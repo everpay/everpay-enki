@@ -30,7 +30,7 @@ export function RollingReserveCard() {
             <div className="space-y-1"><p className="text-xs font-medium text-muted-foreground uppercase">Recent Reserves</p><div className="max-h-40 overflow-y-auto space-y-1">{reserves.slice(0, 10).map(r => (
               <div key={r.id} className="flex items-center justify-between text-xs py-1 border-b border-border last:border-0">
                 <div className="flex items-center gap-2"><Badge variant={r.status === 'held' ? 'secondary' : 'default'} className="text-[10px]">{r.status}</Badge><span className="font-mono text-muted-foreground">{r.transaction_id.slice(0, 8)}…</span></div>
-                <div className="text-right"><span className="font-medium">{formatCurrency(r.amount, r.currency)}</span><span className="ml-2 text-muted-foreground">release: {new Date(r.release_at).toLocaleDateString()}</span></div>
+                <div className="text-right"><span className="font-medium">{formatCurrency(r.amount, r.currency as any)}</span><span className="ml-2 text-muted-foreground">release: {new Date(r.release_at).toLocaleDateString()}</span></div>
               </div>
             ))}</div></div>
           </>
