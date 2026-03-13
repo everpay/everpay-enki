@@ -290,6 +290,20 @@ function HeroSection() {
   );
 }
 
+function ScrollReveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 // ============= STATS SECTION =============
 function StatsSection() {
   const stats = [
@@ -304,14 +318,16 @@ function StatsSection() {
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4">
           {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                {stat.value}
+            <ScrollReveal key={index} delay={index * 0.1}>
+              <div className="text-center">
+                <div className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  {stat.value}
+                </div>
+                <div className="text-sm text-gray-500" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  {stat.label}
+                </div>
               </div>
-              <div className="text-sm text-gray-500" style={{ fontFamily: 'Inter, sans-serif' }}>
-                {stat.label}
-              </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>
@@ -358,8 +374,13 @@ function PaymentPartnersSection() {
   return (
     <section className="py-16 bg-white overflow-hidden">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+        <ScrollReveal>
+          <div className="text-center mb-8">
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+              Trusted Payment Methods Worldwide
+            </p>
+          </div>
+        </ScrollReveal>
             Trusted Payment Methods Worldwide
           </p>
         </div>
@@ -424,13 +445,15 @@ function FeaturesSection() {
   return (
     <section className="py-20 md:py-28 bg-white">
       <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            With Everpay, you get more sales,{' '}
-            <br className="hidden md:block" />
-            more reach, more repeat customers
-          </h2>
-        </div>
+        <ScrollReveal>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              With Everpay, you get more sales,{' '}
+              <br className="hidden md:block" />
+              more reach, more repeat customers
+            </h2>
+          </div>
+        </ScrollReveal>
 
         <div className="flex flex-wrap justify-center gap-3 mb-14">
           {features.map((feature, index) => (
@@ -516,31 +539,35 @@ function TestimonialsSection() {
   return (
     <section className="py-20 md:py-28 bg-gray-50">
       <div className="container mx-auto px-6">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            See why businesses trust Everpay
-          </h2>
-          <p className="text-gray-500 text-lg max-w-xl mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Over 500 businesses have switched to Everpay for faster, more reliable payment processing.
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              See why businesses trust Everpay
+            </h2>
+            <p className="text-gray-500 text-lg max-w-xl mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Over 500 businesses have switched to Everpay for faster, more reliable payment processing.
+            </p>
+          </div>
+        </ScrollReveal>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
           {testimonials.map((t, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
-              <div className="flex gap-0.5 mb-4">
-                {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-4 h-4 fill-[#1aa478] text-[#1aa478]" />
-                ))}
+            <ScrollReveal key={i} delay={i * 0.08}>
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-4 h-4 fill-[#1aa478] text-[#1aa478]" />
+                  ))}
+                </div>
+                <p className="text-gray-700 text-[15px] leading-relaxed mb-5" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  "{t.quote}"
+                </p>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Manrope, sans-serif' }}>{t.name}</p>
+                  <p className="text-sm text-gray-400">{t.title}</p>
+                </div>
               </div>
-              <p className="text-gray-700 text-[15px] leading-relaxed mb-5" style={{ fontFamily: 'Inter, sans-serif' }}>
-                "{t.quote}"
-              </p>
-              <div>
-                <p className="text-sm font-semibold text-gray-900" style={{ fontFamily: 'Manrope, sans-serif' }}>{t.name}</p>
-                <p className="text-sm text-gray-400">{t.title}</p>
-              </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>
@@ -562,28 +589,32 @@ function ProductsSection() {
   return (
     <section className="py-20 md:py-28 bg-white">
       <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            Everything you need to get paid
-          </h2>
-          <p className="text-gray-500 text-lg max-w-xl mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
-            One platform with all the tools to accept payments, prevent fraud, and grow your business globally.
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              Everything you need to get paid
+            </h2>
+            <p className="text-gray-500 text-lg max-w-xl mx-auto" style={{ fontFamily: 'Inter, sans-serif' }}>
+              One platform with all the tools to accept payments, prevent fraud, and grow your business globally.
+            </p>
+          </div>
+        </ScrollReveal>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {products.map((product, index) => (
-            <div key={index} className="group block rounded-2xl border border-gray-100 bg-white p-7 hover:shadow-lg hover:border-[#1aa478]/20 transition-all duration-200">
-              <div className="w-11 h-11 rounded-xl bg-[#1aa478]/10 flex items-center justify-center mb-5">
-                <product.icon className="w-5 h-5 text-[#1aa478]" />
+            <ScrollReveal key={index} delay={index * 0.08}>
+              <div className="group block rounded-2xl border border-gray-100 bg-white p-7 hover:shadow-lg hover:border-[#1aa478]/20 transition-all duration-200">
+                <div className="w-11 h-11 rounded-xl bg-[#1aa478]/10 flex items-center justify-center mb-5">
+                  <product.icon className="w-5 h-5 text-[#1aa478]" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-[#1aa478] transition-colors" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  {product.title}
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  {product.description}
+                </p>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-[#1aa478] transition-colors" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                {product.title}
-              </h3>
-              <p className="text-sm text-gray-500 leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
-                {product.description}
-              </p>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>
@@ -596,20 +627,22 @@ function CTASection() {
   return (
     <section className="py-20 md:py-28 bg-[#0A2F2F]">
       <div className="container mx-auto px-6 text-center">
-        <h2 className="text-3xl md:text-[44px] font-extrabold text-white leading-tight mb-5" style={{ fontFamily: 'Manrope, sans-serif' }}>
-          Ready to grow your business?
-        </h2>
-        <p className="text-lg text-white/60 mb-10 max-w-lg mx-auto leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
-          Get a free demo and see how Everpay can help you accept payments globally, prevent fraud, and increase revenue.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button size="lg" className="bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full px-8 h-12 text-base font-semibold shadow-none min-w-[200px]">
-            Get a free demo
-          </Button>
-          <Button size="lg" variant="outline" className="border-2 border-white/20 bg-transparent text-white hover:bg-white/10 rounded-full px-8 h-12 text-base font-semibold shadow-none min-w-[200px]">
-            Contact sales
-          </Button>
-        </div>
+        <ScrollReveal>
+          <h2 className="text-3xl md:text-[44px] font-extrabold text-white leading-tight mb-5" style={{ fontFamily: 'Manrope, sans-serif' }}>
+            Ready to grow your business?
+          </h2>
+          <p className="text-lg text-white/60 mb-10 max-w-lg mx-auto leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>
+            Get a free demo and see how Everpay can help you accept payments globally, prevent fraud, and increase revenue.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button size="lg" className="bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full px-8 h-12 text-base font-semibold shadow-none min-w-[200px]">
+              Get a free demo
+            </Button>
+            <Button size="lg" variant="outline" className="border-2 border-white/20 bg-transparent text-white hover:bg-white/10 rounded-full px-8 h-12 text-base font-semibold shadow-none min-w-[200px]">
+              Contact sales
+            </Button>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

@@ -21,6 +21,13 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 import Docs from "./pages/Docs";
+import Analytics from "./pages/Analytics";
+import Customers from "./pages/Customers";
+import Invoices from "./pages/Invoices";
+import PayInvoice from "./pages/PayInvoice";
+import MerchantDisputes from "./pages/merchant/MerchantDisputes";
+import MerchantEvidence from "./pages/merchant/MerchantEvidence";
+import MerchantAnalytics from "./pages/merchant/MerchantAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +61,13 @@ const AppRoutes = () => (
     <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
     <Route path="/portal" element={<ProtectedRoute><CustomerPortal /></ProtectedRoute>} />
     <Route path="/chargebacks" element={<ProtectedRoute><Chargebacks /></ProtectedRoute>} />
+    <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+    <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
+    <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+    <Route path="/merchant/disputes" element={<ProtectedRoute><MerchantDisputes /></ProtectedRoute>} />
+    <Route path="/merchant/evidence" element={<ProtectedRoute><MerchantEvidence /></ProtectedRoute>} />
+    <Route path="/merchant/analytics" element={<ProtectedRoute><MerchantAnalytics /></ProtectedRoute>} />
+    <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
