@@ -25,7 +25,7 @@ export function RollingReserveCard() {
               <div className="rounded-lg bg-emerald-500/10 p-3"><div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3 w-3" />Released</div><p className="mt-1 text-lg font-bold text-foreground">${totalReleased.toFixed(2)}</p><p className="text-xs text-muted-foreground">{releasedReserves.length} reserves</p></div>
             </div>
             {Object.keys(heldByCurrency).length > 0 && (
-              <div className="space-y-1"><p className="text-xs font-medium text-muted-foreground uppercase">Held by Currency</p><div className="flex flex-wrap gap-2">{Object.entries(heldByCurrency).map(([curr, amt]) => (<Badge key={curr} variant="outline" className="text-xs gap-1">{curr}: {formatCurrency(amt, curr)}</Badge>))}</div></div>
+              <div className="space-y-1"><p className="text-xs font-medium text-muted-foreground uppercase">Held by Currency</p><div className="flex flex-wrap gap-2">{Object.entries(heldByCurrency).map(([curr, amt]) => (<Badge key={curr} variant="outline" className="text-xs gap-1">{curr}: {formatCurrency(amt, curr as any)}</Badge>))}</div></div>
             )}
             <div className="space-y-1"><p className="text-xs font-medium text-muted-foreground uppercase">Recent Reserves</p><div className="max-h-40 overflow-y-auto space-y-1">{reserves.slice(0, 10).map(r => (
               <div key={r.id} className="flex items-center justify-between text-xs py-1 border-b border-border last:border-0">
