@@ -86,6 +86,35 @@ export default function NewPayment() {
         return;
       }
 
+      // Run fraud check first
+      const cardBin = cardNumber?.replace(/\s/g, '').slice(0, 6);
+      const fraudCheck = await checkFraud({
+        card_bin: cardBin || undefined,
+        card_last4: cardNumber?.replace(/\s/g, '').slice(-4) || undefined,
+        customer_email: email || undefined,
+        amount: parseFloat(amount),
+        currency,
+        device_fingerprint: deviceInfo?.device_id,
+        ip_address: deviceInfo?.ip_address,
+        user_agent: deviceInfo?.user_agent,
+        device_type: deviceInfo?.device_type,
+        timezone: deviceInfo?.timezone,
+      });
+
+      if (fraudCheck?.action === 'block') {
+        toast.error('Payment blocked by fraud detection', {
+          description: `Risk score: ${fraudCheck.total_score}/100 — ${fraudCheck.factors.join(', ')}`,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (fraudCheck?.action === 'review') {
+        toast.warning('Payment flagged for review', {
+          description: `Risk score: ${fraudCheck.total_score}/100`,
+        });
+      }
+
       const payload: any = {
         amount: parseFloat(amount),
         currency,
