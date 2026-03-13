@@ -94,6 +94,23 @@ export default function Checkout() {
 
       if (error) throw error;
 
+      // Handle 3DS redirect
+      if (data?.providerResponse?.redirect_url || data?.providerResponse?.['3d_secure_redirect_url']) {
+        const redirectUrl = data.providerResponse.redirect_url || data.providerResponse['3d_secure_redirect_url'];
+        setThreeDSUrl(redirectUrl);
+        setThreeDSTransactionId(data.transaction?.id || '');
+        setShowThreeDS(true);
+        if (data.transaction?.id) startPolling(data.transaction.id);
+        toast.info('3D Secure authentication required');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Start polling for pending payments
+      if (data?.transaction?.status === 'pending' && data?.transaction?.id) {
+        startPolling(data.transaction.id);
+      }
+
       // Send payment receipt email to customer
       if (customerEmail && data.transaction) {
         try {
