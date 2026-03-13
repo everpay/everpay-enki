@@ -498,7 +498,7 @@ export default function Settings() {
                 </div>
                 <div className="space-y-2">
                   <Label>Country</Label>
-                  <Input value={businessCountry} onChange={(e) => setBusinessCountry(e.target.value)} placeholder="Country" />
+                  <CountrySelect value={businessCountry} onValueChange={setBusinessCountry} />
                 </div>
               </div>
 

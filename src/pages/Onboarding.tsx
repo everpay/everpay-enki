@@ -112,10 +112,10 @@ export default function Onboarding() {
       };
 
       if (profile) {
-        const { error } = await supabase.from('merchant_profiles').update(profileData).eq('id', profile.id);
+        const { error } = await supabase.from('merchant_profiles').update(profileData as any).eq('id', profile.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('merchant_profiles').insert(profileData);
+        const { error } = await supabase.from('merchant_profiles').insert(profileData as any);
         if (error) throw error;
       }
       toast.success('Business profile saved — your application is under review');
