@@ -18,12 +18,9 @@ import {
   BarChart3,
   AlertTriangle,
   Archive,
-  Zap,
   User,
   RotateCcw,
   Package,
-  GitBranch,
-  Brain,
   CreditCard as CreditCardIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -41,7 +38,7 @@ interface NavItem {
   icon: React.ElementType;
   label: string;
   children?: { to: string; icon: React.ElementType; label: string }[];
-  visibleTo?: string[]; // if set, only these roles see this item
+  visibleTo?: string[];
 }
 
 const navItems: NavItem[] = [
@@ -81,16 +78,18 @@ const navItems: NavItem[] = [
       { to: '/chargebacks/analytics', icon: BarChart3, label: 'Analytics' },
     ],
   },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/processor-transparency', icon: Eye, label: 'Processor Routing' },
-  { to: '/multi-acquirer', icon: GitBranch, label: 'Multi-Acquirer' },
-  { to: '/smart-retry', icon: Brain, label: 'Smart Retry AI' },
-  { to: '/processor-analytics', icon: BarChart3, label: 'Processor Analytics' },
+  {
+    to: '/analytics',
+    icon: BarChart3,
+    label: 'Analytics',
+    children: [
+      { to: '/analytics', icon: Eye, label: 'Overview' },
+      { to: '/processor-analytics', icon: BarChart3, label: 'Processor Analytics' },
+    ],
+  },
   { to: '/payment-methods', icon: CreditCardIcon, label: 'Payment Methods' },
   { to: '/kyc-aml', icon: Shield, label: 'KYC / AML', visibleTo: ['admin', 'super_admin'] },
-  
   { to: '/portal', icon: User, label: 'Customer Portal', visibleTo: ['user'] },
-  { to: '/activity', icon: Zap, label: 'Activity' },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -101,13 +100,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const isChildActive = (item: NavItem) =>
     item.children?.some((c) => location.pathname === c.to) || location.pathname === item.to;
 
-  // Filter nav items based on role visibility
   const visibleItems = navItems.filter((item) => {
     if (!item.visibleTo) return true;
     if (!userRole) return false;
-    // If user has admin/super_admin/merchant/reseller/agent role, hide items marked for 'user' only
     const roles = userRole.roles || [];
-    return item.visibleTo.some((r) => roles.includes(r)) || (roles.length === 0 && item.visibleTo.includes('user'));
+    // 'user' role items: only show if user has no other roles or explicitly has 'user'
+    if (item.visibleTo.includes('user') && !item.visibleTo.includes('admin') && !item.visibleTo.includes('super_admin')) {
+      // Hide from merchants, resellers, agents, developers, admins
+      const nonUserRoles = roles.filter((r: string) => r !== 'user');
+      if (nonUserRoles.length > 0) return false;
+      return roles.includes('user') || roles.length === 0;
+    }
+    return item.visibleTo.some((r) => roles.includes(r));
   });
 
   return (
