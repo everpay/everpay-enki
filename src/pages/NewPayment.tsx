@@ -584,6 +584,18 @@ export default function NewPayment() {
           )}
         </div>
       </div>
+
+      <ThreeDSecureModal
+        open={showThreeDS}
+        onClose={() => setShowThreeDS(false)}
+        redirectUrl={threeDSUrl}
+        transactionId={threeDSTransactionId}
+        onComplete={() => {
+          toast.success('3D Secure authentication completed!');
+          queryClient.invalidateQueries({ queryKey: ['transactions'] });
+          setShowThreeDS(false);
+        }}
+      />
     </AppLayout>
   );
 }
