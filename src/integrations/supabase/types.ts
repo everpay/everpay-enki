@@ -131,6 +131,80 @@ export type Database = {
           },
         ]
       }
+      device_analytics: {
+        Row: {
+          browser: string | null
+          browser_version: string | null
+          created_at: string
+          device_id: string
+          device_type: string | null
+          event_type: string | null
+          id: string
+          ip_address: string | null
+          language: string | null
+          merchant_id: string | null
+          metadata: Json | null
+          os: string | null
+          os_version: string | null
+          risk_factors: string[] | null
+          risk_score: number | null
+          screen_resolution: string | null
+          timezone: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          browser_version?: string | null
+          created_at?: string
+          device_id: string
+          device_type?: string | null
+          event_type?: string | null
+          id?: string
+          ip_address?: string | null
+          language?: string | null
+          merchant_id?: string | null
+          metadata?: Json | null
+          os?: string | null
+          os_version?: string | null
+          risk_factors?: string[] | null
+          risk_score?: number | null
+          screen_resolution?: string | null
+          timezone?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          browser_version?: string | null
+          created_at?: string
+          device_id?: string
+          device_type?: string | null
+          event_type?: string | null
+          id?: string
+          ip_address?: string | null
+          language?: string | null
+          merchant_id?: string | null
+          metadata?: Json | null
+          os?: string | null
+          os_version?: string | null
+          risk_factors?: string[] | null
+          risk_score?: number | null
+          screen_resolution?: string | null
+          timezone?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_analytics_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       disputes: {
         Row: {
           amount: number
@@ -1067,6 +1141,7 @@ export type Database = {
           id: string
           idempotency_key: string | null
           merchant_id: string
+          metadata: Json | null
           provider: string
           provider_ref: string | null
           settlement_amount: number | null
@@ -1084,6 +1159,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           merchant_id: string
+          metadata?: Json | null
           provider: string
           provider_ref?: string | null
           settlement_amount?: number | null
@@ -1101,6 +1177,7 @@ export type Database = {
           id?: string
           idempotency_key?: string | null
           merchant_id?: string
+          metadata?: Json | null
           provider?: string
           provider_ref?: string | null
           settlement_amount?: number | null
