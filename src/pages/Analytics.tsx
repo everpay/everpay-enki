@@ -621,6 +621,11 @@ export default function Analytics() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* FRAUD TAB */}
+        <TabsContent value="fraud" className="space-y-4">
+          <FraudAnalytics />
+        </TabsContent>
       </Tabs>
     </AppLayout>
   );
