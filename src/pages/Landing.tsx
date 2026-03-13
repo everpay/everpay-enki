@@ -445,13 +445,15 @@ function FeaturesSection() {
   return (
     <section className="py-20 md:py-28 bg-white">
       <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
-            With Everpay, you get more sales,{' '}
-            <br className="hidden md:block" />
-            more reach, more repeat customers
-          </h2>
-        </div>
+        <ScrollReveal>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-4" style={{ fontFamily: 'Manrope, sans-serif' }}>
+              With Everpay, you get more sales,{' '}
+              <br className="hidden md:block" />
+              more reach, more repeat customers
+            </h2>
+          </div>
+        </ScrollReveal>
 
         <div className="flex flex-wrap justify-center gap-3 mb-14">
           {features.map((feature, index) => (
