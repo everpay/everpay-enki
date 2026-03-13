@@ -173,9 +173,28 @@ export default function NewPayment() {
 
       if (error) throw error;
 
-      toast.success('Payment created successfully!', {
-        description: `${amount} ${currency} via ${selectedProvider} — ${data.transaction.id.slice(0, 8)}`,
-      });
+      // Handle 3DS redirect from Mondo
+      if (data?.providerResponse?.redirect_url || data?.providerResponse?.['3d_secure_redirect_url']) {
+        const redirectUrl = data.providerResponse.redirect_url || data.providerResponse['3d_secure_redirect_url'];
+        setThreeDSUrl(redirectUrl);
+        setThreeDSTransactionId(data.transaction?.id || '');
+        setShowThreeDS(true);
+        toast.info('3D Secure authentication required', {
+          description: 'Please complete verification with your bank.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (data?.success) {
+        toast.success('Payment created successfully!', {
+          description: `${amount} ${currency} via ${selectedProvider} — ${data.transaction.id.slice(0, 8)}`,
+        });
+      } else {
+        toast.warning('Payment pending', {
+          description: `Status: ${data?.transaction?.status || 'unknown'} — ${data?.transaction?.id?.slice(0, 8) || ''}`,
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
 
