@@ -374,8 +374,13 @@ function PaymentPartnersSection() {
   return (
     <section className="py-16 bg-white overflow-hidden">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-8">
-          <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+        <ScrollReveal>
+          <div className="text-center mb-8">
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+              Trusted Payment Methods Worldwide
+            </p>
+          </div>
+        </ScrollReveal>
             Trusted Payment Methods Worldwide
           </p>
         </div>
