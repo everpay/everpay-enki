@@ -275,14 +275,17 @@ export default function Settings() {
     toast.success(`New ${type} key generated and copied to clipboard. Store it securely!`);
   };
 
-  const menuItems: { key: SettingsSection; label: string; icon: React.ElementType; destructive?: boolean }[] = [
+  const menuItems: { key: SettingsSection; label: string; icon: React.ElementType; destructive?: boolean; link?: string }[] = [
     { key: "account", label: "Account Details", icon: User },
     { key: "business", label: "Business Details", icon: Building2 },
     { key: "bank-accounts", label: "Bank Accounts", icon: Building2 },
     { key: "verification", label: "Business Verification", icon: Shield },
     { key: "webhooks", label: "Webhooks", icon: Webhook },
     { key: "team", label: "Team", icon: Users },
-    { key: "developers", label: "Developers", icon: Code },
+    { key: "developers", label: "Developers & Activity", icon: Code },
+    { key: "processor-routing" as any, label: "Processor Routing", icon: Globe, link: "/processor-transparency" },
+    { key: "multi-acquirer" as any, label: "Multi-Acquirer", icon: Globe, link: "/multi-acquirer" },
+    { key: "smart-retry" as any, label: "Smart Retry AI", icon: Zap, link: "/smart-retry" },
     { key: "deactivation", label: "Close Account", icon: AlertTriangle, destructive: true },
   ];
 
