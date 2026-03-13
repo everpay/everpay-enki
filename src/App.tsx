@@ -2,8 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import Index from "./pages/Index";
 import Transactions from "./pages/Transactions";
 import Wallets from "./pages/Wallets";
@@ -37,16 +38,24 @@ import MultiAcquirer from "./pages/MultiAcquirer";
 import SmartRetry from "./pages/SmartRetry";
 import ProcessorAnalyticsPage from "./pages/ProcessorAnalyticsPage";
 import KycAml from "./pages/KycAml";
-
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children, skipOnboardingCheck }: { children: React.ReactNode; skipOnboardingCheck?: boolean }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  const location = useLocation();
+  const { data: onboarding, isLoading: onboardingLoading } = useOnboardingStatus();
+
+  if (loading || onboardingLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Redirect to onboarding if not completed (unless already on onboarding page)
+  if (!skipOnboardingCheck && onboarding?.needsOnboarding && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   return <>{children}</>;
 }
 
