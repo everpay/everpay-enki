@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Building2, FileText, CheckCircle2, Clock, AlertCircle, Upload, Globe, Shield } from 'lucide-react';
+import { Building2, FileText, CheckCircle2, Clock, AlertCircle, Upload, Globe, Shield, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -37,6 +38,7 @@ function useMerchantProfile() {
 export default function Onboarding() {
   const { data, refetch } = useMerchantProfile();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const profile = data?.profile;
   const merchantId = data?.merchantId;
 
@@ -113,9 +115,9 @@ export default function Onboarding() {
         const { error } = await supabase.from('merchant_profiles').insert(profileData);
         if (error) throw error;
       }
-      toast.success('Business profile saved');
+      toast.success('Business profile saved — your application is under review');
+      queryClient.invalidateQueries({ queryKey: ['onboarding-status'] });
       refetch();
-    } catch (err) {
       toast.error('Failed to save profile');
     } finally {
       setIsSaving(false);
@@ -156,10 +158,21 @@ export default function Onboarding() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Business Verification</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Complete your KYB onboarding to activate payment processing</p>
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              {!profile ? 'Welcome! Set Up Your Business' : 'Business Verification'}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {!profile ? 'Complete your business profile to start accepting payments' : 'Complete your KYB onboarding to activate payment processing'}
+            </p>
           </div>
-          {profile && getStatusBadge(profile.onboarding_status)}
+          <div className="flex items-center gap-3">
+            {profile && getStatusBadge(profile.onboarding_status)}
+            {profile && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="gap-1.5">
+                Go to Dashboard <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
