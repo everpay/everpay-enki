@@ -729,6 +729,12 @@ export default function Settings() {
         </div>
       )}
 
+      {/* WEBHOOKS */}
+      {section === "webhooks" && <WebhooksSectionComponent />}
+
+      {/* BUSINESS VERIFICATION */}
+      {section === "verification" && <BusinessVerificationSectionComponent />}
+
       {/* DEACTIVATION */}
       {section === "deactivation" && (
         <div className="max-w-2xl">
