@@ -77,6 +77,7 @@ const AppRoutes = () => {
     <Route path="/refunds" element={<ProtectedRoute><Refunds /></ProtectedRoute>} />
     <Route path="/webhooks" element={<ProtectedRoute><Webhooks /></ProtectedRoute>} />
     <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+    <Route path="/processor-transparency" element={<ProtectedRoute><ProcessorTransparency /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />
