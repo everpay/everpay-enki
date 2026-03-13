@@ -67,7 +67,26 @@ serve(async (req) => {
     }
 
     const paymentData: PaymentRequest = await req.json();
-    const { amount, currency, paymentMethod, customerEmail, description, idempotencyKey, cardDetails } = paymentData;
+    const { amount, currency, paymentMethod, customerEmail, description, idempotencyKey, cardDetails, deviceInfo } = paymentData;
+
+    // Build transaction metadata
+    const txMetadata: Record<string, any> = {};
+    if (cardDetails) {
+      txMetadata.cardFirst6 = cardDetails.number.replace(/\s/g, '').slice(0, 6);
+      txMetadata.cardLast4 = cardDetails.number.replace(/\s/g, '').slice(-4);
+      const first6 = txMetadata.cardFirst6;
+      if (first6.startsWith('4')) txMetadata.card_brand = 'visa';
+      else if (first6.startsWith('5') || (first6.startsWith('2') && parseInt(first6.slice(0, 4)) >= 2221)) txMetadata.card_brand = 'mastercard';
+      else if (first6.startsWith('34') || first6.startsWith('37')) txMetadata.card_brand = 'amex';
+      else if (first6.startsWith('6')) txMetadata.card_brand = 'discover';
+    }
+    if (deviceInfo) {
+      txMetadata.device_info = deviceInfo;
+      // Capture IP from request headers if not provided
+      if (!deviceInfo.ip_address) {
+        txMetadata.device_info.ip_address = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+      }
+    }
 
     // Check idempotency
     if (idempotencyKey) {
