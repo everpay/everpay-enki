@@ -54,6 +54,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import { WebhooksSection as WebhooksSectionComponent } from "@/components/settings/WebhooksSection";
+import { BusinessVerificationSection as BusinessVerificationSectionComponent } from "@/components/settings/BusinessVerificationSection";
 
 type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "deactivation";
 
