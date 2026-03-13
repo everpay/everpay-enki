@@ -301,7 +301,7 @@ export default function Settings() {
             {menuItems.map((item, i) => (
               <button
                 key={item.key}
-                onClick={() => setSection(item.key)}
+                onClick={() => item.link ? navigate(item.link) : setSection(item.key)}
                 className={`flex w-full items-center justify-between px-5 py-3.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors ${
                   item.destructive ? "text-destructive" : "text-foreground"
                 } ${i < menuItems.length - 1 ? "border-b border-border" : ""}`}
