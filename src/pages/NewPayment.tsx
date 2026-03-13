@@ -377,12 +377,68 @@ export default function NewPayment() {
             </TabsContent>
           </Tabs>
 
-          <div className="space-y-2">
-            <Label>Customer Email</Label>
-            <Input
-              type="email" placeholder="customer@example.com" value={email}
-              onChange={(e) => setEmail(e.target.value)} className="bg-background border-border"
-            />
+          {/* Customer Details */}
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <h4 className="text-sm font-medium text-foreground">Customer Details</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>First Name</Label>
+                <Input type="text" placeholder="Joe" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="bg-background border-border" />
+              </div>
+              <div className="space-y-2">
+                <Label>Last Name</Label>
+                <Input type="text" placeholder="Doe" value={lastName} onChange={(e) => setLastName(e.target.value)} className="bg-background border-border" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input type="email" placeholder="customer@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-background border-border" />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input type="text" placeholder="(702)486-5000" value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-background border-border" />
+              </div>
+            </div>
+          </div>
+
+          {/* Billing Address */}
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <h4 className="text-sm font-medium text-foreground">Billing Address</h4>
+            <div className="space-y-2">
+              <Label>Street Address</Label>
+              <Input type="text" placeholder="123 Main St" value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} className="bg-background border-border" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>City</Label>
+                <Input type="text" placeholder="Las Vegas" value={billingCity} onChange={(e) => setBillingCity(e.target.value)} className="bg-background border-border" />
+              </div>
+              <div className="space-y-2">
+                <Label>State</Label>
+                <Input type="text" placeholder="NV" value={billingState} onChange={(e) => setBillingState(e.target.value)} className="bg-background border-border" maxLength={2} />
+              </div>
+              <div className="space-y-2">
+                <Label>Zip Code</Label>
+                <Input type="text" placeholder="89101" value={billingPostalCode} onChange={(e) => setBillingPostalCode(e.target.value)} className="bg-background border-border" maxLength={10} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Country</Label>
+              <Select value={billingCountry} onValueChange={setBillingCountry}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="US">🇺🇸 United States</SelectItem>
+                  <SelectItem value="CA">🇨🇦 Canada</SelectItem>
+                  <SelectItem value="GB">🇬🇧 United Kingdom</SelectItem>
+                  <SelectItem value="BR">🇧🇷 Brazil</SelectItem>
+                  <SelectItem value="MX">🇲🇽 Mexico</SelectItem>
+                  <SelectItem value="CO">🇨🇴 Colombia</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">
