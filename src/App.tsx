@@ -33,6 +33,12 @@ import Refunds from "./pages/Refunds";
 import Onboarding from "./pages/Onboarding";
 import ProcessorTransparency from "./pages/ProcessorTransparency";
 import Products from "./pages/Products";
+import MultiAcquirer from "./pages/MultiAcquirer";
+import SmartRetry from "./pages/SmartRetry";
+import ProcessorAnalyticsPage from "./pages/ProcessorAnalyticsPage";
+import KycAml from "./pages/KycAml";
+import MerchantOnboardingAdmin from "./pages/MerchantOnboardingAdmin";
+import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 const queryClient = new QueryClient();
@@ -80,6 +86,12 @@ const AppRoutes = () => {
     <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
     <Route path="/processor-transparency" element={<ProtectedRoute><ProcessorTransparency /></ProtectedRoute>} />
     <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+    <Route path="/multi-acquirer" element={<ProtectedRoute><MultiAcquirer /></ProtectedRoute>} />
+    <Route path="/smart-retry" element={<ProtectedRoute><SmartRetry /></ProtectedRoute>} />
+    <Route path="/processor-analytics" element={<ProtectedRoute><ProcessorAnalyticsPage /></ProtectedRoute>} />
+    <Route path="/kyc-aml" element={<ProtectedRoute><KycAml /></ProtectedRoute>} />
+    <Route path="/merchant-onboarding" element={<ProtectedRoute><MerchantOnboardingAdmin /></ProtectedRoute>} />
+    <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsPage /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />

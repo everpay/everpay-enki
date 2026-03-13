@@ -55,6 +55,45 @@ export type Database = {
           },
         ]
       }
+      acquirers: {
+        Row: {
+          active: boolean
+          api_endpoint: string | null
+          avg_latency_ms: number | null
+          country: string | null
+          created_at: string
+          id: string
+          name: string
+          routing_weight: number | null
+          success_rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          api_endpoint?: string | null
+          avg_latency_ms?: number | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          routing_weight?: number | null
+          success_rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          api_endpoint?: string | null
+          avg_latency_ms?: number | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          routing_weight?: number | null
+          success_rate?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_request_logs: {
         Row: {
           created_at: string | null
@@ -82,6 +121,36 @@ export type Database = {
           merchant_id?: string | null
           method?: string | null
           status_code?: number | null
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -825,6 +894,54 @@ export type Database = {
           },
         ]
       }
+      merchant_acquirer_mids: {
+        Row: {
+          acquirer_id: string
+          active: boolean | null
+          created_at: string
+          id: string
+          merchant_id: string
+          mid: string
+          priority: number | null
+          routing_weight: number | null
+        }
+        Insert: {
+          acquirer_id: string
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          merchant_id: string
+          mid: string
+          priority?: number | null
+          routing_weight?: number | null
+        }
+        Update: {
+          acquirer_id?: string
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          mid?: string
+          priority?: number | null
+          routing_weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_acquirer_mids_acquirer_id_fkey"
+            columns: ["acquirer_id"]
+            isOneToOne: false
+            referencedRelation: "acquirers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_acquirer_mids_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_profiles: {
         Row: {
           address: Json | null
@@ -1282,6 +1399,47 @@ export type Database = {
           },
         ]
       }
+      risk_rules: {
+        Row: {
+          action: string
+          active: boolean
+          condition: Json
+          created_at: string
+          id: string
+          merchant_id: string | null
+          name: string
+          severity: string
+        }
+        Insert: {
+          action?: string
+          active?: boolean
+          condition?: Json
+          created_at?: string
+          id?: string
+          merchant_id?: string | null
+          name: string
+          severity?: string
+        }
+        Update: {
+          action?: string
+          active?: boolean
+          condition?: Json
+          created_at?: string
+          id?: string
+          merchant_id?: string | null
+          name?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_rules_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rolling_reserves: {
         Row: {
           amount: number
@@ -1441,6 +1599,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      settlement_batches: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          processor: string
+          settled_at: string | null
+          status: string
+          total_amount: number
+          transaction_count: number
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          id?: string
+          processor: string
+          settled_at?: string | null
+          status?: string
+          total_amount?: number
+          transaction_count?: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          processor?: string
+          settled_at?: string | null
+          status?: string
+          total_amount?: number
+          transaction_count?: number
+        }
+        Relationships: []
       }
       settlement_instructions: {
         Row: {

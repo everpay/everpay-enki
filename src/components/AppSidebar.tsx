@@ -22,6 +22,10 @@ import {
   User,
   RotateCcw,
   Package,
+  GitBranch,
+  Brain,
+  Building2,
+  CreditCard as CreditCardIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -80,6 +84,12 @@ const navItems: NavItem[] = [
   },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/processor-transparency', icon: Eye, label: 'Processor Routing' },
+  { to: '/multi-acquirer', icon: GitBranch, label: 'Multi-Acquirer' },
+  { to: '/smart-retry', icon: Brain, label: 'Smart Retry AI' },
+  { to: '/processor-analytics', icon: BarChart3, label: 'Processor Analytics' },
+  { to: '/payment-methods', icon: CreditCardIcon, label: 'Payment Methods' },
+  { to: '/kyc-aml', icon: Shield, label: 'KYC / AML', visibleTo: ['admin', 'super_admin'] },
+  { to: '/merchant-onboarding', icon: Building2, label: 'Merchant Onboarding', visibleTo: ['admin', 'super_admin'] },
   { to: '/portal', icon: User, label: 'Customer Portal', visibleTo: ['user'] },
   { to: '/activity', icon: Zap, label: 'Activity' },
 ];
