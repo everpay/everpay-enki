@@ -20,7 +20,7 @@ import {
   Archive,
   Zap,
   User,
-  Eye,
+  RotateCcw,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
