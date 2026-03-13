@@ -33,6 +33,12 @@ import Refunds from "./pages/Refunds";
 import Onboarding from "./pages/Onboarding";
 import ProcessorTransparency from "./pages/ProcessorTransparency";
 import Products from "./pages/Products";
+import MultiAcquirer from "./pages/MultiAcquirer";
+import SmartRetry from "./pages/SmartRetry";
+import ProcessorAnalyticsPage from "./pages/ProcessorAnalyticsPage";
+import KycAml from "./pages/KycAml";
+import MerchantOnboardingAdmin from "./pages/MerchantOnboardingAdmin";
+import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 const queryClient = new QueryClient();
