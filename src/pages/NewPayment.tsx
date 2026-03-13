@@ -65,6 +65,15 @@ export default function NewPayment() {
   const [expMonth, setExpMonth] = useState('');
   const [expYear, setExpYear] = useState('');
   const [cvc, setCvc] = useState('');
+  const [holderName, setHolderName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [billingCity, setBillingCity] = useState('');
+  const [billingState, setBillingState] = useState('');
+  const [billingPostalCode, setBillingPostalCode] = useState('');
+  const [billingCountry, setBillingCountry] = useState('US');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vgsToken, setVgsToken] = useState('');
   const [cardEntryMode, setCardEntryMode] = useState<'standard' | 'vgs'>('standard');
@@ -122,6 +131,18 @@ export default function NewPayment() {
         customerEmail: email,
         description,
         idempotencyKey,
+        customerDetails: {
+          firstName: firstName || 'Customer',
+          lastName: lastName || 'User',
+          phone: phone || '1234567890',
+        },
+        billingDetails: {
+          address: billingAddress || '123 Main St',
+          postalCode: billingPostalCode || '12345',
+          city: billingCity || 'New York',
+          state: billingState || 'NY',
+          country: billingCountry || 'US',
+        },
         deviceInfo: deviceInfo ? {
           device_type: deviceInfo.device_type,
           os: deviceInfo.os,
@@ -130,6 +151,7 @@ export default function NewPayment() {
           screen_resolution: deviceInfo.screen_resolution,
           timezone: deviceInfo.timezone,
           user_agent: deviceInfo.user_agent,
+          ip_address: deviceInfo.ip_address,
         } : undefined,
       };
 
@@ -137,7 +159,7 @@ export default function NewPayment() {
         if (cardEntryMode === 'vgs' && vgsToken) {
           payload.vgsToken = vgsToken;
         } else if (cardNumber) {
-          payload.cardDetails = { number: cardNumber, expMonth, expYear, cvc };
+          payload.cardDetails = { number: cardNumber, expMonth, expYear, cvc, holderName: holderName || `${firstName} ${lastName}` };
         }
       }
 
@@ -155,6 +177,8 @@ export default function NewPayment() {
 
       setAmount(''); setEmail(''); setDescription('');
       setCardNumber(''); setExpMonth(''); setExpYear(''); setCvc('');
+      setHolderName(''); setFirstName(''); setLastName(''); setPhone('');
+      setBillingAddress(''); setBillingCity(''); setBillingState(''); setBillingPostalCode('');
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Payment failed', {
@@ -245,6 +269,14 @@ export default function NewPayment() {
 
                 <TabsContent value="standard" className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
                   <div className="space-y-2">
+                    <Label>Cardholder Name</Label>
+                    <Input
+                      type="text" placeholder="Joe Doe" value={holderName}
+                      onChange={(e) => setHolderName(e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label>Card Number</Label>
                     <Input
                       type="text" placeholder="4242 4242 4242 4242" value={cardNumber}
@@ -255,11 +287,11 @@ export default function NewPayment() {
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label>Exp Month</Label>
-                      <Input type="text" placeholder="12" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} className="bg-background border-border" maxLength={2} />
+                      <Input type="text" placeholder="04" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} className="bg-background border-border" maxLength={2} />
                     </div>
                     <div className="space-y-2">
                       <Label>Exp Year</Label>
-                      <Input type="text" placeholder="2025" value={expYear} onChange={(e) => setExpYear(e.target.value)} className="bg-background border-border" maxLength={4} />
+                      <Input type="text" placeholder="27" value={expYear} onChange={(e) => setExpYear(e.target.value)} className="bg-background border-border" maxLength={4} />
                     </div>
                     <div className="space-y-2">
                       <Label>CVC</Label>
@@ -347,12 +379,68 @@ export default function NewPayment() {
             </TabsContent>
           </Tabs>
 
-          <div className="space-y-2">
-            <Label>Customer Email</Label>
-            <Input
-              type="email" placeholder="customer@example.com" value={email}
-              onChange={(e) => setEmail(e.target.value)} className="bg-background border-border"
-            />
+          {/* Customer Details */}
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <h4 className="text-sm font-medium text-foreground">Customer Details</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>First Name</Label>
+                <Input type="text" placeholder="Joe" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="bg-background border-border" />
+              </div>
+              <div className="space-y-2">
+                <Label>Last Name</Label>
+                <Input type="text" placeholder="Doe" value={lastName} onChange={(e) => setLastName(e.target.value)} className="bg-background border-border" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input type="email" placeholder="customer@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-background border-border" />
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input type="text" placeholder="(702)486-5000" value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-background border-border" />
+              </div>
+            </div>
+          </div>
+
+          {/* Billing Address */}
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <h4 className="text-sm font-medium text-foreground">Billing Address</h4>
+            <div className="space-y-2">
+              <Label>Street Address</Label>
+              <Input type="text" placeholder="123 Main St" value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} className="bg-background border-border" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>City</Label>
+                <Input type="text" placeholder="Las Vegas" value={billingCity} onChange={(e) => setBillingCity(e.target.value)} className="bg-background border-border" />
+              </div>
+              <div className="space-y-2">
+                <Label>State</Label>
+                <Input type="text" placeholder="NV" value={billingState} onChange={(e) => setBillingState(e.target.value)} className="bg-background border-border" maxLength={2} />
+              </div>
+              <div className="space-y-2">
+                <Label>Zip Code</Label>
+                <Input type="text" placeholder="89101" value={billingPostalCode} onChange={(e) => setBillingPostalCode(e.target.value)} className="bg-background border-border" maxLength={10} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Country</Label>
+              <Select value={billingCountry} onValueChange={setBillingCountry}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="US">🇺🇸 United States</SelectItem>
+                  <SelectItem value="CA">🇨🇦 Canada</SelectItem>
+                  <SelectItem value="GB">🇬🇧 United Kingdom</SelectItem>
+                  <SelectItem value="BR">🇧🇷 Brazil</SelectItem>
+                  <SelectItem value="MX">🇲🇽 Mexico</SelectItem>
+                  <SelectItem value="CO">🇨🇴 Colombia</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">
