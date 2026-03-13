@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 
-type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "deactivation";
+type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "deactivation";
 
 interface SavedBankAccount {
   id: string;
