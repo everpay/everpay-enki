@@ -177,6 +177,8 @@ export default function NewPayment() {
 
       setAmount(''); setEmail(''); setDescription('');
       setCardNumber(''); setExpMonth(''); setExpYear(''); setCvc('');
+      setHolderName(''); setFirstName(''); setLastName(''); setPhone('');
+      setBillingAddress(''); setBillingCity(''); setBillingState(''); setBillingPostalCode('');
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Payment failed', {
