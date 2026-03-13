@@ -330,6 +330,7 @@ export default function Analytics() {
           <TabsTrigger value="geography" className="gap-1.5"><Globe className="h-3.5 w-3.5" /> Currencies</TabsTrigger>
           <TabsTrigger value="performance" className="gap-1.5"><Activity className="h-3.5 w-3.5" /> Performance</TabsTrigger>
           <TabsTrigger value="ratios" className="gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Risk & Ratios</TabsTrigger>
+          <TabsTrigger value="fraud" className="gap-1.5"><Fingerprint className="h-3.5 w-3.5" /> Fraud</TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW TAB */}
