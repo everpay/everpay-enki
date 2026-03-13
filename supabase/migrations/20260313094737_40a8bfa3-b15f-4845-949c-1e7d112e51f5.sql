@@ -1,0 +1,1 @@
+ALTER TABLE public.merchant_profiles ADD COLUMN IF NOT EXISTS contact_number text;
