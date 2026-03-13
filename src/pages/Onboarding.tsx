@@ -38,6 +38,7 @@ function useMerchantProfile() {
 export default function Onboarding() {
   const { data, refetch } = useMerchantProfile();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const profile = data?.profile;
   const merchantId = data?.merchantId;
 
