@@ -381,9 +381,8 @@ function PaymentPartnersSection() {
             </p>
           </div>
         </ScrollReveal>
-            Trusted Payment Methods Worldwide
-          </p>
-        </div>
+
+
         <div ref={scrollRef} className="flex gap-12 overflow-x-hidden items-center" style={{ scrollBehavior: 'auto' }}>
           {[...paymentLogos, ...paymentLogos, ...paymentLogos].map((logo, index) => (
             <div key={`${logo.name}-${index}`} className="flex-shrink-0 flex items-center justify-center hover:scale-110 transition-transform duration-300">
