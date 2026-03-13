@@ -161,8 +161,8 @@ function SiteHeader() {
           <Link to="/docs" className="text-[15px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors">
             Docs
           </Link>
-          <Link to="/auth" className="text-[15px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors">
-            Login
+          <Link to={user ? "/dashboard" : "/auth"} className="text-[15px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors">
+            {user ? 'Dashboard' : 'Login'}
           </Link>
           <Button className="bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full px-6 h-10 text-[15px] font-semibold shadow-none">
             Get a free demo
