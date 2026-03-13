@@ -188,8 +188,8 @@ function SiteHeader() {
               ))}
             </div>
             <div className="border-t border-gray-100 mt-4 pt-6 flex flex-col gap-3">
-              <Link to="/auth" className="text-center text-[15px] font-medium text-gray-600 py-2.5" onClick={() => setIsMenuOpen(false)}>
-                Login
+              <Link to={user ? "/dashboard" : "/auth"} className="text-center text-[15px] font-medium text-gray-600 py-2.5" onClick={() => setIsMenuOpen(false)}>
+                {user ? 'Dashboard' : 'Login'}
               </Link>
               <Button className="w-full bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full h-11 text-[15px] font-semibold">
                 Get a free demo
