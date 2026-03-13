@@ -267,6 +267,14 @@ export default function NewPayment() {
 
                 <TabsContent value="standard" className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
                   <div className="space-y-2">
+                    <Label>Cardholder Name</Label>
+                    <Input
+                      type="text" placeholder="Joe Doe" value={holderName}
+                      onChange={(e) => setHolderName(e.target.value)}
+                      className="bg-background border-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label>Card Number</Label>
                     <Input
                       type="text" placeholder="4242 4242 4242 4242" value={cardNumber}
@@ -277,11 +285,11 @@ export default function NewPayment() {
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label>Exp Month</Label>
-                      <Input type="text" placeholder="12" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} className="bg-background border-border" maxLength={2} />
+                      <Input type="text" placeholder="04" value={expMonth} onChange={(e) => setExpMonth(e.target.value)} className="bg-background border-border" maxLength={2} />
                     </div>
                     <div className="space-y-2">
                       <Label>Exp Year</Label>
-                      <Input type="text" placeholder="2025" value={expYear} onChange={(e) => setExpYear(e.target.value)} className="bg-background border-border" maxLength={4} />
+                      <Input type="text" placeholder="27" value={expYear} onChange={(e) => setExpYear(e.target.value)} className="bg-background border-border" maxLength={4} />
                     </div>
                     <div className="space-y-2">
                       <Label>CVC</Label>
