@@ -19,6 +19,16 @@ interface PaymentRequest {
     expYear: string;
     cvc: string;
   };
+  deviceInfo?: {
+    device_type?: string;
+    os?: string;
+    browser?: string;
+    browser_version?: string;
+    screen_resolution?: string;
+    timezone?: string;
+    ip_address?: string;
+    user_agent?: string;
+  };
 }
 
 serve(async (req) => {
