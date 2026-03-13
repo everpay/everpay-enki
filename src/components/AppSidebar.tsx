@@ -22,6 +22,10 @@ import {
   User,
   RotateCcw,
   Package,
+  GitBranch,
+  Brain,
+  Building2,
+  CreditCard as CreditCardIcon,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
