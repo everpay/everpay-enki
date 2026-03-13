@@ -31,6 +31,8 @@ import MerchantAnalytics from "./pages/merchant/MerchantAnalytics";
 import Webhooks from "./pages/Webhooks";
 import Refunds from "./pages/Refunds";
 import Onboarding from "./pages/Onboarding";
+import ProcessorTransparency from "./pages/ProcessorTransparency";
+import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 const queryClient = new QueryClient();
 
@@ -48,7 +50,9 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const AppRoutes = () => (
+const AppRoutes = () => {
+  useInactivityLogout();
+  return (
   <Routes>
     <Route path="/" element={<Landing />} />
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
@@ -73,12 +77,14 @@ const AppRoutes = () => (
     <Route path="/refunds" element={<ProtectedRoute><Refunds /></ProtectedRoute>} />
     <Route path="/webhooks" element={<ProtectedRoute><Webhooks /></ProtectedRoute>} />
     <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+    <Route path="/processor-transparency" element={<ProtectedRoute><ProcessorTransparency /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
-);
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

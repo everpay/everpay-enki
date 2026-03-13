@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
 import everpayIcon from '@/assets/everpay-icon.png';
 import {
   ChevronDown,
@@ -38,6 +39,7 @@ function SiteHeader() {
   const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -159,8 +161,8 @@ function SiteHeader() {
           <Link to="/docs" className="text-[15px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors">
             Docs
           </Link>
-          <Link to="/auth" className="text-[15px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors">
-            Login
+          <Link to={user ? "/dashboard" : "/auth"} className="text-[15px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors">
+            {user ? 'Dashboard' : 'Login'}
           </Link>
           <Button className="bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full px-6 h-10 text-[15px] font-semibold shadow-none">
             Get a free demo
@@ -186,8 +188,8 @@ function SiteHeader() {
               ))}
             </div>
             <div className="border-t border-gray-100 mt-4 pt-6 flex flex-col gap-3">
-              <Link to="/auth" className="text-center text-[15px] font-medium text-gray-600 py-2.5" onClick={() => setIsMenuOpen(false)}>
-                Login
+              <Link to={user ? "/dashboard" : "/auth"} className="text-center text-[15px] font-medium text-gray-600 py-2.5" onClick={() => setIsMenuOpen(false)}>
+                {user ? 'Dashboard' : 'Login'}
               </Link>
               <Button className="w-full bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full h-11 text-[15px] font-semibold">
                 Get a free demo

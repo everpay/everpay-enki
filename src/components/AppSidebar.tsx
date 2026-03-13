@@ -20,9 +20,7 @@ import {
   Archive,
   Zap,
   User,
-  Webhook,
   RotateCcw,
-  Building2,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -78,8 +76,7 @@ const navItems: NavItem[] = [
     ],
   },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/webhooks', icon: Webhook, label: 'Webhooks' },
-  { to: '/onboarding', icon: Building2, label: 'Business Verification' },
+  { to: '/processor-transparency', icon: Eye, label: 'Processor Routing' },
   { to: '/portal', icon: User, label: 'Customer Portal' },
   { to: '/activity', icon: Zap, label: 'Activity' },
 ];

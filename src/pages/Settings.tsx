@@ -54,8 +54,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import { WebhooksSection as WebhooksSectionComponent } from "@/components/settings/WebhooksSection";
+import { BusinessVerificationSection as BusinessVerificationSectionComponent } from "@/components/settings/BusinessVerificationSection";
 
-type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "deactivation";
+type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "deactivation";
 
 interface SavedBankAccount {
   id: string;
@@ -275,6 +277,8 @@ export default function Settings() {
     { key: "account", label: "Account Details", icon: User },
     { key: "business", label: "Business Details", icon: Building2 },
     { key: "bank-accounts", label: "Bank Accounts", icon: Building2 },
+    { key: "verification", label: "Business Verification", icon: Shield },
+    { key: "webhooks", label: "Webhooks", icon: Webhook },
     { key: "team", label: "Team", icon: Users },
     { key: "developers", label: "Developers", icon: Code },
     { key: "deactivation", label: "Close Account", icon: AlertTriangle, destructive: true },
@@ -726,6 +730,12 @@ export default function Settings() {
           </Card>
         </div>
       )}
+
+      {/* WEBHOOKS */}
+      {section === "webhooks" && <WebhooksSectionComponent />}
+
+      {/* BUSINESS VERIFICATION */}
+      {section === "verification" && <BusinessVerificationSectionComponent />}
 
       {/* DEACTIVATION */}
       {section === "deactivation" && (
