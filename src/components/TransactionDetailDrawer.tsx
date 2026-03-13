@@ -27,6 +27,13 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const cardBrand = (tapixEvent?.payload as any)?.card_brand || (vaultEvent?.payload as any)?.card_brand || null;
   const cardLast4 = (tapixEvent?.payload as any)?.card_last4 || (vaultEvent?.payload as any)?.card_last4 || null;
 
+  // Extract metadata (card BIN + device info)
+  const txMetadata = (transaction as any)?.metadata || {};
+  const cardFirst6 = txMetadata.cardFirst6 || txMetadata.card_first6 || '';
+  const metaCardLast4 = txMetadata.cardLast4 || txMetadata.card_last4 || cardLast4 || '';
+  const metaCardBrand = txMetadata.card_brand || cardBrand || getCardBrandFromBin(cardFirst6);
+  const deviceInfo = txMetadata.device_info || null;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-[480px] bg-card border-border overflow-y-auto">
