@@ -22,8 +22,9 @@ import {
 import {
   TrendingUp, TrendingDown, DollarSign, ArrowLeftRight, CreditCard,
   CalendarIcon, Download, BarChart3, PieChart as PieChartIcon, Activity,
-  Globe, ShieldAlert, Layers, FileText, FileDown,
+  Globe, ShieldAlert, Layers, FileText, FileDown, Fingerprint,
 } from 'lucide-react';
+import { FraudAnalytics } from '@/components/FraudAnalytics';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
