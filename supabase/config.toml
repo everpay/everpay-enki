@@ -7,3 +7,7 @@ project_id = "ccqiuoilfvuetajyjyiv"
     verify_jwt = false
   [functions.send-transactional-email]
     verify_jwt = false
+  [functions.webhook-dispatch]
+    verify_jwt = false
+  [functions.refund-payment]
+    verify_jwt = false
