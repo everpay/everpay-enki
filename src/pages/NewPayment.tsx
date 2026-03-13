@@ -69,6 +69,7 @@ export default function NewPayment() {
   const [cardEntryMode, setCardEntryMode] = useState<'standard' | 'vgs'>('standard');
 
   const queryClient = useQueryClient();
+  const { deviceInfo } = useDeviceAnalytics();
   const selectedProvider = resolveProvider(currency);
   const idempotencyKey = `idk_${Date.now()}`;
 
