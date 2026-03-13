@@ -78,6 +78,9 @@ export default function NewPayment() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vgsToken, setVgsToken] = useState('');
   const [cardEntryMode, setCardEntryMode] = useState<'standard' | 'vgs'>('standard');
+  const [threeDSUrl, setThreeDSUrl] = useState('');
+  const [threeDSTransactionId, setThreeDSTransactionId] = useState('');
+  const [showThreeDS, setShowThreeDS] = useState(false);
 
   const queryClient = useQueryClient();
   const { deviceInfo } = useDeviceAnalytics();
