@@ -131,6 +131,18 @@ export default function NewPayment() {
         customerEmail: email,
         description,
         idempotencyKey,
+        customerDetails: {
+          firstName: firstName || 'Customer',
+          lastName: lastName || 'User',
+          phone: phone || '1234567890',
+        },
+        billingDetails: {
+          address: billingAddress || '123 Main St',
+          postalCode: billingPostalCode || '12345',
+          city: billingCity || 'New York',
+          state: billingState || 'NY',
+          country: billingCountry || 'US',
+        },
         deviceInfo: deviceInfo ? {
           device_type: deviceInfo.device_type,
           os: deviceInfo.os,
@@ -139,6 +151,7 @@ export default function NewPayment() {
           screen_resolution: deviceInfo.screen_resolution,
           timezone: deviceInfo.timezone,
           user_agent: deviceInfo.user_agent,
+          ip_address: deviceInfo.ip_address,
         } : undefined,
       };
 
@@ -146,7 +159,7 @@ export default function NewPayment() {
         if (cardEntryMode === 'vgs' && vgsToken) {
           payload.vgsToken = vgsToken;
         } else if (cardNumber) {
-          payload.cardDetails = { number: cardNumber, expMonth, expYear, cvc };
+          payload.cardDetails = { number: cardNumber, expMonth, expYear, cvc, holderName: holderName || `${firstName} ${lastName}` };
         }
       }
 
