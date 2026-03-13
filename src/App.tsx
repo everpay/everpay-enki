@@ -50,7 +50,9 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const AppRoutes = () => (
+const AppRoutes = () => {
+  useInactivityLogout();
+  return (
   <Routes>
     <Route path="/" element={<Landing />} />
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
