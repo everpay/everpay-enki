@@ -64,29 +64,41 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             </div>
           </div>
 
-          {/* Vault Section */}
-          {(vgsAlias || cardBrand || cardLast4) && (
+          {/* Card & Vault Section */}
+          {(vgsAlias || metaCardBrand || metaCardLast4 || cardFirst6) && (
             <div className="space-y-3">
               <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />
-                Vault
+                Card & Vault
               </h4>
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
-                {cardBrand && (
-                  <DetailRow icon={CreditCard} label="Card Brand" value={
-                    <Badge variant="outline" className="capitalize text-xs">{cardBrand}</Badge>
-                  } />
-                )}
-                {cardLast4 && (
-                  <DetailRow icon={CreditCard} label="Card" value={
-                    <span className="font-mono text-sm">•••• {cardLast4}</span>
-                  } />
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+                {(metaCardBrand || metaCardLast4) && (
+                  <div className="flex justify-center">
+                    <CardBrandBadge brand={metaCardBrand} last4={metaCardLast4} first4={cardFirst6?.slice(0, 4)} />
+                  </div>
                 )}
                 {vgsAlias && (
                   <DetailRow icon={Shield} label="VGS Alias" value={
                     <span className="font-mono text-[10px] text-primary break-all">{vgsAlias}</span>
                   } />
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Device Info Section */}
+          {deviceInfo && (
+            <div className="space-y-3">
+              <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
+                {deviceInfo.device_type === 'mobile' ? <Smartphone className="h-4 w-4 text-primary" /> : <Monitor className="h-4 w-4 text-primary" />}
+                Device Information
+              </h4>
+              <div className="rounded-lg border border-border bg-background p-4 space-y-2">
+                {deviceInfo.browser && <DetailRow icon={Globe} label="Browser" value={`${deviceInfo.browser} ${deviceInfo.browser_version || ''}`} />}
+                {deviceInfo.os && <DetailRow icon={Monitor} label="OS" value={deviceInfo.os} />}
+                {deviceInfo.ip_address && <DetailRow icon={Wifi} label="IP Address" value={<span className="font-mono text-xs">{deviceInfo.ip_address}</span>} />}
+                {deviceInfo.screen_resolution && <DetailRow icon={Monitor} label="Screen" value={deviceInfo.screen_resolution} />}
+                {deviceInfo.timezone && <DetailRow icon={Clock} label="Timezone" value={deviceInfo.timezone} />}
               </div>
             </div>
           )}
