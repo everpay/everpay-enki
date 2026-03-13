@@ -89,6 +89,14 @@ export default function NewPayment() {
   const selectedProvider = resolveProvider(currency);
   const idempotencyKey = `idk_${Date.now()}`;
 
+  const { isPolling, currentStatus: pollingStatus, startPolling } = usePaymentPolling({
+    transactionId: null,
+    enabled: false,
+    onComplete: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
