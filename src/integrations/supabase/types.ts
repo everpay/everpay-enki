@@ -277,6 +277,78 @@ export type Database = {
           },
         ]
       }
+      fraud_scores: {
+        Row: {
+          action_taken: string | null
+          card_bin: string | null
+          created_at: string
+          customer_email: string | null
+          device_fingerprint: string | null
+          device_score: number | null
+          geo_score: number | null
+          id: string
+          ip_address: string | null
+          merchant_id: string
+          metadata: Json | null
+          risk_factors: string[] | null
+          risk_level: string | null
+          total_score: number | null
+          transaction_id: string | null
+          velocity_score: number | null
+        }
+        Insert: {
+          action_taken?: string | null
+          card_bin?: string | null
+          created_at?: string
+          customer_email?: string | null
+          device_fingerprint?: string | null
+          device_score?: number | null
+          geo_score?: number | null
+          id?: string
+          ip_address?: string | null
+          merchant_id: string
+          metadata?: Json | null
+          risk_factors?: string[] | null
+          risk_level?: string | null
+          total_score?: number | null
+          transaction_id?: string | null
+          velocity_score?: number | null
+        }
+        Update: {
+          action_taken?: string | null
+          card_bin?: string | null
+          created_at?: string
+          customer_email?: string | null
+          device_fingerprint?: string | null
+          device_score?: number | null
+          geo_score?: number | null
+          id?: string
+          ip_address?: string | null
+          merchant_id?: string
+          metadata?: Json | null
+          risk_factors?: string[] | null
+          risk_level?: string | null
+          total_score?: number | null
+          transaction_id?: string | null
+          velocity_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_scores_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fraud_scores_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idempotency_keys: {
         Row: {
           created_at: string

@@ -13,3 +13,5 @@ project_id = "ccqiuoilfvuetajyjyiv"
     verify_jwt = false
   [functions.device-analytics]
     verify_jwt = false
+  [functions.fraud-detection]
+    verify_jwt = false

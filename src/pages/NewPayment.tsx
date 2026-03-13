@@ -8,13 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Currency } from '@/lib/types';
 import { resolveProvider } from '@/lib/providers';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, ArrowRight, Loader2, Globe, MapPin } from 'lucide-react';
+import { CreditCard, ArrowRight, Loader2, Globe, MapPin, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { VGSCardForm } from '@/components/VGSCardForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
+import { useFraudDetection, FraudRiskResult } from '@/hooks/useFraudDetection';
 
 // Detect region from browser locale / timezone
 function detectRegion(): { region: string; label: string; flag: string } {
@@ -70,6 +71,7 @@ export default function NewPayment() {
 
   const queryClient = useQueryClient();
   const { deviceInfo } = useDeviceAnalytics();
+  const { isChecking: isFraudChecking, lastResult: fraudResult, checkFraud } = useFraudDetection();
   const selectedProvider = resolveProvider(currency);
   const idempotencyKey = `idk_${Date.now()}`;
 
@@ -82,6 +84,35 @@ export default function NewPayment() {
       if (!session) {
         toast.error('Please sign in to create a payment');
         return;
+      }
+
+      // Run fraud check first
+      const cardBin = cardNumber?.replace(/\s/g, '').slice(0, 6);
+      const fraudCheck = await checkFraud({
+        card_bin: cardBin || undefined,
+        card_last4: cardNumber?.replace(/\s/g, '').slice(-4) || undefined,
+        customer_email: email || undefined,
+        amount: parseFloat(amount),
+        currency,
+        device_fingerprint: deviceInfo?.device_id,
+        ip_address: deviceInfo?.ip_address,
+        user_agent: deviceInfo?.user_agent,
+        device_type: deviceInfo?.device_type,
+        timezone: deviceInfo?.timezone,
+      });
+
+      if (fraudCheck?.action === 'block') {
+        toast.error('Payment blocked by fraud detection', {
+          description: `Risk score: ${fraudCheck.total_score}/100 — ${fraudCheck.factors.join(', ')}`,
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (fraudCheck?.action === 'review') {
+        toast.warning('Payment flagged for review', {
+          description: `Risk score: ${fraudCheck.total_score}/100`,
+        });
       }
 
       const payload: any = {
@@ -386,6 +417,60 @@ export default function NewPayment() {
               </div>
             </div>
           </div>
+
+          {/* Fraud Risk Indicator */}
+          {fraudResult && (
+            <div className={`rounded-xl border p-5 shadow-card ${
+              fraudResult.level === 'low' ? 'border-success/30 bg-success/5' :
+              fraudResult.level === 'medium' ? 'border-warning/30 bg-warning/5' :
+              'border-destructive/30 bg-destructive/5'
+            }`}>
+              <div className="flex items-center gap-2 mb-3">
+                {fraudResult.level === 'low' ? (
+                  <ShieldCheck className="h-4 w-4 text-success" />
+                ) : fraudResult.level === 'medium' ? (
+                  <ShieldAlert className="h-4 w-4 text-warning" />
+                ) : (
+                  <ShieldX className="h-4 w-4 text-destructive" />
+                )}
+                <h3 className="font-heading text-sm font-semibold text-foreground">Fraud Score</h3>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Total</span>
+                  <span className="text-lg font-bold">{fraudResult.total_score}/100</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Velocity</span>
+                  <span className="text-xs font-mono">{fraudResult.velocity_score}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Device</span>
+                  <span className="text-xs font-mono">{fraudResult.device_score}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Geo/IP</span>
+                  <span className="text-xs font-mono">{fraudResult.geo_score}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Action</span>
+                  <Badge variant={fraudResult.action === 'allow' ? 'outline' : 'destructive'} className="text-xs capitalize">
+                    {fraudResult.action}
+                  </Badge>
+                </div>
+                {fraudResult.factors.length > 0 && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-xs text-muted-foreground mb-1">Risk Factors:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {fraudResult.factors.map((f, i) => (
+                        <Badge key={i} variant="outline" className="text-[10px]">{f.replace(/_/g, ' ')}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>
