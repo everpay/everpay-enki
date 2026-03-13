@@ -160,6 +160,7 @@ serve(async (req) => {
         fx_rate: fxRate,
         settlement_amount: settlementAmount,
         settlement_currency: settlementCurrency,
+        metadata: txMetadata,
       })
       .select()
       .single();
