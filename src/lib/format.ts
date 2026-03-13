@@ -11,7 +11,7 @@ const currencyFormats: Record<Currency, { locale: string; code: string }> = {
 };
 
 export function formatCurrency(amount: number, currency: Currency): string {
-  const fmt = currencyFormats[currency];
+  const fmt = currencyFormats[currency] || currencyFormats.USD;
   return new Intl.NumberFormat(fmt.locale, {
     style: 'currency',
     currency: fmt.code,
