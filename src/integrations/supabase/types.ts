@@ -538,6 +538,56 @@ export type Database = {
           },
         ]
       }
+      processor_fee_profiles: {
+        Row: {
+          chargeback_fee: number
+          created_at: string
+          currency: string
+          fixed_fee: number
+          id: string
+          merchant_id: string
+          percentage_fee: number
+          provider: string
+          refund_fee: number
+          settlement_days: number
+          updated_at: string
+        }
+        Insert: {
+          chargeback_fee?: number
+          created_at?: string
+          currency?: string
+          fixed_fee?: number
+          id?: string
+          merchant_id: string
+          percentage_fee?: number
+          provider: string
+          refund_fee?: number
+          settlement_days?: number
+          updated_at?: string
+        }
+        Update: {
+          chargeback_fee?: number
+          created_at?: string
+          currency?: string
+          fixed_fee?: number
+          id?: string
+          merchant_id?: string
+          percentage_fee?: number
+          provider?: string
+          refund_fee?: number
+          settlement_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processor_fee_profiles_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -720,6 +770,59 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routing_rules: {
+        Row: {
+          active: boolean
+          amount_max: number | null
+          amount_min: number | null
+          created_at: string
+          currency_match: string[] | null
+          fallback_provider: string | null
+          id: string
+          merchant_id: string
+          name: string
+          priority: number
+          target_provider: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount_max?: number | null
+          amount_min?: number | null
+          created_at?: string
+          currency_match?: string[] | null
+          fallback_provider?: string | null
+          id?: string
+          merchant_id: string
+          name: string
+          priority?: number
+          target_provider: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount_max?: number | null
+          amount_min?: number | null
+          created_at?: string
+          currency_match?: string[] | null
+          fallback_provider?: string | null
+          id?: string
+          merchant_id?: string
+          name?: string
+          priority?: number
+          target_provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routing_rules_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
         ]
