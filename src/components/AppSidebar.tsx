@@ -89,7 +89,7 @@ const navItems: NavItem[] = [
   { to: '/processor-analytics', icon: BarChart3, label: 'Processor Analytics' },
   { to: '/payment-methods', icon: CreditCardIcon, label: 'Payment Methods' },
   { to: '/kyc-aml', icon: Shield, label: 'KYC / AML', visibleTo: ['admin', 'super_admin'] },
-  { to: '/merchant-onboarding', icon: Building2, label: 'Merchant Onboarding', visibleTo: ['admin', 'super_admin'] },
+  
   { to: '/portal', icon: User, label: 'Customer Portal', visibleTo: ['user'] },
   { to: '/activity', icon: Zap, label: 'Activity' },
 ];

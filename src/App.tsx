@@ -90,7 +90,7 @@ const AppRoutes = () => {
     <Route path="/smart-retry" element={<ProtectedRoute><SmartRetry /></ProtectedRoute>} />
     <Route path="/processor-analytics" element={<ProtectedRoute><ProcessorAnalyticsPage /></ProtectedRoute>} />
     <Route path="/kyc-aml" element={<ProtectedRoute><KycAml /></ProtectedRoute>} />
-    <Route path="/merchant-onboarding" element={<ProtectedRoute><MerchantOnboardingAdmin /></ProtectedRoute>} />
+    
     <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsPage /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
