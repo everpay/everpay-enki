@@ -37,7 +37,7 @@ import MultiAcquirer from "./pages/MultiAcquirer";
 import SmartRetry from "./pages/SmartRetry";
 import ProcessorAnalyticsPage from "./pages/ProcessorAnalyticsPage";
 import KycAml from "./pages/KycAml";
-import MerchantOnboardingAdmin from "./pages/MerchantOnboardingAdmin";
+
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
