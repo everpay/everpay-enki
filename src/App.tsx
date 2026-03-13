@@ -28,6 +28,9 @@ import PayInvoice from "./pages/PayInvoice";
 import MerchantDisputes from "./pages/merchant/MerchantDisputes";
 import MerchantEvidence from "./pages/merchant/MerchantEvidence";
 import MerchantAnalytics from "./pages/merchant/MerchantAnalytics";
+import Webhooks from "./pages/Webhooks";
+import Refunds from "./pages/Refunds";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +70,9 @@ const AppRoutes = () => (
     <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
     <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
     <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+    <Route path="/refunds" element={<ProtectedRoute><Refunds /></ProtectedRoute>} />
+    <Route path="/webhooks" element={<ProtectedRoute><Webhooks /></ProtectedRoute>} />
+    <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />
