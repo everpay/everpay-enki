@@ -3,12 +3,22 @@ import { useProviderEvents } from '@/hooks/useProviderEvents';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi } from 'lucide-react';
+import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe } from 'lucide-react';
+import { CardBrandBadge } from '@/components/CardBrandBadge';
 
 interface TransactionDetailDrawerProps {
   transaction: Transaction | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function getCardBrandFromBin(first6: string): string | null {
+  if (!first6) return null;
+  if (first6.startsWith('4')) return 'visa';
+  if (first6.startsWith('5') || (first6.startsWith('2') && parseInt(first6.slice(0, 4)) >= 2221 && parseInt(first6.slice(0, 4)) <= 2720)) return 'mastercard';
+  if (first6.startsWith('34') || first6.startsWith('37')) return 'amex';
+  if (first6.startsWith('6')) return 'discover';
+  return null;
 }
 
 export function TransactionDetailDrawer({ transaction, open, onOpenChange }: TransactionDetailDrawerProps) {
@@ -25,6 +35,13 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const vgsAlias = (vaultEvent?.payload as any)?.vgs_alias || (tapixEvent?.payload as any)?.vgs_alias || null;
   const cardBrand = (tapixEvent?.payload as any)?.card_brand || (vaultEvent?.payload as any)?.card_brand || null;
   const cardLast4 = (tapixEvent?.payload as any)?.card_last4 || (vaultEvent?.payload as any)?.card_last4 || null;
+
+  // Extract metadata (card BIN + device info)
+  const txMetadata = (transaction as any)?.metadata || {};
+  const cardFirst6 = txMetadata.cardFirst6 || txMetadata.card_first6 || '';
+  const metaCardLast4 = txMetadata.cardLast4 || txMetadata.card_last4 || cardLast4 || '';
+  const metaCardBrand = txMetadata.card_brand || cardBrand || getCardBrandFromBin(cardFirst6);
+  const deviceInfo = txMetadata.device_info || null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -56,29 +73,41 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             </div>
           </div>
 
-          {/* Vault Section */}
-          {(vgsAlias || cardBrand || cardLast4) && (
+          {/* Card & Vault Section */}
+          {(vgsAlias || metaCardBrand || metaCardLast4 || cardFirst6) && (
             <div className="space-y-3">
               <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
                 <Shield className="h-4 w-4 text-primary" />
-                Vault
+                Card & Vault
               </h4>
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
-                {cardBrand && (
-                  <DetailRow icon={CreditCard} label="Card Brand" value={
-                    <Badge variant="outline" className="capitalize text-xs">{cardBrand}</Badge>
-                  } />
-                )}
-                {cardLast4 && (
-                  <DetailRow icon={CreditCard} label="Card" value={
-                    <span className="font-mono text-sm">•••• {cardLast4}</span>
-                  } />
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+                {(metaCardBrand || metaCardLast4) && (
+                  <div className="flex justify-center">
+                    <CardBrandBadge brand={metaCardBrand} last4={metaCardLast4} first4={cardFirst6?.slice(0, 4)} />
+                  </div>
                 )}
                 {vgsAlias && (
                   <DetailRow icon={Shield} label="VGS Alias" value={
                     <span className="font-mono text-[10px] text-primary break-all">{vgsAlias}</span>
                   } />
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Device Info Section */}
+          {deviceInfo && (
+            <div className="space-y-3">
+              <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
+                {deviceInfo.device_type === 'mobile' ? <Smartphone className="h-4 w-4 text-primary" /> : <Monitor className="h-4 w-4 text-primary" />}
+                Device Information
+              </h4>
+              <div className="rounded-lg border border-border bg-background p-4 space-y-2">
+                {deviceInfo.browser && <DetailRow icon={Globe} label="Browser" value={`${deviceInfo.browser} ${deviceInfo.browser_version || ''}`} />}
+                {deviceInfo.os && <DetailRow icon={Monitor} label="OS" value={deviceInfo.os} />}
+                {deviceInfo.ip_address && <DetailRow icon={Wifi} label="IP Address" value={<span className="font-mono text-xs">{deviceInfo.ip_address}</span>} />}
+                {deviceInfo.screen_resolution && <DetailRow icon={Monitor} label="Screen" value={deviceInfo.screen_resolution} />}
+                {deviceInfo.timezone && <DetailRow icon={Clock} label="Timezone" value={deviceInfo.timezone} />}
               </div>
             </div>
           )}

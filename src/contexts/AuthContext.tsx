@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 
 interface AuthContextType {
   session: Session | null;
@@ -19,11 +20,21 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { trackDevice } = useDeviceAnalytics();
+  const trackedRef = useRef(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setLoading(false);
+      // Track device on sign in
+      if (event === 'SIGNED_IN' && session && !trackedRef.current) {
+        trackedRef.current = true;
+        trackDevice('login', { event: 'auth_sign_in' });
+      }
+      if (event === 'SIGNED_OUT') {
+        trackedRef.current = false;
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {

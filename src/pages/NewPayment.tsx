@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { VGSCardForm } from '@/components/VGSCardForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 
 // Detect region from browser locale / timezone
 function detectRegion(): { region: string; label: string; flag: string } {
@@ -68,6 +69,7 @@ export default function NewPayment() {
   const [cardEntryMode, setCardEntryMode] = useState<'standard' | 'vgs'>('standard');
 
   const queryClient = useQueryClient();
+  const { deviceInfo } = useDeviceAnalytics();
   const selectedProvider = resolveProvider(currency);
   const idempotencyKey = `idk_${Date.now()}`;
 
@@ -89,6 +91,15 @@ export default function NewPayment() {
         customerEmail: email,
         description,
         idempotencyKey,
+        deviceInfo: deviceInfo ? {
+          device_type: deviceInfo.device_type,
+          os: deviceInfo.os,
+          browser: deviceInfo.browser,
+          browser_version: deviceInfo.browser_version,
+          screen_resolution: deviceInfo.screen_resolution,
+          timezone: deviceInfo.timezone,
+          user_agent: deviceInfo.user_agent,
+        } : undefined,
       };
 
       if (paymentMethod === 'card') {
