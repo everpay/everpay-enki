@@ -588,6 +588,71 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          category: string | null
+          cost_price: number | null
+          created_at: string
+          description: string | null
+          dimensions: Json | null
+          id: string
+          image_url: string | null
+          merchant_id: string
+          metadata: Json | null
+          name: string
+          price: number
+          product_type: string | null
+          sku: string | null
+          stock: number
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          dimensions?: Json | null
+          id?: string
+          image_url?: string | null
+          merchant_id: string
+          metadata?: Json | null
+          name: string
+          price?: number
+          product_type?: string | null
+          sku?: string | null
+          stock?: number
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          description?: string | null
+          dimensions?: Json | null
+          id?: string
+          image_url?: string | null
+          merchant_id?: string
+          metadata?: Json | null
+          name?: string
+          price?: number
+          product_type?: string | null
+          sku?: string | null
+          stock?: number
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1183,7 +1248,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "merchant"
+        | "reseller"
+        | "super_admin"
+        | "agent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1311,7 +1383,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "merchant",
+        "reseller",
+        "super_admin",
+        "agent",
+      ],
     },
   },
 } as const

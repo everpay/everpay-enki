@@ -56,6 +56,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { WebhooksSection as WebhooksSectionComponent } from "@/components/settings/WebhooksSection";
 import { BusinessVerificationSection as BusinessVerificationSectionComponent } from "@/components/settings/BusinessVerificationSection";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "deactivation";
 
@@ -376,6 +377,22 @@ export default function Settings() {
               <Button onClick={() => saveAccount.mutate()} disabled={saveAccount.isPending}>
                 <Save className="h-4 w-4 mr-2" /> {saveAccount.isPending ? "Saving..." : "Save Account"}
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Appearance</CardTitle>
+              <CardDescription>Toggle between light and dark mode.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Theme</p>
+                  <p className="text-xs text-muted-foreground">Switch between dark and light mode</p>
+                </div>
+                <ThemeToggle />
+              </div>
             </CardContent>
           </Card>
 

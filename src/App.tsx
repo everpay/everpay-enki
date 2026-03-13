@@ -32,6 +32,7 @@ import Webhooks from "./pages/Webhooks";
 import Refunds from "./pages/Refunds";
 import Onboarding from "./pages/Onboarding";
 import ProcessorTransparency from "./pages/ProcessorTransparency";
+import Products from "./pages/Products";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ const AppRoutes = () => {
     <Route path="/webhooks" element={<ProtectedRoute><Webhooks /></ProtectedRoute>} />
     <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
     <Route path="/processor-transparency" element={<ProtectedRoute><ProcessorTransparency /></ProtectedRoute>} />
+    <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />

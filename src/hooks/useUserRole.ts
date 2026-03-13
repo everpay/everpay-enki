@@ -14,8 +14,11 @@ export function useUserRole() {
       return {
         roles,
         isAdmin: roles.includes('admin'),
-        isSuperAdmin: false,
-        isReseller: false,
+        isSuperAdmin: roles.includes('super_admin'),
+        isMerchant: roles.includes('merchant'),
+        isReseller: roles.includes('reseller'),
+        isAgent: roles.includes('agent'),
+        isUser: roles.includes('user') || roles.length === 0, // default to user if no roles
       };
     },
   });
