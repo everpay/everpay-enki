@@ -56,6 +56,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { WebhooksSection as WebhooksSectionComponent } from "@/components/settings/WebhooksSection";
 import { BusinessVerificationSection as BusinessVerificationSectionComponent } from "@/components/settings/BusinessVerificationSection";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "deactivation";
 
