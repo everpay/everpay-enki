@@ -16,6 +16,7 @@ import { VGSCardForm } from '@/components/VGSCardForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 import { useFraudDetection, FraudRiskResult } from '@/hooks/useFraudDetection';
+import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
 
 // Detect region from browser locale / timezone
 function detectRegion(): { region: string; label: string; flag: string } {
@@ -77,6 +78,9 @@ export default function NewPayment() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vgsToken, setVgsToken] = useState('');
   const [cardEntryMode, setCardEntryMode] = useState<'standard' | 'vgs'>('standard');
+  const [threeDSUrl, setThreeDSUrl] = useState('');
+  const [threeDSTransactionId, setThreeDSTransactionId] = useState('');
+  const [showThreeDS, setShowThreeDS] = useState(false);
 
   const queryClient = useQueryClient();
   const { deviceInfo } = useDeviceAnalytics();
@@ -169,9 +173,28 @@ export default function NewPayment() {
 
       if (error) throw error;
 
-      toast.success('Payment created successfully!', {
-        description: `${amount} ${currency} via ${selectedProvider} — ${data.transaction.id.slice(0, 8)}`,
-      });
+      // Handle 3DS redirect from Mondo
+      if (data?.providerResponse?.redirect_url || data?.providerResponse?.['3d_secure_redirect_url']) {
+        const redirectUrl = data.providerResponse.redirect_url || data.providerResponse['3d_secure_redirect_url'];
+        setThreeDSUrl(redirectUrl);
+        setThreeDSTransactionId(data.transaction?.id || '');
+        setShowThreeDS(true);
+        toast.info('3D Secure authentication required', {
+          description: 'Please complete verification with your bank.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (data?.success) {
+        toast.success('Payment created successfully!', {
+          description: `${amount} ${currency} via ${selectedProvider} — ${data.transaction.id.slice(0, 8)}`,
+        });
+      } else {
+        toast.warning('Payment pending', {
+          description: `Status: ${data?.transaction?.status || 'unknown'} — ${data?.transaction?.id?.slice(0, 8) || ''}`,
+        });
+      }
 
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
 
@@ -561,6 +584,18 @@ export default function NewPayment() {
           )}
         </div>
       </div>
+
+      <ThreeDSecureModal
+        open={showThreeDS}
+        onClose={() => setShowThreeDS(false)}
+        redirectUrl={threeDSUrl}
+        transactionId={threeDSTransactionId}
+        onComplete={() => {
+          toast.success('3D Secure authentication completed!');
+          queryClient.invalidateQueries({ queryKey: ['transactions'] });
+          setShowThreeDS(false);
+        }}
+      />
     </AppLayout>
   );
 }
