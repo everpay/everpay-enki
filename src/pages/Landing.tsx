@@ -290,6 +290,20 @@ function HeroSection() {
   );
 }
 
+function ScrollReveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 // ============= STATS SECTION =============
 function StatsSection() {
   const stats = [
@@ -304,14 +318,16 @@ function StatsSection() {
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4">
           {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
-                {stat.value}
+            <ScrollReveal key={index} delay={index * 0.1}>
+              <div className="text-center">
+                <div className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-1" style={{ fontFamily: 'Manrope, sans-serif' }}>
+                  {stat.value}
+                </div>
+                <div className="text-sm text-gray-500" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  {stat.label}
+                </div>
               </div>
-              <div className="text-sm text-gray-500" style={{ fontFamily: 'Inter, sans-serif' }}>
-                {stat.label}
-              </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>
