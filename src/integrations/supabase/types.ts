@@ -55,6 +55,41 @@ export type Database = {
           },
         ]
       }
+      card_velocity: {
+        Row: {
+          created_at: string
+          customer_identifier: string
+          id: string
+          merchant_id: string
+          transaction_count: number
+          transaction_date: string
+        }
+        Insert: {
+          created_at?: string
+          customer_identifier: string
+          id?: string
+          merchant_id: string
+          transaction_count?: number
+          transaction_date?: string
+        }
+        Update: {
+          created_at?: string
+          customer_identifier?: string
+          id?: string
+          merchant_id?: string
+          transaction_count?: number
+          transaction_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_velocity_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           billing_address: Json | null
@@ -199,6 +234,78 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_email: string
+          customer_name: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          items: Json | null
+          merchant_id: string
+          notes: string | null
+          paid_at: string | null
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          customer_email: string
+          customer_name?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          items?: Json | null
+          merchant_id: string
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_email?: string
+          customer_name?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          items?: Json | null
+          merchant_id?: string
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
         ]
@@ -390,6 +497,63 @@ export type Database = {
           },
           {
             foreignKeyName: "provider_events_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rolling_reserves: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          held_at: string
+          id: string
+          merchant_id: string
+          release_at: string
+          released_at: string | null
+          reserve_percent: number
+          status: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          held_at?: string
+          id?: string
+          merchant_id: string
+          release_at: string
+          released_at?: string | null
+          reserve_percent?: number
+          status?: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          held_at?: string
+          id?: string
+          merchant_id?: string
+          release_at?: string
+          released_at?: string | null
+          reserve_percent?: number
+          status?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rolling_reserves_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rolling_reserves_transaction_id_fkey"
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
@@ -623,15 +787,39 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -758,6 +946,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
