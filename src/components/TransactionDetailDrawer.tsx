@@ -12,6 +12,15 @@ interface TransactionDetailDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function getCardBrandFromBin(first6: string): string | null {
+  if (!first6) return null;
+  if (first6.startsWith('4')) return 'visa';
+  if (first6.startsWith('5') || (first6.startsWith('2') && parseInt(first6.slice(0, 4)) >= 2221 && parseInt(first6.slice(0, 4)) <= 2720)) return 'mastercard';
+  if (first6.startsWith('34') || first6.startsWith('37')) return 'amex';
+  if (first6.startsWith('6')) return 'discover';
+  return null;
+}
+
 export function TransactionDetailDrawer({ transaction, open, onOpenChange }: TransactionDetailDrawerProps) {
   const { data: allEvents = [] } = useProviderEvents();
 
