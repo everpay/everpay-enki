@@ -382,6 +382,22 @@ export default function Settings() {
 
           <Card>
             <CardHeader>
+              <CardTitle>Appearance</CardTitle>
+              <CardDescription>Toggle between light and dark mode.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Theme</p>
+                  <p className="text-xs text-muted-foreground">Switch between dark and light mode</p>
+                </div>
+                <ThemeToggle />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5" /> Change Password</CardTitle>
               <CardDescription>Update your account password.</CardDescription>
             </CardHeader>

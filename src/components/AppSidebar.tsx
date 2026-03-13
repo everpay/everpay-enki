@@ -21,14 +21,15 @@ import {
   Zap,
   User,
   RotateCcw,
+  Package,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import everpayIcon from '@/assets/everpay-icon.png';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -37,6 +38,7 @@ interface NavItem {
   icon: React.ElementType;
   label: string;
   children?: { to: string; icon: React.ElementType; label: string }[];
+  visibleTo?: string[]; // if set, only these roles see this item
 }
 
 const navItems: NavItem[] = [
@@ -53,6 +55,7 @@ const navItems: NavItem[] = [
       { to: '/refunds', icon: RotateCcw, label: 'Refunds' },
     ],
   },
+  { to: '/products', icon: Package, label: 'Products' },
   { to: '/subscriptions', icon: RefreshCw, label: 'Subscriptions' },
   { to: '/invoices', icon: FileText, label: 'Invoices' },
   {
@@ -77,31 +80,40 @@ const navItems: NavItem[] = [
   },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/processor-transparency', icon: Eye, label: 'Processor Routing' },
-  { to: '/portal', icon: User, label: 'Customer Portal' },
+  { to: '/portal', icon: User, label: 'Customer Portal', visibleTo: ['user'] },
   { to: '/activity', icon: Zap, label: 'Activity' },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { data: userRole } = useUserRole();
 
   const isChildActive = (item: NavItem) =>
     item.children?.some((c) => location.pathname === c.to) || location.pathname === item.to;
 
+  // Filter nav items based on role visibility
+  const visibleItems = navItems.filter((item) => {
+    if (!item.visibleTo) return true;
+    if (!userRole) return false;
+    // If user has admin/super_admin/merchant/reseller/agent role, hide items marked for 'user' only
+    const roles = userRole.roles || [];
+    return item.visibleTo.some((r) => roles.includes(r)) || (roles.length === 0 && item.visibleTo.includes('user'));
+  });
+
   return (
     <>
-      <div className="flex h-16 items-center justify-between border-b border-border px-6">
+      <div className="flex h-16 items-center border-b border-border px-6">
         <div className="flex items-center gap-2.5">
           <img src={everpayIcon} alt="Everpay" className="h-8 w-8 rounded-lg" />
           <span className="font-heading text-lg font-bold text-foreground tracking-tight">
             Everpay
           </span>
         </div>
-        <ThemeToggle />
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           if (item.children) {
             const active = isChildActive(item);
             return (
