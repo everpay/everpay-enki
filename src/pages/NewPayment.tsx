@@ -91,6 +91,15 @@ export default function NewPayment() {
         customerEmail: email,
         description,
         idempotencyKey,
+        deviceInfo: deviceInfo ? {
+          device_type: deviceInfo.device_type,
+          os: deviceInfo.os,
+          browser: deviceInfo.browser,
+          browser_version: deviceInfo.browser_version,
+          screen_resolution: deviceInfo.screen_resolution,
+          timezone: deviceInfo.timezone,
+          user_agent: deviceInfo.user_agent,
+        } : undefined,
       };
 
       if (paymentMethod === 'card') {
