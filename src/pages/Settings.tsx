@@ -57,6 +57,7 @@ import { useNavigate } from "react-router-dom";
 import { WebhooksSection as WebhooksSectionComponent } from "@/components/settings/WebhooksSection";
 import { BusinessVerificationSection as BusinessVerificationSectionComponent } from "@/components/settings/BusinessVerificationSection";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CountrySelect } from "@/components/CountrySelect";
 
 type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "deactivation";
 
@@ -497,7 +498,7 @@ export default function Settings() {
                 </div>
                 <div className="space-y-2">
                   <Label>Country</Label>
-                  <Input value={businessCountry} onChange={(e) => setBusinessCountry(e.target.value)} placeholder="Country" />
+                  <CountrySelect value={businessCountry} onValueChange={setBusinessCountry} />
                 </div>
               </div>
 

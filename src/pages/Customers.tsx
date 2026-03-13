@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { CountrySelect } from '@/components/CountrySelect';
 import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -155,7 +156,7 @@ export default function Customers() {
             <div className="grid grid-cols-2 gap-3"><div><Label className="text-xs">First Name</Label><Input value={editForm.first_name} onChange={f('first_name')} /></div><div><Label className="text-xs">Last Name</Label><Input value={editForm.last_name} onChange={f('last_name')} /></div></div>
             <div><Label className="text-xs">Email</Label><Input value={editForm.email} onChange={f('email')} type="email" /></div>
             <div className="border-t pt-4"><h4 className="text-sm font-bold flex items-center gap-2 mb-3"><MapPin className="h-4 w-4 text-primary" /> Billing Address</h4>
-              <div className="space-y-3"><Input value={editForm.billing_street} onChange={f('billing_street')} placeholder="Street" /><div className="grid grid-cols-2 gap-3"><Input value={editForm.billing_city} onChange={f('billing_city')} placeholder="City" /><Input value={editForm.billing_state} onChange={f('billing_state')} placeholder="State" /></div><div className="grid grid-cols-2 gap-3"><Input value={editForm.billing_zip} onChange={f('billing_zip')} placeholder="ZIP" /><Input value={editForm.billing_country} onChange={f('billing_country')} placeholder="Country" /></div></div>
+              <div className="space-y-3"><Input value={editForm.billing_street} onChange={f('billing_street')} placeholder="Street" /><div className="grid grid-cols-2 gap-3"><Input value={editForm.billing_city} onChange={f('billing_city')} placeholder="City" /><Input value={editForm.billing_state} onChange={f('billing_state')} placeholder="State" /></div><div className="grid grid-cols-2 gap-3"><Input value={editForm.billing_zip} onChange={f('billing_zip')} placeholder="ZIP" /><CountrySelect value={editForm.billing_country} onValueChange={(v) => setEditForm(prev => ({ ...prev, billing_country: v }))} /></div></div>
             </div>
             <Button className="w-full" onClick={() => editCustomer ? updateMutation.mutate() : createMutation.mutate()}>{editCustomer ? 'Save Changes' : 'Create Customer'}</Button>
           </div>

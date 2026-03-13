@@ -947,6 +947,7 @@ export type Database = {
           address: Json | null
           business_name: string | null
           business_type: string | null
+          contact_number: string | null
           country: string | null
           created_at: string
           id: string
@@ -964,6 +965,7 @@ export type Database = {
           address?: Json | null
           business_name?: string | null
           business_type?: string | null
+          contact_number?: string | null
           country?: string | null
           created_at?: string
           id?: string
@@ -981,6 +983,7 @@ export type Database = {
           address?: Json | null
           business_name?: string | null
           business_type?: string | null
+          contact_number?: string | null
           country?: string | null
           created_at?: string
           id?: string
