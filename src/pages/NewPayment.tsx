@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 import { useFraudDetection, FraudRiskResult } from '@/hooks/useFraudDetection';
 import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
+import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
 // Detect region from browser locale / timezone
 function detectRegion(): { region: string; label: string; flag: string } {
@@ -87,6 +88,14 @@ export default function NewPayment() {
   const { isChecking: isFraudChecking, lastResult: fraudResult, checkFraud } = useFraudDetection();
   const selectedProvider = resolveProvider(currency);
   const idempotencyKey = `idk_${Date.now()}`;
+
+  const { isPolling, currentStatus: pollingStatus, startPolling } = usePaymentPolling({
+    transactionId: null,
+    enabled: false,
+    onComplete: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +188,10 @@ export default function NewPayment() {
         setThreeDSUrl(redirectUrl);
         setThreeDSTransactionId(data.transaction?.id || '');
         setShowThreeDS(true);
+        // Start polling for status updates during 3DS
+        if (data.transaction?.id) {
+          startPolling(data.transaction.id);
+        }
         toast.info('3D Secure authentication required', {
           description: 'Please complete verification with your bank.',
         });
@@ -189,6 +202,14 @@ export default function NewPayment() {
       if (data?.success) {
         toast.success('Payment created successfully!', {
           description: `${amount} ${currency} via ${selectedProvider} — ${data.transaction.id.slice(0, 8)}`,
+        });
+      } else if (data?.transaction?.status === 'pending') {
+        // Start polling for pending transactions
+        if (data.transaction?.id) {
+          startPolling(data.transaction.id);
+        }
+        toast.info('Payment processing', {
+          description: `Checking status for ${data.transaction.id.slice(0, 8)}...`,
         });
       } else {
         toast.warning('Payment pending', {

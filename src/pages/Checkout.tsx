@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, ArrowRight, Loader2, Shield, Lock, CheckCircle, Globe, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
+import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
 const DOMAIN = 'everpayinc.com';
 
@@ -36,6 +38,24 @@ export default function Checkout() {
   const [cvc, setCvc] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [threeDSUrl, setThreeDSUrl] = useState('');
+  const [threeDSTransactionId, setThreeDSTransactionId] = useState('');
+  const [showThreeDS, setShowThreeDS] = useState(false);
+
+  const { isPolling, startPolling } = usePaymentPolling({
+    transactionId: null,
+    enabled: false,
+    onComplete: () => {
+      setPaymentComplete(true);
+      setShowThreeDS(false);
+      if (successUrl) {
+        const redirectUrl = new URL(successUrl);
+        redirectUrl.searchParams.set('TRANSACTION_ID', threeDSTransactionId);
+        redirectUrl.searchParams.set('PARTNER_SESSION_ID', ref);
+        setTimeout(() => { window.location.href = redirectUrl.toString(); }, 2000);
+      }
+    },
+  });
 
   const displayAmount = amount || customAmount;
 
@@ -73,6 +93,23 @@ export default function Checkout() {
       });
 
       if (error) throw error;
+
+      // Handle 3DS redirect
+      if (data?.providerResponse?.redirect_url || data?.providerResponse?.['3d_secure_redirect_url']) {
+        const redirectUrl = data.providerResponse.redirect_url || data.providerResponse['3d_secure_redirect_url'];
+        setThreeDSUrl(redirectUrl);
+        setThreeDSTransactionId(data.transaction?.id || '');
+        setShowThreeDS(true);
+        if (data.transaction?.id) startPolling(data.transaction.id);
+        toast.info('3D Secure authentication required');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Start polling for pending payments
+      if (data?.transaction?.status === 'pending' && data?.transaction?.id) {
+        startPolling(data.transaction.id);
+      }
 
       // Send payment receipt email to customer
       if (customerEmail && data.transaction) {
@@ -287,6 +324,18 @@ export default function Checkout() {
           )}
         </div>
       </div>
+
+      {/* 3DS Modal */}
+      <ThreeDSecureModal
+        open={showThreeDS}
+        onClose={() => setShowThreeDS(false)}
+        redirectUrl={threeDSUrl}
+        transactionId={threeDSTransactionId}
+        onComplete={() => {
+          setShowThreeDS(false);
+          // Polling will handle status update
+        }}
+      />
     </div>
   );
 }

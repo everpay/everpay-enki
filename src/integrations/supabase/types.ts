@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
@@ -48,6 +48,84 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "accounts_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_request_logs: {
+        Row: {
+          created_at: string | null
+          endpoint: string | null
+          id: string
+          latency_ms: number | null
+          merchant_id: string | null
+          method: string | null
+          status_code: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint?: string | null
+          id?: string
+          latency_ms?: number | null
+          merchant_id?: string | null
+          method?: string | null
+          status_code?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          endpoint?: string | null
+          id?: string
+          latency_ms?: number | null
+          merchant_id?: string | null
+          method?: string | null
+          status_code?: number | null
+        }
+        Relationships: []
+      }
+      behavioral_profiles: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          customer_id: string | null
+          id: string
+          merchant_id: string | null
+          mouse_entropy: number | null
+          session_duration: number | null
+          typing_speed: number | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          merchant_id?: string | null
+          mouse_entropy?: number | null
+          session_duration?: number | null
+          typing_speed?: number | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          merchant_id?: string | null
+          mouse_entropy?: number | null
+          session_duration?: number | null
+          typing_speed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "behavioral_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "behavioral_profiles_merchant_id_fkey"
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
@@ -205,6 +283,33 @@ export type Database = {
           },
         ]
       }
+      device_reputation: {
+        Row: {
+          chargebacks: number | null
+          created_at: string | null
+          device_fingerprint: string | null
+          fraud_events: number | null
+          id: string
+          risk_score: number | null
+        }
+        Insert: {
+          chargebacks?: number | null
+          created_at?: string | null
+          device_fingerprint?: string | null
+          fraud_events?: number | null
+          id?: string
+          risk_score?: number | null
+        }
+        Update: {
+          chargebacks?: number | null
+          created_at?: string | null
+          device_fingerprint?: string | null
+          fraud_events?: number | null
+          id?: string
+          risk_score?: number | null
+        }
+        Relationships: []
+      }
       disputes: {
         Row: {
           amount: number
@@ -276,6 +381,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      event_logs: {
+        Row: {
+          created_at: string | null
+          event_type: string | null
+          id: string
+          payload: Json | null
+          source_service: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          source_service?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          source_service?: string | null
+        }
+        Relationships: []
+      }
+      fraud_graph_edges: {
+        Row: {
+          created_at: string | null
+          id: string
+          relationship_type: string | null
+          source_node: string | null
+          target_node: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          relationship_type?: string | null
+          source_node?: string | null
+          target_node?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          relationship_type?: string | null
+          source_node?: string | null
+          target_node?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_graph_edges_source_node_fkey"
+            columns: ["source_node"]
+            isOneToOne: false
+            referencedRelation: "fraud_graph_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fraud_graph_edges_target_node_fkey"
+            columns: ["target_node"]
+            isOneToOne: false
+            referencedRelation: "fraud_graph_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fraud_graph_nodes: {
+        Row: {
+          created_at: string | null
+          id: string
+          node_type: string | null
+          node_value: string | null
+          risk_score: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          node_type?: string | null
+          node_value?: string | null
+          risk_score?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          node_type?: string | null
+          node_value?: string | null
+          risk_score?: number | null
+        }
+        Relationships: []
       }
       fraud_scores: {
         Row: {
@@ -456,6 +648,38 @@ export type Database = {
           },
         ]
       }
+      ledger_accounts: {
+        Row: {
+          account_type: string
+          created_at: string | null
+          currency: string
+          id: string
+          merchant_id: string | null
+        }
+        Insert: {
+          account_type: string
+          created_at?: string | null
+          currency: string
+          id?: string
+          merchant_id?: string | null
+        }
+        Update: {
+          account_type?: string
+          created_at?: string | null
+          currency?: string
+          id?: string
+          merchant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ledger_accounts_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ledger_entries: {
         Row: {
           account_id: string
@@ -497,6 +721,106 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      liquidity_pools: {
+        Row: {
+          balance: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          region: string | null
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          region?: string | null
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          region?: string | null
+        }
+        Relationships: []
+      }
+      margin_records: {
+        Row: {
+          created_at: string | null
+          fx_cost: number | null
+          id: string
+          merchant_fee: number | null
+          net_margin: number | null
+          processor_fee: number | null
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fx_cost?: number | null
+          id?: string
+          merchant_fee?: number | null
+          net_margin?: number | null
+          processor_fee?: number | null
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fx_cost?: number | null
+          id?: string
+          merchant_fee?: number | null
+          net_margin?: number | null
+          processor_fee?: number | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "margin_records_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_accounts: {
+        Row: {
+          available_balance: number | null
+          currency: string
+          id: string
+          merchant_id: string | null
+          pending_balance: number | null
+          reserve_balance: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          available_balance?: number | null
+          currency: string
+          id?: string
+          merchant_id?: string | null
+          pending_balance?: number | null
+          reserve_balance?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          available_balance?: number | null
+          currency?: string
+          id?: string
+          merchant_id?: string | null
+          pending_balance?: number | null
+          reserve_balance?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_accounts_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
         ]
@@ -733,6 +1057,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      processor_metrics: {
+        Row: {
+          avg_fee: number | null
+          avg_latency: number | null
+          id: string
+          processor_id: string | null
+          region: string | null
+          success_rate: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_fee?: number | null
+          avg_latency?: number | null
+          id?: string
+          processor_id?: string | null
+          region?: string | null
+          success_rate?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_fee?: number | null
+          avg_latency?: number | null
+          id?: string
+          processor_id?: string | null
+          region?: string | null
+          success_rate?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -1088,6 +1442,189 @@ export type Database = {
           },
         ]
       }
+      settlement_instructions: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          merchant_id: string | null
+          rail: string | null
+          settlement_run_id: string | null
+          status: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          merchant_id?: string | null
+          rail?: string | null
+          settlement_run_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          merchant_id?: string | null
+          rail?: string | null
+          settlement_run_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "settlement_instructions_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlement_instructions_settlement_run_id_fkey"
+            columns: ["settlement_run_id"]
+            isOneToOne: false
+            referencedRelation: "settlement_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settlement_runs: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          id: string
+          merchant_count: number | null
+          status: string | null
+          total_amount: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          merchant_count?: number | null
+          status?: string | null
+          total_amount?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          merchant_count?: number | null
+          status?: string | null
+          total_amount?: number | null
+        }
+        Relationships: []
+      }
+      shopify_orders: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          shopify_order_id: string | null
+          status: string | null
+          store_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          shopify_order_id?: string | null
+          status?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          shopify_order_id?: string | null
+          status?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "shopify_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_products: {
+        Row: {
+          created_at: string | null
+          id: string
+          price: number | null
+          shopify_product_id: string | null
+          store_id: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          price?: number | null
+          shopify_product_id?: string | null
+          store_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          price?: number | null
+          shopify_product_id?: string | null
+          store_id?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_products_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "shopify_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_stores: {
+        Row: {
+          access_token: string | null
+          id: string
+          installed_at: string | null
+          merchant_id: string | null
+          scope: string | null
+          shop_domain: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          id?: string
+          installed_at?: string | null
+          merchant_id?: string | null
+          scope?: string | null
+          shop_domain?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          id?: string
+          installed_at?: string | null
+          merchant_id?: string | null
+          scope?: string | null
+          shop_domain?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_stores_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           amount: number
@@ -1267,6 +1804,75 @@ export type Database = {
           },
         ]
       }
+      treasury_accounts: {
+        Row: {
+          balance: number | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          provider: string | null
+          region: string | null
+        }
+        Insert: {
+          balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          provider?: string | null
+          region?: string | null
+        }
+        Update: {
+          balance?: number | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          provider?: string | null
+          region?: string | null
+        }
+        Relationships: []
+      }
+      treasury_transfers: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          currency: string | null
+          destination_pool: string | null
+          id: string
+          source_pool: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          destination_pool?: string | null
+          id?: string
+          source_pool?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          currency?: string | null
+          destination_pool?: string | null
+          id?: string
+          source_pool?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_transfers_destination_pool_fkey"
+            columns: ["destination_pool"]
+            isOneToOne: false
+            referencedRelation: "liquidity_pools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treasury_transfers_source_pool_fkey"
+            columns: ["source_pool"]
+            isOneToOne: false
+            referencedRelation: "liquidity_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -1382,6 +1988,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      webhook_events: {
+        Row: {
+          created_at: string | null
+          event_type: string | null
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: []
       }
     }
     Views: {
