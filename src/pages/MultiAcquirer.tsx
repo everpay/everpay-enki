@@ -26,10 +26,10 @@ export default function MultiAcquirer() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Active Acquirers" value="3" icon={<GitBranch className="w-5 h-5" />} />
-        <StatCard label="Avg. Auth Rate" value="94.7%" change="+0.8%" icon={<Activity className="w-5 h-5" />} />
-        <StatCard label="Regions Covered" value="8" icon={<Globe className="w-5 h-5" />} />
-        <StatCard label="Cost Savings" value="$42K" change="vs single acquirer" icon={<DollarSign className="w-5 h-5" />} />
+        <StatCard title="Active Acquirers" value="3" icon={GitBranch} />
+        <StatCard title="Avg. Auth Rate" value="94.7%" change="+0.8%" icon={Activity} />
+        <StatCard title="Regions Covered" value="8" icon={Globe} />
+        <StatCard title="Cost Savings" value="$42K" change="vs single acquirer" icon={DollarSign} />
       </div>
 
       {/* Routing Distribution */}

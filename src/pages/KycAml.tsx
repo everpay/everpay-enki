@@ -26,10 +26,10 @@ export default function KycAml() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Total Profiles" value="1,247" icon={<Shield className="w-5 h-5" />} />
-        <StatCard label="Approved" value="1,089" change="87.3%" icon={<CheckCircle className="w-5 h-5" />} />
-        <StatCard label="Under Review" value="120" icon={<AlertTriangle className="w-5 h-5" />} />
-        <StatCard label="Flagged" value="38" change="3.0%" icon={<XCircle className="w-5 h-5" />} />
+        <StatCard title="Total Profiles" value="1,247" icon={Shield} />
+        <StatCard title="Approved" value="1,089" change="87.3%" icon={CheckCircle} />
+        <StatCard title="Under Review" value="120" icon={AlertTriangle} />
+        <StatCard title="Flagged" value="38" change="3.0%" icon={XCircle} />
       </div>
 
       {/* KYC Profiles */}

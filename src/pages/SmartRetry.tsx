@@ -30,10 +30,10 @@ export default function SmartRetry() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Revenue Recovered" value="$322K" change="This month" icon={<TrendingUp className="w-5 h-5" />} />
-        <StatCard label="Retry Success Rate" value="52.3%" change="+4.1%" icon={<RefreshCw className="w-5 h-5" />} />
-        <StatCard label="AI Rules Active" value="12" icon={<Brain className="w-5 h-5" />} />
-        <StatCard label="Avg. Recovery Time" value="4.2s" icon={<Zap className="w-5 h-5" />} />
+        <StatCard title="Revenue Recovered" value="$322K" change="This month" icon={TrendingUp} />
+        <StatCard title="Retry Success Rate" value="52.3%" change="+4.1%" icon={RefreshCw} />
+        <StatCard title="AI Rules Active" value="12" icon={Brain} />
+        <StatCard title="Avg. Recovery Time" value="4.2s" icon={Zap} />
       </div>
 
       {/* Success Rate Comparison */}

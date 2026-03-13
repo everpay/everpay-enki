@@ -36,10 +36,10 @@ export default function ProcessorAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Avg. Auth Rate" value="94.7%" change="+0.8%" icon={<TrendingUp className="w-5 h-5" />} />
-        <StatCard label="Total Declines (30d)" value="13,300" icon={<AlertCircle className="w-5 h-5" />} />
-        <StatCard label="Avg. Latency" value="312ms" change="-18ms" icon={<Clock className="w-5 h-5" />} />
-        <StatCard label="Uptime (30d)" value="99.97%" icon={<BarChart3 className="w-5 h-5" />} />
+        <StatCard title="Avg. Auth Rate" value="94.7%" change="+0.8%" icon={TrendingUp} />
+        <StatCard title="Total Declines (30d)" value="13,300" icon={AlertCircle} />
+        <StatCard title="Avg. Latency" value="312ms" change="-18ms" icon={Clock} />
+        <StatCard title="Uptime (30d)" value="99.97%" icon={BarChart3} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

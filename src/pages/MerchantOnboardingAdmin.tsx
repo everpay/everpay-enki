@@ -22,10 +22,10 @@ export default function MerchantOnboardingAdmin() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Total Merchants" value="1,247" change="+24 this week" icon={<Building2 className="w-5 h-5" />} />
-        <StatCard label="Pending Review" value="38" icon={<Clock className="w-5 h-5" />} />
-        <StatCard label="Approved (30d)" value="142" change="+18% MoM" icon={<CheckCircle className="w-5 h-5" />} />
-        <StatCard label="Avg. Onboarding" value="2.4 days" change="-0.8 days" icon={<FileCheck className="w-5 h-5" />} />
+        <StatCard title="Total Merchants" value="1,247" change="+24 this week" icon={Building2} />
+        <StatCard title="Pending Review" value="38" icon={Clock} />
+        <StatCard title="Approved (30d)" value="142" change="+18% MoM" icon={CheckCircle} />
+        <StatCard title="Avg. Onboarding" value="2.4 days" change="-0.8 days" icon={FileCheck} />
       </div>
 
       {/* Onboarding Pipeline */}
