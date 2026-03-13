@@ -158,10 +158,21 @@ export default function Onboarding() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Business Verification</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Complete your KYB onboarding to activate payment processing</p>
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              {!profile ? 'Welcome! Set Up Your Business' : 'Business Verification'}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {!profile ? 'Complete your business profile to start accepting payments' : 'Complete your KYB onboarding to activate payment processing'}
+            </p>
           </div>
-          {profile && getStatusBadge(profile.onboarding_status)}
+          <div className="flex items-center gap-3">
+            {profile && getStatusBadge(profile.onboarding_status)}
+            {profile && (
+              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="gap-1.5">
+                Go to Dashboard <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
