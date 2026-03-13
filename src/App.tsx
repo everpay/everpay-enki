@@ -92,7 +92,7 @@ const AppRoutes = () => {
     <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
     <Route path="/refunds" element={<ProtectedRoute><Refunds /></ProtectedRoute>} />
     <Route path="/webhooks" element={<ProtectedRoute><Webhooks /></ProtectedRoute>} />
-    <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+    <Route path="/onboarding" element={<ProtectedRoute skipOnboardingCheck><Onboarding /></ProtectedRoute>} />
     <Route path="/processor-transparency" element={<ProtectedRoute><ProcessorTransparency /></ProtectedRoute>} />
     <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
     <Route path="/multi-acquirer" element={<ProtectedRoute><MultiAcquirer /></ProtectedRoute>} />
