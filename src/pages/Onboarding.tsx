@@ -7,11 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Building2, FileText, CheckCircle2, Clock, AlertCircle, Upload, Globe, Shield, ArrowRight } from 'lucide-react';
+import { Building2, FileText, CheckCircle2, Clock, AlertCircle, Upload, Globe, Shield, ArrowRight, Phone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { CountrySelect } from '@/components/CountrySelect';
 
 const BUSINESS_TYPES = ['sole_proprietorship', 'partnership', 'llc', 'corporation', 'non_profit'];
 const INDUSTRIES = ['e_commerce', 'saas', 'marketplace', 'fintech', 'gaming', 'travel', 'retail', 'healthcare', 'education', 'other'];
@@ -50,6 +50,7 @@ export default function Onboarding() {
   const [website, setWebsite] = useState('');
   const [industry, setIndustry] = useState('');
   const [mccCode, setMccCode] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
@@ -68,6 +69,7 @@ export default function Onboarding() {
       setWebsite(profile.website || '');
       setIndustry(profile.industry || '');
       setMccCode(profile.mcc_code || '');
+      setContactNumber((profile as any).contact_number || '');
       const addr = profile.address as any;
       if (addr) {
         setStreet(addr.street || '');
@@ -94,7 +96,7 @@ export default function Onboarding() {
     if (!merchantId) return;
     setIsSaving(true);
     try {
-      const profileData = {
+      const profileData: Record<string, any> = {
         merchant_id: merchantId,
         business_name: businessName,
         business_type: businessType,
@@ -104,6 +106,7 @@ export default function Onboarding() {
         website,
         industry,
         mcc_code: mccCode,
+        contact_number: contactNumber,
         address: { street, city, state, postal_code: postalCode },
         onboarding_status: profile ? profile.onboarding_status : 'in_review',
       };
@@ -118,7 +121,8 @@ export default function Onboarding() {
       toast.success('Business profile saved — your application is under review');
       queryClient.invalidateQueries({ queryKey: ['onboarding-status'] });
       refetch();
-      toast.error('Failed to save profile');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save profile');
     } finally {
       setIsSaving(false);
     }
@@ -243,11 +247,18 @@ export default function Onboarding() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Country</Label>
-                    <Input value={country} onChange={e => setCountry(e.target.value)} placeholder="US" />
+                    <CountrySelect value={country} onValueChange={setCountry} />
                   </div>
                   <div className="space-y-2">
                     <Label>Website</Label>
                     <Input value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://example.com" type="url" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Business Contact Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input value={contactNumber} onChange={e => setContactNumber(e.target.value)} placeholder="+1 (555) 000-0000" type="tel" className="pl-9" />
                   </div>
                 </div>
 
