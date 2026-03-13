@@ -20,9 +20,7 @@ import {
   Archive,
   Zap,
   User,
-  Webhook,
-  RotateCcw,
-  Building2,
+  Eye,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
