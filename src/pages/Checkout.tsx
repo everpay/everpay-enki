@@ -38,6 +38,24 @@ export default function Checkout() {
   const [cvc, setCvc] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [threeDSUrl, setThreeDSUrl] = useState('');
+  const [threeDSTransactionId, setThreeDSTransactionId] = useState('');
+  const [showThreeDS, setShowThreeDS] = useState(false);
+
+  const { isPolling, startPolling } = usePaymentPolling({
+    transactionId: null,
+    enabled: false,
+    onComplete: () => {
+      setPaymentComplete(true);
+      setShowThreeDS(false);
+      if (successUrl) {
+        const redirectUrl = new URL(successUrl);
+        redirectUrl.searchParams.set('TRANSACTION_ID', threeDSTransactionId);
+        redirectUrl.searchParams.set('PARTNER_SESSION_ID', ref);
+        setTimeout(() => { window.location.href = redirectUrl.toString(); }, 2000);
+      }
+    },
+  });
 
   const displayAmount = amount || customAmount;
 
