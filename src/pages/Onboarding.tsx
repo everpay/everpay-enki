@@ -115,9 +115,9 @@ export default function Onboarding() {
         const { error } = await supabase.from('merchant_profiles').insert(profileData);
         if (error) throw error;
       }
-      toast.success('Business profile saved');
+      toast.success('Business profile saved — your application is under review');
+      queryClient.invalidateQueries({ queryKey: ['onboarding-status'] });
       refetch();
-    } catch (err) {
       toast.error('Failed to save profile');
     } finally {
       setIsSaving(false);
