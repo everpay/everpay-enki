@@ -2,32 +2,119 @@ import { AppLayout } from '@/components/AppLayout';
 import { StatCard } from '@/components/StatCard';
 import { BarChart3, TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-const authRateData = [
-  { processor: 'ShieldHub', rate: 96.2, decline: 3.8 },
-  { processor: 'Mondo', rate: 94.8, decline: 5.2 },
-  { processor: 'Moneto', rate: 93.1, decline: 6.9 },
-];
+function useProcessorAnalytics() {
+  return useQuery({
+    queryKey: ['processor-analytics'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { data: merchant } = await supabase.from('merchants').select('id').eq('user_id', user.id).single();
+      if (!merchant) throw new Error('No merchant');
 
-const latencyData = [
-  { time: '00:00', shieldhub: 310, mondo: 270, moneto: 400 },
-  { time: '04:00', shieldhub: 290, mondo: 260, moneto: 380 },
-  { time: '08:00', shieldhub: 340, mondo: 300, moneto: 450 },
-  { time: '12:00', shieldhub: 380, mondo: 320, moneto: 490 },
-  { time: '16:00', shieldhub: 350, mondo: 290, moneto: 430 },
-  { time: '20:00', shieldhub: 320, mondo: 280, moneto: 410 },
-];
+      const [{ data: attempts }, { data: transactions }] = await Promise.all([
+        supabase.from('payment_attempts').select('provider, status, latency_ms, response_code, response_message, created_at')
+          .order('created_at', { ascending: false }).limit(1000),
+        supabase.from('transactions').select('provider, status, amount, created_at')
+          .eq('merchant_id', merchant.id).limit(1000),
+      ]);
 
-const declineReasons = [
-  { reason: 'Insufficient Funds', count: 4200, pct: '32%' },
-  { reason: 'Do Not Honor', count: 2800, pct: '21%' },
-  { reason: 'Card Expired', count: 1900, pct: '14%' },
-  { reason: 'Invalid Card', count: 1500, pct: '11%' },
-  { reason: 'Suspected Fraud', count: 1200, pct: '9%' },
-  { reason: 'Other', count: 1700, pct: '13%' },
+      // Per-provider auth rates
+      const providerStats: Record<string, { total: number; success: number; latencySum: number; latencyBuckets: Record<string, number> }> = {};
+      (attempts || []).forEach((a: any) => {
+        const p = a.provider || 'unknown';
+        if (!providerStats[p]) providerStats[p] = { total: 0, success: 0, latencySum: 0, latencyBuckets: {} };
+        providerStats[p].total++;
+        if (a.status === 'success' || a.status === 'completed') providerStats[p].success++;
+        providerStats[p].latencySum += a.latency_ms || 0;
+
+        // Bucket by time-of-day (4hr intervals)
+        const hour = new Date(a.created_at).getHours();
+        const bucket = `${String(Math.floor(hour / 4) * 4).padStart(2, '0')}:00`;
+        if (!providerStats[p].latencyBuckets[bucket]) providerStats[p].latencyBuckets[bucket] = 0;
+        providerStats[p].latencyBuckets[bucket] += a.latency_ms || 0;
+      });
+
+      // Count per bucket for averaging
+      const bucketCounts: Record<string, Record<string, number>> = {};
+      (attempts || []).forEach((a: any) => {
+        const p = a.provider || 'unknown';
+        const hour = new Date(a.created_at).getHours();
+        const bucket = `${String(Math.floor(hour / 4) * 4).padStart(2, '0')}:00`;
+        if (!bucketCounts[p]) bucketCounts[p] = {};
+        bucketCounts[p][bucket] = (bucketCounts[p][bucket] || 0) + 1;
+      });
+
+      const providers = Object.keys(providerStats);
+      const authRateData = providers.map(p => ({
+        processor: p,
+        rate: Number(((providerStats[p].success / providerStats[p].total) * 100).toFixed(1)),
+        decline: Number((((providerStats[p].total - providerStats[p].success) / providerStats[p].total) * 100).toFixed(1)),
+      }));
+
+      // Latency over time
+      const allBuckets = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+      const latencyData = allBuckets.map(bucket => {
+        const row: any = { time: bucket };
+        providers.forEach(p => {
+          const count = bucketCounts[p]?.[bucket] || 1;
+          row[p] = Math.round((providerStats[p].latencyBuckets[bucket] || 0) / count);
+        });
+        return row;
+      });
+
+      // Decline reasons
+      const declineMap: Record<string, number> = {};
+      (attempts || []).forEach((a: any) => {
+        if (a.status !== 'success' && a.status !== 'completed') {
+          const reason = a.response_message || a.response_code || 'Unknown';
+          declineMap[reason] = (declineMap[reason] || 0) + 1;
+        }
+      });
+      const totalDeclines = Object.values(declineMap).reduce((s, v) => s + v, 0);
+      const declineReasons = Object.entries(declineMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6)
+        .map(([reason, count]) => ({
+          reason,
+          count,
+          pct: totalDeclines > 0 ? `${Math.round((count / totalDeclines) * 100)}%` : '0%',
+        }));
+
+      // Overall stats
+      const totalAttempts = (attempts || []).length;
+      const totalSuccess = (attempts || []).filter((a: any) => a.status === 'success' || a.status === 'completed').length;
+      const avgRate = totalAttempts > 0 ? ((totalSuccess / totalAttempts) * 100).toFixed(1) : '0';
+      const avgLatency = totalAttempts > 0
+        ? Math.round((attempts || []).reduce((s: number, a: any) => s + (a.latency_ms || 0), 0) / totalAttempts)
+        : 0;
+
+      return {
+        avgRate,
+        totalDeclines,
+        avgLatency,
+        authRateData,
+        latencyData,
+        declineReasons,
+        providers,
+      };
+    },
+  });
+}
+
+const chartColors = [
+  'hsl(var(--primary))',
+  'hsl(152 60% 40%)',
+  'hsl(38 92% 50%)',
+  'hsl(280 60% 50%)',
+  'hsl(200 70% 50%)',
 ];
 
 export default function ProcessorAnalyticsPage() {
+  const { data, isLoading } = useProcessorAnalytics();
+
   return (
     <AppLayout>
       <div className="mb-6">
@@ -36,62 +123,73 @@ export default function ProcessorAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard title="Avg. Auth Rate" value="94.7%" change="+0.8%" icon={TrendingUp} />
-        <StatCard title="Total Declines (30d)" value="13,300" icon={AlertCircle} />
-        <StatCard title="Avg. Latency" value="312ms" change="-18ms" icon={Clock} />
-        <StatCard title="Uptime (30d)" value="99.97%" icon={BarChart3} />
+        <StatCard title="Avg. Auth Rate" value={`${data?.avgRate || 0}%`} icon={TrendingUp} />
+        <StatCard title="Total Declines" value={String(data?.totalDeclines || 0)} icon={AlertCircle} />
+        <StatCard title="Avg. Latency" value={`${data?.avgLatency || 0}ms`} icon={Clock} />
+        <StatCard title="Processors" value={String(data?.providers?.length || 0)} icon={BarChart3} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="rounded-xl border border-border bg-card p-6">
           <h3 className="text-lg font-semibold mb-6">Authorization Rate by Processor</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={authRateData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="processor" className="text-muted-foreground" fontSize={12} />
-              <YAxis domain={[0, 100]} className="text-muted-foreground" fontSize={12} tickFormatter={(v) => `${v}%`} />
-              <Tooltip formatter={(value: number) => [`${value}%`]} />
-              <Bar dataKey="rate" fill="hsl(152 60% 40%)" radius={[4, 4, 0, 0]} name="Auth Rate" />
-              <Bar dataKey="decline" fill="hsl(0 72% 51%)" radius={[4, 4, 0, 0]} name="Decline Rate" />
-            </BarChart>
-          </ResponsiveContainer>
+          {(data?.authRateData || []).length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={data?.authRateData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="processor" className="text-muted-foreground" fontSize={12} />
+                <YAxis domain={[0, 100]} className="text-muted-foreground" fontSize={12} tickFormatter={(v) => `${v}%`} />
+                <Tooltip formatter={(value: number) => [`${value}%`]} />
+                <Bar dataKey="rate" fill="hsl(152 60% 40%)" radius={[4, 4, 0, 0]} name="Auth Rate" />
+                <Bar dataKey="decline" fill="hsl(0 72% 51%)" radius={[4, 4, 0, 0]} name="Decline Rate" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-muted-foreground text-center py-12">No payment attempt data yet</p>
+          )}
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6">
           <h3 className="text-lg font-semibold mb-6">Response Latency (ms)</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={latencyData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="time" className="text-muted-foreground" fontSize={12} />
-              <YAxis className="text-muted-foreground" fontSize={12} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="shieldhub" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="ShieldHub" />
-              <Line type="monotone" dataKey="mondo" stroke="hsl(152 60% 40%)" strokeWidth={2} dot={false} name="Mondo" />
-              <Line type="monotone" dataKey="moneto" stroke="hsl(38 92% 50%)" strokeWidth={2} dot={false} name="Moneto" />
-            </LineChart>
-          </ResponsiveContainer>
+          {(data?.latencyData || []).length > 0 && (data?.providers || []).length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data?.latencyData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="time" className="text-muted-foreground" fontSize={12} />
+                <YAxis className="text-muted-foreground" fontSize={12} />
+                <Tooltip />
+                <Legend />
+                {(data?.providers || []).map((p, i) => (
+                  <Line key={p} type="monotone" dataKey={p} stroke={chartColors[i % chartColors.length]} strokeWidth={2} dot={false} name={p} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-muted-foreground text-center py-12">No latency data yet</p>
+          )}
         </div>
       </div>
 
-      {/* Decline Reasons */}
       <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="text-lg font-semibold mb-6">Top Decline Reasons (30d)</h3>
-        <div className="space-y-3">
-          {declineReasons.map((r) => (
-            <div key={r.reason} className="flex items-center gap-4">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium">{r.reason}</span>
-                  <span className="text-sm text-muted-foreground">{r.count.toLocaleString()} ({r.pct})</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full bg-primary" style={{ width: r.pct }} />
+        <h3 className="text-lg font-semibold mb-6">Top Decline Reasons</h3>
+        {(data?.declineReasons || []).length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">No declines recorded</p>
+        ) : (
+          <div className="space-y-3">
+            {(data?.declineReasons || []).map((r: any) => (
+              <div key={r.reason} className="flex items-center gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{r.reason}</span>
+                    <span className="text-sm text-muted-foreground">{r.count.toLocaleString()} ({r.pct})</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full bg-primary" style={{ width: r.pct }} />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );
