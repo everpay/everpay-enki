@@ -324,6 +324,18 @@ export default function Checkout() {
           )}
         </div>
       </div>
+
+      {/* 3DS Modal */}
+      <ThreeDSecureModal
+        open={showThreeDS}
+        onClose={() => setShowThreeDS(false)}
+        redirectUrl={threeDSUrl}
+        transactionId={threeDSTransactionId}
+        onComplete={() => {
+          setShowThreeDS(false);
+          // Polling will handle status update
+        }}
+      />
     </div>
   );
 }
