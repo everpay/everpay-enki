@@ -31,7 +31,10 @@ const navItems = [
   { to: '/payments/new', icon: CreditCard, label: 'New Payment' },
   { to: '/payment-links', icon: Link2, label: 'Payment Links' },
   { to: '/subscriptions', icon: RefreshCw, label: 'Subscriptions' },
+  { to: '/customers', icon: User, label: 'Customers' },
+  { to: '/invoices', icon: CreditCard, label: 'Invoices' },
   { to: '/chargebacks', icon: Shield, label: 'Chargebacks' },
+  { to: '/analytics', icon: Zap, label: 'Analytics' },
   { to: '/portal', icon: User, label: 'Customer Portal' },
   { to: '/activity', icon: Zap, label: 'Activity' },
 ];
