@@ -22,8 +22,9 @@ import {
 import {
   TrendingUp, TrendingDown, DollarSign, ArrowLeftRight, CreditCard,
   CalendarIcon, Download, BarChart3, PieChart as PieChartIcon, Activity,
-  Globe, ShieldAlert, Layers, FileText, FileDown,
+  Globe, ShieldAlert, Layers, FileText, FileDown, Fingerprint,
 } from 'lucide-react';
+import { FraudAnalytics } from '@/components/FraudAnalytics';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -329,6 +330,7 @@ export default function Analytics() {
           <TabsTrigger value="geography" className="gap-1.5"><Globe className="h-3.5 w-3.5" /> Currencies</TabsTrigger>
           <TabsTrigger value="performance" className="gap-1.5"><Activity className="h-3.5 w-3.5" /> Performance</TabsTrigger>
           <TabsTrigger value="ratios" className="gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Risk & Ratios</TabsTrigger>
+          <TabsTrigger value="fraud" className="gap-1.5"><Fingerprint className="h-3.5 w-3.5" /> Fraud</TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW TAB */}
@@ -618,6 +620,11 @@ export default function Analytics() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* FRAUD TAB */}
+        <TabsContent value="fraud" className="space-y-4">
+          <FraudAnalytics />
         </TabsContent>
       </Tabs>
     </AppLayout>

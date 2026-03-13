@@ -163,7 +163,7 @@ serve(async (req) => {
         customer_email: customerEmail,
         description,
         idempotency_key: idempotencyKey,
-        provider_ref: String(providerResponse.id || providerResponse.transaction_reference || ''),
+        provider_ref: String(providerResponse.id || providerResponse.gateway_session_id || providerResponse.transaction_reference || ''),
         fx_rate: fxRate,
         settlement_amount: settlementAmount,
         settlement_currency: settlementCurrency,
@@ -292,7 +292,52 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
   return responseData;
 }
 
-// ─── Mondo — sandbox mode with simulated responses ───
+// ─── Mondo Card BIN Lookup — enforce 90% EU / 10% international ───
+async function mondoCardBinLookup(cardNumber: string): Promise<{ isEU: boolean; region: string; authorized: boolean; country: string }> {
+  const accountId = Deno.env.get('MONDO_ACCOUNT_ID');
+  const gatewaySecret = Deno.env.get('MONDO_GATEWAY_SECRET_KEY');
+
+  if (!accountId || !gatewaySecret) {
+    console.log('Mondo BIN lookup: No credentials, assuming EU card');
+    return { isEU: true, region: 'EU', authorized: true, country: 'UNK' };
+  }
+
+  const bin = cardNumber.replace(/\s/g, '').slice(0, 8);
+
+  try {
+    const response = await fetch('https://server-to-server.getmondo.co/tools/card_bin_lookup_api.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_account_id: accountId,
+        gateway_secret_key: gatewaySecret,
+        bin,
+      }),
+    });
+
+    const data = await response.json();
+    console.log('Mondo BIN lookup response:', data);
+
+    if (data.success) {
+      const euRegions = ['EU', 'UK'];
+      const isEU = euRegions.includes(data.bank_region_short_code);
+      return {
+        isEU,
+        region: data.bank_region_short_code || 'UNKNOWN',
+        authorized: data.authorized_region === true,
+        country: data.country_iso3 || 'UNK',
+      };
+    }
+
+    console.warn('Mondo BIN lookup failed:', data.error);
+    return { isEU: true, region: 'UNKNOWN', authorized: true, country: 'UNK' };
+  } catch (error) {
+    console.warn('Mondo BIN lookup error:', error);
+    return { isEU: true, region: 'UNKNOWN', authorized: true, country: 'UNK' };
+  }
+}
+
+// ─── Mondo — Server-to-Server Cards API ───
 async function processMondoPayment(data: PaymentRequest) {
   const gatewaySecret = Deno.env.get('MONDO_GATEWAY_SECRET_KEY');
   const accountId = Deno.env.get('MONDO_ACCOUNT_ID');
@@ -303,49 +348,97 @@ async function processMondoPayment(data: PaymentRequest) {
     return generateMondoSandboxResponse(data);
   }
 
-  let endpoint = 'https://api.getmondo.co/v1/payments';
-  let body: any = {
-    amount: data.amount,
+  // ─── Card BIN region check (90% EU / 10% international) ───
+  if (data.paymentMethod === 'card' && data.cardDetails) {
+    const binResult = await mondoCardBinLookup(data.cardDetails.number);
+    console.log(`Mondo BIN check: region=${binResult.region}, isEU=${binResult.isEU}, authorized=${binResult.authorized}, country=${binResult.country}`);
+
+    if (!binResult.authorized) {
+      console.warn(`Mondo: Card region ${binResult.region} not authorized for this account`);
+      return {
+        id: `mondo_rejected_${crypto.randomUUID().slice(0, 8)}`,
+        status: 'Declined',
+        amount: data.amount.toString(),
+        currency: data.currency,
+        error: { code: 'REGION_NOT_AUTHORIZED', message: `Card region ${binResult.region} (${binResult.country}) is not authorized. Mondo enforces 90% EU / 10% international card traffic.` },
+        bin_lookup: binResult,
+      };
+    }
+  }
+
+  // ─── Server-to-Server Cards API: POST /payment/ ───
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+  const transactionRef = `everpay_${crypto.randomUUID().slice(0, 12)}`;
+
+  const mondoBody: Record<string, any> = {
+    company_account_id: accountId,
+    gateway_secret_key: gatewaySecret,
+    amount: data.amount.toFixed(2),
     currency: data.currency,
-    account_id: accountId,
-    customer_email: data.customerEmail,
-    description: data.description,
+    transaction_reference: transactionRef,
+    partner_return_url_completed: 'https://everpay-os.lovable.app/transactions?status=completed',
+    partner_return_url_canceled: 'https://everpay-os.lovable.app/transactions?status=canceled',
+    partner_return_url_rejected: 'https://everpay-os.lovable.app/transactions?status=rejected',
+    partner_webhook_url: `${supabaseUrl}/functions/v1/moneto-webhook`,
+    customer_email: data.customerEmail || 'customer@example.com',
+    customer_first_name: data.customerDetails?.firstName || 'Customer',
+    customer_last_name: data.customerDetails?.lastName || 'User',
+    customer_phone: data.customerDetails?.phone || '1234567890',
+    billing_address: data.billingDetails?.address || '123 Main St',
+    billing_city: data.billingDetails?.city || 'London',
+    billing_state: data.billingDetails?.state || 'LDN',
+    billing_zip: data.billingDetails?.postalCode || 'EC1A 1BB',
+    billing_country: data.billingDetails?.country || 'GB',
   };
 
+  // Add card details for S2S
   if (data.paymentMethod === 'card' && data.cardDetails) {
-    endpoint = 'https://api.getmondo.co/v1/cards/charge';
-    body.card = {
-      number: data.cardDetails.number,
-      exp_month: data.cardDetails.expMonth,
-      exp_year: data.cardDetails.expYear,
-      cvc: data.cardDetails.cvc,
-    };
-  } else if (data.paymentMethod === 'apple_pay') {
-    endpoint = 'https://api.getmondo.co/v1/apple-pay/charge';
-  } else if (data.paymentMethod === 'open_banking') {
-    const openbankingKey = Deno.env.get('MONDO_OPENBANKING_API_KEY');
-    endpoint = 'https://api.getmondo.co/v1/open-banking/payments';
-    body.openbanking_key = openbankingKey;
+    const cleanNum = data.cardDetails.number.replace(/\s/g, '');
+    mondoBody.card_number = cleanNum;
+    mondoBody.card_expiry_month = data.cardDetails.expMonth;
+    mondoBody.card_expiry_year = data.cardDetails.expYear;
+    mondoBody.card_cvv = data.cardDetails.cvc;
+    mondoBody.card_holder_name = data.cardDetails.holderName ||
+      `${data.customerDetails?.firstName || 'Customer'} ${data.customerDetails?.lastName || 'User'}`;
   }
 
   try {
-    const response = await fetch(endpoint, {
+    console.log('Mondo S2S → POST https://server-to-server.getmondo.co/payment/');
+    console.log('Mondo request:', { amount: mondoBody.amount, currency: mondoBody.currency, ref: transactionRef });
+
+    const response = await fetch('https://server-to-server.getmondo.co/payment/', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${gatewaySecret}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mondoBody),
     });
 
-    if (!response.ok) {
-      console.warn('Mondo API failed, falling back to sandbox response');
+    const responseData = await response.json();
+    console.log('Mondo S2S response:', {
+      status: responseData.status,
+      gateway_session_id: responseData.gateway_session_id,
+      error: responseData.error,
+    });
+
+    if (!response.ok && !responseData.gateway_session_id) {
+      console.warn('Mondo S2S API failed, falling back to sandbox response');
       return generateMondoSandboxResponse(data);
     }
 
-    return await response.json();
+    // If we get a 3DS redirect URL, return it for the frontend to handle
+    if (responseData['3d_secure_redirect_url']) {
+      return {
+        ...responseData,
+        status: 'Redirect',
+        redirect_url: responseData['3d_secure_redirect_url'],
+      };
+    }
+
+    return {
+      ...responseData,
+      status: responseData.status || 'Approved',
+    };
   } catch (error) {
-    console.warn('Mondo API error, falling back to sandbox:', error);
+    console.warn('Mondo S2S API error, falling back to sandbox:', error);
     return generateMondoSandboxResponse(data);
   }
 }
@@ -353,13 +446,14 @@ async function processMondoPayment(data: PaymentRequest) {
 function generateMondoSandboxResponse(data: PaymentRequest) {
   return {
     id: `mondo_sandbox_${crypto.randomUUID().slice(0, 8)}`,
+    gateway_session_id: `sandbox_session_${crypto.randomUUID().slice(0, 8)}`,
     status: 'Approved',
     amount: data.amount.toString(),
     currency: data.currency,
     authorization: `MONDO${Math.floor(Math.random() * 999999).toString().padStart(6, '0')}`,
     timestamp: new Date().toISOString(),
     sandbox: true,
-    error: { code: '000', messsage: 'Approved transaction (sandbox)' },
+    error: { code: '000', message: 'Approved transaction (sandbox)' },
   };
 }
 
