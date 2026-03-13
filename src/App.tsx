@@ -103,7 +103,7 @@ const AppRoutes = () => {
     <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsPage /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-    <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />
+    <Route path="/activity" element={<Navigate to="/settings" replace />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
   );
