@@ -1,17 +1,1 @@
-project_id = "ccqiuoilfvuetajyjyiv"
-
-[functions]
-  [functions.auth-email-hook]
-    verify_jwt = false
-  [functions.chargeflow-webhook]
-    verify_jwt = false
-  [functions.send-transactional-email]
-    verify_jwt = false
-  [functions.webhook-dispatch]
-    verify_jwt = false
-  [functions.refund-payment]
-    verify_jwt = false
-  [functions.device-analytics]
-    verify_jwt = false
-  [functions.fraud-detection]
-    verify_jwt = false
+project_id = "dhobjuetzkvnkdoqeavy"
