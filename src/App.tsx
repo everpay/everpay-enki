@@ -31,6 +31,8 @@ import MerchantAnalytics from "./pages/merchant/MerchantAnalytics";
 import Webhooks from "./pages/Webhooks";
 import Refunds from "./pages/Refunds";
 import Onboarding from "./pages/Onboarding";
+import ProcessorTransparency from "./pages/ProcessorTransparency";
+import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 const queryClient = new QueryClient();
 
