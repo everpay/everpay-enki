@@ -83,6 +83,12 @@ export default function Auth() {
             {isLogin ? 'Sign in to your merchant dashboard' : 'Set up your merchant account'}
           </p>
 
+          {formError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-2">
+              {formError}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
