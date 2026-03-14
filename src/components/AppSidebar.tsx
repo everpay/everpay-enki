@@ -209,7 +209,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             signOut();
             onNavigate?.();
           }}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-destructive font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
         >
           <LogOut className="h-4 w-4 text-destructive" />
           Sign Out
