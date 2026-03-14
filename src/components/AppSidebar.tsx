@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -22,16 +22,16 @@ import {
   RotateCcw,
   Package,
   CreditCard as CreditCardIcon,
-} from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUserRole } from '@/hooks/useUserRole';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import everpayIcon from '@/assets/everpay-icon.png';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import everpayIcon from "@/assets/everpay-icon.png";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface NavItem {
   to: string;
@@ -42,54 +42,54 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/customers', icon: UserCircle, label: 'Customers' },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/customers", icon: UserCircle, label: "Customers" },
   {
-    to: '/transactions',
+    to: "/transactions",
     icon: ArrowLeftRight,
-    label: 'Transactions',
+    label: "Transactions",
     children: [
-      { to: '/transactions', icon: Eye, label: 'Overview' },
-      { to: '/payments/new', icon: CreditCard, label: 'New Payment' },
-      { to: '/payment-links', icon: Link2, label: 'Payment Links' },
-      { to: '/refunds', icon: RotateCcw, label: 'Refunds' },
+      { to: "/transactions", icon: Eye, label: "Overview" },
+      { to: "/payments/new", icon: CreditCard, label: "New Payment" },
+      { to: "/payment-links", icon: Link2, label: "Payment Links" },
+      { to: "/refunds", icon: RotateCcw, label: "Refunds" },
     ],
   },
-  { to: '/products', icon: Package, label: 'Products' },
-  { to: '/subscriptions', icon: RefreshCw, label: 'Subscriptions' },
-  { to: '/invoices', icon: FileText, label: 'Invoices' },
+  { to: "/products", icon: Package, label: "Products" },
+  { to: "/subscriptions", icon: RefreshCw, label: "Subscriptions" },
+  { to: "/invoices", icon: FileText, label: "Invoices" },
   {
-    to: '/chargebacks',
-    icon: Shield,
-    label: 'Chargebacks',
-    children: [
-      { to: '/chargebacks', icon: Eye, label: 'Overview' },
-      { to: '/chargebacks/disputes', icon: AlertTriangle, label: 'Disputes' },
-      { to: '/chargebacks/evidence', icon: Archive, label: 'Evidence' },
-      { to: '/chargebacks/analytics', icon: BarChart3, label: 'Analytics' },
-    ],
-  },
-  {
-    to: '/analytics',
-    icon: BarChart3,
-    label: 'Analytics',
-    children: [
-      { to: '/analytics', icon: Eye, label: 'Overview' },
-      { to: '/processor-analytics', icon: BarChart3, label: 'Processor Analytics' },
-      { to: '/payment-methods', icon: CreditCardIcon, label: 'Payment Methods' },
-    ],
-  },
-  { to: '/kyc-aml', icon: Shield, label: 'KYC / AML', visibleTo: ['admin', 'super_admin'] },
-  { to: '/portal', icon: User, label: 'Customer Portal', visibleTo: ['user'] },
-  {
-    to: '/wallets',
+    to: "/wallets",
     icon: Wallet,
-    label: 'Treasury',
+    label: "Treasury",
     children: [
-      { to: '/wallets', icon: Eye, label: 'Overview' },
-      { to: '/payouts', icon: ArrowUpRight, label: 'Payouts' },
+      { to: "/wallets", icon: Eye, label: "Overview" },
+      { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
     ],
   },
+  {
+    to: "/chargebacks",
+    icon: Shield,
+    label: "Chargebacks",
+    children: [
+      { to: "/chargebacks", icon: Eye, label: "Overview" },
+      { to: "/chargebacks/disputes", icon: AlertTriangle, label: "Disputes" },
+      { to: "/chargebacks/evidence", icon: Archive, label: "Evidence" },
+      { to: "/chargebacks/analytics", icon: BarChart3, label: "Analytics" },
+    ],
+  },
+  {
+    to: "/analytics",
+    icon: BarChart3,
+    label: "Analytics",
+    children: [
+      { to: "/analytics", icon: Eye, label: "Overview" },
+      { to: "/processor-analytics", icon: BarChart3, label: "Processor Analytics" },
+    ],
+  },
+  { to: "/payment-methods", icon: CreditCardIcon, label: "Payment Methods" },
+  { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
+  { to: "/portal", icon: User, label: "Customer Portal", visibleTo: ["user"] },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
@@ -105,11 +105,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     if (!userRole) return false;
     const roles = userRole.roles || [];
     // 'user' role items: only show if user has no other roles or explicitly has 'user'
-    if (item.visibleTo.includes('user') && !item.visibleTo.includes('admin') && !item.visibleTo.includes('super_admin')) {
+    if (
+      item.visibleTo.includes("user") &&
+      !item.visibleTo.includes("admin") &&
+      !item.visibleTo.includes("super_admin")
+    ) {
       // Hide from merchants, resellers, agents, developers, admins
-      const nonUserRoles = roles.filter((r: string) => r !== 'user');
+      const nonUserRoles = roles.filter((r: string) => r !== "user");
       if (nonUserRoles.length > 0) return false;
-      return roles.includes('user') || roles.length === 0;
+      return roles.includes("user") || roles.length === 0;
     }
     return item.visibleTo.some((r) => roles.includes(r));
   });
@@ -119,9 +123,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="flex h-16 items-center border-b border-border px-6">
         <div className="flex items-center gap-2.5">
           <img src={everpayIcon} alt="Everpay" className="h-8 w-8 rounded-lg" />
-          <span className="font-heading text-lg font-bold text-foreground tracking-tight">
-            Everpay
-          </span>
+          <span className="font-heading text-lg font-bold text-foreground tracking-tight">Everpay</span>
         </div>
       </div>
 
@@ -133,7 +135,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               <Collapsible key={item.to + item.label} defaultOpen={active}>
                 <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground">
                   <span className="flex items-center gap-3">
-                    <item.icon className={`h-4 w-4 ${active ? 'text-primary' : ''}`} />
+                    <item.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
                     {item.label}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
@@ -142,18 +144,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                   <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-3">
                     {item.children.map((child) => {
                       const childActive = location.pathname === child.to;
-                        return (
+                      return (
                         <NavLink
                           key={child.to + child.label}
                           to={child.to}
                           onClick={onNavigate}
                           className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                             childActive
-                              ? 'bg-sidebar-accent text-foreground'
-                              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
+                              ? "bg-sidebar-accent text-foreground"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
                           }`}
                         >
-                          <child.icon className={`h-3.5 w-3.5 ${childActive ? 'text-primary' : ''}`} />
+                          <child.icon className={`h-3.5 w-3.5 ${childActive ? "text-primary" : ""}`} />
                           {child.label}
                         </NavLink>
                       );
@@ -172,38 +174,41 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               onClick={onNavigate}
               className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-sidebar-accent text-foreground'
-                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
+                  ? "bg-sidebar-accent text-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
               }`}
             >
-              <item.icon className={`h-4 w-4 ${isActive ? 'text-primary' : ''}`} />
+              <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
               {item.label}
             </NavLink>
           );
         })}
-      </nav>
-
-      <div className="border-t border-border px-3 py-4 space-y-1">
         <NavLink
           to="/settings"
           onClick={onNavigate}
           className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-            location.pathname === '/settings'
-              ? 'bg-sidebar-accent text-foreground'
-              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
+            location.pathname === "/settings"
+              ? "bg-sidebar-accent text-foreground"
+              : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
           }`}
         >
-          <Settings className={`h-4 w-4 ${location.pathname === '/settings' ? 'text-primary' : ''}`} />
+          <Settings className={`h-4 w-4 ${location.pathname === "/settings" ? "text-primary" : ""}`} />
           Settings
         </NavLink>
+      </nav>
+
+      <div className="border-t border-border px-3 py-4 space-y-1">
         {user && (
           <div className="px-3 py-2 mb-1">
             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
           </div>
         )}
-        
+
         <button
-          onClick={() => { signOut(); onNavigate?.(); }}
+          onClick={() => {
+            signOut();
+            onNavigate?.();
+          }}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
         >
           <LogOut className="h-4 w-4 text-destructive" />
