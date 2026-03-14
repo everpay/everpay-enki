@@ -156,6 +156,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                           <child.icon className={`h-3.5 w-3.5 ${childActive ? 'text-primary' : ''}`} />
                           {child.label}
                         </NavLink>
+                        <NavLink
+          to="/settings"
+          onClick={onNavigate}
+          className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+            location.pathname === '/settings'
+              ? 'bg-sidebar-accent text-foreground'
+              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
+          }`}
+        >
+          <Settings className={`h-4 w-4 ${location.pathname === '/settings' ? 'text-primary' : ''}`} />
+          Settings
+        </NavLink>
                       );
                     })}
                   </div>
@@ -189,18 +201,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
           </div>
         )}
-        <NavLink
-          to="/settings"
-          onClick={onNavigate}
-          className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-            location.pathname === '/settings'
-              ? 'bg-sidebar-accent text-foreground'
-              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
-          }`}
-        >
-          <Settings className={`h-4 w-4 ${location.pathname === '/settings' ? 'text-primary' : ''}`} />
-          Settings
-        </NavLink>
+        
         <button
           onClick={() => { signOut(); onNavigate?.(); }}
           className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
