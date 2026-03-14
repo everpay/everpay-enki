@@ -142,7 +142,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                   <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-3">
                     {item.children.map((child) => {
                       const childActive = location.pathname === child.to;
-                      return (
+                        return (
                         <NavLink
                           key={child.to + child.label}
                           to={child.to}
@@ -156,18 +156,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                           <child.icon className={`h-3.5 w-3.5 ${childActive ? 'text-primary' : ''}`} />
                           {child.label}
                         </NavLink>
-                        <NavLink
-          to="/settings"
-          onClick={onNavigate}
-          className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-            location.pathname === '/settings'
-              ? 'bg-sidebar-accent text-foreground'
-              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
-          }`}
-        >
-          <Settings className={`h-4 w-4 ${location.pathname === '/settings' ? 'text-primary' : ''}`} />
-          Settings
-        </NavLink>
                       );
                     })}
                   </div>
@@ -196,6 +184,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="border-t border-border px-3 py-4 space-y-1">
+        <NavLink
+          to="/settings"
+          onClick={onNavigate}
+          className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+            location.pathname === '/settings'
+              ? 'bg-sidebar-accent text-foreground'
+              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
+          }`}
+        >
+          <Settings className={`h-4 w-4 ${location.pathname === '/settings' ? 'text-primary' : ''}`} />
+          Settings
+        </NavLink>
         {user && (
           <div className="px-3 py-2 mb-1">
             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
