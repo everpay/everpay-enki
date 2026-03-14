@@ -59,15 +59,6 @@ const navItems: NavItem[] = [
   { to: "/subscriptions", icon: RefreshCw, label: "Subscriptions" },
   { to: "/invoices", icon: FileText, label: "Invoices" },
   {
-    to: "/wallets",
-    icon: Wallet,
-    label: "Treasury",
-    children: [
-      { to: "/wallets", icon: Eye, label: "Overview" },
-      { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
-    ],
-  },
-  {
     to: "/chargebacks",
     icon: Shield,
     label: "Chargebacks",
@@ -85,11 +76,20 @@ const navItems: NavItem[] = [
     children: [
       { to: "/analytics", icon: Eye, label: "Overview" },
       { to: "/processor-analytics", icon: BarChart3, label: "Processor Analytics" },
+      { to: "/payment-methods", icon: CreditCardIcon, label: "Payment Methods" },
     ],
   },
-  { to: "/payment-methods", icon: CreditCardIcon, label: "Payment Methods" },
   { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
   { to: "/portal", icon: User, label: "Customer Portal", visibleTo: ["user"] },
+  {
+    to: "/wallets",
+    icon: Wallet,
+    label: "Treasury",
+    children: [
+      { to: "/wallets", icon: Eye, label: "Overview" },
+      { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
+    ],
+  },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
