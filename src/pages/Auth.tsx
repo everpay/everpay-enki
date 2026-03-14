@@ -14,11 +14,13 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setFormError('');
 
     try {
       if (isLogin) {
@@ -39,7 +41,7 @@ export default function Auth() {
         toast.success('Account created! Check your email to confirm.');
       }
     } catch (error: any) {
-      toast.error(error.message);
+      setFormError(error.message);
     } finally {
       setLoading(false);
     }
@@ -80,6 +82,12 @@ export default function Auth() {
           <p className="text-sm text-muted-foreground mb-6">
             {isLogin ? 'Sign in to your merchant dashboard' : 'Set up your merchant account'}
           </p>
+
+          {formError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive mb-2">
+              {formError}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
