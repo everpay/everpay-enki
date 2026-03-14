@@ -20,6 +20,7 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setFormError('');
 
     try {
       if (isLogin) {
@@ -40,7 +41,7 @@ export default function Auth() {
         toast.success('Account created! Check your email to confirm.');
       }
     } catch (error: any) {
-      toast.error(error.message);
+      setFormError(error.message);
     } finally {
       setLoading(false);
     }
