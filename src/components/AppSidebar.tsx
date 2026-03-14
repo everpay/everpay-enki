@@ -184,6 +184,18 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="border-t border-border px-3 py-4 space-y-1">
+        <NavLink
+          to="/settings"
+          onClick={onNavigate}
+          className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+            location.pathname === '/settings'
+              ? 'bg-sidebar-accent text-foreground'
+              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground'
+          }`}
+        >
+          <Settings className={`h-4 w-4 ${location.pathname === '/settings' ? 'text-primary' : ''}`} />
+          Settings
+        </NavLink>
         {user && (
           <div className="px-3 py-2 mb-1">
             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
