@@ -104,8 +104,12 @@ export default function Settings() {
   const [webhookUrl, setWebhookUrl] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
+  const [showTestPublicKey, setShowTestPublicKey] = useState(false);
+  const [showTestSecretKey, setShowTestSecretKey] = useState(false);
   const [livePublicKey, setLivePublicKey] = useState("");
   const [liveSecretKey, setLiveSecretKey] = useState("");
+  const [testPublicKey, setTestPublicKey] = useState("");
+  const [testSecretKey, setTestSecretKey] = useState("");
 
   // Deactivation
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
