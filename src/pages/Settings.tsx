@@ -156,8 +156,11 @@ export default function Settings() {
       setContactEmail(user?.email || "");
       setWebhookUrl(merchant.webhook_url || "");
       if (merchant.id) {
-        setLivePublicKey(`evp_pk_live_${merchant.id.replace(/-/g, "").slice(0, 24)}`);
+        const idClean = merchant.id.replace(/-/g, "").slice(0, 24);
+        setLivePublicKey(`evp_pk_live_${idClean}`);
         setLiveSecretKey(merchant.api_key_hash || "");
+        setTestPublicKey(`evp_pk_test_${idClean}`);
+        setTestSecretKey(`evp_sk_test_${idClean}`);
       }
     }
   }, [merchant, user]);
