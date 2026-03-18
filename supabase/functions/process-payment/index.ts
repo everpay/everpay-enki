@@ -276,11 +276,7 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
 
   const responseData = await response.json();
 
-  console.log('ShieldHub response:', {
-    status: responseData.status,
-    id: responseData.id,
-    error: responseData.error,
-  });
+  console.log('ShieldHub full response:', JSON.stringify(responseData));
 
   if (!response.ok && !responseData.status) {
     throw new Error(`ShieldHub API failed: ${JSON.stringify(responseData)}`);
