@@ -713,7 +713,10 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
-              <CardDescription>Configure your webhook URL to receive payment notifications.</CardDescription>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Webhook className="h-5 w-5" /> Webhook Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
