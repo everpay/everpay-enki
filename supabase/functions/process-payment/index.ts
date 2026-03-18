@@ -258,13 +258,10 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
     },
   };
 
-  // Determine endpoint — sandbox vs production
-  const isTestMode = clientId.startsWith('test_') || clientId.includes('test');
-  const apiEndpoint = isTestMode
-    ? 'https://sandbox.shieldhubpay.com/api/transaction'
-    : 'https://pgw.shieldhubpay.com/api/transaction';
+  // Always use sandbox endpoint — production merchant is disabled
+  const apiEndpoint = 'https://sandbox.shieldhubpay.com/api/transaction';
 
-  console.log(`ShieldHub ${isTestMode ? 'SANDBOX' : 'PRODUCTION'} → ${apiEndpoint}`);
+  console.log(`ShieldHub SANDBOX → ${apiEndpoint}`);
   console.log('ShieldHub request:', { amount: amountStr, currency: data.currency, ref: transactionRef });
 
   const response = await fetch(apiEndpoint, {
