@@ -146,7 +146,8 @@ serve(async (req) => {
     // Map provider status to our internal status
     const statusMap: Record<string, string> = {
       'Approved': 'completed', 'approved': 'completed', 'success': 'completed', 'completed': 'completed',
-      'Declined': 'failed', 'declined': 'failed', 'Failed': 'failed', 'failed': 'failed',
+      'Declined': 'failed', 'declined': 'failed',
+      'Failed': 'failed', 'failed': 'failed',
       'Redirect': 'pending', 'pending': 'pending', 'processing': 'pending',
     };
     const internalStatus = statusMap[providerResponse.status] || 'pending';
