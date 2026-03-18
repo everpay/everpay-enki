@@ -658,7 +658,61 @@ export default function Settings() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Webhook className="h-5 w-5" /> Webhook Configuration</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" /> Test Keys
+                <Badge variant="outline" className="text-xs bg-warning/10 text-warning border-warning/20">Sandbox</Badge>
+              </CardTitle>
+              <CardDescription>Use these keys for testing in sandbox mode. No real charges are made.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Test Publishable Key</Label>
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Input type={showTestPublicKey ? "text" : "password"} value={testPublicKey || "No key generated"} readOnly className="pr-10 font-mono text-xs" />
+                    <button type="button" onClick={() => setShowTestPublicKey(!showTestPublicKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {showTestPublicKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(testPublicKey); toast.success("Copied"); }}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => {
+                    const newKey = `evp_pk_test_${crypto.randomUUID().replace(/-/g, "")}`;
+                    setTestPublicKey(newKey);
+                    navigator.clipboard.writeText(newKey);
+                    toast.success("New test publishable key generated and copied");
+                  }} className="gap-1.5">
+                    <RefreshCw className="h-3.5 w-3.5" /> Rotate
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Test Secret Key</Label>
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Input type={showTestSecretKey ? "text" : "password"} value={testSecretKey || "No key generated"} readOnly className="pr-10 font-mono text-xs" />
+                    <button type="button" onClick={() => setShowTestSecretKey(!showTestSecretKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {showTestSecretKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(testSecretKey); toast.success("Copied"); }}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => {
+                    const newKey = `evp_sk_test_${crypto.randomUUID().replace(/-/g, "")}`;
+                    setTestSecretKey(newKey);
+                    navigator.clipboard.writeText(newKey);
+                    toast.success("New test secret key generated and copied");
+                  }} className="gap-1.5">
+                    <RefreshCw className="h-3.5 w-3.5" /> Rotate
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Test keys only work in sandbox mode. Switch to live keys for production.</p>
+              </div>
+            </CardContent>
+          </Card>
               <CardDescription>Configure your webhook URL to receive payment notifications.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
