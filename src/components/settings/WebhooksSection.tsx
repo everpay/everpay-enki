@@ -15,11 +15,27 @@ import { toast } from 'sonner';
 import { formatDate } from '@/lib/format';
 
 const WEBHOOK_EVENTS = [
-  'payment.created', 'payment.authorized', 'payment.failed',
+  // Payments
+  'payment.created', 'payment.authorized', 'payment.captured', 'payment.completed',
+  'payment.failed', 'payment.expired', 'payment.canceled',
+  // Refunds
   'refund.created', 'refund.processed', 'refund.failed',
-  'chargeback.created', 'dispute.updated', 'dispute.won', 'dispute.lost',
-  'payout.completed', 'subscription.created', 'subscription.canceled',
-  'invoice.paid', 'invoice.overdue',
+  // Disputes & Chargebacks
+  'chargeback.created', 'chargeback.updated', 'chargeback.won', 'chargeback.lost',
+  'dispute.created', 'dispute.updated', 'dispute.won', 'dispute.lost',
+  // Payouts
+  'payout.created', 'payout.completed', 'payout.failed',
+  // Subscriptions
+  'subscription.created', 'subscription.updated', 'subscription.renewed',
+  'subscription.canceled', 'subscription.expired', 'subscription.payment_failed',
+  // Invoices
+  'invoice.created', 'invoice.sent', 'invoice.paid', 'invoice.overdue', 'invoice.voided',
+  // Customers
+  'customer.created', 'customer.updated', 'customer.deleted',
+  // Payment Methods
+  'payment_method.attached', 'payment_method.detached', 'payment_method.updated',
+  // Payment Links
+  'payment_link.completed', 'payment_link.failed', 'payment_link.expired',
 ];
 
 function useWebhookEndpoints() {
