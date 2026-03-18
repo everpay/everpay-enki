@@ -731,15 +731,23 @@ export default function Settings() {
               <div className="rounded-lg border border-border bg-muted/50 p-4">
                 <h4 className="font-medium text-sm mb-2">Webhook Events</h4>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline">payment_link.completed</Badge>
-                  <Badge variant="outline">payment_link.failed</Badge>
-                  <Badge variant="outline">payment_link.expired</Badge>
-                  <Badge variant="outline">moneto.payment.succeeded</Badge>
-                  <Badge variant="outline">moneto.payout.completed</Badge>
+                  <Badge variant="outline">payment.created</Badge>
+                  <Badge variant="outline">payment.completed</Badge>
+                  <Badge variant="outline">payment.failed</Badge>
+                  <Badge variant="outline">refund.created</Badge>
+                  <Badge variant="outline">refund.processed</Badge>
+                  <Badge variant="outline">subscription.created</Badge>
+                  <Badge variant="outline">subscription.renewed</Badge>
+                  <Badge variant="outline">subscription.canceled</Badge>
+                  <Badge variant="outline">customer.created</Badge>
+                  <Badge variant="outline">customer.updated</Badge>
                   <Badge variant="outline">invoice.paid</Badge>
                   <Badge variant="outline">invoice.overdue</Badge>
                   <Badge variant="outline">dispute.created</Badge>
-                  <Badge variant="outline">subscription.renewed</Badge>
+                  <Badge variant="outline">payout.completed</Badge>
+                  <Badge variant="outline">payment_link.completed</Badge>
+                  <Badge variant="outline">payment_link.failed</Badge>
+                  <Badge variant="outline">payment_method.attached</Badge>
                 </div>
               </div>
             </CardContent>
