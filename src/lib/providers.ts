@@ -85,7 +85,9 @@ const countryProviderMap: Record<string, Provider> = {
   AR: 'paygate10',
   // OFA: Asia-Pacific
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
-  JP: 'ofa', KR: 'ofa', BD: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
+  JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
+  // Bangladesh: MakaPay
+  BD: 'makapay',
   // LATAM shared: PG10 primary, FacilitaPay fallback
   BR: 'paygate10', MX: 'paygate10', CO: 'facilitapay',
 };
