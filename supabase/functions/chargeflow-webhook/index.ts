@@ -11,6 +11,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify webhook secret token
+  const webhookSecret = Deno.env.get('CHARGEFLOW_WEBHOOK_SECRET');
+  if (webhookSecret) {
+    const signature = req.headers.get('x-chargeflow-signature') || req.headers.get('x-webhook-secret');
+    const url = new URL(req.url);
+    const token = url.searchParams.get('token') || signature;
+    if (token !== webhookSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;

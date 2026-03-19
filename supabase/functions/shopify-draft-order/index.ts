@@ -58,14 +58,24 @@ serve(async (req) => {
       throw new Error('store_id and line_items are required');
     }
 
-    // Fetch Shopify store credentials
+    // Get the user's merchant to scope the store lookup
+    const { data: merchant, error: merchantError } = await supabase
+      .from('merchants')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (merchantError || !merchant) throw new Error('Merchant not found');
+
+    // Fetch Shopify store credentials — scoped to the authenticated user's merchant
     const { data: store, error: storeError } = await supabase
       .from('shopify_stores')
       .select('*')
       .eq('id', store_id)
+      .eq('merchant_id', merchant.id)
       .single();
 
-    if (storeError || !store) throw new Error('Shopify store not found');
+    if (storeError || !store) throw new Error('Store not found or unauthorized');
 
     const shopDomain = store.shop_domain;
     const accessToken = store.access_token;
