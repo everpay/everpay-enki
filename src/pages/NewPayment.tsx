@@ -89,7 +89,7 @@ export default function NewPayment() {
   const queryClient = useQueryClient();
   const { deviceInfo } = useDeviceAnalytics();
   const { isChecking: isFraudChecking, lastResult: fraudResult, checkFraud } = useFraudDetection();
-  const selectedProvider = resolveProvider(currency);
+  const selectedProvider = resolveProvider(currency, billingCountry);
   const idempotencyKey = `idk_${Date.now()}`;
 
   const { isPolling, currentStatus: pollingStatus, startPolling } = usePaymentPolling({
