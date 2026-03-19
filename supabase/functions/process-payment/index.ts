@@ -9,7 +9,7 @@ const corsHeaders = {
 interface PaymentRequest {
   amount: number;
   currency: string;
-  paymentMethod: 'card' | 'pix' | 'boleto' | 'apple_pay' | 'open_banking' | 'upi' | 'bank_transfer' | 'spei' | 'wallet' | 'p2p';
+  paymentMethod: 'card' | 'pix' | 'boleto' | 'apple_pay' | 'open_banking' | 'upi' | 'bank_transfer' | 'spei' | 'wallet' | 'p2p' | 'sslcommerz' | 'surjopay';
   customerEmail?: string;
   description?: string;
   idempotencyKey?: string;
