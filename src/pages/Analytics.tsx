@@ -25,6 +25,7 @@ import {
   Globe, ShieldAlert, Layers, FileText, FileDown, Fingerprint,
 } from 'lucide-react';
 import { FraudAnalytics } from '@/components/FraudAnalytics';
+import { MLFraudInsights } from '@/components/MLFraudInsights';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
