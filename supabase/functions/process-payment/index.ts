@@ -176,6 +176,12 @@ serve(async (req) => {
       case 'ofa':
         providerResponse = await processOFAPayment(paymentData);
         break;
+      case 'facilitapay':
+        providerResponse = await processFacilitaPayPayment(paymentData);
+        break;
+      case 'moneto':
+        providerResponse = await processMonetoPayment(paymentData);
+        break;
       default:
         providerResponse = await processShieldHubPayment(paymentData, req);
         break;
@@ -539,6 +545,70 @@ function generateMondoSandboxResponse(data: PaymentRequest) {
     amount: data.amount.toString(), currency: data.currency,
     redirect_url: null, message: 'Sandbox: Payment approved',
     sandbox: true, test_mode: true,
+  };
+}
+
+// ─── FacilitaPay — Simulation mode (Colombia/LATAM) ───
+async function processFacilitaPayPayment(data: PaymentRequest) {
+  const transactionRef = `fp_${crypto.randomUUID().slice(0, 12)}`;
+  const country = data.billingDetails?.country || 'CO';
+
+  const countryPayMethods: Record<string, string> = {
+    CO: 'PSE', BR: 'PIX', MX: 'SPEI', AR: 'Bank Transfer', CL: 'Bank Transfer',
+  };
+  const payMethod = countryPayMethods[country] || 'Bank Transfer';
+
+  console.log(`FacilitaPay: Processing ${data.amount} ${data.currency} for ${country} via ${payMethod}`);
+
+  const rand = Math.random();
+  let status: string, statusCode: string, message: string;
+  if (rand < 0.80) {
+    status = 'Approved'; statusCode = '000'; message = 'Transaction approved';
+  } else if (rand < 0.95) {
+    status = 'Declined'; statusCode = '050'; message = 'Transaction declined';
+  } else {
+    status = 'pending'; statusCode = '001'; message = 'Transaction processing';
+  }
+
+  return {
+    id: Math.floor(10000 + Math.random() * 90000),
+    transaction_reference: transactionRef,
+    orderno: `FP-${Date.now()}`,
+    status, payMethod, country,
+    currency: data.currency,
+    amount: data.amount.toFixed(2),
+    statusCode, message,
+    timestamp: new Date().toISOString(),
+    test_mode: true, provider: 'facilitapay',
+  };
+}
+
+// ─── Moneto — Simulation mode (Canada) ───
+async function processMonetoPayment(data: PaymentRequest) {
+  const transactionRef = `moneto_${crypto.randomUUID().slice(0, 12)}`;
+
+  console.log(`Moneto: Processing ${data.amount} ${data.currency} for CA`);
+
+  const rand = Math.random();
+  let status: string, statusCode: string, message: string;
+  if (rand < 0.85) {
+    status = 'Approved'; statusCode = '000'; message = 'Transaction approved';
+  } else if (rand < 0.95) {
+    status = 'Declined'; statusCode = '051'; message = 'Insufficient funds';
+  } else {
+    status = 'pending'; statusCode = '001'; message = 'Transaction processing';
+  }
+
+  return {
+    id: Math.floor(10000 + Math.random() * 90000),
+    transaction_reference: transactionRef,
+    orderno: `MNT-${Date.now()}`,
+    status, country: 'CA',
+    currency: data.currency,
+    amount: data.amount.toFixed(2),
+    statusCode, message,
+    timestamp: new Date().toISOString(),
+    test_mode: true, provider: 'moneto',
   };
 }
 

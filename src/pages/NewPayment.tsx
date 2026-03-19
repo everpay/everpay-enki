@@ -64,7 +64,7 @@ export default function NewPayment() {
   const [currency, setCurrency] = useState<Currency>(defaultCurrency);
   const [email, setEmail] = useState('');
   const [description, setDescription] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix' | 'boleto' | 'apple_pay' | 'open_banking'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix' | 'boleto' | 'apple_pay' | 'open_banking' | 'upi' | 'bank_transfer' | 'spei' | 'wallet' | 'p2p'>('card');
   const [cardNumber, setCardNumber] = useState('');
   const [expMonth, setExpMonth] = useState('');
   const [expYear, setExpYear] = useState('');
@@ -315,6 +315,11 @@ export default function NewPayment() {
                 <SelectItem value="boleto">📄 Boleto</SelectItem>
                 <SelectItem value="apple_pay">🍎 Apple Pay</SelectItem>
                 <SelectItem value="open_banking">🏦 Open Banking</SelectItem>
+                <SelectItem value="upi">🇮🇳 UPI</SelectItem>
+                <SelectItem value="bank_transfer">🏦 Bank Transfer</SelectItem>
+                <SelectItem value="spei">🇲🇽 SPEI</SelectItem>
+                <SelectItem value="wallet">👛 Wallet</SelectItem>
+                <SelectItem value="p2p">🔄 P2P</SelectItem>
               </SelectContent>
             </Select>
           </div>
