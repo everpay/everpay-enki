@@ -930,3 +930,161 @@ function DevelopersSection() {
     </Card>
   );
 }
+
+// ─── Surcharge Settings Section ───
+function SurchargeSettingsSection({ merchantId }: { merchantId?: string }) {
+  const queryClient = useQueryClient();
+  const [enabled, setEnabled] = useState(false);
+  const [percentageFee, setPercentageFee] = useState("0");
+  const [fixedFee, setFixedFee] = useState("0");
+  const [maxFeeCap, setMaxFeeCap] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["surcharge-settings", merchantId],
+    queryFn: async () => {
+      if (!merchantId) return null;
+      const { data, error } = await supabase
+        .from("surcharge_settings")
+        .select("*")
+        .eq("merchant_id", merchantId)
+        .single();
+      if (error && error.code !== "PGRST116") throw error;
+      return data;
+    },
+    enabled: !!merchantId,
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setEnabled(settings.enabled || false);
+      setPercentageFee(String(settings.percentage_fee || 0));
+      setFixedFee(String(settings.fixed_fee || 0));
+      setMaxFeeCap(settings.max_fee_cap ? String(settings.max_fee_cap) : "");
+    }
+  }, [settings]);
+
+  const handleSave = async () => {
+    if (!merchantId) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        merchant_id: merchantId,
+        enabled,
+        percentage_fee: parseFloat(percentageFee) || 0,
+        fixed_fee: parseFloat(fixedFee) || 0,
+        max_fee_cap: maxFeeCap ? parseFloat(maxFeeCap) : null,
+      };
+
+      if (settings?.id) {
+        const { error } = await supabase
+          .from("surcharge_settings")
+          .update(payload)
+          .eq("id", settings.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("surcharge_settings")
+          .insert(payload);
+        if (error) throw error;
+      }
+      toast.success("Surcharge settings saved");
+      queryClient.invalidateQueries({ queryKey: ["surcharge-settings"] });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save surcharge settings");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) return <div className="text-sm text-muted-foreground">Loading...</div>;
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Hash className="h-5 w-5" /> Surcharging
+          </CardTitle>
+          <CardDescription>
+            Pass processing fees to your customers. The surcharge is calculated and added to the total at checkout.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="flex items-center justify-between rounded-lg border border-border p-4">
+            <div>
+              <p className="text-sm font-medium text-foreground">Enable Surcharging</p>
+              <p className="text-xs text-muted-foreground">Add a fee to customer transactions</p>
+            </div>
+            <Button
+              variant={enabled ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEnabled(!enabled)}
+            >
+              {enabled ? "Enabled" : "Disabled"}
+            </Button>
+          </div>
+
+          {enabled && (
+            <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Percentage Fee (%)</Label>
+                  <Input
+                    type="number" step="0.01" min="0" max="10"
+                    value={percentageFee}
+                    onChange={(e) => setPercentageFee(e.target.value)}
+                    placeholder="2.9"
+                    className="bg-background border-border"
+                  />
+                  <p className="text-xs text-muted-foreground">e.g. 2.9 = 2.9% of amount</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Fixed Fee ($)</Label>
+                  <Input
+                    type="number" step="0.01" min="0"
+                    value={fixedFee}
+                    onChange={(e) => setFixedFee(e.target.value)}
+                    placeholder="0.30"
+                    className="bg-background border-border"
+                  />
+                  <p className="text-xs text-muted-foreground">Flat fee per transaction</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Max Fee Cap ($)</Label>
+                <Input
+                  type="number" step="0.01" min="0"
+                  value={maxFeeCap}
+                  onChange={(e) => setMaxFeeCap(e.target.value)}
+                  placeholder="Leave blank for no cap"
+                  className="bg-background border-border"
+                />
+                <p className="text-xs text-muted-foreground">Maximum surcharge amount per transaction (optional)</p>
+              </div>
+
+              {parseFloat(percentageFee) > 0 || parseFloat(fixedFee) > 0 ? (
+                <div className="rounded-md bg-primary/5 border border-primary/20 p-3">
+                  <p className="text-sm font-medium text-foreground">Preview</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    A $100.00 transaction would have a surcharge of{" "}
+                    <span className="font-mono font-medium text-foreground">
+                      ${((100 * (parseFloat(percentageFee) || 0) / 100) + (parseFloat(fixedFee) || 0)).toFixed(2)}
+                    </span>
+                    {" "}→ Total: <span className="font-mono font-medium text-foreground">
+                      ${(100 + (100 * (parseFloat(percentageFee) || 0) / 100) + (parseFloat(fixedFee) || 0)).toFixed(2)}
+                    </span>
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          <Button onClick={handleSave} disabled={isSaving}>
+            <Save className="h-4 w-4 mr-2" /> {isSaving ? "Saving..." : "Save Surcharge Settings"}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
