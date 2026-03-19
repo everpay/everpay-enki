@@ -78,6 +78,7 @@ export default function NewPayment() {
   const [billingState, setBillingState] = useState('');
   const [billingPostalCode, setBillingPostalCode] = useState('');
   const [billingCountry, setBillingCountry] = useState('US');
+  const selectedCountryConfig = getConfigForCountry(billingCountry);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vgsToken, setVgsToken] = useState('');
   const [cardEntryMode, setCardEntryMode] = useState<'standard' | 'vgs'>('standard');
