@@ -55,8 +55,15 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     name: 'ofa',
     displayName: 'OFA Pay',
     supportedCurrencies: ['USD', 'BRL', 'MXN'],
-    regions: ['CN', 'VN', 'TH', 'ID', 'MY', 'PH', 'JP', 'KR', 'BD', 'IN', 'BR', 'MX', 'HK', 'AU'],
+    regions: ['CN', 'VN', 'TH', 'ID', 'MY', 'PH', 'JP', 'KR', 'HK', 'AU'],
     methods: ['P2P', 'P2C', 'P2PN', 'P2PO', 'QP', 'CRYPTO', 'Bank Transfer'],
+  },
+  makapay: {
+    name: 'makapay',
+    displayName: 'MakaPay',
+    supportedCurrencies: ['BDT'],
+    regions: ['BD'],
+    methods: ['SSLCommerz', 'SurjoPay', 'Mobile Banking'],
   },
 };
 
@@ -78,7 +85,9 @@ const countryProviderMap: Record<string, Provider> = {
   AR: 'paygate10',
   // OFA: Asia-Pacific
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
-  JP: 'ofa', KR: 'ofa', BD: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
+  JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
+  // Bangladesh: MakaPay
+  BD: 'makapay',
   // LATAM shared: PG10 primary, FacilitaPay fallback
   BR: 'paygate10', MX: 'paygate10', CO: 'facilitapay',
 };
@@ -106,7 +115,7 @@ const currencyProviderMap: Record<string, Provider> = {
   PHP: 'ofa',
   JPY: 'ofa',
   KRW: 'ofa',
-  BDT: 'ofa',
+  BDT: 'makapay',
   HKD: 'ofa',
   AUD: 'ofa',
 };
@@ -135,6 +144,7 @@ export function getProviderColor(provider: Provider): string {
     case 'moneto': return 'hsl(var(--chart-5))';
     case 'paygate10': return 'hsl(25 95% 53%)';
     case 'ofa': return 'hsl(340 75% 55%)';
+    case 'makapay': return 'hsl(160 70% 45%)';
     default: return 'hsl(var(--chart-1))';
   }
 }

@@ -8,6 +8,7 @@ const currencyFormats: Record<Currency, { locale: string; code: string }> = {
   MXN: { locale: 'es-MX', code: 'MXN' },
   COP: { locale: 'es-CO', code: 'COP' },
   CAD: { locale: 'en-CA', code: 'CAD' },
+  BDT: { locale: 'bn-BD', code: 'BDT' },
 };
 
 export function formatCurrency(amount: number, currency: Currency): string {
