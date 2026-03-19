@@ -699,6 +699,33 @@ export type Database = {
           },
         ]
       }
+      fx_rates: {
+        Row: {
+          base_currency: string
+          created_at: string
+          id: string
+          quote_currency: string
+          rate: number
+          source: string | null
+        }
+        Insert: {
+          base_currency: string
+          created_at?: string
+          id?: string
+          quote_currency: string
+          rate: number
+          source?: string | null
+        }
+        Update: {
+          base_currency?: string
+          created_at?: string
+          id?: string
+          quote_currency?: string
+          rate?: number
+          source?: string | null
+        }
+        Relationships: []
+      }
       idempotency_keys: {
         Row: {
           created_at: string
@@ -1170,6 +1197,53 @@ export type Database = {
           },
         ]
       }
+      payment_intents: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          merchant_id: string
+          metadata: Json | null
+          payment_method: string | null
+          processor_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          merchant_id: string
+          metadata?: Json | null
+          payment_method?: string | null
+          processor_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          merchant_id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          processor_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_intents_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_methods: {
         Row: {
           card_brand: string | null
@@ -1430,6 +1504,53 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliation_reports: {
+        Row: {
+          created_at: string
+          currency: string
+          difference: number | null
+          id: string
+          internal_total: number | null
+          merchant_id: string
+          metadata: Json | null
+          processor_total: number | null
+          report_date: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          difference?: number | null
+          id?: string
+          internal_total?: number | null
+          merchant_id: string
+          metadata?: Json | null
+          processor_total?: number | null
+          report_date?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          difference?: number | null
+          id?: string
+          internal_total?: number | null
+          merchant_id?: string
+          metadata?: Json | null
+          processor_total?: number | null
+          report_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_reports_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
         ]
@@ -2342,6 +2463,53 @@ export type Database = {
           payload?: Json | null
         }
         Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          attempt_number: number | null
+          created_at: string
+          delivered_at: string | null
+          event_type: string
+          id: string
+          merchant_id: string
+          payload: Json | null
+          response_body: string | null
+          status_code: number | null
+          url: string
+        }
+        Insert: {
+          attempt_number?: number | null
+          created_at?: string
+          delivered_at?: string | null
+          event_type: string
+          id?: string
+          merchant_id: string
+          payload?: Json | null
+          response_body?: string | null
+          status_code?: number | null
+          url: string
+        }
+        Update: {
+          attempt_number?: number | null
+          created_at?: string
+          delivered_at?: string | null
+          event_type?: string
+          id?: string
+          merchant_id?: string
+          payload?: Json | null
+          response_body?: string | null
+          status_code?: number | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
