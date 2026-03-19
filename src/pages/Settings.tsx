@@ -37,6 +37,7 @@ import {
   Users,
   UserPlus,
   Shield,
+  DollarSign,
 } from "lucide-react";
 import { useProviderEvents } from "@/hooks/useProviderEvents";
 import { formatDate } from "@/lib/format";
