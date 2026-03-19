@@ -617,6 +617,132 @@ async function processMonetoPayment(data: PaymentRequest) {
   };
 }
 
+// ─── MakaPay — Bangladesh (BDT) ───
+async function processMakapayPayment(data: PaymentRequest) {
+  const apiKey = Deno.env.get('MAKAPAY_API_KEY');
+  const apiSecret = Deno.env.get('MAKAPAY_API_SECRET');
+  const baseUrl = 'https://makapp.xyz/api/v1';
+
+  if (!apiKey || !apiSecret) {
+    console.log('MakaPay: No credentials, using simulation');
+    return simulateMakapayPayment(data);
+  }
+
+  try {
+    // 1. Fetch available payment methods
+    const methodsRes = await fetch(`${baseUrl}/payment-methods`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-API-KEY': apiKey,
+        'X-API-SECRET': apiSecret,
+        'X-Request-Id': `ep_${crypto.randomUUID().slice(0, 12)}`,
+      },
+    });
+    const methodsData = await methodsRes.json();
+    console.log('MakaPay methods:', JSON.stringify(methodsData));
+
+    // Pick first active method (sslcommerz preferred)
+    const methods = methodsData?.data || [];
+    const selectedMethod = methods.find((m: any) => m.code === 'sslcommerz' && m.status === 'active')
+      || methods.find((m: any) => m.status === 'active')
+      || { id: 3, code: 'sslcommerz' };
+
+    // 2. Initiate payment
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const orderRef = `EP-${Date.now()}`;
+
+    const initiateBody = {
+      payment_method_id: String(selectedMethod.id),
+      provider_code: selectedMethod.code,
+      amount: Math.round(data.amount),
+      currency: 'BDT',
+      reference: orderRef,
+      customer_email: data.customerEmail || 'customer@example.com',
+      customer_phone: data.customerDetails?.phone || '017XXXXXXXX',
+      request_payload: {
+        product_name: data.description || `Payment ${orderRef}`,
+        return_url: 'https://everpay-os.lovable.app/transactions?status=completed',
+      },
+      process_now: true,
+    };
+
+    const initiateRes = await fetch(`${baseUrl}/payments/initiate`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-API-KEY': apiKey,
+        'X-API-SECRET': apiSecret,
+        'X-Request-Id': `ep_${crypto.randomUUID().slice(0, 12)}`,
+      },
+      body: JSON.stringify(initiateBody),
+    });
+    const initiateData = await initiateRes.json();
+    console.log('MakaPay initiate:', JSON.stringify(initiateData));
+
+    if (!initiateData.success) {
+      return {
+        id: Math.floor(10000 + Math.random() * 90000),
+        transaction_reference: orderRef,
+        status: 'Failed',
+        message: initiateData.message || 'Payment initiation failed',
+        errors: initiateData.errors,
+        currency: 'BDT',
+        amount: data.amount.toFixed(2),
+        timestamp: new Date().toISOString(),
+        provider: 'makapay',
+      };
+    }
+
+    const txn = initiateData.data?.transaction || {};
+    return {
+      id: txn.trx_id || Math.floor(10000 + Math.random() * 90000),
+      transaction_reference: orderRef,
+      trx_id: txn.trx_id,
+      status: txn.status === 'processing' ? 'pending' : (txn.status === 'success' ? 'Approved' : txn.status),
+      checkout_url: initiateData.data?.checkout_url,
+      redirect_url: initiateData.data?.checkout_url,
+      provider_transaction_id: initiateData.data?.provider_transaction_id,
+      provider_code: selectedMethod.code,
+      currency: 'BDT',
+      amount: data.amount.toFixed(2),
+      reference: orderRef,
+      timestamp: new Date().toISOString(),
+      provider: 'makapay',
+    };
+  } catch (error) {
+    console.error('MakaPay API error:', error);
+    return simulateMakapayPayment(data);
+  }
+}
+
+function simulateMakapayPayment(data: PaymentRequest) {
+  const transactionRef = `maka_${crypto.randomUUID().slice(0, 12)}`;
+  const rand = Math.random();
+  let status: string, message: string;
+  if (rand < 0.80) {
+    status = 'Approved'; message = 'Transaction approved';
+  } else if (rand < 0.95) {
+    status = 'Declined'; message = 'Transaction declined';
+  } else {
+    status = 'pending'; message = 'Transaction processing';
+  }
+
+  return {
+    id: Math.floor(10000 + Math.random() * 90000),
+    transaction_reference: transactionRef,
+    trx_id: `TXN-SIM-${Date.now()}`,
+    status, message,
+    provider_code: 'sslcommerz',
+    currency: 'BDT',
+    amount: data.amount.toFixed(2),
+    timestamp: new Date().toISOString(),
+    test_mode: true,
+    provider: 'makapay',
+  };
+}
+
 function getFxRate(currency: string): number {
   const rates: Record<string, number> = {
     BRL: 0.20, MXN: 0.058, COP: 0.00025, ARS: 0.0011,
