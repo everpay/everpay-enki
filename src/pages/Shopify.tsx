@@ -192,8 +192,8 @@ export default function Shopify() {
                           <AlertCircle className="h-3 w-3" /> Simulation
                         </Badge>
                       )}
-                      <Badge variant={store.active ? 'default' : 'outline'}>
-                        {store.active ? 'Active' : 'Inactive'}
+                      <Badge variant={store.access_token ? 'default' : 'outline'}>
+                        {store.access_token ? 'Active' : 'Pending'}
                       </Badge>
                     </div>
                   </div>
