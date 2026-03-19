@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Currency } from '@/lib/types';
 import { resolveProvider } from '@/lib/providers';
 import { Badge } from '@/components/ui/badge';
+import { CountrySelect, COUNTRIES } from '@/components/CountrySelect';
+import { COUNTRY_PAYMENT_CONFIGS, getConfigForCountry } from '@/lib/country-routing';
 import { CreditCard, ArrowRight, Loader2, Globe, MapPin, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
