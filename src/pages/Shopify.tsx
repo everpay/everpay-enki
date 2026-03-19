@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle, Package } from 'lucide-react';
-import AppLayout from '@/components/AppLayout';
+import { AppLayout } from '@/components/AppLayout';
 
 interface ShopifyStore {
   id: string;
