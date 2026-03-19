@@ -107,7 +107,7 @@ export default function Shopify() {
           <Card>
             <CardContent className="pt-6 text-center">
               <ShoppingCart className="h-8 w-8 mx-auto text-primary mb-2" />
-              <p className="text-2xl font-bold">{stores.filter(s => s.active).length}</p>
+              <p className="text-2xl font-bold">{stores.filter(s => s.access_token).length}</p>
               <p className="text-sm text-muted-foreground">Active Stores</p>
             </CardContent>
           </Card>
