@@ -21,6 +21,7 @@ export const COUNTRY_PAYMENT_CONFIGS: CountryPaymentConfig[] = [
   { code: 'MX', name: 'Mexico', flag: '🇲🇽', currency: 'MXN', currencySymbol: '$', provider: 'paygate10', paymentMethods: ['SPEI', 'Cash', 'Bank Transfer'] },
   { code: 'ZA', name: 'South Africa', flag: '🇿🇦', currency: 'ZAR', currencySymbol: 'R', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Cash'] },
   { code: 'KE', name: 'Kenya', flag: '🇰🇪', currency: 'KES', currencySymbol: 'KSh', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Wallet'] },
+  { code: 'PK', name: 'Pakistan', flag: '🇵🇰', currency: 'PKR', currencySymbol: '₨', provider: 'paygate10', paymentMethods: ['JazzCash', 'EasyPaisa', 'Bank Transfer'] },
   
   // OFA countries
   { code: 'CN', name: 'China', flag: '🇨🇳', currency: 'CNY', currencySymbol: '¥', provider: 'ofa', paymentMethods: ['P2P', 'P2C', 'QP', 'Bank Transfer'] },

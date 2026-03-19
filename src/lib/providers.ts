@@ -107,6 +107,7 @@ const currencyProviderMap: Record<string, Provider> = {
   ZAR: 'paygate10',
   KES: 'paygate10',
   ARS: 'paygate10',
+  PKR: 'paygate10',
   CNY: 'ofa',
   VND: 'ofa',
   THB: 'ofa',
