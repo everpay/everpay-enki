@@ -47,9 +47,9 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
   paygate10: {
     name: 'paygate10',
     displayName: 'Paygate10',
-    supportedCurrencies: ['USD', 'BRL', 'MXN', 'COP'],
-    regions: ['IN', 'BR', 'AR', 'NG', 'EG', 'MX', 'ZA', 'KE'],
-    methods: ['UPI', 'NB', 'PIX', 'LBT', 'Bank Deposit', 'SPEI', 'Cash', 'Bank Transfer', 'Wallet', 'UPIQRCode'],
+    supportedCurrencies: ['USD', 'BRL', 'MXN', 'COP', 'PKR'],
+    regions: ['IN', 'PK', 'BR', 'AR', 'NG', 'EG', 'MX', 'ZA', 'KE'],
+    methods: ['UPI', 'NB', 'PIX', 'LBT', 'Bank Deposit', 'SPEI', 'Cash', 'Bank Transfer', 'Wallet', 'UPIQRCode', 'JazzCash', 'EasyPaisa'],
   },
   ofa: {
     name: 'ofa',
