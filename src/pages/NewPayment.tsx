@@ -64,7 +64,7 @@ export default function NewPayment() {
   const [currency, setCurrency] = useState<Currency>(defaultCurrency);
   const [email, setEmail] = useState('');
   const [description, setDescription] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix' | 'boleto' | 'apple_pay' | 'open_banking'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix' | 'boleto' | 'apple_pay' | 'open_banking' | 'upi' | 'bank_transfer' | 'spei' | 'wallet' | 'p2p'>('card');
   const [cardNumber, setCardNumber] = useState('');
   const [expMonth, setExpMonth] = useState('');
   const [expYear, setExpYear] = useState('');
