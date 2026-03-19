@@ -104,6 +104,7 @@ const AppRoutes = () => {
     
     <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsPage /></ProtectedRoute>} />
     <Route path="/bigcommerce" element={<ProtectedRoute><BigCommerce /></ProtectedRoute>} />
+    <Route path="/shopify" element={<ProtectedRoute><Shopify /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
