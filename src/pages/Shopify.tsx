@@ -15,7 +15,6 @@ interface ShopifyStore {
   id: string;
   shop_domain: string | null;
   access_token: string | null;
-  active: boolean | null;
   merchant_id: string | null;
   installed_at: string | null;
   scope: string | null;
