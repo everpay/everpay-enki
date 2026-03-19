@@ -63,7 +63,7 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     displayName: 'MakaPay',
     supportedCurrencies: ['BDT'],
     regions: ['BD'],
-    methods: ['SSLCommerz', 'SurjoPay', 'Mobile Banking'],
+    methods: ['SSLCommerz', 'SurjoPay', 'bKash', 'Nagad'],
   },
 };
 
