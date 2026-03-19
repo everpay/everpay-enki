@@ -56,7 +56,8 @@ const countryProviderMap: Record<string, string> = {
   IN: 'paygate10', NG: 'paygate10', EG: 'paygate10', ZA: 'paygate10', KE: 'paygate10',
   AR: 'paygate10', BR: 'paygate10', MX: 'paygate10',
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
-  JP: 'ofa', KR: 'ofa', BD: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
+  JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
+  BD: 'makapay',
   CO: 'facilitapay',
 };
 
