@@ -232,7 +232,7 @@ export default function Analytics() {
       </div>
       <h2>Transactions</h2>
       <table><tr><th>Date</th><th>Amount</th><th>Currency</th><th>Status</th><th>Provider</th></tr>
-      ${filteredTransactions.slice(0, 100).map(tx => `<tr><td>${format(new Date(tx.created_at), 'PP p')}</td><td>${tx.amount}</td><td>${tx.currency}</td><td>${tx.status}</td><td>${tx.provider}</td></tr>`).join('')}
+      ${filteredTransactions.slice(0, 100).map(tx => { const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); return `<tr><td>${esc(format(new Date(tx.created_at), 'PP p'))}</td><td>${esc(String(tx.amount))}</td><td>${esc(tx.currency)}</td><td>${esc(tx.status)}</td><td>${esc(tx.provider)}</td></tr>`; }).join('')}
       </table></body></html>`;
     const win = window.open('', '_blank');
     if (win) { win.document.write(reportHtml); win.document.close(); setTimeout(() => win.print(), 500); }

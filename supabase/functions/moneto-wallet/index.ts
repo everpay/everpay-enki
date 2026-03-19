@@ -9,8 +9,11 @@ const corsHeaders = {
 // Moneto API Configuration
 const MONETO_BASE_URL = Deno.env.get('MONETO_BASE_URL') || 'https://demo.genwin.app';
 const MONETO_PAYMENT_URL = Deno.env.get('MONETO_PAYMENT_URL') || 'https://pay-demo.genwin.net';
-const MONETO_MERCHANT_ID = Deno.env.get('MONETO_MERCHANT_ID') || '8d40edb9-0a8e-5496-aa57-3d4672bf0cba';
-const MONETO_MERCHANT_SECRET = Deno.env.get('MONETO_MERCHANT_SECRET') || 'sk_sandbox_ebQbSqK300GiCUxr5aPbC4LWDZ8Q096eTHhdQKzMRS5Z4pOx5jIY8HG2sby7N4ECpFiqYlxYBiNe073rUwSLf6HbJnOrkKNI';
+const MONETO_MERCHANT_ID = Deno.env.get('MONETO_MERCHANT_ID');
+const MONETO_MERCHANT_SECRET = Deno.env.get('MONETO_MERCHANT_SECRET');
+if (!MONETO_MERCHANT_ID || !MONETO_MERCHANT_SECRET) {
+  throw new Error('MONETO_MERCHANT_ID and MONETO_MERCHANT_SECRET must be configured');
+}
 
 interface PaymentRequest {
   amount: number;
