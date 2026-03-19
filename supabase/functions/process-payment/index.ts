@@ -184,6 +184,9 @@ serve(async (req) => {
       case 'moneto':
         providerResponse = await processMonetoPayment(paymentData);
         break;
+      case 'makapay':
+        providerResponse = await processMakapayPayment(paymentData);
+        break;
       default:
         providerResponse = await processShieldHubPayment(paymentData, req);
         break;
