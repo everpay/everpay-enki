@@ -288,6 +288,7 @@ export default function Settings() {
     { key: "bank-accounts", label: "Bank Accounts", icon: Building2 },
     { key: "verification", label: "Business Verification", icon: Shield },
     { key: "webhooks", label: "Webhooks", icon: Webhook },
+    { key: "surcharging", label: "Surcharging", icon: Hash },
     { key: "team", label: "Team", icon: Users },
     { key: "developers", label: "Developers & Activity", icon: Code },
     { key: "processor-routing" as any, label: "Processor Routing", icon: Globe, link: "/processor-transparency" },

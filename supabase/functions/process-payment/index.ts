@@ -176,6 +176,12 @@ serve(async (req) => {
       case 'ofa':
         providerResponse = await processOFAPayment(paymentData);
         break;
+      case 'facilitapay':
+        providerResponse = await processFacilitaPayPayment(paymentData);
+        break;
+      case 'moneto':
+        providerResponse = await processMonetoPayment(paymentData);
+        break;
       default:
         providerResponse = await processShieldHubPayment(paymentData, req);
         break;
