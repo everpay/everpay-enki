@@ -11,17 +11,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Verify webhook secret token
+  // Verify webhook secret token (mandatory)
   const webhookSecret = Deno.env.get('CHARGEFLOW_WEBHOOK_SECRET');
-  if (webhookSecret) {
-    const signature = req.headers.get('x-chargeflow-signature') || req.headers.get('x-webhook-secret');
-    const url = new URL(req.url);
-    const token = url.searchParams.get('token') || signature;
-    if (token !== webhookSecret) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+  if (!webhookSecret) {
+    console.error('CHARGEFLOW_WEBHOOK_SECRET is not configured');
+    return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+  const token = req.headers.get('x-chargeflow-signature') || req.headers.get('x-webhook-secret');
+  if (token !== webhookSecret) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
