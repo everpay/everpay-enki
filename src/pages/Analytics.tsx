@@ -25,6 +25,7 @@ import {
   Globe, ShieldAlert, Layers, FileText, FileDown, Fingerprint,
 } from 'lucide-react';
 import { FraudAnalytics } from '@/components/FraudAnalytics';
+import { MLFraudInsights } from '@/components/MLFraudInsights';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -625,6 +626,7 @@ export default function Analytics() {
         {/* FRAUD TAB */}
         <TabsContent value="fraud" className="space-y-4">
           <FraudAnalytics />
+          <MLFraudInsights />
         </TabsContent>
       </Tabs>
     </AppLayout>
