@@ -55,8 +55,15 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     name: 'ofa',
     displayName: 'OFA Pay',
     supportedCurrencies: ['USD', 'BRL', 'MXN'],
-    regions: ['CN', 'VN', 'TH', 'ID', 'MY', 'PH', 'JP', 'KR', 'BD', 'IN', 'BR', 'MX', 'HK', 'AU'],
+    regions: ['CN', 'VN', 'TH', 'ID', 'MY', 'PH', 'JP', 'KR', 'HK', 'AU'],
     methods: ['P2P', 'P2C', 'P2PN', 'P2PO', 'QP', 'CRYPTO', 'Bank Transfer'],
+  },
+  makapay: {
+    name: 'makapay',
+    displayName: 'MakaPay',
+    supportedCurrencies: ['BDT'],
+    regions: ['BD'],
+    methods: ['SSLCommerz', 'SurjoPay', 'Mobile Banking'],
   },
 };
 
