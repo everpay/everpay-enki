@@ -40,6 +40,7 @@ import ProcessorAnalyticsPage from "./pages/ProcessorAnalyticsPage";
 import KycAml from "./pages/KycAml";
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import BigCommerce from "./pages/BigCommerce";
+import Shopify from "./pages/Shopify";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 const queryClient = new QueryClient();

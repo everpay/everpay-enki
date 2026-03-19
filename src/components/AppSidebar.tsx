@@ -81,8 +81,15 @@ const navItems: NavItem[] = [
     ],
   },
   { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
-  { to: "/bigcommerce", icon: Store, label: "BigCommerce" },
-  { to: "/portal", icon: User, label: "Customer Portal", visibleTo: ["user"] },
+  {
+    to: "/bigcommerce",
+    icon: Store,
+    label: "Integrations",
+    children: [
+      { to: "/bigcommerce", icon: Store, label: "BigCommerce" },
+      { to: "/shopify", icon: Package, label: "Shopify" },
+    ],
+  },
   {
     to: "/wallets",
     icon: Wallet,
