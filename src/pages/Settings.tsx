@@ -831,6 +831,9 @@ export default function Settings() {
       {/* BUSINESS VERIFICATION */}
       {section === "verification" && <BusinessVerificationSectionComponent />}
 
+      {/* SURCHARGING */}
+      {section === "surcharging" && <SurchargeSettingsSection merchantId={merchant?.id} />}
+
       {/* DEACTIVATION */}
       {section === "deactivation" && (
         <div className="max-w-2xl">
