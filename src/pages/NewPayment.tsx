@@ -315,6 +315,11 @@ export default function NewPayment() {
                 <SelectItem value="boleto">📄 Boleto</SelectItem>
                 <SelectItem value="apple_pay">🍎 Apple Pay</SelectItem>
                 <SelectItem value="open_banking">🏦 Open Banking</SelectItem>
+                <SelectItem value="upi">🇮🇳 UPI</SelectItem>
+                <SelectItem value="bank_transfer">🏦 Bank Transfer</SelectItem>
+                <SelectItem value="spei">🇲🇽 SPEI</SelectItem>
+                <SelectItem value="wallet">👛 Wallet</SelectItem>
+                <SelectItem value="p2p">🔄 P2P</SelectItem>
               </SelectContent>
             </Select>
           </div>
