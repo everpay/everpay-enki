@@ -625,6 +625,7 @@ export default function Analytics() {
         {/* FRAUD TAB */}
         <TabsContent value="fraud" className="space-y-4">
           <FraudAnalytics />
+          <MLFraudInsights />
         </TabsContent>
       </Tabs>
     </AppLayout>
