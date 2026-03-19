@@ -492,19 +492,7 @@ export default function NewPayment() {
             </div>
             <div className="space-y-2">
               <Label>Country</Label>
-              <Select value={billingCountry} onValueChange={setBillingCountry}>
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="US">🇺🇸 United States</SelectItem>
-                  <SelectItem value="CA">🇨🇦 Canada</SelectItem>
-                  <SelectItem value="GB">🇬🇧 United Kingdom</SelectItem>
-                  <SelectItem value="BR">🇧🇷 Brazil</SelectItem>
-                  <SelectItem value="MX">🇲🇽 Mexico</SelectItem>
-                  <SelectItem value="CO">🇨🇴 Colombia</SelectItem>
-                </SelectContent>
-              </Select>
+              <CountrySelect value={billingCountry} onValueChange={setBillingCountry} />
             </div>
           </div>
 
