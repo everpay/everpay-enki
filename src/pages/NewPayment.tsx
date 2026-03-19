@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Currency } from '@/lib/types';
 import { resolveProvider } from '@/lib/providers';
 import { Badge } from '@/components/ui/badge';
+import { CountrySelect, COUNTRIES } from '@/components/CountrySelect';
+import { COUNTRY_PAYMENT_CONFIGS, getConfigForCountry } from '@/lib/country-routing';
 import { CreditCard, ArrowRight, Loader2, Globe, MapPin, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -76,6 +78,7 @@ export default function NewPayment() {
   const [billingState, setBillingState] = useState('');
   const [billingPostalCode, setBillingPostalCode] = useState('');
   const [billingCountry, setBillingCountry] = useState('US');
+  const selectedCountryConfig = getConfigForCountry(billingCountry);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [vgsToken, setVgsToken] = useState('');
   const [cardEntryMode, setCardEntryMode] = useState<'standard' | 'vgs'>('standard');
@@ -86,7 +89,7 @@ export default function NewPayment() {
   const queryClient = useQueryClient();
   const { deviceInfo } = useDeviceAnalytics();
   const { isChecking: isFraudChecking, lastResult: fraudResult, checkFraud } = useFraudDetection();
-  const selectedProvider = resolveProvider(currency);
+  const selectedProvider = resolveProvider(currency, billingCountry);
   const idempotencyKey = `idk_${Date.now()}`;
 
   const { isPolling, currentStatus: pollingStatus, startPolling } = usePaymentPolling({
@@ -238,6 +241,9 @@ export default function NewPayment() {
     shieldhub: { label: 'US & Global payments', badge: '🌐 ShieldHub' },
     facilitapay: { label: 'LATAM payments', badge: '🌎 FacilitaPay' },
     stripe: { label: 'Global fallback', badge: '⚡ Stripe' },
+    paygate10: { label: 'Emerging markets', badge: '🌍 Paygate10' },
+    ofa: { label: 'Asia-Pacific payments', badge: '🌏 OFA Pay' },
+    moneto: { label: 'Canada payments', badge: '🇨🇦 Moneto' },
   };
 
   const providerInfo = providerRegionLabel[selectedProvider] || { label: '', badge: selectedProvider };
@@ -267,13 +273,31 @@ export default function NewPayment() {
                 <SelectTrigger className="bg-background border-border">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[280px]">
                   <SelectItem value="USD">🇺🇸 USD</SelectItem>
                   <SelectItem value="EUR">🇪🇺 EUR</SelectItem>
                   <SelectItem value="GBP">🇬🇧 GBP</SelectItem>
+                  <SelectItem value="CAD">🇨🇦 CAD</SelectItem>
                   <SelectItem value="BRL">🇧🇷 BRL</SelectItem>
                   <SelectItem value="MXN">🇲🇽 MXN</SelectItem>
                   <SelectItem value="COP">🇨🇴 COP</SelectItem>
+                  <SelectItem value="INR">🇮🇳 INR</SelectItem>
+                  <SelectItem value="NGN">🇳🇬 NGN</SelectItem>
+                  <SelectItem value="EGP">🇪🇬 EGP</SelectItem>
+                  <SelectItem value="ZAR">🇿🇦 ZAR</SelectItem>
+                  <SelectItem value="KES">🇰🇪 KES</SelectItem>
+                  <SelectItem value="ARS">🇦🇷 ARS</SelectItem>
+                  <SelectItem value="CNY">🇨🇳 CNY</SelectItem>
+                  <SelectItem value="VND">🇻🇳 VND</SelectItem>
+                  <SelectItem value="THB">🇹🇭 THB</SelectItem>
+                  <SelectItem value="IDR">🇮🇩 IDR</SelectItem>
+                  <SelectItem value="MYR">🇲🇾 MYR</SelectItem>
+                  <SelectItem value="PHP">🇵🇭 PHP</SelectItem>
+                  <SelectItem value="JPY">🇯🇵 JPY</SelectItem>
+                  <SelectItem value="KRW">🇰🇷 KRW</SelectItem>
+                  <SelectItem value="BDT">🇧🇩 BDT</SelectItem>
+                  <SelectItem value="HKD">🇭🇰 HKD</SelectItem>
+                  <SelectItem value="AUD">🇦🇺 AUD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -471,19 +495,7 @@ export default function NewPayment() {
             </div>
             <div className="space-y-2">
               <Label>Country</Label>
-              <Select value={billingCountry} onValueChange={setBillingCountry}>
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="US">🇺🇸 United States</SelectItem>
-                  <SelectItem value="CA">🇨🇦 Canada</SelectItem>
-                  <SelectItem value="GB">🇬🇧 United Kingdom</SelectItem>
-                  <SelectItem value="BR">🇧🇷 Brazil</SelectItem>
-                  <SelectItem value="MX">🇲🇽 Mexico</SelectItem>
-                  <SelectItem value="CO">🇨🇴 Colombia</SelectItem>
-                </SelectContent>
-              </Select>
+              <CountrySelect value={billingCountry} onValueChange={setBillingCountry} />
             </div>
           </div>
 

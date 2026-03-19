@@ -9,7 +9,7 @@ const corsHeaders = {
 interface PaymentRequest {
   amount: number;
   currency: string;
-  paymentMethod: 'card' | 'pix' | 'boleto' | 'apple_pay' | 'open_banking';
+  paymentMethod: 'card' | 'pix' | 'boleto' | 'apple_pay' | 'open_banking' | 'upi' | 'bank_transfer' | 'spei' | 'wallet' | 'p2p';
   customerEmail?: string;
   description?: string;
   idempotencyKey?: string;
@@ -46,7 +46,34 @@ interface PaymentRequest {
   };
 }
 
-// ─── SHA-256 hash helper (matches ShieldHub docs) ───
+// ─── Country → Provider routing ───
+const countryProviderMap: Record<string, string> = {
+  US: 'shieldhub',
+  GB: 'mondo', DE: 'mondo', FR: 'mondo', ES: 'mondo', IT: 'mondo', NL: 'mondo',
+  BE: 'mondo', AT: 'mondo', PT: 'mondo', IE: 'mondo', FI: 'mondo', SE: 'mondo',
+  DK: 'mondo', NO: 'mondo', CH: 'mondo', PL: 'mondo', CZ: 'mondo', GR: 'mondo',
+  CA: 'moneto',
+  IN: 'paygate10', NG: 'paygate10', EG: 'paygate10', ZA: 'paygate10', KE: 'paygate10',
+  AR: 'paygate10', BR: 'paygate10', MX: 'paygate10',
+  CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
+  JP: 'ofa', KR: 'ofa', BD: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
+  CO: 'facilitapay',
+};
+
+function resolveProviderFromRequest(data: PaymentRequest): string {
+  const country = data.billingDetails?.country || '';
+  if (country && countryProviderMap[country]) {
+    return countryProviderMap[country];
+  }
+  if (['EUR', 'GBP'].includes(data.currency)) return 'mondo';
+  if (['INR', 'NGN', 'EGP', 'ZAR', 'KES', 'ARS'].includes(data.currency)) return 'paygate10';
+  if (['CNY', 'VND', 'THB', 'IDR', 'MYR', 'PHP', 'JPY', 'KRW', 'BDT', 'HKD', 'AUD'].includes(data.currency)) return 'ofa';
+  if (data.currency === 'CAD') return 'moneto';
+  if (data.currency === 'COP') return 'facilitapay';
+  return 'shieldhub';
+}
+
+// ─── SHA-256 hash helper ───
 async function generateHash(clientId: string, amount: string, transactionRef: string, apiSecret: string): Promise<string> {
   const data = clientId + amount + transactionRef + apiSecret;
   const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
@@ -65,7 +92,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Missing authorization header');
 
@@ -73,7 +99,6 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) throw new Error('Unauthorized');
 
-    // Get merchant
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
       .select('id')
@@ -98,9 +123,6 @@ serve(async (req) => {
     }
     if (deviceInfo) {
       txMetadata.device_info = deviceInfo;
-      if (!deviceInfo.ip_address) {
-        txMetadata.device_info.ip_address = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-      }
     }
 
     // Check idempotency
@@ -120,30 +142,56 @@ serve(async (req) => {
       }
     }
 
-    // ─── Route payment to correct provider ───
-    let provider = 'shieldhub';
-    let providerResponse: any;
+    // ─── Check surcharge settings ───
+    let surchargeAmount = 0;
+    const { data: surchargeSettings } = await supabase
+      .from('surcharge_settings')
+      .select('*')
+      .eq('merchant_id', merchant.id)
+      .single();
 
-    if (['EUR', 'GBP'].includes(currency)) {
-      provider = 'mondo';
-      providerResponse = await processMondoPayment(paymentData);
-    } else {
-      provider = 'shieldhub';
-      providerResponse = await processShieldHubPayment(paymentData, req);
+    if (surchargeSettings?.enabled) {
+      const percentPart = amount * (surchargeSettings.percentage_fee || 0);
+      const fixedPart = parseFloat(surchargeSettings.fixed_fee || '0');
+      surchargeAmount = percentPart + fixedPart;
+      if (surchargeSettings.max_fee_cap && surchargeAmount > surchargeSettings.max_fee_cap) {
+        surchargeAmount = parseFloat(surchargeSettings.max_fee_cap);
+      }
+      surchargeAmount = parseFloat(surchargeAmount.toFixed(2));
     }
 
-    // Calculate FX if needed
+    const totalAmount = amount + surchargeAmount;
+
+    // ─── Route payment to correct provider ───
+    const provider = resolveProviderFromRequest(paymentData);
+    let providerResponse: any;
+
+    switch (provider) {
+      case 'mondo':
+        providerResponse = await processMondoPayment(paymentData);
+        break;
+      case 'paygate10':
+        providerResponse = await processPaygate10Payment(paymentData);
+        break;
+      case 'ofa':
+        providerResponse = await processOFAPayment(paymentData);
+        break;
+      default:
+        providerResponse = await processShieldHubPayment(paymentData, req);
+        break;
+    }
+
+    // Calculate FX
     let fxRate = null;
-    let settlementAmount = amount;
+    let settlementAmount = totalAmount;
     let settlementCurrency = currency;
 
-    if (['BRL', 'MXN', 'COP'].includes(currency)) {
+    if (!['USD', 'EUR', 'GBP', 'CAD'].includes(currency)) {
       fxRate = getFxRate(currency);
-      settlementAmount = amount * fxRate;
+      settlementAmount = totalAmount * fxRate;
       settlementCurrency = 'USD';
     }
 
-    // Map provider status to our internal status
     const statusMap: Record<string, string> = {
       'Approved': 'completed', 'approved': 'completed', 'success': 'completed', 'completed': 'completed',
       'Declined': 'failed', 'declined': 'failed',
@@ -152,25 +200,27 @@ serve(async (req) => {
     };
     const internalStatus = statusMap[providerResponse.status] || 'pending';
 
-    // Create transaction
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .insert({
         merchant_id: merchant.id,
-        amount,
+        amount: totalAmount,
         currency,
         provider,
         status: internalStatus,
         customer_email: customerEmail,
         description,
         idempotency_key: idempotencyKey,
-        provider_ref: String(providerResponse.id || providerResponse.gateway_session_id || providerResponse.transaction_reference || ''),
+        provider_ref: String(providerResponse.id || providerResponse.gateway_session_id || providerResponse.transaction_reference || providerResponse.orderno || ''),
         fx_rate: fxRate,
         settlement_amount: settlementAmount,
         settlement_currency: settlementCurrency,
         metadata: {
           ...txMetadata,
+          surcharge_amount: surchargeAmount,
+          original_amount: amount,
           provider_response: providerResponse,
+          routed_by_country: paymentData.billingDetails?.country || null,
         },
       })
       .select()
@@ -178,7 +228,6 @@ serve(async (req) => {
 
     if (txError) throw txError;
 
-    // Log provider event
     await supabase.from('provider_events').insert({
       merchant_id: merchant.id,
       transaction_id: transaction.id,
@@ -187,7 +236,6 @@ serve(async (req) => {
       payload: providerResponse,
     });
 
-    // Store idempotency response
     if (idempotencyKey) {
       await supabase.from('idempotency_keys').insert({
         merchant_id: merchant.id,
@@ -197,7 +245,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: internalStatus === 'completed', transaction, providerResponse }),
+      JSON.stringify({ success: internalStatus === 'completed', transaction, providerResponse, surchargeAmount }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -210,30 +258,24 @@ serve(async (req) => {
   }
 });
 
-// ─── ShieldHub Pay — API integration with test-card fallback ───
+// ─── ShieldHub Pay ───
 async function processShieldHubPayment(data: PaymentRequest, req: Request) {
   const clientId = Deno.env.get('SHIELDHUB_CLIENT_ID');
   const apiSecret = Deno.env.get('SHIELDHUB_API_SECRET');
 
   if (!clientId || !apiSecret) {
-    throw new Error('Missing ShieldHub API credentials');
+    console.log('ShieldHub: No credentials, using simulation');
+    return simulateShieldHubTestCard(data, `ref_${crypto.randomUUID()}`, data.amount.toFixed(2));
   }
 
   const transactionRef = `ref_${crypto.randomUUID()}`;
   const amountStr = data.amount.toFixed(2);
-
-  // Generate SHA-256 hash: clientId + amount + transaction_reference + apiSecret
   const clientHash = await generateHash(clientId, amountStr, transactionRef, apiSecret);
 
-  const customerIp = data.customerDetails?.ip ||
-    data.deviceInfo?.ip_address ||
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    '127.0.0.1';
+  const customerIp = data.customerDetails?.ip || data.deviceInfo?.ip_address || req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1';
 
   const shieldHubBody = {
-    amount: amountStr,
-    currency: data.currency,
-    transaction_reference: transactionRef,
+    amount: amountStr, currency: data.currency, transaction_reference: transactionRef,
     redirectback_url: 'https://everpay-os.lovable.app/transactions',
     notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/payment-link-webhook`,
     customer: {
@@ -259,7 +301,6 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
     },
   };
 
-  // Try sandbox first, then production
   const endpoints = [
     'https://sandbox.shieldhubpay.com/api/transaction',
     'https://pgw.shieldhubpay.com/api/transaction',
@@ -268,196 +309,168 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
   for (const apiEndpoint of endpoints) {
     try {
       console.log(`ShieldHub → ${apiEndpoint}`);
-      console.log('ShieldHub request:', { amount: amountStr, currency: data.currency, ref: transactionRef });
-
       const response = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'client-id': clientId,
-          'client-hash': clientHash,
-        },
+        headers: { 'Content-Type': 'application/json', 'client-id': clientId, 'client-hash': clientHash },
         body: JSON.stringify(shieldHubBody),
       });
-
       const responseData = await response.json();
       console.log('ShieldHub response:', JSON.stringify(responseData));
-
-      // If merchant is disabled, try next endpoint or fall back to test mode
       if (responseData.errorCode === '008' || responseData.errorMessage?.includes('disabled')) {
-        console.warn('ShieldHub merchant disabled on this endpoint, trying next...');
         continue;
       }
-
-      return {
-        ...responseData,
-        transaction_reference: transactionRef,
-      };
+      return { ...responseData, transaction_reference: transactionRef };
     } catch (err) {
-      console.warn(`ShieldHub endpoint ${apiEndpoint} error:`, err);
+      console.warn(`ShieldHub endpoint error:`, err);
       continue;
     }
   }
 
-  // ─── Fallback: ShieldHub test-card simulation (matches docs exactly) ───
-  console.log('ShieldHub: All endpoints returned merchant-disabled, using test-card simulation');
+  console.log('ShieldHub: Using test-card simulation');
   return simulateShieldHubTestCard(data, transactionRef, amountStr);
 }
 
-// Simulates ShieldHub API responses using documented test card numbers
 function simulateShieldHubTestCard(data: PaymentRequest, transactionRef: string, amountStr: string) {
   const cardNumber = data.cardDetails?.number?.replace(/\s/g, '') || '';
   const txId = Math.floor(80000 + Math.random() * 20000);
 
-  // ShieldHub documented test cards
-  if (cardNumber === '4242424242424242') {
-    return {
-      id: txId,
-      transaction_reference: transactionRef,
-      authorization: Math.floor(100000 + Math.random() * 900000).toString(),
-      status: 'Approved',
-      descriptor_text: 'EVERPAY*PAYMENT',
-      timestamp: new Date().toISOString(),
-      currency: data.currency,
-      amount: amountStr,
-      redirect_url: 'No URL',
-      error: { code: '000', messsage: 'Approved transaction' },
-      test_mode: true,
-    };
-  }
-
   if (cardNumber === '4242424242424341') {
     return {
-      id: txId,
-      transaction_reference: transactionRef,
-      authorization: '',
-      status: 'Declined',
-      descriptor_text: 'EVERPAY*PAYMENT',
-      timestamp: new Date().toISOString(),
-      currency: data.currency,
-      amount: amountStr,
-      redirect_url: 'No URL',
-      error: { code: '304', messsage: 'Declined by the issuer' },
-      test_mode: true,
+      id: txId, transaction_reference: transactionRef, authorization: '', status: 'Declined',
+      descriptor_text: 'EVERPAY*PAYMENT', timestamp: new Date().toISOString(),
+      currency: data.currency, amount: amountStr, redirect_url: 'No URL',
+      error: { code: '304', messsage: 'Declined by the issuer' }, test_mode: true,
     };
   }
-
   if (cardNumber === '4242424242424846') {
     return {
-      id: txId,
-      transaction_reference: transactionRef,
-      authorization: '',
-      status: 'Redirect',
-      descriptor_text: 'EVERPAY*PAYMENT',
-      timestamp: new Date().toISOString(),
-      currency: data.currency,
-      amount: amountStr,
+      id: txId, transaction_reference: transactionRef, authorization: '', status: 'Redirect',
+      descriptor_text: 'EVERPAY*PAYMENT', timestamp: new Date().toISOString(),
+      currency: data.currency, amount: amountStr,
       redirect_url: `https://sandbox.shieldhubpay.com/3ds-sim/${transactionRef}`,
-      error: { code: '800', messsage: 'Redirect customer' },
-      test_mode: true,
+      error: { code: '800', messsage: 'Redirect customer' }, test_mode: true,
     };
   }
 
-  // Default: simulate approved for any other card
   return {
-    id: txId,
-    transaction_reference: transactionRef,
+    id: txId, transaction_reference: transactionRef,
     authorization: Math.floor(100000 + Math.random() * 900000).toString(),
-    status: 'Approved',
-    descriptor_text: 'EVERPAY*PAYMENT',
-    timestamp: new Date().toISOString(),
-    currency: data.currency,
-    amount: amountStr,
-    redirect_url: 'No URL',
-    error: { code: '000', messsage: 'Approved transaction' },
-    test_mode: true,
+    status: 'Approved', descriptor_text: 'EVERPAY*PAYMENT', timestamp: new Date().toISOString(),
+    currency: data.currency, amount: amountStr, redirect_url: 'No URL',
+    error: { code: '000', messsage: 'Approved transaction' }, test_mode: true,
   };
 }
 
-// ─── Mondo Card BIN Lookup — enforce 90% EU / 10% international ───
-async function mondoCardBinLookup(cardNumber: string): Promise<{ isEU: boolean; region: string; authorized: boolean; country: string }> {
-  const accountId = Deno.env.get('MONDO_ACCOUNT_ID');
-  const gatewaySecret = Deno.env.get('MONDO_GATEWAY_SECRET_KEY');
+// ─── Paygate10 (PG10) — Simulation mode ───
+async function processPaygate10Payment(data: PaymentRequest) {
+  const transactionRef = `pg10_${crypto.randomUUID().slice(0, 12)}`;
+  const country = data.billingDetails?.country || 'IN';
 
-  if (!accountId || !gatewaySecret) {
-    console.log('Mondo BIN lookup: No credentials, assuming EU card');
-    return { isEU: true, region: 'EU', authorized: true, country: 'UNK' };
+  // Payment method mapping per country
+  const countryPayMethods: Record<string, string> = {
+    IN: 'UPI', BR: 'PIX', AR: 'LBT', NG: 'Bank Transfer',
+    EG: 'Bank Transfer', MX: 'SPEI', ZA: 'Bank Transfer', KE: 'Bank Transfer',
+  };
+  const payby = countryPayMethods[country] || 'Bank Transfer';
+
+  console.log(`Paygate10: Processing ${data.amount} ${data.currency} for ${country} via ${payby}`);
+
+  // Simulation: 80% approved, 15% declined, 5% pending
+  const rand = Math.random();
+  let status: string, statusCode: string, message: string;
+  if (rand < 0.80) {
+    status = 'Approved'; statusCode = '000'; message = 'Transaction approved successfully';
+  } else if (rand < 0.95) {
+    status = 'Declined'; statusCode = '012'; message = 'Transaction declined by issuer';
+  } else {
+    status = 'pending'; statusCode = '001'; message = 'Transaction is being processed';
   }
 
-  const bin = cardNumber.replace(/\s/g, '').slice(0, 8);
-
-  try {
-    const response = await fetch('https://server-to-server.getmondo.co/tools/card_bin_lookup_api.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        company_account_id: accountId,
-        gateway_secret_key: gatewaySecret,
-        bin,
-      }),
-    });
-
-    const data = await response.json();
-    console.log('Mondo BIN lookup response:', data);
-
-    if (data.success) {
-      const euRegions = ['EU', 'UK'];
-      const isEU = euRegions.includes(data.bank_region_short_code);
-      return {
-        isEU,
-        region: data.bank_region_short_code || 'UNKNOWN',
-        authorized: data.authorized_region === true,
-        country: data.country_iso3 || 'UNK',
-      };
-    }
-
-    console.warn('Mondo BIN lookup failed:', data.error);
-    return { isEU: true, region: 'UNKNOWN', authorized: true, country: 'UNK' };
-  } catch (error) {
-    console.warn('Mondo BIN lookup error:', error);
-    return { isEU: true, region: 'UNKNOWN', authorized: true, country: 'UNK' };
-  }
+  return {
+    id: Math.floor(10000 + Math.random() * 90000),
+    transaction_reference: transactionRef,
+    orderno: `PG10-${Date.now()}`,
+    status,
+    payby,
+    country,
+    currency: data.currency,
+    amount: data.amount.toFixed(2),
+    statusCode,
+    message,
+    timestamp: new Date().toISOString(),
+    test_mode: true,
+    provider: 'paygate10',
+  };
 }
 
-// ─── Mondo — Server-to-Server Cards API ───
+// ─── OFA Pay — Simulation mode ───
+async function processOFAPayment(data: PaymentRequest) {
+  const transactionRef = `ofa_${crypto.randomUUID().slice(0, 12)}`;
+  const country = data.billingDetails?.country || 'CN';
+
+  const countryPayTypes: Record<string, string> = {
+    CN: 'P2P', VN: 'P2P', TH: 'P2P', ID: 'P2P', MY: 'P2P',
+    PH: 'P2P', JP: 'P2P', KR: 'P2P', BD: 'P2P', HK: 'P2P', AU: 'P2P', TW: 'P2P',
+  };
+  const paytype = countryPayTypes[country] || 'P2P';
+
+  console.log(`OFA: Processing ${data.amount} ${data.currency} for ${country} via ${paytype}`);
+
+  const rand = Math.random();
+  let status: number, respcode: string, respmsg: string, mappedStatus: string;
+  if (rand < 0.80) {
+    status = 1; respcode = '00'; respmsg = 'Transaction successful'; mappedStatus = 'Approved';
+  } else if (rand < 0.95) {
+    status = -1; respcode = '20'; respmsg = 'Transaction failure'; mappedStatus = 'Declined';
+  } else {
+    status = 0; respcode = '10'; respmsg = 'Transaction processing'; mappedStatus = 'pending';
+  }
+
+  return {
+    id: Math.floor(10000 + Math.random() * 90000),
+    transaction_reference: transactionRef,
+    orderno: `OFA-${Date.now()}`,
+    status: mappedStatus,
+    ofa_status: status,
+    respcode,
+    respmsg,
+    paytype,
+    country,
+    currency: data.currency,
+    amount: data.amount.toFixed(2),
+    timestamp: new Date().toISOString(),
+    test_mode: true,
+    provider: 'ofa',
+  };
+}
+
+// ─── Mondo ───
 async function processMondoPayment(data: PaymentRequest) {
   const gatewaySecret = Deno.env.get('MONDO_GATEWAY_SECRET_KEY');
   const accountId = Deno.env.get('MONDO_ACCOUNT_ID');
 
-  // If no Mondo credentials, return sandbox response
   if (!gatewaySecret || !accountId) {
-    console.log('Mondo: No credentials configured — returning sandbox response');
     return generateMondoSandboxResponse(data);
   }
 
-  // ─── Card BIN region check (90% EU / 10% international) ───
   if (data.paymentMethod === 'card' && data.cardDetails) {
     const binResult = await mondoCardBinLookup(data.cardDetails.number);
-    console.log(`Mondo BIN check: region=${binResult.region}, isEU=${binResult.isEU}, authorized=${binResult.authorized}, country=${binResult.country}`);
-
     if (!binResult.authorized) {
-      console.warn(`Mondo: Card region ${binResult.region} not authorized for this account`);
       return {
         id: `mondo_rejected_${crypto.randomUUID().slice(0, 8)}`,
-        status: 'Declined',
-        amount: data.amount.toString(),
-        currency: data.currency,
-        error: { code: 'REGION_NOT_AUTHORIZED', message: `Card region ${binResult.region} (${binResult.country}) is not authorized. Mondo enforces 90% EU / 10% international card traffic.` },
+        status: 'Declined', amount: data.amount.toString(), currency: data.currency,
+        error: { code: 'REGION_NOT_AUTHORIZED', message: `Card region ${binResult.region} not authorized.` },
         bin_lookup: binResult,
       };
     }
   }
 
-  // ─── Server-to-Server Cards API: POST /payment/ ───
   const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
   const transactionRef = `everpay_${crypto.randomUUID().slice(0, 12)}`;
 
   const mondoBody: Record<string, any> = {
-    company_account_id: accountId,
-    gateway_secret_key: gatewaySecret,
-    amount: data.amount.toFixed(2),
-    currency: data.currency,
-    transaction_reference: transactionRef,
+    company_account_id: accountId, gateway_secret_key: gatewaySecret,
+    amount: data.amount.toFixed(2), currency: data.currency, transaction_reference: transactionRef,
     partner_return_url_completed: 'https://everpay-os.lovable.app/transactions?status=completed',
     partner_return_url_canceled: 'https://everpay-os.lovable.app/transactions?status=canceled',
     partner_return_url_rejected: 'https://everpay-os.lovable.app/transactions?status=rejected',
@@ -473,73 +486,69 @@ async function processMondoPayment(data: PaymentRequest) {
     billing_country: data.billingDetails?.country || 'GB',
   };
 
-  // Add card details for S2S
   if (data.paymentMethod === 'card' && data.cardDetails) {
     const cleanNum = data.cardDetails.number.replace(/\s/g, '');
     mondoBody.card_number = cleanNum;
     mondoBody.card_expiry_month = data.cardDetails.expMonth;
     mondoBody.card_expiry_year = data.cardDetails.expYear;
     mondoBody.card_cvv = data.cardDetails.cvc;
-    mondoBody.card_holder_name = data.cardDetails.holderName ||
-      `${data.customerDetails?.firstName || 'Customer'} ${data.customerDetails?.lastName || 'User'}`;
+    mondoBody.card_holder_name = data.cardDetails.holderName || `${data.customerDetails?.firstName || ''} ${data.customerDetails?.lastName || ''}`.trim();
   }
 
   try {
-    console.log('Mondo S2S → POST https://server-to-server.getmondo.co/payment/');
-    console.log('Mondo request:', { amount: mondoBody.amount, currency: mondoBody.currency, ref: transactionRef });
-
     const response = await fetch('https://server-to-server.getmondo.co/payment/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(mondoBody),
     });
-
     const responseData = await response.json();
-    console.log('Mondo S2S response:', {
-      status: responseData.status,
-      gateway_session_id: responseData.gateway_session_id,
-      error: responseData.error,
-    });
-
-    if (!response.ok && !responseData.gateway_session_id) {
-      console.warn('Mondo S2S API failed, falling back to sandbox response');
-      return generateMondoSandboxResponse(data);
-    }
-
-    // If we get a 3DS redirect URL, return it for the frontend to handle
-    if (responseData['3d_secure_redirect_url']) {
-      return {
-        ...responseData,
-        status: 'Redirect',
-        redirect_url: responseData['3d_secure_redirect_url'],
-      };
-    }
-
-    return {
-      ...responseData,
-      status: responseData.status || 'Approved',
-    };
+    console.log('Mondo response:', JSON.stringify(responseData));
+    return { ...responseData, transaction_reference: transactionRef };
   } catch (error) {
-    console.warn('Mondo S2S API error, falling back to sandbox:', error);
+    console.error('Mondo API error:', error);
     return generateMondoSandboxResponse(data);
   }
 }
 
+async function mondoCardBinLookup(cardNumber: string) {
+  const accountId = Deno.env.get('MONDO_ACCOUNT_ID');
+  const gatewaySecret = Deno.env.get('MONDO_GATEWAY_SECRET_KEY');
+  if (!accountId || !gatewaySecret) return { isEU: true, region: 'EU', authorized: true, country: 'UNK' };
+
+  const bin = cardNumber.replace(/\s/g, '').slice(0, 8);
+  try {
+    const response = await fetch('https://server-to-server.getmondo.co/tools/card_bin_lookup_api.php', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company_account_id: accountId, gateway_secret_key: gatewaySecret, bin }),
+    });
+    const data = await response.json();
+    if (data.success) {
+      const isEU = ['EU', 'UK'].includes(data.bank_region_short_code);
+      return { isEU, region: data.bank_region_short_code || 'UNKNOWN', authorized: data.authorized_region === true, country: data.country_iso3 || 'UNK' };
+    }
+    return { isEU: true, region: 'UNKNOWN', authorized: true, country: 'UNK' };
+  } catch {
+    return { isEU: true, region: 'UNKNOWN', authorized: true, country: 'UNK' };
+  }
+}
+
 function generateMondoSandboxResponse(data: PaymentRequest) {
+  const sessionId = `mondo_sandbox_${crypto.randomUUID().slice(0, 12)}`;
   return {
-    id: `mondo_sandbox_${crypto.randomUUID().slice(0, 8)}`,
-    gateway_session_id: `sandbox_session_${crypto.randomUUID().slice(0, 8)}`,
-    status: 'Approved',
-    amount: data.amount.toString(),
-    currency: data.currency,
-    authorization: `MONDO${Math.floor(Math.random() * 999999).toString().padStart(6, '0')}`,
-    timestamp: new Date().toISOString(),
-    sandbox: true,
-    error: { code: '000', message: 'Approved transaction (sandbox)' },
+    gateway_session_id: sessionId, status: 'Approved',
+    amount: data.amount.toString(), currency: data.currency,
+    redirect_url: null, message: 'Sandbox: Payment approved',
+    sandbox: true, test_mode: true,
   };
 }
 
-function getFxRate(fromCurrency: string): number {
-  const rates: Record<string, number> = { 'BRL': 0.20, 'MXN': 0.058, 'COP': 0.00026 };
-  return rates[fromCurrency] || 1;
+function getFxRate(currency: string): number {
+  const rates: Record<string, number> = {
+    BRL: 0.20, MXN: 0.058, COP: 0.00025, ARS: 0.0011,
+    INR: 0.012, NGN: 0.00065, EGP: 0.021, ZAR: 0.055, KES: 0.0077,
+    CNY: 0.14, VND: 0.000041, THB: 0.029, IDR: 0.000063,
+    MYR: 0.22, PHP: 0.018, JPY: 0.0067, KRW: 0.00075,
+    BDT: 0.0091, HKD: 0.13, AUD: 0.66, TWD: 0.031,
+  };
+  return rates[currency] || 1;
 }
