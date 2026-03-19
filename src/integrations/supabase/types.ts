@@ -1933,6 +1933,56 @@ export type Database = {
           },
         ]
       }
+      surcharge_settings: {
+        Row: {
+          apply_to_credit: boolean | null
+          apply_to_debit: boolean | null
+          created_at: string | null
+          disclosure_text: string | null
+          enabled: boolean | null
+          fixed_fee: number | null
+          id: string
+          max_fee_cap: number | null
+          merchant_id: string
+          percentage_fee: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          apply_to_credit?: boolean | null
+          apply_to_debit?: boolean | null
+          created_at?: string | null
+          disclosure_text?: string | null
+          enabled?: boolean | null
+          fixed_fee?: number | null
+          id?: string
+          max_fee_cap?: number | null
+          merchant_id: string
+          percentage_fee?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          apply_to_credit?: boolean | null
+          apply_to_debit?: boolean | null
+          created_at?: string | null
+          disclosure_text?: string | null
+          enabled?: boolean | null
+          fixed_fee?: number | null
+          id?: string
+          max_fee_cap?: number | null
+          merchant_id?: string
+          percentage_fee?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surcharge_settings_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
