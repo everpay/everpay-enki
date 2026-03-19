@@ -1,6 +1,9 @@
 import { formatCurrency } from '@/lib/format';
 import { Currency } from '@/lib/types';
 
+const escHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 interface InvoiceData {
   invoice_number: string;
   customer_name?: string | null;
