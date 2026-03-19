@@ -202,6 +202,95 @@ export type Database = {
           },
         ]
       }
+      bigcommerce_orders: {
+        Row: {
+          amount: number | null
+          bc_order_id: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          status: string | null
+          store_id: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          bc_order_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          status?: string | null
+          store_id?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          bc_order_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          status?: string | null
+          store_id?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bigcommerce_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "bigcommerce_stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bigcommerce_orders_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bigcommerce_stores: {
+        Row: {
+          access_token: string | null
+          active: boolean | null
+          id: string
+          installed_at: string | null
+          merchant_id: string | null
+          scope: string | null
+          shop_domain: string | null
+          store_hash: string
+        }
+        Insert: {
+          access_token?: string | null
+          active?: boolean | null
+          id?: string
+          installed_at?: string | null
+          merchant_id?: string | null
+          scope?: string | null
+          shop_domain?: string | null
+          store_hash: string
+        }
+        Update: {
+          access_token?: string | null
+          active?: boolean | null
+          id?: string
+          installed_at?: string | null
+          merchant_id?: string | null
+          scope?: string | null
+          shop_domain?: string | null
+          store_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bigcommerce_stores_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_velocity: {
         Row: {
           created_at: string

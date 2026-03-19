@@ -39,6 +39,7 @@ import SmartRetry from "./pages/SmartRetry";
 import ProcessorAnalyticsPage from "./pages/ProcessorAnalyticsPage";
 import KycAml from "./pages/KycAml";
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
+import BigCommerce from "./pages/BigCommerce";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
 const queryClient = new QueryClient();
@@ -101,6 +102,7 @@ const AppRoutes = () => {
     <Route path="/kyc-aml" element={<ProtectedRoute><KycAml /></ProtectedRoute>} />
     
     <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsPage /></ProtectedRoute>} />
+    <Route path="/bigcommerce" element={<ProtectedRoute><BigCommerce /></ProtectedRoute>} />
     <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />

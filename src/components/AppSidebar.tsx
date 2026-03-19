@@ -22,6 +22,7 @@ import {
   RotateCcw,
   Package,
   CreditCard as CreditCardIcon,
+  Store,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -80,6 +81,7 @@ const navItems: NavItem[] = [
     ],
   },
   { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
+  { to: "/bigcommerce", icon: Store, label: "BigCommerce" },
   { to: "/portal", icon: User, label: "Customer Portal", visibleTo: ["user"] },
   {
     to: "/wallets",
