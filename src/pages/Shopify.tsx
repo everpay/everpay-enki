@@ -71,7 +71,6 @@ export default function Shopify() {
       const { error } = await supabase.from('shopify_stores').insert({
         shop_domain: shopDomain.trim(),
         merchant_id: merchant.id,
-        active: true,
       });
 
       if (error) throw error;
