@@ -20,7 +20,7 @@ interface InvoiceData {
 
 export function generateInvoicePDF(invoice: InvoiceData): void {
   const lineItemsRows = Array.isArray(invoice.items) && invoice.items.length > 0
-    ? invoice.items.map(item => `<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;">${item.description || 'Item'}</td><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:center;">${item.quantity}</td><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">${formatCurrency(item.unit_price, invoice.currency)}</td><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">${formatCurrency(item.quantity * item.unit_price, invoice.currency)}</td></tr>`).join('')
+    ? invoice.items.map(item => `<tr><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;">${escHtml(item.description || 'Item')}</td><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:center;">${item.quantity}</td><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:right;">${formatCurrency(item.unit_price, invoice.currency)}</td><td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;">${formatCurrency(item.quantity * item.unit_price, invoice.currency)}</td></tr>`).join('')
     : `<tr><td colspan="4" style="padding:10px 12px;text-align:center;color:#94a3b8;">No line items</td></tr>`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoice ${invoice.invoice_number}</title>
