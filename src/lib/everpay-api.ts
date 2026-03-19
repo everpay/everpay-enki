@@ -46,7 +46,7 @@ export function resolveProvider(params: {
     const countryMap: Record<string, string> = {
       US: 'shieldhub', CA: 'moneto',
       GB: 'mondo', DE: 'mondo', FR: 'mondo', NL: 'mondo',
-      IN: 'paygate10', BR: 'paygate10', MX: 'paygate10', NG: 'paygate10',
+      IN: 'paygate10', PK: 'paygate10', BR: 'paygate10', MX: 'paygate10', NG: 'paygate10',
       CN: 'ofa', VN: 'ofa', TH: 'ofa', JP: 'ofa', KR: 'ofa',
       CO: 'facilitapay',
     };

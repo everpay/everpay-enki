@@ -47,9 +47,9 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
   paygate10: {
     name: 'paygate10',
     displayName: 'Paygate10',
-    supportedCurrencies: ['USD', 'BRL', 'MXN', 'COP'],
-    regions: ['IN', 'BR', 'AR', 'NG', 'EG', 'MX', 'ZA', 'KE'],
-    methods: ['UPI', 'NB', 'PIX', 'LBT', 'Bank Deposit', 'SPEI', 'Cash', 'Bank Transfer', 'Wallet', 'UPIQRCode'],
+    supportedCurrencies: ['USD', 'BRL', 'MXN', 'COP', 'PKR'],
+    regions: ['IN', 'PK', 'BR', 'AR', 'NG', 'EG', 'MX', 'ZA', 'KE'],
+    methods: ['UPI', 'NB', 'PIX', 'LBT', 'Bank Deposit', 'SPEI', 'Cash', 'Bank Transfer', 'Wallet', 'UPIQRCode', 'JazzCash', 'EasyPaisa'],
   },
   ofa: {
     name: 'ofa',
@@ -80,8 +80,8 @@ const countryProviderMap: Record<string, Provider> = {
   IS: 'mondo',
   // Moneto: Canada
   CA: 'moneto',
-  // Paygate10: India, Brazil, Argentina, Nigeria, Egypt, Mexico, South Africa, Kenya
-  IN: 'paygate10', NG: 'paygate10', EG: 'paygate10', ZA: 'paygate10', KE: 'paygate10',
+  // Paygate10: India, Pakistan, Brazil, Argentina, Nigeria, Egypt, Mexico, South Africa, Kenya
+  IN: 'paygate10', PK: 'paygate10', NG: 'paygate10', EG: 'paygate10', ZA: 'paygate10', KE: 'paygate10',
   AR: 'paygate10',
   // OFA: Asia-Pacific
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
@@ -107,6 +107,7 @@ const currencyProviderMap: Record<string, Provider> = {
   ZAR: 'paygate10',
   KES: 'paygate10',
   ARS: 'paygate10',
+  PKR: 'paygate10',
   CNY: 'ofa',
   VND: 'ofa',
   THB: 'ofa',

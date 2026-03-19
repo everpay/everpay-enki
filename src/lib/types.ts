@@ -1,4 +1,4 @@
-export type Currency = 'USD' | 'EUR' | 'GBP' | 'BRL' | 'MXN' | 'COP' | 'CAD' | 'BDT';
+export type Currency = 'USD' | 'EUR' | 'GBP' | 'BRL' | 'MXN' | 'COP' | 'CAD' | 'BDT' | 'PKR';
 
 export type TransactionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
 export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed';
