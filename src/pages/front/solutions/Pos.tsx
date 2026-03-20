@@ -181,7 +181,7 @@ export default function PosPage() {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             <Card className="overflow-hidden">
               <div className="relative h-64">
-                <img src="/countertop-pos-terminal.jpg" alt="Countertop POS Terminal" className="absolute inset-0 w-full h-full object-cover" className="object-cover" />
+                <img src="/countertop-pos-terminal.jpg" alt="Countertop POS Terminal" className="absolute inset-0 w-full h-full object-cover" />
               </div>
               <CardContent className="pt-6">
                 <h3 className="text-2xl font-semibold mb-3">Countertop Terminal</h3>
@@ -210,7 +210,7 @@ export default function PosPage() {
 
             <Card className="overflow-hidden">
               <div className="relative h-64">
-                <img src="/mobile-card-reader.jpg" alt="Mobile Card Reader" className="absolute inset-0 w-full h-full object-cover" className="object-cover" />
+                <img src="/mobile-card-reader.jpg" alt="Mobile Card Reader" className="absolute inset-0 w-full h-full object-cover" />
               </div>
               <CardContent className="pt-6">
                 <h3 className="text-2xl font-semibold mb-3">Mobile Reader</h3>
@@ -239,7 +239,7 @@ export default function PosPage() {
 
             <Card className="overflow-hidden">
               <div className="relative h-64">
-                <img src="/tablet-pos-system.jpg" alt="Tablet POS System" className="absolute inset-0 w-full h-full object-cover" className="object-cover" />
+                <img src="/tablet-pos-system.jpg" alt="Tablet POS System" className="absolute inset-0 w-full h-full object-cover" />
               </div>
               <CardContent className="pt-6">
                 <h3 className="text-2xl font-semibold mb-3">Tablet POS</h3>

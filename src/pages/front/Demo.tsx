@@ -271,8 +271,8 @@ export default function DemoPage() {
                         >
                           <option value="">Select a country</option>
                           {countries.map((country) => (
-                            <option key={country.code} value={country.code}>
-                              {country.name}
+                            <option key={country} value={country}>
+                              {country}
                             </option>
                           ))}
                         </select>
