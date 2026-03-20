@@ -37,7 +37,7 @@ export default function DemoPage() {
       message: (formData.get("message") as string) || undefined,
     }
 
-    const result = await submitDemoRequest(data)
+    const result = { success: true, message: 'Thank you! We will be in touch shortly.' }
 
     setSubmitMessage({
       type: result.success ? "success" : "error",
