@@ -840,7 +840,7 @@ function simulateMakapayPayment(data: PaymentRequest) {
     trx_id: `TXN-SIM-${Date.now()}`,
     status, message,
     provider_code: 'sslcommerz',
-    currency: 'BDT',
+    currency: data.currency || 'USD',
     amount: data.amount.toFixed(2),
     timestamp: new Date().toISOString(),
     test_mode: true,
