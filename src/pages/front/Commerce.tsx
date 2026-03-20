@@ -156,11 +156,11 @@ export default function CommercePage() {
               Join thousands of businesses using Everpay's commerce platform to reach more customers and increase sales.
             </p>
             <div className="flex justify-center gap-4">            
-              <a href="https://app.everpayinc.com/sign-up" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="bg-[#4CAF50] hover:bg-[#45a049]">
-                Get started
-              </Button>
-                </a>
+              <Link to="/signup">
+                <Button size="lg" className="bg-[#4CAF50] hover:bg-[#45a049]">
+                  Get started
+                </Button>
+              </Link>
             <Link to="/contact">
               <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
                 Talk to sales

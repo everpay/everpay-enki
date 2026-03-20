@@ -187,11 +187,11 @@ export default function PartnersPage() {
               Join our partner ecosystem and let's build the future of payments together.
             </p>
             <div className="flex justify-center gap-4">
-              <a href="https://app.everpayinc.com/sign-up" target="_blank" rel="noopener noreferrer">
+              <Link to="/signup">
                 <Button size="lg" className="bg-[#4CAF50] hover:bg-[#45a049]">
                   Apply Now
                 </Button>
-              </a>
+              </Link>
               <Link to="/contact">
                 <Button variant="outline" size="lg" className="border-white bg-transparent text-white hover:bg-white/10">
                   Contact Partner Team

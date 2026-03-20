@@ -195,10 +195,10 @@ export function SiteHeader() {
                 </Link>
               ) : (
                 <div className="flex gap-3">
-                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/login" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-border active:scale-[0.97] transition-all">Log in</Button>
                   </Link>
-                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/signup" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                     <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 text-[15px] font-semibold active:scale-[0.97] transition-all">Sign up</Button>
                   </Link>
                 </div>
