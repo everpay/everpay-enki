@@ -43,7 +43,7 @@ const featuredPartners = [
     name: "QuickBooks",
     type: "Accounting",
     description: "Automated payment reconciliation",
-    logo: "https://live.staticflickr.com/65535/51872030578_e3e74e72b5_w.jpg",
+    logo: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=200&h=200&fit=crop",
   },
 ]
 
