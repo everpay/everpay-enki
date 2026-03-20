@@ -95,7 +95,11 @@ export default function OnlinePaymentsPage() {
                     className={`relative h-[400px] rounded-lg overflow-hidden ${index % 2 === 1 ? "md:order-1" : ""}`}
                   >
                     <img
-                      src={`/placeholder.svg?height=400&width=600&text=${feature.title}`}
+                      src={[
+                        "https://live.staticflickr.com/65535/52408479928_f83c0c1f14_b.jpg",
+                        "https://live.staticflickr.com/65535/52235038737_4d2b8e4fbc_b.jpg",
+                        "https://live.staticflickr.com/65535/52076871278_5c63a6781d_b.jpg",
+                      ][index % 3]}
                       alt={feature.title}
                       width={600}
                       height={400}

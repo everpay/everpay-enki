@@ -170,7 +170,7 @@ export default function PartnersPage() {
               </div>
               <div className="relative h-[400px] rounded-lg overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c"
+                  src="https://live.staticflickr.com/65535/52397919901_2d3c75379e_b.jpg"
                   alt="Partnership benefits"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
