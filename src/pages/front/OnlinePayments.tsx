@@ -198,7 +198,7 @@ export default function OnlinePaymentsPage() {
               Join thousands of businesses using Everpay to power their online payments.
             </p>
             <div className="flex justify-center gap-4">
-               <Link to="https://app.everpayinc.com/sign-up">
+               <Link to="/signup">
               <Button size="lg" className="bg-[#4CAF50] hover:bg-[#45a049]">
                 Create Account
               </Button>

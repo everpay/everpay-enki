@@ -152,11 +152,11 @@ export default function PricingPage() {
                 </div>
 
                 <div className="mt-auto">
-                  <a href="https://app.everpayinc.com/sign-up" target="_blank" rel="noopener noreferrer">
+                  <Link to="/signup">
                     <Button className="w-full bg-[#1aa478] hover:bg-[#158f64] text-white rounded-full h-12 text-base font-semibold">
                       Get started <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
-                  </a>
+                  </Link>
                 </div>
               </motion.div>
 

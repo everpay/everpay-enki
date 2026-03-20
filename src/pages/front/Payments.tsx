@@ -340,15 +340,11 @@ export default function PaymentsPage() {
                 in payments every day.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <a
-                  href="https://app.everpayinc.com/sign-up"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <Link to="/signup">
                   <Button size="lg" className="bg-[#4CAF50] hover:bg-[#45a049]">
                     Create account
                   </Button>
-                </a>
+                </Link>
                 <Link to="/contact">
                   <Button
                     variant="outline"

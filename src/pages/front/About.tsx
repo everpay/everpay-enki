@@ -532,14 +532,14 @@ export default function AboutPage() {
                 cutting-edge technology protect your revenue on an industry-leading platform. Join us.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                <a href="https://app.everpayinc.com/sign-up" target="_blank" rel="noopener noreferrer">
+                <Link to="/signup">
                   <Button
                     size="lg"
                     className="bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full px-10 h-13 text-base font-semibold shadow-none min-w-[220px]"
                   >
                     Get started free
                   </Button>
-                </a>
+                </Link>
                 <Link to="/contact">
                   <Button
                     size="lg"
