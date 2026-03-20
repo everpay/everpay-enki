@@ -810,7 +810,7 @@ async function processMakapayPayment(data: PaymentRequest) {
       redirect_url: initiateData.data?.checkout_url,
       provider_transaction_id: initiateData.data?.provider_transaction_id,
       provider_code: selectedMethod.code,
-      currency: 'BDT',
+      currency: data.currency || 'USD',
       amount: data.amount.toFixed(2),
       reference: orderRef,
       timestamp: new Date().toISOString(),
