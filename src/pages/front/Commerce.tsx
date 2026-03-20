@@ -66,7 +66,7 @@ export default function CommercePage() {
               ].map((feature, index) => (
                 <Link
                   key={index}
-                  href={feature.link}
+                  to={feature.link}
                   className="group relative overflow-hidden rounded-lg border bg-white p-6 shadow-sm transition-all hover:shadow-md"
                 >
                   <div className="relative z-10">

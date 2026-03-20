@@ -68,7 +68,7 @@ export default function BlogPage() {
               {featuredPosts.map((post, index) => (
                 <Link
                   key={index}
-                  href="#"
+                  to="#"
                   className={`group animate-fade-in-up`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >

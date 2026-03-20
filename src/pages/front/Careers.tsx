@@ -159,7 +159,7 @@ export default function CareersPage() {
                     {dept.positions.map((position, posIndex) => (
                       <Link
                         key={posIndex}
-                        href="#"
+                        to="#"
                         className="block p-6 rounded-2xl border-2 border-gray-200 hover:border-[#1aa478] transition-all duration-300 hover:shadow-xl"
                       >
                         <h4 className="font-semibold mb-2 text-lg" style={{ fontFamily: "Manrope, sans-serif" }}>

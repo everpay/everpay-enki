@@ -110,7 +110,7 @@ export default function PartnersPage() {
               {featuredPartners.map((partner, index) => (
                 <Link
                   key={index}
-                  href="#"
+                  to="#"
                   className="block p-6 bg-white rounded-lg border transition-shadow hover:shadow-md"
                 >
                   <div className="h-16 relative mb-4">
