@@ -164,9 +164,44 @@ serve(async (req) => {
 
     const totalAmount = amount + surchargeAmount;
 
-    // ─── Route payment to correct provider ───
+    // ═══════════════════════════════════════════════════════════
+    // STEP 1 — CREATE PAYMENT INTENT
+    // ═══════════════════════════════════════════════════════════
+    const { data: intent, error: intentError } = await supabase
+      .from('payment_intents')
+      .insert({
+        merchant_id: merchant.id,
+        amount: totalAmount,
+        currency,
+        status: 'requires_payment_method',
+        payment_method: paymentMethod,
+        metadata: {
+          customer_email: customerEmail,
+          description,
+          idempotency_key: idempotencyKey,
+          surcharge_amount: surchargeAmount,
+          original_amount: amount,
+          ...txMetadata,
+        },
+      })
+      .select()
+      .single();
+
+    if (intentError) throw new Error(`Failed to create payment intent: ${intentError.message}`);
+    console.log(`STEP 1: Payment intent created: ${intent.id}`);
+
+    // Update intent to processing
+    await supabase
+      .from('payment_intents')
+      .update({ status: 'processing' })
+      .eq('id', intent.id);
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 2 — ROUTE & PROCESS PAYMENT (Everpay PSP routing)
+    // ═══════════════════════════════════════════════════════════
     const provider = resolveProviderFromRequest(paymentData);
     let providerResponse: any;
+    const processingStart = Date.now();
 
     switch (provider) {
       case 'mondo':
@@ -192,6 +227,9 @@ serve(async (req) => {
         break;
     }
 
+    const latencyMs = Date.now() - processingStart;
+    console.log(`STEP 2: Payment processed via ${provider} in ${latencyMs}ms`);
+
     // Calculate FX
     let fxRate = null;
     let settlementAmount = totalAmount;
@@ -211,6 +249,9 @@ serve(async (req) => {
     };
     const internalStatus = statusMap[providerResponse.status] || 'pending';
 
+    // ═══════════════════════════════════════════════════════════
+    // STEP 3 — STORE TRANSACTION (accounting record)
+    // ═══════════════════════════════════════════════════════════
     const { data: transaction, error: txError } = await supabase
       .from('transactions')
       .insert({
@@ -228,6 +269,7 @@ serve(async (req) => {
         settlement_currency: settlementCurrency,
         metadata: {
           ...txMetadata,
+          payment_intent_id: intent.id,
           surcharge_amount: surchargeAmount,
           original_amount: amount,
           provider_response: providerResponse,
@@ -237,8 +279,35 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (txError) throw txError;
+    if (txError) throw new Error(`Failed to create transaction: ${txError.message}`);
+    console.log(`STEP 3: Transaction created: ${transaction.id}`);
 
+    // ═══════════════════════════════════════════════════════════
+    // STEP 4 — CREATE PAYMENT ATTEMPT (processor audit trail)
+    // ═══════════════════════════════════════════════════════════
+    const { data: attempt, error: attemptError } = await supabase
+      .from('payment_attempts')
+      .insert({
+        transaction_id: transaction.id,
+        provider,
+        attempt_number: 1,
+        status: internalStatus,
+        latency_ms: latencyMs,
+        response_code: providerResponse.error?.code || providerResponse.statusCode || providerResponse.respcode || null,
+        response_message: providerResponse.error?.messsage || providerResponse.message || providerResponse.respmsg || null,
+      })
+      .select()
+      .single();
+
+    if (attemptError) {
+      console.error(`STEP 4: Failed to create payment attempt: ${attemptError.message}`);
+    } else {
+      console.log(`STEP 4: Payment attempt created: ${attempt.id}`);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 5 — LOG PROVIDER EVENT
+    // ═══════════════════════════════════════════════════════════
     await supabase.from('provider_events').insert({
       merchant_id: merchant.id,
       transaction_id: transaction.id,
@@ -246,17 +315,48 @@ serve(async (req) => {
       event_type: 'payment.created',
       payload: providerResponse,
     });
+    console.log(`STEP 5: Provider event logged`);
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 6 — UPDATE PAYMENT INTENT (final status)
+    // ═══════════════════════════════════════════════════════════
+    const intentFinalStatus = internalStatus === 'completed' ? 'succeeded'
+      : internalStatus === 'failed' ? 'failed'
+      : internalStatus === 'pending' ? 'requires_action'
+      : 'processing';
+
+    await supabase
+      .from('payment_intents')
+      .update({
+        status: intentFinalStatus,
+        processor_id: provider,
+      })
+      .eq('id', intent.id);
+    console.log(`STEP 6: Payment intent updated to ${intentFinalStatus}`);
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 7 — STORE IDEMPOTENCY & RETURN
+    // ═══════════════════════════════════════════════════════════
+    const responsePayload = {
+      success: internalStatus === 'completed',
+      payment_intent: { id: intent.id, status: intentFinalStatus },
+      transaction,
+      attempt: attempt ? { id: attempt.id, latency_ms: latencyMs } : null,
+      providerResponse,
+      surchargeAmount,
+    };
 
     if (idempotencyKey) {
       await supabase.from('idempotency_keys').insert({
         merchant_id: merchant.id,
         key: idempotencyKey,
-        response: { transaction },
+        response: responsePayload,
       });
     }
+    console.log(`STEP 7: Payment flow complete`);
 
     return new Response(
-      JSON.stringify({ success: internalStatus === 'completed', transaction, providerResponse, surchargeAmount }),
+      JSON.stringify(responsePayload),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
