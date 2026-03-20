@@ -139,7 +139,7 @@ export function SiteHeader() {
 
         <div className="hidden lg:flex items-center gap-3">
           <Link to="/docs" className="text-[15px] font-medium text-foreground/60 hover:text-foreground px-4 py-2 transition-colors font-body">Docs</Link>
-          <Link to={user ? '/dashboard' : '/auth'} className="text-[15px] font-medium text-foreground/60 hover:text-foreground px-4 py-2 transition-colors font-body">
+          <Link to={user ? '/dashboard' : '/login'} className="text-[15px] font-medium text-foreground/60 hover:text-foreground px-4 py-2 transition-colors font-body">
             {user ? 'Dashboard' : 'Login'}
           </Link>
           <Link to="/demo">
