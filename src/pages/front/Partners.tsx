@@ -2,7 +2,9 @@ import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle, Users, Building, Globe } from 'lucide-react'
+
 import { Link } from "react-router-dom"
+
 const partnerTypes = [
   {
     title: "Technology Partners",
@@ -114,7 +116,11 @@ export default function PartnersPage() {
                   className="block p-6 bg-white rounded-lg border transition-shadow hover:shadow-md"
                 >
                   <div className="h-16 relative mb-4">
-                    <img src="/placeholder.svg" alt="" className="absolute inset-0 w-full h-full object-contain" />
+                    <img
+                      src={partner.logo || "/placeholder.svg"}
+                      alt={partner.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                   </div>
                   <div className="space-y-2">
                     <div className="text-sm text-[#4CAF50] font-medium">{partner.type}</div>
@@ -163,7 +169,11 @@ export default function PartnersPage() {
                 </div>
               </div>
               <div className="relative h-[400px] rounded-lg overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c" alt="Partnership benefits" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c"
+                  alt="Partnership benefits"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>

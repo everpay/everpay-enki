@@ -1,7 +1,9 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
+
 import { Link } from "react-router-dom"
+
 const departments = [
   {
     name: "Engineering",
@@ -106,7 +108,11 @@ export default function CareersPage() {
                 </ul>
               </div>
               <div className="relative h-[400px] rounded-2xl overflow-hidden shadow-2xl animate-fade-in-right">
-                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80" alt="Team collaboration" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80"
+                  alt="Team collaboration"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>

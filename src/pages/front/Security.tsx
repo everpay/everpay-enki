@@ -3,6 +3,7 @@ import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
 import { Shield, Lock, CheckCircle, FileCheck, Server, Eye, Globe, ClipboardCheck } from "lucide-react"
 import { Link } from "react-router-dom"
+
 const securityPillars = [
   {
     title: "Enterprise-Grade Security",

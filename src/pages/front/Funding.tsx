@@ -17,6 +17,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { Link } from "react-router-dom"
+
 import { useState } from "react"
 
 const trustBadges = [
@@ -384,7 +385,11 @@ export default function FundingPage() {
                   </Link>
                 </div>
                 <div className="relative h-[400px] rounded-2xl overflow-hidden">
-                  <img src="/modern-pos-terminal-payment-system.jpg" alt="Business owner reviewing funding options" className="absolute inset-0 w-full h-full object-cover" />
+                  <img
+                    src="/modern-pos-terminal-payment-system.jpg"
+                    alt="Business owner reviewing funding options"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                 </div>
               </div>
             </div>

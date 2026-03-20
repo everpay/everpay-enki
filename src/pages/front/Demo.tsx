@@ -1,9 +1,19 @@
+import type React from "react"
+
 import { useState } from "react"
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CheckCircle } from "lucide-react"
+
+const countries = [
+  "United States", "Canada", "United Kingdom", "Germany", "France", "Australia",
+  "Japan", "Brazil", "India", "Mexico", "Spain", "Italy", "Netherlands", "Sweden",
+  "Switzerland", "Singapore", "South Korea", "Pakistan", "Nigeria", "South Africa",
+  "United Arab Emirates", "Saudi Arabia", "Other"
+];
+
 export default function DemoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState<{ type: "success" | "error"; message: string } | null>(null)
@@ -27,8 +37,7 @@ export default function DemoPage() {
       message: (formData.get("message") as string) || undefined,
     }
 
-    // TODO: wire to backend
-    const result = { success: true, message: 'Thank you! Our team will contact you within 24 hours.' }
+    const result = { success: true, message: 'Thank you! We will be in touch shortly.' }
 
     setSubmitMessage({
       type: result.success ? "success" : "error",
@@ -261,8 +270,10 @@ export default function DemoPage() {
                           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1aa478] focus:border-transparent"
                         >
                           <option value="">Select a country</option>
-                          {['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan', 'Brazil', 'India', 'Mexico', 'Nigeria', 'Pakistan', 'Singapore'].map((c) => (
-                            <option key={c} value={c}>{c}</option>
+                          {countries.map((country) => (
+                            <option key={country} value={country}>
+                              {country}
+                            </option>
                           ))}
                         </select>
                       </div>

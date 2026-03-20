@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Users, DollarSign, Shield, TrendingUp, Zap, Globe } from "lucide-react"
 import { Link } from "react-router-dom"
+
+
 export default function MarketplacesPage() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -39,7 +41,11 @@ export default function MarketplacesPage() {
               </div>
             </div>
             <div className="relative h-[400px] lg:h-[500px]">
-              <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=600&fit=crop&q=80" alt="Marketplace payments" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-2xl" />
+              <img
+                src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=600&fit=crop&q=80"
+                alt="Marketplace payments"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
@@ -195,13 +201,21 @@ export default function MarketplacesPage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1556742111-a301076d9d18?w=800&h=600&fit=crop&q=80" alt="E-commerce marketplace" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1556742111-a301076d9d18?w=800&h=600&fit=crop&q=80"
+                  alt="E-commerce marketplace"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=800&h=600&fit=crop&q=80" alt="Service marketplace" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=800&h=600&fit=crop&q=80"
+                  alt="Service marketplace"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               <div className="order-1 md:order-2">
                 <h3 className="text-2xl font-bold mb-4">Service Marketplaces</h3>
@@ -250,7 +264,11 @@ export default function MarketplacesPage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=800&h=600&fit=crop&q=80" alt="P2P marketplace" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=800&h=600&fit=crop&q=80"
+                  alt="P2P marketplace"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>

@@ -17,6 +17,7 @@ import {
   TrendingUp,
   CheckCircle,
 } from "lucide-react"
+
 import { Link } from "react-router-dom"
 import { useState } from "react"
 
@@ -128,7 +129,11 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="relative h-[420px] rounded-3xl overflow-hidden shadow-lg">
-                <img src="/placeholder.jpg" alt="Team collaborating on payment solutions" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="/placeholder.jpg"
+                  alt="Team collaborating on payment solutions"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>
@@ -139,7 +144,11 @@ export default function AboutPage() {
           <div className="container mx-auto px-6">
             <div className="max-w-[1100px] mx-auto grid md:grid-cols-2 gap-16 items-center">
               <div className="relative h-[420px] rounded-3xl overflow-hidden shadow-lg md:order-first">
-                <img src="/mobile-card-reader.jpg" alt="Customer using Everpay payment terminal" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="/mobile-card-reader.jpg"
+                  alt="Customer using Everpay payment terminal"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               <div>
                 <div className="w-14 h-14 rounded-2xl bg-[#1aa478]/10 flex items-center justify-center mb-8">
@@ -210,7 +219,11 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="relative h-[420px] rounded-3xl overflow-hidden shadow-lg">
-                <img src="/countertop-pos-terminal.jpg" alt="Modern payment technology" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="/countertop-pos-terminal.jpg"
+                  alt="Modern payment technology"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>
@@ -221,7 +234,11 @@ export default function AboutPage() {
           <div className="container mx-auto px-6">
             <div className="max-w-[1100px] mx-auto grid md:grid-cols-2 gap-16 items-center">
               <div className="relative h-[420px] rounded-3xl overflow-hidden shadow-lg md:order-first">
-                <img src="/tablet-pos-system.jpg" alt="Secure payment processing" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="/tablet-pos-system.jpg"
+                  alt="Secure payment processing"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               <div>
                 <div className="w-14 h-14 rounded-2xl bg-[#1aa478]/10 flex items-center justify-center mb-8">
@@ -292,7 +309,11 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="relative h-[420px] rounded-3xl overflow-hidden shadow-lg">
-                <img src="/modern-pos-terminal-payment-system.jpg" alt="Growing business with Everpay" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="/modern-pos-terminal-payment-system.jpg"
+                  alt="Growing business with Everpay"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>
@@ -303,7 +324,11 @@ export default function AboutPage() {
           <div className="container mx-auto px-6">
             <div className="max-w-[1100px] mx-auto grid md:grid-cols-2 gap-16 items-center">
               <div className="relative h-[420px] rounded-3xl overflow-hidden shadow-lg md:order-first">
-                <img src="/placeholder.jpg" alt="Global payments network" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="/placeholder.jpg"
+                  alt="Global payments network"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               </div>
               <div>
                 <div className="w-14 h-14 rounded-2xl bg-[#1aa478]/10 flex items-center justify-center mb-8">

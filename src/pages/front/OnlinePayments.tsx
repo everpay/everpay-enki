@@ -2,7 +2,9 @@ import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
 import { Globe, Smartphone, ShieldCheck, CheckCircle } from "lucide-react"
+
 import { Link } from "react-router-dom"
+
 const features = [
   {
     title: "Global Payment Methods",
@@ -58,7 +60,13 @@ export default function OnlinePaymentsPage() {
                 </div>
               </div>
               <div className="relative h-[400px] rounded-lg overflow-hidden">
-                <img src="/placeholder.svg?height=400&width=600" alt="Online Payments" className="object-cover" width="600" height="400" />
+                <img
+                  src="/placeholder.svg?height=400&width=600"
+                  alt="Online Payments"
+                  width={600}
+                  height={400}
+                  className="object-cover"
+                />
               </div>
             </div>
           </div>
@@ -86,7 +94,13 @@ export default function OnlinePaymentsPage() {
                   <div
                     className={`relative h-[400px] rounded-lg overflow-hidden ${index % 2 === 1 ? "md:order-1" : ""}`}
                   >
-                    <img src={`/placeholder.svg?height=400&width=600&text=${feature.title}`} alt={feature.title} className="object-cover" width="600" height="400" />
+                    <img
+                      src={`/placeholder.svg?height=400&width=600&text=${feature.title}`}
+                      alt={feature.title}
+                      width={600}
+                      height={400}
+                      className="object-cover"
+                    />
                   </div>
                 </div>
               ))}

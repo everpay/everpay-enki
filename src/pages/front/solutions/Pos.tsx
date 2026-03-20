@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, CreditCard, ShoppingCart, Lock, Users, Zap, Globe, BarChart } from "lucide-react"
 import { Link } from "react-router-dom"
+
 import { MetaballsBackground } from "@/components/front/MetaballsBackground"
 
-export default function POSSolutionsPage() {
+export default function PosPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -42,7 +43,11 @@ export default function POSSolutionsPage() {
               </div>
             </div>
             <div className="relative h-[400px] lg:h-[500px]">
-              <img src="/modern-pos-terminal-payment-system.jpg" alt="Modern POS Terminal System" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-2xl" />
+              <img
+                src="/modern-pos-terminal-payment-system.jpg"
+                alt="Modern POS Terminal System"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
