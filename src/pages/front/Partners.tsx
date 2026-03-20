@@ -31,19 +31,19 @@ const featuredPartners = [
     name: "Shopify",
     type: "E-commerce",
     description: "Integrated payment solutions for online stores",
-    logo: "https://live.staticflickr.com/65535/52425795498_0e897bc320_w.jpg",
+    logo: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200&h=200&fit=crop",
   },
   {
     name: "Salesforce",
     type: "CRM",
     description: "Seamless payment processing in CRM workflows",
-    logo: "https://live.staticflickr.com/65535/52076871278_5c63a6781d_w.jpg",
+    logo: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop",
   },
   {
     name: "QuickBooks",
     type: "Accounting",
     description: "Automated payment reconciliation",
-    logo: "https://live.staticflickr.com/65535/51872030578_e3e74e72b5_w.jpg",
+    logo: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=200&h=200&fit=crop",
   },
 ]
 
@@ -170,7 +170,7 @@ export default function PartnersPage() {
               </div>
               <div className="relative h-[400px] rounded-lg overflow-hidden">
                 <img
-                  src="https://live.staticflickr.com/65535/52397919901_2d3c75379e_b.jpg"
+                  src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=500&fit=crop"
                   alt="Partnership benefits"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
