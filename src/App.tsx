@@ -80,7 +80,7 @@ function ProtectedRoute({ children, skipOnboardingCheck }: { children: React.Rea
   const { data: onboarding, isLoading: onboardingLoading } = useOnboardingStatus();
 
   if (loading || onboardingLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/login" replace />;
 
   // Redirect to onboarding if not completed (unless already on onboarding page)
   if (!skipOnboardingCheck && onboarding?.needsOnboarding && location.pathname !== '/onboarding') {
@@ -132,7 +132,7 @@ const AppRoutes = () => {
     <Route path="/products/payment-gateway" element={<FrontPaymentGateway />} />
 
     {/* Auth & public */}
-    <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+    <Route path="/auth" element={<Navigate to="/login" replace />} />
     <Route path="/login" element={<AuthRoute><Auth /></AuthRoute>} />
     <Route path="/signup" element={<AuthRoute><Auth /></AuthRoute>} />
     <Route path="/docs" element={<Docs />} />

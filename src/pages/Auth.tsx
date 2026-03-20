@@ -158,7 +158,10 @@ export default function Auth() {
 
           <div className="mt-4 text-center">
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                navigate(isLogin ? '/signup' : '/login', { replace: true });
+              }}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {isLogin ? "Don't have an account? " : 'Already have an account? '}
