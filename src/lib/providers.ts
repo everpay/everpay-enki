@@ -156,6 +156,7 @@ export function getProviderColor(provider: Provider): string {
     case 'paygate10': return 'hsl(25 95% 53%)';
     case 'ofa': return 'hsl(340 75% 55%)';
     case 'makapay': return 'hsl(160 70% 45%)';
+    case 'payok': return 'hsl(200 80% 50%)';
     default: return 'hsl(var(--chart-1))';
   }
 }

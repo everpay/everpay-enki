@@ -49,6 +49,7 @@ export function resolveProvider(params: {
       IN: 'paygate10', PK: 'paygate10', BR: 'paygate10', MX: 'paygate10', NG: 'paygate10',
       CN: 'ofa', VN: 'ofa', TH: 'ofa', JP: 'ofa', KR: 'ofa',
       CO: 'facilitapay',
+      TR: 'payok',
     };
     if (countryMap[country]) return countryMap[country];
   }
