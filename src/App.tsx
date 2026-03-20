@@ -132,7 +132,7 @@ const AppRoutes = () => {
     <Route path="/products/payment-gateway" element={<FrontPaymentGateway />} />
 
     {/* Auth & public */}
-    <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+    <Route path="/auth" element={<Navigate to="/login" replace />} />
     <Route path="/login" element={<AuthRoute><Auth /></AuthRoute>} />
     <Route path="/signup" element={<AuthRoute><Auth /></AuthRoute>} />
     <Route path="/docs" element={<Docs />} />
