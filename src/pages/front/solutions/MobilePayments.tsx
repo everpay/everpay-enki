@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Smartphone, Wifi, ShoppingBag, Users, Shield, Zap } from "lucide-react"
 import { Link } from "react-router-dom"
+
+
 export default function MobilePaymentsPage() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -39,7 +41,12 @@ export default function MobilePaymentsPage() {
               </div>
             </div>
             <div className="relative h-[400px] lg:h-[500px]">
-              <img src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=800&h=600&fit=crop&q=80" alt="Mobile payment processing" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-2xl" />
+              <img
+                src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=800&h=600&fit=crop&q=80"
+                alt="Mobile payment processing"
+                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover rounded-lg shadow-2xl"
+              />
             </div>
           </div>
         </div>
@@ -195,13 +202,23 @@ export default function MobilePaymentsPage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=800&h=600&fit=crop&q=80" alt="Food truck" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=800&h=600&fit=crop&q=80"
+                  alt="Food truck"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&h=600&fit=crop&q=80" alt="Field services" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&h=600&fit=crop&q=80"
+                  alt="Field services"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
               <div className="order-1 md:order-2">
                 <h3 className="text-2xl font-bold mb-4">Field Services</h3>
@@ -250,7 +267,12 @@ export default function MobilePaymentsPage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?w=800&h=600&fit=crop&q=80" alt="Retail events" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?w=800&h=600&fit=crop&q=80"
+                  alt="Retail events"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
           </div>

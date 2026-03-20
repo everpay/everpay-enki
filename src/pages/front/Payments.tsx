@@ -1,4 +1,4 @@
-
+;
 
 import { useState } from "react";
 import { SiteHeader } from "@/components/front/SiteHeader";
@@ -6,8 +6,7 @@ import { SiteFooter } from "@/components/front/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 ;
-import { Link } from "react-router-dom"
-;
+import { Link } from "react-router-dom";
 
 export default function PaymentsPage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -56,7 +55,13 @@ export default function PaymentsPage() {
               </div>
 
               <div className="relative h-[300px] md:h-[400px] rounded-lg overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d" alt="Modern payment system" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d"
+                  alt="Modern payment system"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover"
+                  priority
+                />
               </div>
             </div>
           </div>
@@ -114,7 +119,12 @@ export default function PaymentsPage() {
                 ].map((feature, index) => (
                   <div key={index} className="relative group overflow-hidden rounded-lg">
                     <div className="relative h-[250px] md:h-[300px]">
-                      <img src="/placeholder.svg" alt="" className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105" />
+                      <img
+                        src={feature.image}
+                        alt={feature.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        className="object-cover transition-transform group-hover:scale-105"
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-0 p-6 text-white">
                         <h3 className="text-xl font-semibold mb-2">

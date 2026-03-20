@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Building2, Globe, Shield, Users, Lock, TrendingUp } from "lucide-react"
 import { Link } from "react-router-dom"
+
+
 export default function EnterprisePage() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -39,7 +41,12 @@ export default function EnterprisePage() {
               </div>
             </div>
             <div className="relative h-[400px] lg:h-[500px]">
-              <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop&q=80" alt="Enterprise payments" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-2xl" />
+              <img
+                src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop&q=80"
+                alt="Enterprise payments"
+                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover rounded-lg shadow-2xl"
+              />
             </div>
           </div>
         </div>
@@ -197,13 +204,23 @@ export default function EnterprisePage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=600&fit=crop&q=80" alt="Multi-entity management" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=600&fit=crop&q=80"
+                  alt="Multi-entity management"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80" alt="Payment orchestration" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80"
+                  alt="Payment orchestration"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
               <div className="order-1 md:order-2">
                 <h3 className="text-2xl font-bold mb-4">Payment Orchestration</h3>
@@ -252,7 +269,12 @@ export default function EnterprisePage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop&q=80" alt="Fraud management" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop&q=80"
+                  alt="Fraud management"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
           </div>

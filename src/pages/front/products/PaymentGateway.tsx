@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, GitBranch, Shield, TrendingUp, Zap, Globe, BarChart } from "lucide-react"
 import { Link } from "react-router-dom"
+
 import { MetaballsBackground } from "@/components/front/MetaballsBackground"
 
 export default function PaymentGatewayPage() {
@@ -46,7 +47,12 @@ export default function PaymentGatewayPage() {
               </div>
             </div>
             <div className="relative h-[380px] lg:h-[480px]">
-              <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80" alt="Payment gateway orchestration" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-2xl" />
+              <img
+                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80"
+                alt="Payment gateway orchestration"
+                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover rounded-lg shadow-2xl"
+              />
             </div>
           </div>
         </div>
@@ -260,7 +266,12 @@ export default function PaymentGatewayPage() {
               </div>
             </div>
             <div className="relative h-[500px]">
-              <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop&q=80" alt="Payment analytics" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+              <img
+                src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop&q=80"
+                alt="Payment analytics"
+                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover rounded-lg shadow-xl"
+              />
             </div>
           </div>
         </div>
@@ -318,7 +329,12 @@ export default function PaymentGatewayPage() {
               </ul>
             </div>
             <div className="relative h-[400px] rounded-lg overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71" alt="Integration dashboard" className="absolute inset-0 w-full h-full object-cover" />
+              <img
+                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71"
+                alt="Integration dashboard"
+                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover"
+              />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Link } from "react-router-dom"
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white">

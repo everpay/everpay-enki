@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Utensils, CreditCard, Smartphone, Users, BarChart, Clock } from "lucide-react"
 import { Link } from "react-router-dom"
+
 import { MetaballsBackground } from "@/components/front/MetaballsBackground"
 
 export default function RestaurantPage() {
@@ -43,7 +44,12 @@ export default function RestaurantPage() {
               </div>
             </div>
             <div className="relative h-[400px] lg:h-[500px]">
-              <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop&q=80" alt="Restaurant payment processing" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-2xl" />
+              <img
+                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop&q=80"
+                alt="Restaurant payment processing"
+                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover rounded-lg shadow-2xl"
+              />
             </div>
           </div>
         </div>
@@ -199,13 +205,23 @@ export default function RestaurantPage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop&q=80" alt="Quick service restaurant" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop&q=80"
+                  alt="Quick service restaurant"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop&q=80" alt="Full service restaurant" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop&q=80"
+                  alt="Full service restaurant"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
               <div className="order-1 md:order-2">
                 <h3 className="text-2xl font-bold mb-4">Full Service Restaurants</h3>
@@ -253,7 +269,12 @@ export default function RestaurantPage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=800&h=600&fit=crop&q=80" alt="Food truck" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=800&h=600&fit=crop&q=80"
+                  alt="Food truck"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
           </div>

@@ -1,3 +1,5 @@
+import type React from "react"
+
 import { useState } from "react"
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
@@ -6,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Mail, Phone, MapPin } from "lucide-react"
+
+
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState<{ type: "success" | "error"; message: string } | null>(null)
@@ -26,8 +30,7 @@ export default function ContactPage() {
       message: formData.get("message") as string,
     }
 
-    // TODO: wire to backend
-    const result = { success: true, message: 'Thank you! We will get back to you shortly.' }
+    const result = await submitContactRequest(data)
 
     setSubmitMessage({
       type: result.success ? "success" : "error",

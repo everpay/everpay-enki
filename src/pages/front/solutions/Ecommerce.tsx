@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Lock, Zap, Globe, TrendingUp, Shield, Users } from "lucide-react"
 import { Link } from "react-router-dom"
+
 import { MetaballsBackground } from "@/components/front/MetaballsBackground"
 
 export default function EcommercePage() {
@@ -43,7 +44,12 @@ export default function EcommercePage() {
               </div>
             </div>
             <div className="relative h-[400px] lg:h-[500px]">
-              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop&q=80" alt="E-commerce payment processing" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-2xl" />
+              <img
+                src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop&q=80"
+                alt="E-commerce payment processing"
+                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover rounded-lg shadow-2xl"
+              />
             </div>
           </div>
         </div>
@@ -199,13 +205,23 @@ export default function EcommercePage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=600&fit=crop&q=80" alt="Payment methods" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=600&fit=crop&q=80"
+                  alt="Payment methods"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80" alt="Fraud prevention" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80"
+                  alt="Fraud prevention"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
               <div className="order-1 md:order-2">
                 <h3 className="text-2xl font-bold mb-4">Advanced Fraud Prevention</h3>
@@ -255,7 +271,12 @@ export default function EcommercePage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop&q=80" alt="Integration" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop&q=80"
+                  alt="Integration"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
           </div>

@@ -2,7 +2,9 @@ import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
 import { Shield, LineChart, Brain, CheckCircle } from 'lucide-react'
+
 import { Link } from "react-router-dom"
+
 const fraudFeatures = [
   {
     title: "AI-Powered Detection",
@@ -118,7 +120,12 @@ export default function FraudPreventionPage() {
                   <div
                     className={`relative h-[400px] rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow animate-fade-in ${index % 2 === 1 ? "md:order-1" : ""}`}
                   >
-                    <img src="/placeholder.svg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    <img
+                      src={featureImages[index] || "/placeholder.svg?height=400&width=600"}
+                      alt={feature.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      className="object-cover"
+                    />
                   </div>
                 </div>
               ))}
@@ -206,7 +213,12 @@ export default function FraudPreventionPage() {
                   </div>
                 </div>
                 <div className="relative h-[300px] rounded-lg overflow-hidden shadow-lg animate-fade-in-right animation-delay-600">
-                  <img src="/placeholder.svg?height=300&width=500" alt="Fraud Prevention" className="absolute inset-0 w-full h-full object-cover" />
+                  <img
+                    src="/placeholder.svg?height=300&width=500"
+                    alt="Fraud Prevention"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    className="object-cover"
+                  />
                 </div>
               </div>
             </div>

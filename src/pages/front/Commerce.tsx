@@ -2,7 +2,9 @@ import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
 import { ChevronRight, Globe, ShoppingCart, CreditCard, BarChart } from 'lucide-react'
+
 import { Link } from "react-router-dom"
+
 export default function CommercePage() {
   return (
     <div className="flex flex-col min-h-screen">
@@ -66,7 +68,7 @@ export default function CommercePage() {
               ].map((feature, index) => (
                 <Link
                   key={index}
-                  to={feature.link}
+                  href={feature.link}
                   className="group relative overflow-hidden rounded-lg border bg-white p-6 shadow-sm transition-all hover:shadow-md"
                 >
                   <div className="relative z-10">
@@ -80,7 +82,12 @@ export default function CommercePage() {
                     </div>
                   </div>
                   <div className="absolute inset-0 -z-10 opacity-0 transition-opacity group-hover:opacity-5">
-                    <img src="/placeholder.svg" alt="" className="absolute inset-0 w-full h-full object-cover" />
+                    <img
+                      src={feature.image || "/placeholder.svg"}
+                      alt={feature.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      className="object-cover"
+                    />
                   </div>
                 </Link>
               ))}
@@ -113,7 +120,12 @@ export default function CommercePage() {
                 </ul>
               </div>
               <div className="relative h-[400px] rounded-lg overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71" alt="Integration dashboard" className="absolute inset-0 w-full h-full object-cover" />
+                <img
+                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71"
+                  alt="Integration dashboard"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover"
+                />
               </div>
             </div>
           </div>
@@ -124,7 +136,7 @@ export default function CommercePage() {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <div className="mb-8">
-                <img src="/placeholder.svg" alt="Customer logo" className="mx-auto" width="120" height="40" />
+                <img src="/placeholder.svg" alt="Customer logo" width={120} height={40} className="mx-auto" />
               </div>
               <blockquote className="text-2xl font-medium mb-8">
                 "Everpay's commerce platform has transformed how we run our business. The ability to sell across

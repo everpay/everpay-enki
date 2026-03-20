@@ -2,6 +2,7 @@ import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
 import { Link } from "react-router-dom"
+
 import { 
   CreditCard, 
   Shield, 
@@ -153,7 +154,13 @@ export default function CardIssuingPage() {
               </div>
               <div className="relative">
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                  <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=800&q=80" alt="Card issuing platform dashboard" className="w-full h-auto" width="800" height="600" />
+                  <img
+                    src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=800&q=80"
+                    alt="Card issuing platform dashboard"
+                    width={800}
+                    height={600}
+                    className="w-full h-auto"
+                  />
                 </div>
                 <div className="absolute -bottom-6 -left-6 bg-white rounded-xl p-4 shadow-xl">
                   <div className="flex items-center gap-3">
@@ -340,7 +347,13 @@ export default function CardIssuingPage() {
                 </ul>
               </div>
               <div className="relative">
-                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" alt="Secure card infrastructure" className="rounded-2xl shadow-2xl" width="800" height="600" />
+                <img
+                  src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80"
+                  alt="Secure card infrastructure"
+                  width={800}
+                  height={600}
+                  className="rounded-2xl shadow-2xl"
+                />
               </div>
             </div>
           </div>

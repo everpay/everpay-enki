@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Store, ShoppingBag, Smartphone, BarChart, Users, Zap } from "lucide-react"
 import { Link } from "react-router-dom"
+
 import { MetaballsBackground } from "@/components/front/MetaballsBackground"
 
 export default function RetailPage() {
@@ -42,7 +43,12 @@ export default function RetailPage() {
               </div>
             </div>
             <div className="relative h-[400px] lg:h-[500px]">
-              <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop&q=80" alt="Retail payment processing" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-2xl" />
+              <img
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop&q=80"
+                alt="Retail payment processing"
+                className="absolute inset-0 w-full h-full object-cover"
+                className="object-cover rounded-lg shadow-2xl"
+              />
             </div>
           </div>
         </div>
@@ -199,13 +205,23 @@ export default function RetailPage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=600&fit=crop&q=80" alt="Specialty retail" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=600&fit=crop&q=80"
+                  alt="Specialty retail"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1580828343064-fde4fc206bc6?w=800&h=600&fit=crop&q=80" alt="Fashion retail" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1580828343064-fde4fc206bc6?w=800&h=600&fit=crop&q=80"
+                  alt="Fashion retail"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
               <div className="order-1 md:order-2">
                 <h3 className="text-2xl font-bold mb-4">Fashion & Apparel</h3>
@@ -254,7 +270,12 @@ export default function RetailPage() {
                 </ul>
               </div>
               <div className="relative h-[400px]">
-                <img src="https://images.unsplash.com/photo-1555529669-2269763671c0?w=800&h=600&fit=crop&q=80" alt="Multi-location retail" className="absolute inset-0 w-full h-full object-cover rounded-lg shadow-xl" />
+                <img
+                  src="https://images.unsplash.com/photo-1555529669-2269763671c0?w=800&h=600&fit=crop&q=80"
+                  alt="Multi-location retail"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  className="object-cover rounded-lg shadow-xl"
+                />
               </div>
             </div>
           </div>
