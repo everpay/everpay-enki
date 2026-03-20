@@ -13,7 +13,10 @@ import { Link2, Copy, ExternalLink, Mail, MessageSquare, QrCode, Check, Code, Gl
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-const DOMAIN = 'everpayinc.com';
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') return window.location.origin;
+  return 'https://everpayinc.com';
+};
 
 export default function PaymentLinks() {
   const [amount, setAmount] = useState('');
