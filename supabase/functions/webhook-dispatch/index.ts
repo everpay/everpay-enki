@@ -5,15 +5,34 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const jsonResponse = (status: number, body: Record<string, unknown>) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const getBearerToken = (req: Request): string | null => {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+
+  const token = authHeader.slice("Bearer ".length).trim();
+  return token.length > 0 ? token : null;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate authorization
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  const token = getBearerToken(req);
+  if (!token) {
+    return jsonResponse(401, { error: "Unauthorized" });
   }
 
   try {
@@ -22,13 +41,49 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { merchant_id, event_type, payload } = await req.json();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return jsonResponse(401, { error: "Unauthorized" });
+    }
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return jsonResponse(400, { error: "Invalid JSON payload" });
+    }
+
+    if (!isRecord(body)) {
+      return jsonResponse(400, { error: "Invalid request body" });
+    }
+
+    const merchant_id =
+      typeof body.merchant_id === "string" ? body.merchant_id.trim() : "";
+    const event_type =
+      typeof body.event_type === "string" ? body.event_type.trim() : "";
+    const payload = isRecord(body.payload) ? body.payload : {};
 
     if (!merchant_id || !event_type) {
-      return new Response(JSON.stringify({ error: "merchant_id and event_type required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse(400, { error: "merchant_id and event_type required" });
+    }
+
+    if (!UUID_REGEX.test(merchant_id)) {
+      return jsonResponse(400, { error: "Invalid merchant_id format" });
+    }
+
+    const { data: merchant, error: merchantError } = await supabase
+      .from("merchants")
+      .select("id")
+      .eq("id", merchant_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (merchantError || !merchant) {
+      return jsonResponse(403, { error: "Forbidden" });
     }
 
     // Get active webhook endpoints for this merchant that subscribe to this event
@@ -46,6 +101,15 @@ Deno.serve(async (req) => {
       // Check if endpoint subscribes to this event
       const events = endpoint.events as string[];
       if (events.length > 0 && !events.includes(event_type)) continue;
+
+       if (!endpoint.secret || typeof endpoint.secret !== "string") {
+        results.push({
+          endpoint_id: endpoint.id,
+          status: "failed",
+          response_status: null,
+        });
+        continue;
+      }
 
       // Create HMAC signature
       const encoder = new TextEncoder();
@@ -79,7 +143,7 @@ Deno.serve(async (req) => {
         deliveryStatus = response.ok ? "delivered" : "failed";
       } catch (fetchErr) {
         deliveryStatus = "failed";
-        responseBody = fetchErr.message;
+        responseBody = fetchErr instanceof Error ? fetchErr.message : "Delivery request failed";
       }
 
       // Log delivery
@@ -101,9 +165,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("Webhook dispatch error:", err);
+    return jsonResponse(500, { error: "Internal server error" });
   }
 });
