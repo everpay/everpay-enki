@@ -133,7 +133,6 @@ export default function AboutPage() {
                   src="/placeholder.jpg"
                   alt="Team collaborating on payment solutions"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
             </div>
@@ -149,7 +148,6 @@ export default function AboutPage() {
                   src="/mobile-card-reader.jpg"
                   alt="Customer using Everpay payment terminal"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
               <div>
@@ -225,7 +223,6 @@ export default function AboutPage() {
                   src="/countertop-pos-terminal.jpg"
                   alt="Modern payment technology"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
             </div>
@@ -241,7 +238,6 @@ export default function AboutPage() {
                   src="/tablet-pos-system.jpg"
                   alt="Secure payment processing"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
               <div>
@@ -317,7 +313,6 @@ export default function AboutPage() {
                   src="/modern-pos-terminal-payment-system.jpg"
                   alt="Growing business with Everpay"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
             </div>
@@ -333,7 +328,6 @@ export default function AboutPage() {
                   src="/placeholder.jpg"
                   alt="Global payments network"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
               <div>

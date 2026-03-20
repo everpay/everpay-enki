@@ -45,7 +45,6 @@ export default function MobilePaymentsPage() {
                 src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=800&h=600&fit=crop&q=80"
                 alt="Mobile payment processing"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover rounded-lg shadow-2xl"
               />
             </div>
           </div>
@@ -206,7 +205,6 @@ export default function MobilePaymentsPage() {
                   src="https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=800&h=600&fit=crop&q=80"
                   alt="Food truck"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>
@@ -217,7 +215,6 @@ export default function MobilePaymentsPage() {
                   src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&h=600&fit=crop&q=80"
                   alt="Field services"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
               <div className="order-1 md:order-2">
@@ -271,7 +268,6 @@ export default function MobilePaymentsPage() {
                   src="https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?w=800&h=600&fit=crop&q=80"
                   alt="Retail events"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>

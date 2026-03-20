@@ -45,7 +45,6 @@ export default function SaasPlaftormsPage() {
                 src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=600&fit=crop&q=80"
                 alt="SaaS platform payments"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover rounded-lg shadow-2xl"
               />
             </div>
           </div>
@@ -206,7 +205,6 @@ export default function SaasPlaftormsPage() {
                   src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop&q=80"
                   alt="Vertical SaaS"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>
@@ -217,7 +215,6 @@ export default function SaasPlaftormsPage() {
                   src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=600&fit=crop&q=80"
                   alt="E-commerce platforms"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
               <div className="order-1 md:order-2">
@@ -271,7 +268,6 @@ export default function SaasPlaftormsPage() {
                   src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=600&fit=crop&q=80"
                   alt="Business management"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>

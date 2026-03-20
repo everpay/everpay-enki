@@ -45,7 +45,6 @@ export default function EnterprisePage() {
                 src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop&q=80"
                 alt="Enterprise payments"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover rounded-lg shadow-2xl"
               />
             </div>
           </div>
@@ -208,7 +207,6 @@ export default function EnterprisePage() {
                   src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=600&fit=crop&q=80"
                   alt="Multi-entity management"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>
@@ -219,7 +217,6 @@ export default function EnterprisePage() {
                   src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80"
                   alt="Payment orchestration"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
               <div className="order-1 md:order-2">
@@ -273,7 +270,6 @@ export default function EnterprisePage() {
                   src="https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop&q=80"
                   alt="Fraud management"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>

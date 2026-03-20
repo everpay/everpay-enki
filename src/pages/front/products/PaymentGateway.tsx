@@ -51,7 +51,6 @@ export default function PaymentGatewayPage() {
                 src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80"
                 alt="Payment gateway orchestration"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover rounded-lg shadow-2xl"
               />
             </div>
           </div>
@@ -270,7 +269,6 @@ export default function PaymentGatewayPage() {
                 src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop&q=80"
                 alt="Payment analytics"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover rounded-lg shadow-xl"
               />
             </div>
           </div>
@@ -333,7 +331,6 @@ export default function PaymentGatewayPage() {
                 src="https://images.unsplash.com/photo-1551288049-bebda4e38f71"
                 alt="Integration dashboard"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover"
               />
             </div>
           </div>

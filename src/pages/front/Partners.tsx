@@ -120,7 +120,6 @@ export default function PartnersPage() {
                       src={partner.logo || "/placeholder.svg"}
                       alt={partner.name}
                       className="absolute inset-0 w-full h-full object-cover"
-                      className="object-contain"
                     />
                   </div>
                   <div className="space-y-2">
@@ -174,7 +173,6 @@ export default function PartnersPage() {
                   src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c"
                   alt="Partnership benefits"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
             </div>

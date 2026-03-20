@@ -47,7 +47,6 @@ export default function RetailPage() {
                 src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop&q=80"
                 alt="Retail payment processing"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover rounded-lg shadow-2xl"
               />
             </div>
           </div>
@@ -209,7 +208,6 @@ export default function RetailPage() {
                   src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=600&fit=crop&q=80"
                   alt="Specialty retail"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>
@@ -220,7 +218,6 @@ export default function RetailPage() {
                   src="https://images.unsplash.com/photo-1580828343064-fde4fc206bc6?w=800&h=600&fit=crop&q=80"
                   alt="Fashion retail"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
               <div className="order-1 md:order-2">
@@ -274,7 +271,6 @@ export default function RetailPage() {
                   src="https://images.unsplash.com/photo-1555529669-2269763671c0?w=800&h=600&fit=crop&q=80"
                   alt="Multi-location retail"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>

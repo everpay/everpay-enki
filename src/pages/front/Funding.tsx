@@ -389,7 +389,6 @@ export default function FundingPage() {
                     src="/modern-pos-terminal-payment-system.jpg"
                     alt="Business owner reviewing funding options"
                     className="absolute inset-0 w-full h-full object-cover"
-                    className="object-cover"
                   />
                 </div>
               </div>

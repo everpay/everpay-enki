@@ -47,7 +47,6 @@ export default function PosPage() {
                 src="/modern-pos-terminal-payment-system.jpg"
                 alt="Modern POS Terminal System"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover rounded-lg shadow-2xl"
               />
             </div>
           </div>

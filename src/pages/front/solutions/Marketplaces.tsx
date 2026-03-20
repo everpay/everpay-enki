@@ -45,7 +45,6 @@ export default function MarketplacesPage() {
                 src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=600&fit=crop&q=80"
                 alt="Marketplace payments"
                 className="absolute inset-0 w-full h-full object-cover"
-                className="object-cover rounded-lg shadow-2xl"
               />
             </div>
           </div>
@@ -206,7 +205,6 @@ export default function MarketplacesPage() {
                   src="https://images.unsplash.com/photo-1556742111-a301076d9d18?w=800&h=600&fit=crop&q=80"
                   alt="E-commerce marketplace"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>
@@ -217,7 +215,6 @@ export default function MarketplacesPage() {
                   src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=800&h=600&fit=crop&q=80"
                   alt="Service marketplace"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
               <div className="order-1 md:order-2">
@@ -271,7 +268,6 @@ export default function MarketplacesPage() {
                   src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=800&h=600&fit=crop&q=80"
                   alt="P2P marketplace"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover rounded-lg shadow-xl"
                 />
               </div>
             </div>

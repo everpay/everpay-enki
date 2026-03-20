@@ -112,7 +112,6 @@ export default function CareersPage() {
                   src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80"
                   alt="Team collaboration"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
             </div>

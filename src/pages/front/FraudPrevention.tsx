@@ -124,7 +124,6 @@ export default function FraudPreventionPage() {
                       src={featureImages[index] || "/placeholder.svg?height=400&width=600"}
                       alt={feature.title}
                       className="absolute inset-0 w-full h-full object-cover"
-                      className="object-cover"
                     />
                   </div>
                 </div>
@@ -217,7 +216,6 @@ export default function FraudPreventionPage() {
                     src="/placeholder.svg?height=300&width=500"
                     alt="Fraud Prevention"
                     className="absolute inset-0 w-full h-full object-cover"
-                    className="object-cover"
                   />
                 </div>
               </div>

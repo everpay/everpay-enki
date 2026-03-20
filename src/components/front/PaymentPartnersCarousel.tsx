@@ -73,7 +73,6 @@ export function PaymentPartnersSection() {
                   src={method.image || "/placeholder.svg"}
                   alt={method.name}
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-contain p-2"
                   sizes="128px"
                 />
               </div>

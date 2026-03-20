@@ -86,7 +86,6 @@ export default function CommercePage() {
                       src={feature.image || "/placeholder.svg"}
                       alt={feature.title}
                       className="absolute inset-0 w-full h-full object-cover"
-                      className="object-cover"
                     />
                   </div>
                 </Link>
@@ -124,7 +123,6 @@ export default function CommercePage() {
                   src="https://images.unsplash.com/photo-1551288049-bebda4e38f71"
                   alt="Integration dashboard"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
             </div>

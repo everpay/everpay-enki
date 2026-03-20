@@ -59,7 +59,6 @@ export default function PaymentsPage() {
                   src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d"
                   alt="Modern payment system"
                   className="absolute inset-0 w-full h-full object-cover"
-                  className="object-cover"
                 />
               </div>
             </div>
@@ -122,7 +121,6 @@ export default function PaymentsPage() {
                         src={feature.image}
                         alt={feature.title}
                         className="absolute inset-0 w-full h-full object-cover"
-                        className="object-cover transition-transform group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-0 p-6 text-white">
