@@ -13,32 +13,51 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Missing authorization header');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-    if (userError || !user) throw new Error('Unauthorized');
+    const token = authHeader.replace('Bearer ', '');
+
+    // Use anon-key client with the user's token to validate via getClaims
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = claimsData.claims.sub as string;
+
+    // Use service role client for DB operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get merchant for this user
     const { data: merchant } = await supabase
       .from('merchants')
       .select('id')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     const body = await req.json();
 
     if (body.action === 'history') {
-      // GET history
       let query = supabase
         .from('device_analytics')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -62,13 +81,11 @@ serve(async (req) => {
       event_type, metadata,
     } = body;
 
-    // Get client IP from request headers
-    const clientIP = ip_address || 
+    const clientIP = ip_address ||
       req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      req.headers.get('x-real-ip') || 
+      req.headers.get('x-real-ip') ||
       'unknown';
 
-    // Calculate risk score
     let riskScore = 0;
     const riskFactors: string[] = [];
 
@@ -83,7 +100,7 @@ serve(async (req) => {
     const { data: analytics, error: insertError } = await supabase
       .from('device_analytics')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         merchant_id: merchant?.id || null,
         device_id: device_id || crypto.randomUUID(),
         device_type, os, os_version, browser, browser_version,
