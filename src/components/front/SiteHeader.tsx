@@ -1,0 +1,186 @@
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import {
+  ChevronDown, Menu, X, ShoppingBag, UtensilsCrossed, ShoppingCart,
+  Smartphone, Laptop, Store, Building2, CreditCard, Plug, Globe,
+  Shield, Lock, DollarSign,
+} from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+
+export function SiteHeader() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleMenuEnter = (menu: string) => {
+    if (closeTimeoutRef.current) { clearTimeout(closeTimeoutRef.current); closeTimeoutRef.current = null; }
+    setActiveMegaMenu(menu);
+  };
+
+  const handleMenuLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => setActiveMegaMenu(null), 150);
+  };
+
+  const solutionItems = [
+    { icon: ShoppingBag, label: 'Retail', to: '/solutions/retail' },
+    { icon: UtensilsCrossed, label: 'Restaurant', to: '/solutions/restaurant' },
+    { icon: ShoppingCart, label: 'E-commerce', to: '/solutions/ecommerce' },
+    { icon: Smartphone, label: 'Mobile Payments', to: '/solutions/mobile-payments' },
+  ];
+
+  const platformItems = [
+    { icon: Laptop, label: 'SaaS & Platforms', to: '/solutions/saas-platforms' },
+    { icon: Store, label: 'Marketplaces', to: '/solutions/marketplaces' },
+    { icon: Building2, label: 'Enterprise', to: '/solutions/enterprise' },
+  ];
+
+  const productItems = [
+    { icon: CreditCard, label: 'Online Payments', to: '/online-payments' },
+    { icon: Plug, label: 'Payment Gateway', to: '/products/payment-gateway' },
+    { icon: Store, label: 'Point of Sale', to: '/solutions/pos' },
+    { icon: Shield, label: 'Fraud Prevention', to: '/fraud-prevention' },
+    { icon: Lock, label: 'Security', to: '/security' },
+    { icon: Globe, label: 'Payment Methods', to: '/payments' },
+    { icon: DollarSign, label: 'Funding', to: '/funding' },
+    { icon: CreditCard, label: 'Card Issuing', to: '/card-issuing' },
+  ];
+
+  return (
+    <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-white'}`}>
+      <div className="container mx-auto flex h-[72px] items-center justify-between px-6">
+        <Link to="/" className="flex items-center gap-2.5">
+          <img src="/favicon.png" alt="Everpay Logo" className="h-8 w-8 rounded-lg" />
+          <span className="text-[22px] font-bold text-gray-900 tracking-tight" style={{ fontFamily: 'Manrope, sans-serif' }}>everpay</span>
+        </Link>
+
+        {/* Desktop Nav */}
+        <nav className="hidden lg:flex items-center gap-1">
+          {/* Solutions */}
+          <div className="relative" onMouseEnter={() => handleMenuEnter('solutions')} onMouseLeave={handleMenuLeave}>
+            <button className="flex items-center gap-1 px-4 py-2 text-[15px] font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
+              Solutions
+              <ChevronDown className={`h-3.5 w-3.5 opacity-50 transition-transform ${activeMegaMenu === 'solutions' ? 'rotate-180' : ''}`} />
+            </button>
+            {activeMegaMenu === 'solutions' && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-[520px]">
+                <div className="h-2" />
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                  <div className="grid grid-cols-2 gap-1">
+                    <p className="col-span-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">By Business Type</p>
+                    {solutionItems.map((item) => (
+                      <Link key={item.label} to={item.to} className="flex items-center gap-3 rounded-xl p-3 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors" onClick={() => setActiveMegaMenu(null)}>
+                        <item.icon className="h-4 w-4 text-[#1aa478]" />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    ))}
+                    <div className="col-span-2 border-t border-gray-100 my-2" />
+                    <p className="col-span-2 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">By Platform</p>
+                    {platformItems.map((item) => (
+                      <Link key={item.label} to={item.to} className="flex items-center gap-3 rounded-xl p-3 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors" onClick={() => setActiveMegaMenu(null)}>
+                        <item.icon className="h-4 w-4 text-[#1aa478]" />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Products */}
+          <div className="relative" onMouseEnter={() => handleMenuEnter('products')} onMouseLeave={handleMenuLeave}>
+            <button className="flex items-center gap-1 px-4 py-2 text-[15px] font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
+              Products
+              <ChevronDown className={`h-3.5 w-3.5 opacity-50 transition-transform ${activeMegaMenu === 'products' ? 'rotate-180' : ''}`} />
+            </button>
+            {activeMegaMenu === 'products' && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-[440px]">
+                <div className="h-2" />
+                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                  <div className="grid grid-cols-2 gap-1">
+                    {productItems.map((item) => (
+                      <Link key={item.label} to={item.to} className="flex items-center gap-3 rounded-xl p-3 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors" onClick={() => setActiveMegaMenu(null)}>
+                        <item.icon className="h-4 w-4 text-[#1aa478]" />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Link to="/pricing" className="px-4 py-2 text-[15px] font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">Pricing</Link>
+          <Link to="/about" className="px-4 py-2 text-[15px] font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">About</Link>
+          <Link to="/blog" className="px-4 py-2 text-[15px] font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">Blog</Link>
+        </nav>
+
+        {/* Desktop CTA */}
+        <div className="hidden lg:flex items-center gap-3">
+          <Link to="/docs" className="text-[15px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors">Docs</Link>
+          <Link to={user ? '/dashboard' : '/auth'} className="text-[15px] font-medium text-gray-600 hover:text-gray-900 px-4 py-2 transition-colors">
+            {user ? 'Dashboard' : 'Login'}
+          </Link>
+          <Link to="/demo">
+            <Button className="bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full px-6 h-10 text-[15px] font-semibold shadow-none">
+              Get a free demo
+            </Button>
+          </Link>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button className="lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
+          {isMenuOpen ? <X className="h-6 w-6 text-gray-900" /> : <Menu className="h-6 w-6 text-gray-900" />}
+        </button>
+      </div>
+
+      {/* Mobile Navigation */}
+      {isMenuOpen && (
+        <div className="lg:hidden border-t border-gray-100 bg-white max-h-[calc(100vh-72px)] overflow-y-auto">
+          <nav className="container mx-auto flex flex-col px-6 py-6">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Solutions</p>
+              {[...solutionItems, ...platformItems].map((item) => (
+                <Link key={item.label} to={item.to} className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900 w-full text-left" onClick={() => setIsMenuOpen(false)}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+            <div className="border-t border-gray-100 mt-4 pt-4 space-y-1">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Products</p>
+              {productItems.map((item) => (
+                <Link key={item.label} to={item.to} className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900 w-full text-left" onClick={() => setIsMenuOpen(false)}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+            <div className="border-t border-gray-100 mt-4 pt-4 space-y-1">
+              <Link to="/pricing" className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900" onClick={() => setIsMenuOpen(false)}>Pricing</Link>
+              <Link to="/about" className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900" onClick={() => setIsMenuOpen(false)}>About</Link>
+              <Link to="/blog" className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900" onClick={() => setIsMenuOpen(false)}>Blog</Link>
+            </div>
+            <div className="border-t border-gray-100 mt-4 pt-6 flex flex-col gap-3">
+              <Link to={user ? '/dashboard' : '/auth'} className="text-center text-[15px] font-medium text-gray-600 py-2.5" onClick={() => setIsMenuOpen(false)}>
+                {user ? 'Dashboard' : 'Login'}
+              </Link>
+              <Link to="/demo">
+                <Button className="w-full bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full h-11 text-[15px] font-semibold">
+                  Get a free demo
+                </Button>
+              </Link>
+            </div>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
