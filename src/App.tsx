@@ -43,6 +43,35 @@ import BigCommerce from "./pages/BigCommerce";
 import Shopify from "./pages/Shopify";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 
+// Front site pages
+import FrontAbout from "./pages/front/About";
+import FrontPricing from "./pages/front/Pricing";
+import FrontContact from "./pages/front/Contact";
+import FrontDemo from "./pages/front/Demo";
+import FrontBlog from "./pages/front/Blog";
+import FrontCareers from "./pages/front/Careers";
+import FrontPartners from "./pages/front/Partners";
+import FrontFunding from "./pages/front/Funding";
+import FrontCommerce from "./pages/front/Commerce";
+import FrontSecurity from "./pages/front/Security";
+import FrontFraudPrevention from "./pages/front/FraudPrevention";
+import FrontOnlinePayments from "./pages/front/OnlinePayments";
+import FrontPayments from "./pages/front/Payments";
+import FrontCardIssuing from "./pages/front/CardIssuing";
+import FrontAmlPolicy from "./pages/front/AmlPolicy";
+import FrontTerms from "./pages/front/Terms";
+import FrontPrivacyPolicy from "./pages/front/PrivacyPolicy";
+import FrontCookiePolicy from "./pages/front/CookiePolicy";
+import FrontRetail from "./pages/front/solutions/Retail";
+import FrontRestaurant from "./pages/front/solutions/Restaurant";
+import FrontEcommerce from "./pages/front/solutions/Ecommerce";
+import FrontMobilePayments from "./pages/front/solutions/MobilePayments";
+import FrontSaasPlaftorms from "./pages/front/solutions/SaasPlaftorms";
+import FrontMarketplaces from "./pages/front/solutions/Marketplaces";
+import FrontEnterprise from "./pages/front/solutions/Enterprise";
+import FrontPos from "./pages/front/solutions/Pos";
+import FrontPaymentGateway from "./pages/front/products/PaymentGateway";
+
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children, skipOnboardingCheck }: { children: React.ReactNode; skipOnboardingCheck?: boolean }) {
