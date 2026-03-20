@@ -793,7 +793,7 @@ async function processMakapayPayment(data: PaymentRequest) {
         status: 'Failed',
         message: initiateData.message || 'Payment initiation failed',
         errors: initiateData.errors,
-        currency: 'BDT',
+        currency: data.currency || 'USD',
         amount: data.amount.toFixed(2),
         timestamp: new Date().toISOString(),
         provider: 'makapay',
