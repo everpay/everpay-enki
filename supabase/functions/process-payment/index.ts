@@ -59,6 +59,7 @@ const countryProviderMap: Record<string, string> = {
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
   BD: 'makapay',
   CO: 'facilitapay',
+  TR: 'payok',
 };
 
 function resolveProviderFromRequest(data: PaymentRequest): string {
