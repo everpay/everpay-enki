@@ -3,8 +3,10 @@ import { useProviderEvents } from '@/hooks/useProviderEvents';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe } from 'lucide-react';
+import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe, Building2, Wallet } from 'lucide-react';
 import { CardBrandBadge } from '@/components/CardBrandBadge';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TransactionDetailDrawerProps {
   transaction: Transaction | null;
@@ -21,8 +23,43 @@ function getCardBrandFromBin(first6: string): string | null {
   return null;
 }
 
+type PaymentMethodType = 'card' | 'bank' | 'wallet' | 'unknown';
+
+function detectPaymentMethodType(tx: Transaction, metadata: Record<string, any>): PaymentMethodType {
+  const provider = tx.provider?.toLowerCase() || '';
+  const paymentMethod = metadata?.payment_method_type || metadata?.payment_type || '';
+
+  if (['apple_pay', 'google_pay', 'paypal', 'apple pay', 'google pay'].some(w => paymentMethod.toLowerCase().includes(w) || provider.includes(w))) return 'wallet';
+  if (['ach', 'sepa', 'pix', 'boleto', 'open_banking', 'bank_transfer', 'wire'].some(w => paymentMethod.toLowerCase().includes(w) || provider.includes(w))) return 'bank';
+  if (metadata?.card_first6 || metadata?.cardFirst6 || metadata?.card_brand || metadata?.card_last4 || metadata?.cardLast4) return 'card';
+  return 'card'; // default to card for most providers
+}
+
+function usePaymentMethod(transactionId: string | null, customerId?: string) {
+  return useQuery({
+    queryKey: ['payment-method-detail', transactionId],
+    enabled: !!transactionId,
+    queryFn: async () => {
+      // Try to find payment method linked to this transaction's customer
+      if (!customerId) return null;
+      const { data } = await supabase
+        .from('payment_methods')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('is_default', { ascending: false })
+        .limit(1);
+      return data?.[0] || null;
+    },
+  });
+}
+
 export function TransactionDetailDrawer({ transaction, open, onOpenChange }: TransactionDetailDrawerProps) {
   const { data: allEvents = [] } = useProviderEvents();
+
+  // Extract customer_id from metadata for payment method lookup
+  const txMetadata = (transaction as any)?.metadata || {};
+  const customerId = txMetadata?.customer_id || txMetadata?.customerId || null;
+  const { data: paymentMethod } = usePaymentMethod(transaction?.id || null, customerId);
 
   if (!transaction) return null;
 
@@ -33,22 +70,43 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const vaultEvent = relatedEvents.find((e) => e.event_type === 'vault.completed');
 
   const vgsAlias = (vaultEvent?.payload as any)?.vgs_alias || (tapixEvent?.payload as any)?.vgs_alias || null;
-  const cardBrand = (tapixEvent?.payload as any)?.card_brand || (vaultEvent?.payload as any)?.card_brand || null;
-  const cardLast4 = (tapixEvent?.payload as any)?.card_last4 || (vaultEvent?.payload as any)?.card_last4 || null;
+  const eventCardBrand = (tapixEvent?.payload as any)?.card_brand || (vaultEvent?.payload as any)?.card_brand || null;
+  const eventCardLast4 = (tapixEvent?.payload as any)?.card_last4 || (vaultEvent?.payload as any)?.card_last4 || null;
 
-  // Extract metadata (card BIN + device info)
-  const txMetadata = (transaction as any)?.metadata || {};
+  // Merge from all sources: metadata > events > payment_methods table
   const cardFirst6 = txMetadata.cardFirst6 || txMetadata.card_first6 || '';
-  const metaCardLast4 = txMetadata.cardLast4 || txMetadata.card_last4 || cardLast4 || '';
-  const metaCardBrand = txMetadata.card_brand || cardBrand || getCardBrandFromBin(cardFirst6);
+  const cardLast4 = txMetadata.cardLast4 || txMetadata.card_last4 || eventCardLast4 || paymentMethod?.card_last4 || '';
+  const cardBrand = txMetadata.card_brand || eventCardBrand || paymentMethod?.card_brand || getCardBrandFromBin(cardFirst6);
+  const expMonth = paymentMethod?.exp_month || txMetadata.exp_month || null;
+  const expYear = paymentMethod?.exp_year || txMetadata.exp_year || null;
   const deviceInfo = txMetadata.device_info || null;
+
+  // Detect payment method type
+  const methodType = detectPaymentMethodType(transaction, txMetadata);
+
+  // Tapix enrichment data
+  const tapixData = (tapixEvent?.payload as any) || {};
+  const enrichedMerchant = tapixData.merchant_name || tapixData.store || null;
+  const enrichedCategory = tapixData.category || null;
+  const enrichedLocation = tapixData.location || null;
+
+  // Bank details from metadata
+  const bankName = txMetadata.bank_name || txMetadata.institution_name || null;
+  const bankAccountLast4 = txMetadata.account_last4 || txMetadata.bank_last4 || null;
+  const bankType = txMetadata.bank_method || txMetadata.payment_rail || null;
+
+  // Wallet details
+  const walletType = txMetadata.wallet_type || txMetadata.payment_method_type || null;
+
+  const PaymentMethodIcon = methodType === 'bank' ? Building2 : methodType === 'wallet' ? Wallet : CreditCard;
+  const methodLabel = methodType === 'bank' ? 'Bank Payment' : methodType === 'wallet' ? 'Digital Wallet' : 'Card Payment';
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-[480px] bg-card border-border overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="font-heading text-foreground flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-primary" />
+            <PaymentMethodIcon className="h-5 w-5 text-primary" />
             Transaction Details
           </SheetTitle>
           <SheetDescription>
@@ -73,22 +131,88 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             </div>
           </div>
 
-          {/* Card & Vault Section */}
-          {(vgsAlias || metaCardBrand || metaCardLast4 || cardFirst6) && (
+          {/* Payment Method Section */}
+          <div className="space-y-3">
+            <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
+              <PaymentMethodIcon className="h-4 w-4 text-primary" />
+              {methodLabel}
+            </h4>
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+              {/* Card display */}
+              {methodType === 'card' && (cardBrand || cardLast4 || cardFirst6) && (
+                <div className="flex justify-center">
+                  <CardBrandBadge
+                    brand={cardBrand}
+                    last4={cardLast4}
+                    first4={cardFirst6?.slice(0, 4)}
+                    expMonth={expMonth}
+                    expYear={expYear}
+                  />
+                </div>
+              )}
+
+              {/* Bank payment display */}
+              {methodType === 'bank' && (
+                <div className="flex items-center justify-center gap-3 rounded-lg border border-border bg-background px-4 py-3">
+                  <Building2 className="h-6 w-6 text-primary" />
+                  <div>
+                    <p className="font-medium text-sm text-foreground">
+                      {bankName || 'Bank Transfer'}
+                      {bankAccountLast4 && <span className="font-mono ml-1">••••{bankAccountLast4}</span>}
+                    </p>
+                    {bankType && <p className="text-xs text-muted-foreground uppercase">{bankType}</p>}
+                  </div>
+                </div>
+              )}
+
+              {/* Wallet display */}
+              {methodType === 'wallet' && (
+                <div className="flex items-center justify-center gap-3 rounded-lg border border-border bg-background px-4 py-3">
+                  {walletType?.toLowerCase().includes('apple') ? (
+                    <img src="/logos/apple-pay.svg" alt="Apple Pay" className="h-6 w-auto" />
+                  ) : walletType?.toLowerCase().includes('google') ? (
+                    <img src="/logos/google-pay.svg" alt="Google Pay" className="h-6 w-auto" />
+                  ) : walletType?.toLowerCase().includes('paypal') ? (
+                    <img src="/logos/paypal.svg" alt="PayPal" className="h-6 w-auto" />
+                  ) : (
+                    <Wallet className="h-6 w-6 text-primary" />
+                  )}
+                  <p className="font-medium text-sm text-foreground capitalize">
+                    {walletType?.replace(/_/g, ' ') || 'Digital Wallet'}
+                  </p>
+                </div>
+              )}
+
+              {/* Fallback card display when no specific data */}
+              {methodType === 'card' && !cardBrand && !cardLast4 && !cardFirst6 && (
+                <div className="flex items-center justify-center gap-3 text-muted-foreground py-2">
+                  <CreditCard className="h-5 w-5" />
+                  <span className="text-sm">Card details not available</span>
+                </div>
+              )}
+
+              {/* VGS Alias */}
+              {vgsAlias && (
+                <DetailRow icon={Shield} label="VGS Alias" value={
+                  <span className="font-mono text-[10px] text-primary break-all">{vgsAlias}</span>
+                } />
+              )}
+            </div>
+          </div>
+
+          {/* Tapix Enrichment */}
+          {(enrichedMerchant || enrichedCategory || enrichedLocation) && (
             <div className="space-y-3">
               <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" />
-                Card & Vault
+                <Zap className="h-4 w-4 text-primary" />
+                Enrichment Data
               </h4>
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
-                {(metaCardBrand || metaCardLast4) && (
-                  <div className="flex justify-center">
-                    <CardBrandBadge brand={metaCardBrand} last4={metaCardLast4} first4={cardFirst6?.slice(0, 4)} />
-                  </div>
-                )}
-                {vgsAlias && (
-                  <DetailRow icon={Shield} label="VGS Alias" value={
-                    <span className="font-mono text-[10px] text-primary break-all">{vgsAlias}</span>
+              <div className="rounded-lg border border-border bg-background p-4 space-y-2">
+                {enrichedMerchant && <DetailRow icon={FileText} label="Merchant" value={enrichedMerchant} />}
+                {enrichedCategory && <DetailRow icon={Hash} label="Category" value={enrichedCategory} />}
+                {enrichedLocation && (
+                  <DetailRow icon={Globe} label="Location" value={
+                    [enrichedLocation.city, enrichedLocation.state, enrichedLocation.country].filter(Boolean).join(', ')
                   } />
                 )}
               </div>
