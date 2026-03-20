@@ -722,7 +722,7 @@ async function processMonetoPayment(data: PaymentRequest) {
   };
 }
 
-// ─── MakaPay — Bangladesh (BDT) ───
+// ─── MakaPay — Bangladesh (USD) ───
 async function processMakapayPayment(data: PaymentRequest) {
   const apiKey = Deno.env.get('MAKAPAY_API_KEY');
   const apiSecret = Deno.env.get('MAKAPAY_API_SECRET');
