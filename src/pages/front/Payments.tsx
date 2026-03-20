@@ -60,7 +60,6 @@ export default function PaymentsPage() {
                   alt="Modern payment system"
                   className="absolute inset-0 w-full h-full object-cover"
                   className="object-cover"
-                  priority
                 />
               </div>
             </div>
