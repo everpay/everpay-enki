@@ -32,6 +32,13 @@ const legalLinks = [
   { href: 'https://status.everpayinc.com', label: 'System Status' },
 ];
 
+const securityBadges = [
+  { src: '/logos/pci-dss.svg', alt: 'PCI DSS Level 1 Certified', width: 89, height: 34 },
+  { src: '/logos/soc-2-certificate.svg', alt: 'SOC 2 Type II Certified', width: 74, height: 32 },
+  { src: '/logos/gdpr-compliant.svg', alt: 'GDPR Compliant', width: 110, height: 35 },
+  { src: '/logos/iso-27018-certificate.svg', alt: 'ISO 27018 Certified', width: 45, height: 45 },
+];
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-secondary/30">
@@ -51,19 +58,36 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="flex items-center gap-4 mt-10">
-          {[
-            { href: 'https://facebook.com/everpay/', icon: Facebook, label: 'Facebook' },
-            { href: 'https://twitter.com/everpay/', icon: Twitter, label: 'Twitter' },
-            { href: 'https://linkedin.com/in/everpay/', icon: Linkedin, label: 'LinkedIn' },
-            { href: 'https://github.com/everpay/', icon: Github, label: 'GitHub' },
-          ].map(({ href, icon: Icon, label }) => (
-            <a key={label} href={href} className="hover:scale-110 transition-transform duration-200" aria-label={label}>
-              <Icon className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-            </a>
-          ))}
+        {/* Social icons + Security badges row */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mt-10">
+          <div className="flex items-center gap-4">
+            {[
+              { href: 'https://facebook.com/everpay/', icon: Facebook, label: 'Facebook' },
+              { href: 'https://twitter.com/everpay/', icon: Twitter, label: 'Twitter' },
+              { href: 'https://linkedin.com/in/everpay/', icon: Linkedin, label: 'LinkedIn' },
+              { href: 'https://github.com/everpay/', icon: Github, label: 'GitHub' },
+            ].map(({ href, icon: Icon, label }) => (
+              <a key={label} href={href} className="hover:scale-110 transition-transform duration-200" aria-label={label}>
+                <Icon className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+              </a>
+            ))}
+          </div>
+          <div className="flex items-center gap-5 flex-wrap">
+            {securityBadges.map((badge) => (
+              <img
+                key={badge.alt}
+                src={badge.src}
+                alt={badge.alt}
+                width={badge.width}
+                height={badge.height}
+                className="opacity-60 hover:opacity-100 transition-opacity duration-200"
+                loading="lazy"
+              />
+            ))}
+          </div>
         </div>
 
+        {/* Sub-footer */}
         <div className="mt-10 pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <p className="text-xs text-muted-foreground font-body">© {new Date().getFullYear()} Everpay Corporation. All rights reserved.</p>
@@ -79,10 +103,13 @@ export function SiteFooter() {
           </div>
           <div className="mt-8 space-y-2">
             <p className="text-xs text-muted-foreground/60 leading-relaxed font-body">
-              Everpay Corporation is a financial technology company and not a bank. Banking services are provided by Everpay's bank partners, Members FDIC.
+              Everpay Corporation is a financial technology company and not a bank. Banking services are provided by Everpay's bank partners, Members FDIC. The Everpay Visa® Card is issued by Everpay's banking partners pursuant to a license from Visa U.S.A. Inc. and may be used everywhere Visa debit cards are accepted.
             </p>
             <p className="text-xs text-muted-foreground/60 leading-relaxed font-body">
-              Everpay is PCI DSS Level 1 certified, the highest level of security certification in the payments industry.
+              Everpay is PCI DSS Level 1 certified, the highest level of security certification in the payments industry. All sensitive payment data is encrypted end-to-end and tokenized to ensure it never touches your servers. Our platform is SOC 2 Type II audited and GDPR compliant.
+            </p>
+            <p className="text-xs text-muted-foreground/60 leading-relaxed font-body">
+              Everpay's money transmission and payment processing services are provided in the United States by Everpay Inc., a registered Money Services Business (MSB) with FinCEN. In Canada, services are provided by Everpay Canada Corp., a registered payment service provider. International services are provided by Everpay International Limited, authorized and regulated by applicable financial authorities.
             </p>
           </div>
         </div>
