@@ -65,6 +65,13 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['BD'],
     methods: ['SSLCommerz', 'SurjoPay', 'bKash', 'Nagad'],
   },
+  payok: {
+    name: 'payok',
+    displayName: 'PayOK',
+    supportedCurrencies: ['USD'],
+    regions: ['TR'],
+    methods: ['Card', 'Bank Transfer'],
+  },
 };
 
 // Country → provider mapping for intelligent routing
