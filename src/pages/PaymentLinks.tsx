@@ -13,7 +13,10 @@ import { Link2, Copy, ExternalLink, Mail, MessageSquare, QrCode, Check, Code, Gl
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-const DOMAIN = 'everpayinc.com';
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') return window.location.origin;
+  return 'https://everpayinc.com';
+};
 
 export default function PaymentLinks() {
   const [amount, setAmount] = useState('');
@@ -55,7 +58,7 @@ export default function PaymentLinks() {
     if (successUrl) params.set('success_url', encodeURIComponent(successUrl));
     if (cancelUrl) params.set('cancel_url', encodeURIComponent(cancelUrl));
     
-    return `https://${DOMAIN}/checkout?${params.toString()}`;
+    return `${getBaseUrl()}/checkout?${params.toString()}`;
   };
 
   const paymentLink = generatePaymentLink();
@@ -325,7 +328,7 @@ export default function PaymentLinks() {
                   </div>
                   <div>
                     <p className="font-medium text-foreground">Everpay Checkout</p>
-                    <p className="text-xs text-muted-foreground">pay.{DOMAIN}</p>
+                    <p className="text-xs text-muted-foreground">pay.everpayinc.com</p>
                   </div>
                 </div>
 

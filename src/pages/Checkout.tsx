@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
-const DOMAIN = 'everpayinc.com';
+
 
 export default function Checkout() {
   const [searchParams] = useSearchParams();
@@ -314,7 +314,7 @@ export default function Checkout() {
         {/* Footer */}
         <div className="text-center space-y-1">
           <p className="text-xs text-muted-foreground">
-            Secured by <span className="font-medium text-foreground">Everpay</span> · {DOMAIN}
+            Secured by <span className="font-medium text-foreground">Everpay</span> · everpayinc.com
           </p>
           {ref && (
             <p className="text-[10px] font-mono text-muted-foreground">Ref: {ref}</p>
