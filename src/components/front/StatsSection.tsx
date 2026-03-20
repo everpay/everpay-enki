@@ -1,27 +1,33 @@
-export function StatsSection() {
-  const stats = [
-    { value: "99.99%", label: "Uptime guarantee" },
-    { value: "135+", label: "Currencies supported" },
-    { value: "1K+", label: "Active merchants" },
-    { value: "<200ms", label: "Average response time" },
-  ]
+import { motion } from "framer-motion"
 
+const stats = [
+  { value: "99.99%", label: "Uptime guarantee" },
+  { value: "135+", label: "Currencies supported" },
+  { value: "1K+", label: "Active merchants" },
+  { value: "<200ms", label: "Average response time" },
+]
+
+export function StatsSection() {
   return (
-    <section className="py-16 bg-white border-y border-gray-100">
+    <section className="py-16 bg-white border-y border-border">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4">
           {stats.map((stat, index) => (
-            <div key={index} className="text-center">
-              <div
-                className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-1"
-                style={{ fontFamily: "Manrope, sans-serif" }}
-              >
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+              className="text-center"
+            >
+              <div className="text-3xl lg:text-4xl font-extrabold text-foreground mb-1 font-heading tabular-nums">
                 {stat.value}
               </div>
-              <div className="text-sm text-gray-500" style={{ fontFamily: "Inter, sans-serif" }}>
+              <div className="text-sm text-muted-foreground font-body">
                 {stat.label}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
