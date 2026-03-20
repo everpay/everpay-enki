@@ -28,22 +28,11 @@ export function IntegrationsSection() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-16"
         >
-          <p
-            className="text-sm font-semibold text-[#1aa478] uppercase tracking-wider mb-4"
-            style={{ fontFamily: "Manrope, sans-serif" }}
-          >
-            Integrations
-          </p>
-          <h2
-            className="text-3xl md:text-[40px] font-extrabold text-gray-900 leading-tight mb-5"
-            style={{ fontFamily: "Manrope, sans-serif" }}
-          >
+          <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-4 font-body">Integrations</p>
+          <h2 className="text-3xl md:text-[40px] font-extrabold text-foreground leading-tight mb-5 font-heading">
             Works with the tools you already use.
           </h2>
-          <p
-            className="text-lg text-gray-500 max-w-xl mx-auto leading-relaxed"
-            style={{ fontFamily: "Inter, sans-serif" }}
-          >
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed font-body">
             Connect Everpay to your existing stack in minutes. Pre-built integrations for the most popular platforms.
           </p>
         </motion.div>
@@ -56,18 +45,13 @@ export function IntegrationsSection() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.4, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center justify-center rounded-2xl border border-gray-100 bg-gray-50/50 p-6 hover:bg-white hover:shadow-md hover:border-[#1aa478]/15 transition-all duration-200 text-center"
+              className="flex flex-col items-center justify-center rounded-2xl border border-border bg-secondary/30 p-6 hover:bg-card hover:shadow-md hover:border-primary/15 transition-all duration-200 text-center"
             >
-              <div className="w-10 h-10 rounded-xl bg-[#1aa478]/10 flex items-center justify-center mb-3">
-                <span className="text-sm font-bold text-[#1aa478]">{item.name.charAt(0)}</span>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                <span className="text-sm font-bold text-primary font-heading">{item.name.charAt(0)}</span>
               </div>
-              <p
-                className="text-sm font-semibold text-gray-900"
-                style={{ fontFamily: "Manrope, sans-serif" }}
-              >
-                {item.name}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">{item.category}</p>
+              <p className="text-sm font-semibold text-foreground font-heading">{item.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 font-body">{item.category}</p>
             </motion.div>
           ))}
         </div>
@@ -79,10 +63,7 @@ export function IntegrationsSection() {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="text-center"
         >
-          <Link
-            to="/partners"
-            className="inline-flex items-center gap-2 text-[#1aa478] font-semibold text-[15px] hover:underline"
-          >
+          <Link to="/partners" className="inline-flex items-center gap-2 text-primary font-semibold text-[15px] hover:underline font-body">
             View all integrations
             <ArrowRight className="w-4 h-4" />
           </Link>
