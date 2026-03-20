@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
-const DOMAIN = 'everpayinc.com';
+
 
 export default function Checkout() {
   const [searchParams] = useSearchParams();
