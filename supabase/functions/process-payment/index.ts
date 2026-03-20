@@ -73,6 +73,7 @@ function resolveProviderFromRequest(data: PaymentRequest): string {
   if (['CNY', 'VND', 'THB', 'IDR', 'MYR', 'PHP', 'JPY', 'KRW', 'HKD', 'AUD'].includes(data.currency)) return 'ofa';
   if (data.currency === 'CAD') return 'moneto';
   if (data.currency === 'COP') return 'facilitapay';
+  if (data.currency === 'TRY') return 'payok';
   return 'shieldhub';
 }
 
