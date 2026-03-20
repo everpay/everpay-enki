@@ -26,6 +26,21 @@ export default function PaymentLinks() {
   const [successUrl, setSuccessUrl] = useState('');
   const [cancelUrl, setCancelUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [merchantId, setMerchantId] = useState('');
+
+  useEffect(() => {
+    const fetchMerchantId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      if (merchant) setMerchantId(merchant.id);
+    };
+    fetchMerchantId();
+  }, []);
 
   const generatePaymentLink = () => {
     const params = new URLSearchParams();
