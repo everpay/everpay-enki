@@ -126,7 +126,6 @@ const currencyProviderMap: Record<string, Provider> = {
   JPY: 'ofa',
   KRW: 'ofa',
   TRY: 'payok',
-  TRY: 'payok',
   HKD: 'ofa',
   AUD: 'ofa',
 };
