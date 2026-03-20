@@ -69,7 +69,7 @@ function resolveProviderFromRequest(data: PaymentRequest): string {
   }
   if (['EUR', 'GBP'].includes(data.currency)) return 'mondo';
   if (['INR', 'NGN', 'EGP', 'ZAR', 'KES', 'ARS'].includes(data.currency)) return 'paygate10';
-  if (data.currency === 'BDT') return 'makapay';
+  if (data.country === 'BD') return 'makapay';
   if (['CNY', 'VND', 'THB', 'IDR', 'MYR', 'PHP', 'JPY', 'KRW', 'HKD', 'AUD'].includes(data.currency)) return 'ofa';
   if (data.currency === 'CAD') return 'moneto';
   if (data.currency === 'COP') return 'facilitapay';
