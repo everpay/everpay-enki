@@ -61,11 +61,11 @@ export default function OnlinePaymentsPage() {
               </div>
               <div className="relative h-[400px] rounded-lg overflow-hidden">
                 <img
-                  src="/placeholder.svg?height=400&width=600"
+                  src="https://live.staticflickr.com/65535/52545687205_04f5568f9d_b.jpg"
                   alt="Online Payments"
                   width={600}
                   height={400}
-                  className="object-cover"
+                  className="object-cover w-full h-full"
                 />
               </div>
             </div>
