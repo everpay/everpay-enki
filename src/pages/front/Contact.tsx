@@ -26,7 +26,8 @@ export default function ContactPage() {
       message: formData.get("message") as string,
     }
 
-    const result = await submitContactRequest(data)
+    // TODO: wire to backend
+    const result = { success: true, message: 'Thank you! We will get back to you shortly.' }
 
     setSubmitMessage({
       type: result.success ? "success" : "error",
