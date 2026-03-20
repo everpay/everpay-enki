@@ -45,7 +45,7 @@ export function HeroSection() {
 
           {/* Headline */}
           <h1
-            className="text-4xl md:text-[58px] lg:text-[68px] font-extrabold text-white leading-[1.08] tracking-tight mb-6"
+            className="text-4xl md:text-[62px] lg:text-[72px] font-extrabold text-white leading-[1.08] tracking-tight mb-6"
             style={{ fontFamily: "Manrope, sans-serif" }}
           >
             Accept Payments Everywhere. <span className="text-[#1aa478]">Grow Faster.</span>
