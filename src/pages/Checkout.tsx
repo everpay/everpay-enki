@@ -23,6 +23,7 @@ export default function Checkout() {
   const name = searchParams.get('name') ? decodeURIComponent(searchParams.get('name')!) : '';
   const ref = searchParams.get('ref') || '';
   const method = searchParams.get('method') || 'all';
+  const merchantId = searchParams.get('merchant_id') || '';
   const successUrl = searchParams.get('success_url') ? decodeURIComponent(searchParams.get('success_url')!) : '';
   const cancelUrl = searchParams.get('cancel_url') ? decodeURIComponent(searchParams.get('cancel_url')!) : '';
 
@@ -77,6 +78,7 @@ export default function Checkout() {
         customerEmail: customerEmail,
         description: description || `Payment ${ref}`,
         idempotencyKey: `link_${ref}_${Date.now()}`,
+        merchantId: merchantId || undefined,
       };
 
       if (paymentMethod === 'card' && cardNumber) {

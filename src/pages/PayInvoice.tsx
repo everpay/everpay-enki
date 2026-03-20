@@ -39,7 +39,7 @@ export default function PayInvoice() {
     if (!invoice) return;
     setIsSubmitting(true);
     try {
-      const payload: any = { amount: invoice.amount, currency: invoice.currency, paymentMethod: paymentMethod === 'openbanking' ? 'open_banking' : paymentMethod, customerEmail: invoice.customer_email, description: `Invoice ${invoice.invoice_number}`, idempotencyKey: `inv_${invoice.id}_${Date.now()}` };
+      const payload: any = { amount: invoice.amount, currency: invoice.currency, paymentMethod: paymentMethod === 'openbanking' ? 'open_banking' : paymentMethod, customerEmail: invoice.customer_email, description: `Invoice ${invoice.invoice_number}`, idempotencyKey: `inv_${invoice.id}_${Date.now()}`, merchantId: invoice.merchant_id };
       if (paymentMethod === 'card' && cardNumber) payload.cardDetails = { number: cardNumber.replace(/\s/g, ''), expMonth, expYear, cvc, holderName: holderName.trim() };
       const { data, error } = await supabase.functions.invoke('process-payment', { body: payload });
       if (error) throw error;

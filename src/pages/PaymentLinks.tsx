@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Currency } from '@/lib/types';
 import { Link2, Copy, ExternalLink, Mail, MessageSquare, QrCode, Check, Code, Globe } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const DOMAIN = 'everpayinc.com';
 
@@ -25,6 +26,21 @@ export default function PaymentLinks() {
   const [successUrl, setSuccessUrl] = useState('');
   const [cancelUrl, setCancelUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [merchantId, setMerchantId] = useState('');
+
+  useEffect(() => {
+    const fetchMerchantId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      if (merchant) setMerchantId(merchant.id);
+    };
+    fetchMerchantId();
+  }, []);
 
   const generatePaymentLink = () => {
     const params = new URLSearchParams();
@@ -35,6 +51,7 @@ export default function PaymentLinks() {
     if (customerName) params.set('name', encodeURIComponent(customerName));
     params.set('ref', orderId);
     if (paymentMethod !== 'all') params.set('method', paymentMethod);
+    if (merchantId) params.set('merchant_id', merchantId);
     if (successUrl) params.set('success_url', encodeURIComponent(successUrl));
     if (cancelUrl) params.set('cancel_url', encodeURIComponent(cancelUrl));
     
