@@ -98,7 +98,7 @@ export default function Checkout() {
       if (data?.providerResponse?.redirect_url || data?.providerResponse?.['3d_secure_redirect_url']) {
         const redirectUrl = data.providerResponse.redirect_url || data.providerResponse['3d_secure_redirect_url'];
         setThreeDSUrl(redirectUrl);
-        setThreeDSTransactionId(data.transaction?.id || '');
+        setThreeDSTransactionId(data.transaction?.id || data.payment_intent?.id || '');
         setShowThreeDS(true);
         if (data.transaction?.id) startPolling(data.transaction.id);
         toast.info('3D Secure authentication required');
