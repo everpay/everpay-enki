@@ -51,6 +51,7 @@ export default function PaymentLinks() {
     if (customerName) params.set('name', encodeURIComponent(customerName));
     params.set('ref', orderId);
     if (paymentMethod !== 'all') params.set('method', paymentMethod);
+    if (merchantId) params.set('merchant_id', merchantId);
     if (successUrl) params.set('success_url', encodeURIComponent(successUrl));
     if (cancelUrl) params.set('cancel_url', encodeURIComponent(cancelUrl));
     
