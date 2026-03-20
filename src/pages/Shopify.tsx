@@ -14,7 +14,6 @@ import { AppLayout } from '@/components/AppLayout';
 interface ShopifyStore {
   id: string;
   shop_domain: string | null;
-  access_token: string | null;
   merchant_id: string | null;
   installed_at: string | null;
   scope: string | null;
@@ -32,7 +31,7 @@ export default function Shopify() {
     try {
       const { data, error } = await supabase
         .from('shopify_stores')
-        .select('*')
+        .select('id, shop_domain, merchant_id, installed_at, scope')
         .order('installed_at', { ascending: false });
 
       if (error) throw error;
@@ -106,7 +105,7 @@ export default function Shopify() {
           <Card>
             <CardContent className="pt-6 text-center">
               <ShoppingCart className="h-8 w-8 mx-auto text-primary mb-2" />
-              <p className="text-2xl font-bold">{stores.filter(s => s.access_token).length}</p>
+              <p className="text-2xl font-bold">{stores.filter(s => s.scope).length}</p>
               <p className="text-sm text-muted-foreground">Active Stores</p>
             </CardContent>
           </Card>
@@ -182,7 +181,7 @@ export default function Shopify() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {store.access_token ? (
+                      {store.scope ? (
                         <Badge variant="default" className="gap-1">
                           <CheckCircle2 className="h-3 w-3" /> Live
                         </Badge>
@@ -191,8 +190,8 @@ export default function Shopify() {
                           <AlertCircle className="h-3 w-3" /> Simulation
                         </Badge>
                       )}
-                      <Badge variant={store.access_token ? 'default' : 'outline'}>
-                        {store.access_token ? 'Active' : 'Pending'}
+                      <Badge variant={store.scope ? 'default' : 'outline'}>
+                        {store.scope ? 'Active' : 'Pending'}
                       </Badge>
                     </div>
                   </div>
