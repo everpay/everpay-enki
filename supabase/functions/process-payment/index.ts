@@ -69,7 +69,7 @@ function resolveProviderFromRequest(data: PaymentRequest): string {
   }
   if (['EUR', 'GBP'].includes(data.currency)) return 'mondo';
   if (['INR', 'NGN', 'EGP', 'ZAR', 'KES', 'ARS'].includes(data.currency)) return 'paygate10';
-  if (data.currency === 'BDT') return 'makapay';
+  if (data.country === 'BD') return 'makapay';
   if (['CNY', 'VND', 'THB', 'IDR', 'MYR', 'PHP', 'JPY', 'KRW', 'HKD', 'AUD'].includes(data.currency)) return 'ofa';
   if (data.currency === 'CAD') return 'moneto';
   if (data.currency === 'COP') return 'facilitapay';
@@ -722,7 +722,7 @@ async function processMonetoPayment(data: PaymentRequest) {
   };
 }
 
-// ─── MakaPay — Bangladesh (BDT) ───
+// ─── MakaPay — Bangladesh (USD) ───
 async function processMakapayPayment(data: PaymentRequest) {
   const apiKey = Deno.env.get('MAKAPAY_API_KEY');
   const apiSecret = Deno.env.get('MAKAPAY_API_SECRET');
@@ -761,7 +761,7 @@ async function processMakapayPayment(data: PaymentRequest) {
       payment_method_id: String(selectedMethod.id),
       provider_code: selectedMethod.code,
       amount: Math.round(data.amount),
-      currency: 'BDT',
+      currency: data.currency || 'USD',
       reference: orderRef,
       customer_email: data.customerEmail || 'customer@example.com',
       customer_phone: data.customerDetails?.phone || '017XXXXXXXX',
@@ -793,7 +793,7 @@ async function processMakapayPayment(data: PaymentRequest) {
         status: 'Failed',
         message: initiateData.message || 'Payment initiation failed',
         errors: initiateData.errors,
-        currency: 'BDT',
+        currency: data.currency || 'USD',
         amount: data.amount.toFixed(2),
         timestamp: new Date().toISOString(),
         provider: 'makapay',
@@ -810,7 +810,7 @@ async function processMakapayPayment(data: PaymentRequest) {
       redirect_url: initiateData.data?.checkout_url,
       provider_transaction_id: initiateData.data?.provider_transaction_id,
       provider_code: selectedMethod.code,
-      currency: 'BDT',
+      currency: data.currency || 'USD',
       amount: data.amount.toFixed(2),
       reference: orderRef,
       timestamp: new Date().toISOString(),
@@ -840,7 +840,7 @@ function simulateMakapayPayment(data: PaymentRequest) {
     trx_id: `TXN-SIM-${Date.now()}`,
     status, message,
     provider_code: 'sslcommerz',
-    currency: 'BDT',
+    currency: data.currency || 'USD',
     amount: data.amount.toFixed(2),
     timestamp: new Date().toISOString(),
     test_mode: true,

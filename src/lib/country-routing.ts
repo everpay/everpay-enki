@@ -32,7 +32,7 @@ export const COUNTRY_PAYMENT_CONFIGS: CountryPaymentConfig[] = [
   { code: 'PH', name: 'Philippines', flag: '🇵🇭', currency: 'PHP', currencySymbol: '₱', provider: 'ofa', paymentMethods: ['P2P', 'P2C', 'Bank Transfer'] },
   { code: 'JP', name: 'Japan', flag: '🇯🇵', currency: 'JPY', currencySymbol: '¥', provider: 'ofa', paymentMethods: ['P2P', 'Bank Transfer'] },
   { code: 'KR', name: 'South Korea', flag: '🇰🇷', currency: 'KRW', currencySymbol: '₩', provider: 'ofa', paymentMethods: ['P2P', 'Bank Transfer'] },
-  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩', currency: 'BDT', currencySymbol: '৳', provider: 'ofa', paymentMethods: ['P2P', 'Bank Transfer'] },
+  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩', currency: 'USD', currencySymbol: '$', provider: 'makapay', paymentMethods: ['SSLCommerz', 'SurjoPay', 'bKash', 'Nagad'] },
   { code: 'HK', name: 'Hong Kong', flag: '🇭🇰', currency: 'HKD', currencySymbol: 'HK$', provider: 'ofa', paymentMethods: ['P2P', 'P2C', 'Bank Transfer'] },
   { code: 'AU', name: 'Australia', flag: '🇦🇺', currency: 'AUD', currencySymbol: 'A$', provider: 'ofa', paymentMethods: ['P2P', 'Bank Transfer'] },
   { code: 'TW', name: 'Taiwan', flag: '🇹🇼', currency: 'TWD', currencySymbol: 'NT$', provider: 'ofa', paymentMethods: ['P2P', 'Bank Transfer'] },
