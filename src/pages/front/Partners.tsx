@@ -31,19 +31,19 @@ const featuredPartners = [
     name: "Shopify",
     type: "E-commerce",
     description: "Integrated payment solutions for online stores",
-    logo: "https://images.unsplash.com/photo-1",
+    logo: "https://live.staticflickr.com/65535/52425795498_0e897bc320_w.jpg",
   },
   {
     name: "Salesforce",
     type: "CRM",
     description: "Seamless payment processing in CRM workflows",
-    logo: "https://images.unsplash.com/photo-2",
+    logo: "https://live.staticflickr.com/65535/52076871278_5c63a6781d_w.jpg",
   },
   {
     name: "QuickBooks",
     type: "Accounting",
     description: "Automated payment reconciliation",
-    logo: "https://images.unsplash.com/photo-3",
+    logo: "https://live.staticflickr.com/65535/51872030578_e3e74e72b5_w.jpg",
   },
 ]
 
