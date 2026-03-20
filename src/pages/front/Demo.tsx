@@ -27,7 +27,8 @@ export default function DemoPage() {
       message: (formData.get("message") as string) || undefined,
     }
 
-    const result = await submitDemoRequest(data)
+    // TODO: wire to backend
+    const result = { success: true, message: 'Thank you! Our team will contact you within 24 hours.' }
 
     setSubmitMessage({
       type: result.success ? "success" : "error",
