@@ -65,6 +65,13 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['BD'],
     methods: ['SSLCommerz', 'SurjoPay', 'bKash', 'Nagad'],
   },
+  payok: {
+    name: 'payok',
+    displayName: 'PayOK',
+    supportedCurrencies: ['USD'],
+    regions: ['TR'],
+    methods: ['Card', 'Bank Transfer'],
+  },
 };
 
 // Country → provider mapping for intelligent routing
@@ -88,6 +95,8 @@ const countryProviderMap: Record<string, Provider> = {
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
   // Bangladesh: MakaPay
   BD: 'makapay',
+  // Turkey: PayOK
+  TR: 'payok',
   // LATAM shared: PG10 primary, FacilitaPay fallback
   BR: 'paygate10', MX: 'paygate10', CO: 'facilitapay',
 };
@@ -117,6 +126,7 @@ const currencyProviderMap: Record<string, Provider> = {
   JPY: 'ofa',
   KRW: 'ofa',
   BDT: 'makapay',
+  TRY: 'payok',
   HKD: 'ofa',
   AUD: 'ofa',
 };
@@ -146,6 +156,7 @@ export function getProviderColor(provider: Provider): string {
     case 'paygate10': return 'hsl(25 95% 53%)';
     case 'ofa': return 'hsl(340 75% 55%)';
     case 'makapay': return 'hsl(160 70% 45%)';
+    case 'payok': return 'hsl(200 80% 50%)';
     default: return 'hsl(var(--chart-1))';
   }
 }

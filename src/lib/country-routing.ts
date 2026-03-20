@@ -57,6 +57,9 @@ export const COUNTRY_PAYMENT_CONFIGS: CountryPaymentConfig[] = [
   
   // FacilitaPay (LATAM)
   { code: 'CO', name: 'Colombia', flag: '🇨🇴', currency: 'COP', currencySymbol: '$', provider: 'facilitapay', paymentMethods: ['PSE', 'Bank Transfer'] },
+  
+  // PayOK (Turkey)
+  { code: 'TR', name: 'Turkey', flag: '🇹🇷', currency: 'TRY', currencySymbol: '₺', provider: 'payok', paymentMethods: ['Card', 'Bank Transfer'] },
 ];
 
 export function getConfigForCountry(code: string): CountryPaymentConfig | undefined {

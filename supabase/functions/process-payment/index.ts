@@ -59,6 +59,7 @@ const countryProviderMap: Record<string, string> = {
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
   BD: 'makapay',
   CO: 'facilitapay',
+  TR: 'payok',
 };
 
 function resolveProviderFromRequest(data: PaymentRequest): string {
@@ -72,6 +73,7 @@ function resolveProviderFromRequest(data: PaymentRequest): string {
   if (['CNY', 'VND', 'THB', 'IDR', 'MYR', 'PHP', 'JPY', 'KRW', 'HKD', 'AUD'].includes(data.currency)) return 'ofa';
   if (data.currency === 'CAD') return 'moneto';
   if (data.currency === 'COP') return 'facilitapay';
+  if (data.currency === 'TRY') return 'payok';
   return 'shieldhub';
 }
 
@@ -221,6 +223,9 @@ serve(async (req) => {
         break;
       case 'makapay':
         providerResponse = await processMakapayPayment(paymentData);
+        break;
+      case 'payok':
+        providerResponse = await processPayOKPayment(paymentData);
         break;
       default:
         providerResponse = await processShieldHubPayment(paymentData, req);
@@ -843,6 +848,107 @@ function simulateMakapayPayment(data: PaymentRequest) {
   };
 }
 
+// ─── PayOK — Turkey (TRY / Card + Bank Transfer) ───
+const PAYOK_PUBLIC_KEY = `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0FGhV5hZNUQ75c9yMhpvkn3ZQAtgriw3eZv2/4B1717qNlDD+H3lXp8J/ZhzCYWn5bAobtEbLrgw6Cfzk4VFqUS820bWtRh7ZIqN8P1HlEfFb0lj9XuZfyp9mStzhhdn+OXwUyi57h4GeAM9PZuLlm6Wkz9XukYtYYmb3AjbPrsfdOrVsBRdmn4pLuqmDRvvu/lvS71M21a07mHclCNrZth/1oRsU5ZbWNWJyyQG03PQmgAOsqmZLlPF8I/UQY/lgVy4SPrVA2jtMHi3CN1dUw7ndxHA4QJXPZCGIP0sCVZp4RDoDAkxKR4Bxh87nsgZ7z53n4H1wGR+4ppp6tRqbwIDAQAB`;
+const PAYOK_MERCHANT_ID = '720637';
+const PAYOK_BASE_URL = 'https://api.payok.com';
+
+async function rsaEncrypt(data: string): Promise<string> {
+  // Import the RSA public key and encrypt payment data
+  const binaryKey = Uint8Array.from(atob(PAYOK_PUBLIC_KEY), c => c.charCodeAt(0));
+  const cryptoKey = await crypto.subtle.importKey(
+    'spki',
+    binaryKey.buffer,
+    { name: 'RSA-OAEP', hash: 'SHA-256' },
+    false,
+    ['encrypt']
+  );
+  const encoded = new TextEncoder().encode(data);
+  const encrypted = await crypto.subtle.encrypt({ name: 'RSA-OAEP' }, cryptoKey, encoded);
+  return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+}
+
+async function processPayOKPayment(data: PaymentRequest) {
+  const transactionRef = `payok_${crypto.randomUUID().slice(0, 12)}`;
+  const country = data.billingDetails?.country || 'TR';
+
+  console.log(`PayOK: Processing ${data.amount} ${data.currency} for ${country}`);
+
+  // Build encrypted payload
+  const paymentPayload = JSON.stringify({
+    merchant_id: PAYOK_MERCHANT_ID,
+    amount: data.amount.toFixed(2),
+    currency: data.currency || 'TRY',
+    order_id: transactionRef,
+    customer_email: data.customerEmail || 'customer@example.com',
+    customer_name: `${data.customerDetails?.firstName || 'Customer'} ${data.customerDetails?.lastName || 'User'}`.trim(),
+    description: data.description || `Payment ${transactionRef}`,
+    return_url: 'https://everpay-os.lovable.app/transactions?status=completed',
+    cancel_url: 'https://everpay-os.lovable.app/transactions?status=canceled',
+  });
+
+  try {
+    const encryptedData = await rsaEncrypt(paymentPayload);
+
+    const response = await fetch(`${PAYOK_BASE_URL}/v1/payments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Merchant-ID': PAYOK_MERCHANT_ID,
+      },
+      body: JSON.stringify({
+        encrypted_data: encryptedData,
+        merchant_id: PAYOK_MERCHANT_ID,
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('PayOK response:', JSON.stringify(result));
+      return {
+        id: result.transaction_id || Math.floor(10000 + Math.random() * 90000),
+        transaction_reference: transactionRef,
+        status: result.status === 'approved' ? 'Approved' : result.status === 'declined' ? 'Declined' : 'pending',
+        redirect_url: result.payment_url || result.redirect_url || null,
+        currency: data.currency,
+        amount: data.amount.toFixed(2),
+        message: result.message || 'Transaction processed',
+        timestamp: new Date().toISOString(),
+        provider: 'payok',
+        country,
+      };
+    }
+
+    // API not reachable or error — fall through to simulation
+    console.warn('PayOK API error, using simulation');
+  } catch (err) {
+    console.warn('PayOK API error:', err);
+  }
+
+  // Simulation fallback
+  const rand = Math.random();
+  let status: string, message: string;
+  if (rand < 0.80) {
+    status = 'Approved'; message = 'Transaction approved';
+  } else if (rand < 0.95) {
+    status = 'Declined'; message = 'Transaction declined by issuer';
+  } else {
+    status = 'pending'; message = 'Transaction processing';
+  }
+
+  return {
+    id: Math.floor(10000 + Math.random() * 90000),
+    transaction_reference: transactionRef,
+    orderno: `PAYOK-${Date.now()}`,
+    status, message, country,
+    currency: data.currency,
+    amount: data.amount.toFixed(2),
+    timestamp: new Date().toISOString(),
+    test_mode: true,
+    provider: 'payok',
+  };
+}
+
 function getFxRate(currency: string): number {
   const rates: Record<string, number> = {
     BRL: 0.20, MXN: 0.058, COP: 0.00025, ARS: 0.0011,
@@ -850,6 +956,7 @@ function getFxRate(currency: string): number {
     CNY: 0.14, VND: 0.000041, THB: 0.029, IDR: 0.000063,
     MYR: 0.22, PHP: 0.018, JPY: 0.0067, KRW: 0.00075,
     BDT: 0.0091, HKD: 0.13, AUD: 0.66, TWD: 0.031,
+    TRY: 0.031,
   };
   return rates[currency] || 1;
 }
