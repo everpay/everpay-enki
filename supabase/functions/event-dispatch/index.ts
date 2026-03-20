@@ -6,6 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const jsonResponse = (status: number, body: Record<string, unknown>) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const getBearerToken = (req: Request): string | null => {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+
+  const token = authHeader.slice("Bearer ".length).trim();
+  return token.length > 0 ? token : null;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 /**
  * Event Bus / Dispatcher
  * 
@@ -32,10 +52,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate authorization
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  const token = getBearerToken(req);
+  if (!token) {
+    return jsonResponse(401, { error: "Unauthorized" });
   }
 
   try {
@@ -44,13 +63,54 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { event_type, source_service, merchant_id, payload }: EventPayload = await req.json();
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
+      return jsonResponse(401, { error: "Unauthorized" });
+    }
 
-    if (!event_type) {
-      return new Response(
-        JSON.stringify({ error: 'event_type is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return jsonResponse(400, { error: "Invalid JSON payload" });
+    }
+
+    if (!isRecord(body)) {
+      return jsonResponse(400, { error: "Invalid request body" });
+    }
+
+    const event_type = typeof body.event_type === "string" ? body.event_type.trim() : "";
+    const source_service = typeof body.source_service === "string" && body.source_service.trim().length > 0
+      ? body.source_service.trim()
+      : "unknown";
+    const merchant_id = typeof body.merchant_id === "string" ? body.merchant_id.trim() : undefined;
+    const payload = isRecord(body.payload) ? body.payload : {};
+
+    if (!event_type || event_type.length > 120 || !event_type.includes('.')) {
+      return jsonResponse(400, { error: 'Valid event_type is required' });
+    }
+
+    if (merchant_id && !UUID_REGEX.test(merchant_id)) {
+      return jsonResponse(400, { error: 'Invalid merchant_id format' });
+    }
+
+    const category = event_type.split('.')[0];
+
+    if ((category === 'payment' || category === 'fraud' || category === 'settlement') && !merchant_id) {
+      return jsonResponse(400, { error: 'merchant_id is required for this event type' });
+    }
+
+    if (merchant_id) {
+      const { data: merchant, error: merchantError } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('id', merchant_id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (merchantError || !merchant) {
+        return jsonResponse(403, { error: 'Forbidden' });
+      }
     }
 
     // 1. Log event
@@ -58,7 +118,7 @@ serve(async (req) => {
       .from('event_logs')
       .insert({
         event_type,
-        source_service: source_service || 'unknown',
+        source_service,
         payload: { merchant_id, ...payload },
       })
       .select('id')
@@ -68,23 +128,24 @@ serve(async (req) => {
 
     const dispatched: string[] = [];
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-    // 2. Route to downstream systems based on event type prefix
-    const category = event_type.split('.')[0];
 
     // Payment events → trigger webhook dispatch to merchant
     if (category === 'payment' && merchant_id) {
       try {
-        await fetch(`${supabaseUrl}/functions/v1/webhook-dispatch`, {
+        const webhookRes = await fetch(`${supabaseUrl}/functions/v1/webhook-dispatch`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${serviceKey}`,
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({ merchant_id, event_type, payload }),
         });
-        dispatched.push('webhook-dispatch');
+
+        if (webhookRes.ok) {
+          dispatched.push('webhook-dispatch');
+        } else {
+          console.error('Webhook dispatch failed with status:', webhookRes.status);
+        }
       } catch (e) {
         console.error('Webhook dispatch failed:', e);
       }
@@ -93,11 +154,11 @@ serve(async (req) => {
     // Fraud events → log to audit
     if (category === 'fraud' && merchant_id) {
       await supabase.from('audit_logs').insert({
-        user_id: payload.user_id || '00000000-0000-0000-0000-000000000000',
+        user_id: user.id,
         action: event_type,
         entity_type: 'fraud_score',
         entity_id: (payload.transaction_id as string) || null,
-        metadata: { source: source_service, ...payload },
+        metadata: { source: source_service, merchant_id, ...payload },
       });
       dispatched.push('audit-log');
     }
@@ -118,9 +179,6 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Event dispatch error:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse(500, { error: 'Internal server error' });
   }
 });
