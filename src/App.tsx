@@ -133,6 +133,8 @@ const AppRoutes = () => {
 
     {/* Auth & public */}
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+    <Route path="/login" element={<AuthRoute><Auth /></AuthRoute>} />
+    <Route path="/signup" element={<AuthRoute><Auth /></AuthRoute>} />
     <Route path="/docs" element={<Docs />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/checkout" element={<Checkout />} />

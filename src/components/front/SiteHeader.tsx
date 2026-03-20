@@ -139,7 +139,7 @@ export function SiteHeader() {
 
         <div className="hidden lg:flex items-center gap-3">
           <Link to="/docs" className="text-[15px] font-medium text-foreground/60 hover:text-foreground px-4 py-2 transition-colors font-body">Docs</Link>
-          <Link to={user ? '/dashboard' : '/auth'} className="text-[15px] font-medium text-foreground/60 hover:text-foreground px-4 py-2 transition-colors font-body">
+          <Link to={user ? '/dashboard' : '/login'} className="text-[15px] font-medium text-foreground/60 hover:text-foreground px-4 py-2 transition-colors font-body">
             {user ? 'Dashboard' : 'Login'}
           </Link>
           <Link to="/demo">
@@ -195,10 +195,10 @@ export function SiteHeader() {
                 </Link>
               ) : (
                 <div className="flex gap-3">
-                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/login" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-border active:scale-[0.97] transition-all">Log in</Button>
                   </Link>
-                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/signup" className="flex-1" onClick={() => setIsMenuOpen(false)}>
                     <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 text-[15px] font-semibold active:scale-[0.97] transition-all">Sign up</Button>
                   </Link>
                 </div>

@@ -192,14 +192,14 @@ export default function FraudPreventionPage() {
                     Start protecting your business with our advanced fraud prevention system today.
                   </p>
                   <div className="flex gap-4 animate-fade-in-up animation-delay-400">
-                   <a href="https://app.everpayinc.com/sign-up" target="_blank" rel="noopener noreferrer">
+                   <Link to="/signup">
                     <Button
                       size="lg"
                       className="bg-accent text-accent-foreground hover:bg-accent/90 hover:scale-105 transition-transform"
                     >
                       Get Started
                     </Button>
-                     </a>
+                   </Link>
                     <Link to="/contact">
                     <Button
                       variant="outline"
