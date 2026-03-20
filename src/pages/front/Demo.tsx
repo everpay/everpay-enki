@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CheckCircle } from "lucide-react"
 
-import { countries } from "@/lib/countries-list"
+const countries = [
+  "United States", "Canada", "United Kingdom", "Germany", "France", "Australia",
+  "Japan", "Brazil", "India", "Mexico", "Spain", "Italy", "Netherlands", "Sweden",
+  "Switzerland", "Singapore", "South Korea", "Pakistan", "Nigeria", "South Africa",
+  "United Arab Emirates", "Saudi Arabia", "Other"
+];
 
 export default function DemoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
