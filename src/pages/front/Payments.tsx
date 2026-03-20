@@ -29,18 +29,14 @@ export default function PaymentsPage() {
                   payment solutions.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                  <a
-                    href="https://app.everpayinc.com/sign-up"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <Link to="/signup">
                     <Button
                       size="lg"
                       className="bg-[#4CAF50] hover:bg-[#45a049] w-full sm:w-[180px] h-[48px] rounded-lg text-base font-medium"
                     >
                       Get started
                     </Button>
-                  </a>
+                  </Link>
 
                   <Link to="/contact">
                     <Button
