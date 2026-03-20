@@ -213,7 +213,7 @@ export default function FraudPreventionPage() {
                 </div>
                 <div className="relative h-[300px] rounded-lg overflow-hidden shadow-lg animate-fade-in-right animation-delay-600">
                   <img
-                    src="/placeholder.svg?height=300&width=500"
+                    src="https://live.staticflickr.com/65535/52545687205_04f5568f9d_b.jpg"
                     alt="Fraud Prevention"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
