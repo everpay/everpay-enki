@@ -78,6 +78,7 @@ export default function Checkout() {
         customerEmail: customerEmail,
         description: description || `Payment ${ref}`,
         idempotencyKey: `link_${ref}_${Date.now()}`,
+        merchantId: merchantId || undefined,
       };
 
       if (paymentMethod === 'card' && cardNumber) {
