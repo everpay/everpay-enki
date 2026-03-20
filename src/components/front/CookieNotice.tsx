@@ -9,7 +9,7 @@ export function CookieNotice() {
   useEffect(() => {
     const dismissed = localStorage.getItem("everpay-cookie-consent")
     if (!dismissed) {
-      const timer = setTimeout(() => setVisible(true), 1000)
+      const timer = setTimeout(() => setVisible(true), 800)
       return () => clearTimeout(timer)
     }
   }, [])
@@ -27,57 +27,79 @@ export function CookieNotice() {
   if (!visible) return null
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-[60] p-4 md:p-6 pointer-events-none">
-      <div
-        className="pointer-events-auto max-w-[520px] ml-auto md:ml-0 w-full bg-white border border-gray-200 rounded-2xl shadow-xl p-6 animate-in slide-in-from-bottom-4 duration-500"
-      >
-        <div className="flex items-start gap-4">
-          <div className="flex-1">
-            <p
-              className="text-sm font-semibold text-gray-900 mb-1"
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm" />
+
+      {/* Modal */}
+      <div className="fixed inset-0 z-[61] flex items-end sm:items-center justify-center p-0 sm:p-6">
+        <div
+          className="w-full sm:max-w-[640px] bg-white sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col"
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between p-6 pb-2">
+            <h2
+              className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight"
               style={{ fontFamily: "Manrope, sans-serif" }}
             >
-              We use cookies
-            </p>
+              Everpay gives you choice
+            </h2>
+            <button
+              onClick={dismiss}
+              className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1 -mr-1 -mt-1"
+              aria-label="Dismiss cookie notice"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto px-6 pb-2">
             <p
-              className="text-sm text-gray-500 leading-relaxed"
+              className="text-[15px] text-gray-600 leading-relaxed mb-4"
               style={{ fontFamily: "Inter, sans-serif" }}
             >
-              We use cookies to improve your experience, analyze traffic, and personalize content. By
-              continuing to use this site, you agree to our use of cookies.{" "}
-              <Link to="/cookie-policy"
+              We use cookies to collect data insights, personalize your web experience, support our web
+              functionality, help us understand how our websites and applications are used, and provide you
+              with tailored ads. Those include "necessary cookies" that are essential to ensuring optimal
+              performance of our websites and applications, and other types of cookies such as functionality
+              cookies and advertising cookies.
+            </p>
+            <p
+              className="text-[15px] text-gray-600 leading-relaxed"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Necessary cookies are always required as they are essential to ensure optimal performance of
+              our websites and applications. You may consent to other cookies which allow Everpay to provide
+              you with a consistent, customized, and personalized experience, based on your preferences and
+              interests. To learn more about our cookies and privacy practices, please visit our{" "}
+              <Link
+                to="/privacy-policy"
                 className="text-[#1aa478] hover:underline font-medium"
               >
-                Learn more
+                privacy notice.
               </Link>
             </p>
-            <div className="flex items-center gap-3 mt-4">
-              <Button
-                size="sm"
-                onClick={accept}
-                className="bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full px-5 h-9 text-sm font-semibold shadow-none"
-              >
-                Accept all
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={dismiss}
-                className="border-gray-200 bg-transparent text-gray-600 hover:bg-gray-50 rounded-full px-5 h-9 text-sm font-semibold shadow-none"
-              >
-                Reject non-essential
-              </Button>
-            </div>
           </div>
-          <button
-            onClick={dismiss}
-            className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1"
-            aria-label="Dismiss cookie notice"
-          >
-            <X className="h-4 w-4" />
-          </button>
+
+          {/* Actions */}
+          <div className="p-6 pt-4 space-y-3">
+            <Button
+              onClick={accept}
+              className="w-full bg-[#dc2626] hover:bg-[#b91c1c] text-white rounded-full h-12 text-base font-semibold shadow-none"
+            >
+              Accept All Cookies
+            </Button>
+            <Button
+              variant="outline"
+              onClick={dismiss}
+              className="w-full border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 rounded-full h-12 text-base font-semibold shadow-none"
+            >
+              Custom Settings
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
