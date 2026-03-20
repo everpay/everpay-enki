@@ -37,7 +37,7 @@ const featuredPartners = [
     name: "Salesforce",
     type: "CRM",
     description: "Seamless payment processing in CRM workflows",
-    logo: "https://live.staticflickr.com/65535/52076871278_5c63a6781d_w.jpg",
+    logo: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop",
   },
   {
     name: "QuickBooks",
