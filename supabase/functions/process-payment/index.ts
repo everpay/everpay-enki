@@ -96,22 +96,42 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Missing authorization header');
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) throw new Error('Unauthorized');
-
-    const { data: merchant, error: merchantError } = await supabase
-      .from('merchants')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-    if (merchantError || !merchant) throw new Error('Merchant not found');
-
     const paymentData: PaymentRequest = await req.json();
     const { amount, currency, paymentMethod, customerEmail, description, idempotencyKey, cardDetails, deviceInfo } = paymentData;
+
+    // Support two auth modes:
+    // 1. Authenticated merchant (dashboard payments) — uses JWT to resolve merchant
+    // 2. Guest checkout (payment links, hosted pages, invoices) — uses merchantId in body
+    let merchantId: string | null = null;
+
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (user && !authError) {
+        const { data: merchant } = await supabase
+          .from('merchants')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        if (merchant) merchantId = merchant.id;
+      }
+    }
+
+    // Fallback: guest checkout with merchantId in body
+    if (!merchantId && (paymentData as any).merchantId) {
+      // Verify the merchant exists
+      const { data: guestMerchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('id', (paymentData as any).merchantId)
+        .single();
+      if (guestMerchant) merchantId = guestMerchant.id;
+    }
+
+    if (!merchantId) throw new Error('Merchant not found — provide valid authentication or merchantId');
+
+    const merchant = { id: merchantId };
 
     // Build transaction metadata
     const txMetadata: Record<string, any> = {};
