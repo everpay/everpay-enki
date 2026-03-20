@@ -31,7 +31,7 @@ const featuredPartners = [
     name: "Shopify",
     type: "E-commerce",
     description: "Integrated payment solutions for online stores",
-    logo: "https://live.staticflickr.com/65535/52425795498_0e897bc320_w.jpg",
+    logo: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200&h=200&fit=crop",
   },
   {
     name: "Salesforce",
