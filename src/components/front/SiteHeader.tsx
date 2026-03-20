@@ -250,10 +250,30 @@ export function SiteHeader() {
               Pricing
             </Link>
 
-            {/* CTA */}
-            <div className="px-6 py-6">
-              <Link to="/demo" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full h-12 text-[15px] font-semibold">
+            {/* Auth + CTA */}
+            <div className="px-6 py-6 space-y-3">
+              {user ? (
+                <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-gray-300">
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <div className="flex gap-3">
+                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-gray-300">
+                      Log in
+                    </Button>
+                  </Link>
+                  <Link to="/auth" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                    <Button className="w-full bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full h-12 text-[15px] font-semibold">
+                      Sign up
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              <Link to="/demo" onClick={() => setIsMenuOpen(false)} className="block">
+                <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-[#1aa478] text-[#1aa478] hover:bg-[#1aa478]/5">
                   Book your demo
                 </Button>
               </Link>
