@@ -11,6 +11,8 @@ import { CheckoutProtectionSection } from "@/components/front/CheckoutProtection
 import { EnterpriseProofSection } from "@/components/front/EnterpriseProofSection"
 import { BusinessTypesSection } from "@/components/front/BusinessTypesSection"
 import { PlatformSection } from "@/components/front/PlatformSection"
+import { PosProductSuiteSection } from "@/components/front/PosProductSuiteSection"
+import { IndustryVerticalsSection } from "@/components/front/IndustryVerticalsSection"
 import { CTASection } from "@/components/front/CtaSection"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { CookieNotice } from "@/components/front/CookieNotice"
@@ -24,6 +26,8 @@ export default function LandingPage() {
         <StatsSection />
         <PaymentPartnersSection />
         <FeaturesSection />
+        <PosProductSuiteSection />
+        <IndustryVerticalsSection />
         <GlobalReachSection />
         <BusinessTypesSection />
         <DeveloperSection />
