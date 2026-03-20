@@ -224,6 +224,9 @@ serve(async (req) => {
       case 'makapay':
         providerResponse = await processMakapayPayment(paymentData);
         break;
+      case 'payok':
+        providerResponse = await processPayOKPayment(paymentData);
+        break;
       default:
         providerResponse = await processShieldHubPayment(paymentData, req);
         break;
