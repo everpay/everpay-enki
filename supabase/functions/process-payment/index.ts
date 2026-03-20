@@ -761,7 +761,7 @@ async function processMakapayPayment(data: PaymentRequest) {
       payment_method_id: String(selectedMethod.id),
       provider_code: selectedMethod.code,
       amount: Math.round(data.amount),
-      currency: 'BDT',
+      currency: data.currency || 'USD',
       reference: orderRef,
       customer_email: data.customerEmail || 'customer@example.com',
       customer_phone: data.customerDetails?.phone || '017XXXXXXXX',
