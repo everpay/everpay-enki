@@ -95,6 +95,8 @@ const countryProviderMap: Record<string, Provider> = {
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
   // Bangladesh: MakaPay
   BD: 'makapay',
+  // Turkey: PayOK
+  TR: 'payok',
   // LATAM shared: PG10 primary, FacilitaPay fallback
   BR: 'paygate10', MX: 'paygate10', CO: 'facilitapay',
 };
