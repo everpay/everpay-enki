@@ -134,7 +134,7 @@ export default function CommercePage() {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <div className="mb-8">
-                <img src="https://live.staticflickr.com/65535/52397919901_2d3c75379e_w.jpg" alt="Customer logo" width={120} height={40} className="mx-auto" />
+                <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=120&h=40&fit=crop" alt="Customer logo" width={120} height={40} className="mx-auto" />
               </div>
               <blockquote className="text-2xl font-medium mb-8">
                 "Everpay's commerce platform has transformed how we run our business. The ability to sell across

@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 
 const verticals = [
-  { title: "Restaurants", subtitle: "Fine dining to food trucks", description: "Table management, KDS integration, split checks, tip handling, and online ordering — all from one system.", image: "https://live.staticflickr.com/65535/52523884047_3c3d68f3ab_b.jpg", stats: "35% faster table turns", link: "/solutions/restaurant" },
-  { title: "Retail", subtitle: "Boutiques to multi-location chains", description: "Barcode scanning, inventory sync across stores, purchase orders, and customer loyalty — built into every terminal.", image: "https://live.staticflickr.com/65535/52421149066_a5e7d26937_b.jpg", stats: "22% higher AOV with kiosk", link: "/solutions/retail" },
-  { title: "Services", subtitle: "Salons, clinics, and field ops", description: "Appointment booking, mobile invoicing, recurring payments, and staff scheduling in a single handheld device.", image: "https://live.staticflickr.com/65535/52235896728_0e0e3b4c8e_b.jpg", stats: "85% less admin overhead", link: "/solutions/pos" },
+  { title: "Restaurants", subtitle: "Fine dining to food trucks", description: "Table management, KDS integration, split checks, tip handling, and online ordering — all from one system.", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=500&fit=crop", stats: "35% faster table turns", link: "/solutions/restaurant" },
+  { title: "Retail", subtitle: "Boutiques to multi-location chains", description: "Barcode scanning, inventory sync across stores, purchase orders, and customer loyalty — built into every terminal.", image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=500&fit=crop", stats: "22% higher AOV with kiosk", link: "/solutions/retail" },
+  { title: "Services", subtitle: "Salons, clinics, and field ops", description: "Appointment booking, mobile invoicing, recurring payments, and staff scheduling in a single handheld device.", image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=500&fit=crop", stats: "85% less admin overhead", link: "/solutions/pos" },
 ]
 
 const containerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.12 } } }

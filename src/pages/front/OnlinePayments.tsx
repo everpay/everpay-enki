@@ -96,9 +96,9 @@ export default function OnlinePaymentsPage() {
                   >
                     <img
                       src={[
-                        "https://live.staticflickr.com/65535/52408479928_f83c0c1f14_b.jpg",
-                        "https://live.staticflickr.com/65535/52235038737_4d2b8e4fbc_b.jpg",
-                        "https://live.staticflickr.com/65535/52076871278_5c63a6781d_b.jpg",
+                        "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop",
+                        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop",
                       ][index % 3]}
                       alt={feature.title}
                       width={600}
