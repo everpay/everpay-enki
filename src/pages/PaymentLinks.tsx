@@ -328,7 +328,7 @@ export default function PaymentLinks() {
                   </div>
                   <div>
                     <p className="font-medium text-foreground">Everpay Checkout</p>
-                    <p className="text-xs text-muted-foreground">pay.{DOMAIN}</p>
+                    <p className="text-xs text-muted-foreground">pay.everpayinc.com</p>
                   </div>
                 </div>
 
