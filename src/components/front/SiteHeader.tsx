@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMegaMenu, setActiveMegaMenu] = useState<string | null>(null);
+  const [openMobileSection, setOpenMobileSection] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { user } = useAuth();
@@ -21,6 +22,16 @@ export function SiteHeader() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMenuOpen]);
+
   const handleMenuEnter = (menu: string) => {
     if (closeTimeoutRef.current) { clearTimeout(closeTimeoutRef.current); closeTimeoutRef.current = null; }
     setActiveMegaMenu(menu);
@@ -28,6 +39,10 @@ export function SiteHeader() {
 
   const handleMenuLeave = () => {
     closeTimeoutRef.current = setTimeout(() => setActiveMegaMenu(null), 150);
+  };
+
+  const toggleMobileSection = (section: string) => {
+    setOpenMobileSection(prev => prev === section ? null : section);
   };
 
   const solutionItems = [
@@ -52,6 +67,32 @@ export function SiteHeader() {
     { icon: Globe, label: 'Payment Methods', to: '/payments' },
     { icon: DollarSign, label: 'Funding', to: '/funding' },
     { icon: CreditCard, label: 'Card Issuing', to: '/card-issuing' },
+  ];
+
+  const resourceItems = [
+    { label: 'Blog', to: '/blog' },
+    { label: 'API Documentation', to: '/docs' },
+    { label: 'Request Demo', to: '/demo' },
+    { label: 'Help & Support', to: '/contact' },
+    { label: 'Plans & Pricing', to: '/pricing' },
+  ];
+
+  const mobileSections = [
+    {
+      title: 'Solutions',
+      key: 'solutions',
+      items: [...solutionItems, ...platformItems],
+    },
+    {
+      title: 'Products',
+      key: 'products',
+      items: productItems,
+    },
+    {
+      title: 'Resources',
+      key: 'resources',
+      items: resourceItems,
+    },
   ];
 
   return (
@@ -137,44 +178,83 @@ export function SiteHeader() {
           </Link>
         </div>
 
-        {/* Mobile Menu Button */}
-        <button className="lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
-          {isMenuOpen ? <X className="h-6 w-6 text-gray-900" /> : <Menu className="h-6 w-6 text-gray-900" />}
-        </button>
+        {/* Mobile: Book demo + hamburger */}
+        <div className="flex lg:hidden items-center gap-3">
+          <Link to="/demo">
+            <Button variant="outline" className="rounded-full h-9 px-4 text-sm font-medium border-gray-300">
+              Book your demo
+            </Button>
+          </Link>
+          <button onClick={() => { setIsMenuOpen(!isMenuOpen); setOpenMobileSection(null); }} aria-label="Toggle menu">
+            {isMenuOpen ? <X className="h-6 w-6 text-gray-900" /> : <Menu className="h-6 w-6 text-gray-900" />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Navigation — Recurly-style accordion */}
       {isMenuOpen && (
-        <div className="lg:hidden border-t border-gray-100 bg-white max-h-[calc(100vh-72px)] overflow-y-auto">
-          <nav className="container mx-auto flex flex-col px-6 py-6">
-            <div className="space-y-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Solutions</p>
-              {[...solutionItems, ...platformItems].map((item) => (
-                <Link key={item.label} to={item.to} className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900 w-full text-left" onClick={() => setIsMenuOpen(false)}>
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-            <div className="border-t border-gray-100 mt-4 pt-4 space-y-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Products</p>
-              {productItems.map((item) => (
-                <Link key={item.label} to={item.to} className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900 w-full text-left" onClick={() => setIsMenuOpen(false)}>
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-            <div className="border-t border-gray-100 mt-4 pt-4 space-y-1">
-              <Link to="/pricing" className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900" onClick={() => setIsMenuOpen(false)}>Pricing</Link>
-              <Link to="/about" className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900" onClick={() => setIsMenuOpen(false)}>About</Link>
-              <Link to="/blog" className="block py-2.5 text-[15px] text-gray-600 hover:text-gray-900" onClick={() => setIsMenuOpen(false)}>Blog</Link>
-            </div>
-            <div className="border-t border-gray-100 mt-4 pt-6 flex flex-col gap-3">
-              <Link to={user ? '/dashboard' : '/auth'} className="text-center text-[15px] font-medium text-gray-600 py-2.5" onClick={() => setIsMenuOpen(false)}>
-                {user ? 'Dashboard' : 'Login'}
-              </Link>
-              <Link to="/demo">
-                <Button className="w-full bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full h-11 text-[15px] font-semibold">
-                  Get a free demo
+        <div className="lg:hidden fixed inset-0 top-[72px] bg-white z-40 overflow-y-auto">
+          <nav className="flex flex-col">
+            {/* Accordion sections */}
+            {mobileSections.map((section) => (
+              <div key={section.key} className="border-b border-gray-100">
+                <button
+                  onClick={() => toggleMobileSection(section.key)}
+                  className="flex items-center justify-between w-full px-6 py-5 text-left"
+                >
+                  <span className="text-lg font-semibold text-gray-900">{section.title}</span>
+                  <ChevronDown
+                    className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                      openMobileSection === section.key ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Expanded content */}
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    openMobileSection === section.key ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <div className="px-6 pb-5 space-y-1">
+                    {section.key === 'products' && (
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">PRODUCTS</p>
+                    )}
+                    {section.items.map((item) => (
+                      <Link
+                        key={item.label}
+                        to={item.to}
+                        className="flex items-center gap-3 py-3 text-[15px] text-gray-600 hover:text-gray-900 transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {'icon' in item && (
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50">
+                            {(() => { const Icon = (item as any).icon; return <Icon className="h-4 w-4 text-gray-700" />; })()}
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-medium text-gray-900">{item.label}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Direct links */}
+            <Link to="/blog" className="px-6 py-5 text-lg font-semibold text-gray-900 border-b border-gray-100" onClick={() => setIsMenuOpen(false)}>
+              Customer stories
+            </Link>
+            <Link to="/pricing" className="px-6 py-5 text-lg font-semibold text-gray-900 border-b border-gray-100" onClick={() => setIsMenuOpen(false)}>
+              Pricing
+            </Link>
+
+            {/* CTA */}
+            <div className="px-6 py-6">
+              <Link to="/demo" onClick={() => setIsMenuOpen(false)}>
+                <Button className="w-full bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full h-12 text-[15px] font-semibold">
+                  Book your demo
                 </Button>
               </Link>
             </div>
