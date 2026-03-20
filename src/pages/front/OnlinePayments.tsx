@@ -61,7 +61,7 @@ export default function OnlinePaymentsPage() {
               </div>
               <div className="relative h-[400px] rounded-lg overflow-hidden">
                 <img
-                  src="https://live.staticflickr.com/65535/52545687205_04f5568f9d_b.jpg"
+                  src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=500&fit=crop"
                   alt="Online Payments"
                   width={600}
                   height={400}
