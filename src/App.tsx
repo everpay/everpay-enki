@@ -101,17 +101,50 @@ const AppRoutes = () => {
   useInactivityLogout();
   return (
   <Routes>
+    {/* Front site pages (public) */}
     <Route path="/" element={<Landing />} />
+    <Route path="/about" element={<FrontAbout />} />
+    <Route path="/pricing" element={<FrontPricing />} />
+    <Route path="/contact" element={<FrontContact />} />
+    <Route path="/demo" element={<FrontDemo />} />
+    <Route path="/blog" element={<FrontBlog />} />
+    <Route path="/careers" element={<FrontCareers />} />
+    <Route path="/partners" element={<FrontPartners />} />
+    <Route path="/funding" element={<FrontFunding />} />
+    <Route path="/commerce" element={<FrontCommerce />} />
+    <Route path="/security" element={<FrontSecurity />} />
+    <Route path="/fraud-prevention" element={<FrontFraudPrevention />} />
+    <Route path="/online-payments" element={<FrontOnlinePayments />} />
+    <Route path="/payments" element={<FrontPayments />} />
+    <Route path="/card-issuing" element={<FrontCardIssuing />} />
+    <Route path="/aml-policy" element={<FrontAmlPolicy />} />
+    <Route path="/terms" element={<FrontTerms />} />
+    <Route path="/privacy-policy" element={<FrontPrivacyPolicy />} />
+    <Route path="/cookie-policy" element={<FrontCookiePolicy />} />
+    <Route path="/solutions/retail" element={<FrontRetail />} />
+    <Route path="/solutions/restaurant" element={<FrontRestaurant />} />
+    <Route path="/solutions/ecommerce" element={<FrontEcommerce />} />
+    <Route path="/solutions/mobile-payments" element={<FrontMobilePayments />} />
+    <Route path="/solutions/saas-platforms" element={<FrontSaasPlaftorms />} />
+    <Route path="/solutions/marketplaces" element={<FrontMarketplaces />} />
+    <Route path="/solutions/enterprise" element={<FrontEnterprise />} />
+    <Route path="/solutions/pos" element={<FrontPos />} />
+    <Route path="/products/payment-gateway" element={<FrontPaymentGateway />} />
+
+    {/* Auth & public */}
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
     <Route path="/docs" element={<Docs />} />
     <Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/checkout" element={<Checkout />} />
+    <Route path="/pay/:id" element={<PayInvoice />} />
+
+    {/* App pages (protected) */}
     <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
     <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
     <Route path="/wallets" element={<ProtectedRoute><Wallets /></ProtectedRoute>} />
     <Route path="/payouts" element={<ProtectedRoute><Payouts /></ProtectedRoute>} />
     <Route path="/payments/new" element={<ProtectedRoute><NewPayment /></ProtectedRoute>} />
     <Route path="/payment-links" element={<ProtectedRoute><PaymentLinks /></ProtectedRoute>} />
-    <Route path="/checkout" element={<Checkout />} />
     <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
     <Route path="/portal" element={<ProtectedRoute><CustomerPortal /></ProtectedRoute>} />
     <Route path="/chargebacks" element={<ProtectedRoute><Chargebacks /></ProtectedRoute>} />
@@ -130,11 +163,9 @@ const AppRoutes = () => {
     <Route path="/smart-retry" element={<ProtectedRoute><SmartRetry /></ProtectedRoute>} />
     <Route path="/processor-analytics" element={<ProtectedRoute><ProcessorAnalyticsPage /></ProtectedRoute>} />
     <Route path="/kyc-aml" element={<ProtectedRoute><KycAml /></ProtectedRoute>} />
-    
     <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsPage /></ProtectedRoute>} />
     <Route path="/bigcommerce" element={<ProtectedRoute><BigCommerce /></ProtectedRoute>} />
     <Route path="/shopify" element={<ProtectedRoute><Shopify /></ProtectedRoute>} />
-    <Route path="/pay/:id" element={<PayInvoice />} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
     <Route path="*" element={<NotFound />} />
