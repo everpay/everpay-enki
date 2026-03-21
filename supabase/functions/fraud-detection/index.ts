@@ -259,9 +259,12 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Fraud detection error:', error);
+    const safeMessages = ['Unauthorized', 'Merchant not found', 'Missing authorization header'];
+    const msg = error instanceof Error && safeMessages.includes(error.message) ? error.message : 'An internal error occurred';
+    const status = msg === 'Unauthorized' || msg === 'Missing authorization header' ? 401 : msg === 'Merchant not found' ? 404 : 500;
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: msg }),
+      { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

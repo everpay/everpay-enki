@@ -79,9 +79,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in tapix-enrich:', error);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      }),
+      JSON.stringify({ error: 'An internal error occurred' }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
