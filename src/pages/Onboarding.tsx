@@ -108,7 +108,8 @@ export default function Onboarding() {
         mcc_code: mccCode,
         contact_number: contactNumber,
         address: { street, city, state, postal_code: postalCode },
-        onboarding_status: profile ? profile.onboarding_status : 'in_review',
+        onboarding_status: 'approved',
+        kyb_verified_at: new Date().toISOString(),
       };
 
       if (profile) {
