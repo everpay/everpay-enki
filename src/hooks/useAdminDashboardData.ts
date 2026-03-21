@@ -8,6 +8,7 @@ interface SystemStats {
   totalVolume: number;
   totalRefunds: number;
   totalDisputes: number;
+  totalChargebacks: number;
   refundAmount: number;
   disputeAmount: number;
 }
@@ -40,6 +41,7 @@ export function useAdminDashboardData() {
         totalVolume,
         totalRefunds: refunds.length,
         totalDisputes: disputes.length,
+        totalChargebacks: disputes.filter(d => d.status === 'chargeback' || d.status === 'open').length,
         refundAmount,
         disputeAmount,
       };
