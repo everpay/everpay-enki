@@ -412,6 +412,7 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
 
   const shieldHubBody = {
     amount: amountStr, currency: data.currency, transaction_reference: transactionRef,
+    descriptor: 'AXP*FER*AXP*FERES',
     redirectback_url: 'https://everpay-os.lovable.app/transactions',
     notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/payment-link-webhook`,
     customer: {
@@ -424,9 +425,9 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
     billing: {
       address: data.billingDetails?.address || '123 Main St',
       postal_code: data.billingDetails?.postalCode || '12345',
-      city: data.billingDetails?.city || 'New York',
-      state: data.billingDetails?.state || 'NY',
-      country: data.billingDetails?.country || 'US',
+      city: data.billingDetails?.city || 'Mexico City',
+      state: data.billingDetails?.state || 'CDMX',
+      country: data.billingDetails?.country || 'MX',
     },
     card: {
       holder: data.cardDetails?.holderName || `${data.customerDetails?.firstName || 'Customer'} ${data.customerDetails?.lastName || 'User'}`,
@@ -437,10 +438,8 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
     },
   };
 
-  const endpoints = [
-    'https://sandbox.shieldhubpay.com/api/transaction',
-    'https://pgw.shieldhubpay.com/api/transaction',
-  ];
+  // Live 2D endpoint — EVERPAY 3D PTY (Mexico, USD, Visa/MC)
+  const apiEndpoint = 'https://pgw.shieldhubpay.com/api/transaction';
 
   for (const apiEndpoint of endpoints) {
     try {
