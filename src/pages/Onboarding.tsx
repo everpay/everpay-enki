@@ -108,7 +108,8 @@ export default function Onboarding() {
         mcc_code: mccCode,
         contact_number: contactNumber,
         address: { street, city, state, postal_code: postalCode },
-        onboarding_status: profile ? profile.onboarding_status : 'in_review',
+        onboarding_status: 'approved',
+        kyb_verified_at: new Date().toISOString(),
       };
 
       if (profile) {
@@ -128,6 +129,27 @@ export default function Onboarding() {
     }
   };
 
+  const REQUIRED_DOC_TYPES = ['business_registration', 'government_id', 'bank_verification'];
+
+  const checkAutoActivation = async (updatedDocs: { name: string; path: string }[]) => {
+    const hasRequired = REQUIRED_DOC_TYPES.every(docType =>
+      updatedDocs.some(d => d.name.toLowerCase().includes(docType))
+    );
+    if (hasRequired && merchantId && profile) {
+      const { error } = await supabase
+        .from('merchant_profiles')
+        .update({ onboarding_status: 'approved', kyb_verified_at: new Date().toISOString() } as any)
+        .eq('id', profile.id);
+      if (!error) {
+        toast.success('Account activated! Redirecting to dashboard...');
+        queryClient.invalidateQueries({ queryKey: ['onboarding-status'] });
+        queryClient.invalidateQueries({ queryKey: ['merchant-profile'] });
+        setTimeout(() => navigate('/dashboard'), 1500);
+        return;
+      }
+    }
+  };
+
   const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -138,8 +160,10 @@ export default function Onboarding() {
       const path = `${user.id}/${Date.now()}_${file.name}`;
       const { error } = await supabase.storage.from('kyb-documents').upload(path, file);
       if (error) throw error;
-      setDocuments(prev => [...prev, { name: file.name, path }]);
+      const updatedDocs = [...documents, { name: file.name, path }];
+      setDocuments(updatedDocs);
       toast.success('Document uploaded');
+      await checkAutoActivation(updatedDocs);
     } catch (err) {
       toast.error('Failed to upload document');
     } finally {
@@ -289,15 +313,22 @@ export default function Onboarding() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                {['Business Registration', 'Government ID', 'Bank Verification', 'Tax Certificate'].map(docType => {
-                  const uploaded = documents.some(d => d.name.toLowerCase().includes(docType.toLowerCase().replace(/ /g, '_')));
-                  return (
-                    <div key={docType} className={`flex items-center justify-between rounded-lg border p-3 text-sm ${uploaded ? 'border-success/20 bg-success/5' : 'border-border'}`}>
-                      <span className={uploaded ? 'text-success' : 'text-muted-foreground'}>{docType}</span>
-                      {uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
-                    </div>
-                  );
-                })}
+                {[
+                  { label: 'Business Registration', required: true },
+                  { label: 'Government ID', required: true },
+                  { label: 'Bank Verification', required: true },
+                  { label: 'Tax Certificate', required: false },
+                ].map(({ label: docType, required }) => {
+                   const uploaded = documents.some(d => d.name.toLowerCase().includes(docType.toLowerCase().replace(/ /g, '_')));
+                   return (
+                     <div key={docType} className={`flex items-center justify-between rounded-lg border p-3 text-sm ${uploaded ? 'border-success/20 bg-success/5' : 'border-border'}`}>
+                       <span className={uploaded ? 'text-success' : 'text-muted-foreground'}>
+                         {docType} {required ? <span className="text-destructive">*</span> : <span className="text-muted-foreground text-xs">(optional)</span>}
+                       </span>
+                       {uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
+                     </div>
+                   );
+                 })}
               </div>
               <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                 <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
