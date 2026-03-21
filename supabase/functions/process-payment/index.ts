@@ -433,8 +433,8 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
       holder: data.cardDetails?.holderName || `${data.customerDetails?.firstName || 'Customer'} ${data.customerDetails?.lastName || 'User'}`,
       number: data.cardDetails?.number?.replace(/\s/g, '') || '',
       cvv: data.cardDetails?.cvc || '',
-      expiry_month: data.cardDetails?.expMonth || '',
-      expiry_year: data.cardDetails?.expYear || '',
+      expiry_month: (data.cardDetails?.expMonth || '').padStart(2, '0').slice(-2),
+      expiry_year: (data.cardDetails?.expYear || '').slice(-2),
     },
   };
 
