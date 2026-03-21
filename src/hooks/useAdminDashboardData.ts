@@ -8,6 +8,7 @@ interface SystemStats {
   totalVolume: number;
   totalRefunds: number;
   totalDisputes: number;
+  totalChargebacks: number;
   refundAmount: number;
   disputeAmount: number;
 }
