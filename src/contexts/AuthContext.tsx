@@ -32,9 +32,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === 'SIGNED_IN' && session && !trackedRef.current) {
         trackedRef.current = true;
         trackDevice('login', { event: 'auth_sign_in' });
+        // Identify user in PostHog
+        posthog.identify(session.user.id, {
+          email: session.user.email,
+          created_at: session.user.created_at,
+        });
       }
       if (event === 'SIGNED_OUT') {
         trackedRef.current = false;
+        posthog.reset();
       }
     });
 
