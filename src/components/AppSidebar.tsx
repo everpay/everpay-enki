@@ -109,6 +109,7 @@ const adminNavItems: NavItem[] = [
   { to: "/enki/merchants", icon: Store, label: "Merchants" },
   { to: "/enki/users", icon: Users, label: "Users" },
   { to: "/enki/analytics", icon: BarChart3, label: "Analytics" },
+  { to: "/enki/fees", icon: CreditCardIcon, label: "Transaction Fees" },
   { to: "/enki/reserves", icon: Landmark, label: "Reserves" },
   { to: "/enki/regulatory", icon: FileBarChart, label: "Regulatory Export" },
 ];
