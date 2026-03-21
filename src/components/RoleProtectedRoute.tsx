@@ -23,10 +23,13 @@ export function RoleProtectedRoute({ children, allowedRoles }: RoleProtectedRout
   if (!userRole) return <Navigate to="/dashboard" replace />;
 
   const hasAccess =
-    userRole.isAdmin ||
     userRole.isSuperAdmin ||
     allowedRoles.some(role => {
+      if (role === 'admin') return userRole.isAdmin || userRole.isSuperAdmin;
       if (role === 'reseller') return userRole.isReseller;
+      if (role === 'user') return userRole.isUser;
+      if (role === 'merchant') return userRole.isMerchant;
+      if (role === 'agent') return userRole.isAgent;
       return false;
     });
 
