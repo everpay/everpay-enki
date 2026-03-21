@@ -51,6 +51,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminRegulatoryExport from "./pages/admin/AdminRegulatoryExport";
 import AdminReservesDashboard from "./pages/admin/AdminReservesDashboard";
+import AdminTransactionFees from "./pages/admin/AdminTransactionFees";
+import ResellerPortal from "./pages/ResellerPortal";
 
 // Front site pages
 import FrontAbout from "./pages/front/About";
