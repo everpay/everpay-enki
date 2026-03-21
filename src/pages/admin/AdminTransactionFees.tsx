@@ -181,7 +181,7 @@ export default function AdminTransactionFees() {
   };
 
   const deleteFee = async (id: string) => {
-    const { error } = await supabase.from('transaction_fees').delete().eq('id', id);
+    const { error } = await supabase.from('transaction_fees' as any).delete().eq('id', id);
     if (error) { toast({ title: 'Error', variant: 'destructive' }); return; }
     setFees(prev => prev.filter(f => f.id !== id));
     toast({ title: 'Fee deleted' });
