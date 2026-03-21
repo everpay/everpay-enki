@@ -162,10 +162,11 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('Chargeflow error:', error);
+    const isUnauthorized = error instanceof Error && error.message === 'Unauthorized';
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: isUnauthorized ? 'Unauthorized' : 'An internal error occurred' }),
       {
-        status: error instanceof Error && error.message === 'Unauthorized' ? 401 : 500,
+        status: isUnauthorized ? 401 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
