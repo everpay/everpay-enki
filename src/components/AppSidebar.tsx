@@ -102,6 +102,7 @@ const navItems: NavItem[] = [
       { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
     ],
   },
+  { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
 ];
 
 const adminNavItems: NavItem[] = [
