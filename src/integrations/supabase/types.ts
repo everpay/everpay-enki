@@ -154,6 +154,51 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_number: string | null
+          bank_name: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          external_account_id: string | null
+          iban: string | null
+          id: string
+          merchant_id: string | null
+          provider: string | null
+          sort_code: string | null
+          status: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          bank_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          external_account_id?: string | null
+          iban?: string | null
+          id?: string
+          merchant_id?: string | null
+          provider?: string | null
+          sort_code?: string | null
+          status?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          bank_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          external_account_id?: string | null
+          iban?: string | null
+          id?: string
+          merchant_id?: string | null
+          provider?: string | null
+          sort_code?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       behavioral_profiles: {
         Row: {
           confidence_score: number | null
@@ -325,6 +370,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      crypto_wallets: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          merchant_id: string | null
+          network: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          merchant_id?: string | null
+          network?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          merchant_id?: string | null
+          network?: string | null
+        }
+        Relationships: []
       }
       customers: {
         Row: {
@@ -723,6 +795,39 @@ export type Database = {
           quote_currency?: string
           rate?: number
           source?: string | null
+        }
+        Relationships: []
+      }
+      iban_accounts: {
+        Row: {
+          bank_name: string | null
+          bic: string | null
+          country: string | null
+          created_at: string | null
+          iban: string | null
+          id: string
+          merchant_id: string | null
+          status: string | null
+        }
+        Insert: {
+          bank_name?: string | null
+          bic?: string | null
+          country?: string | null
+          created_at?: string | null
+          iban?: string | null
+          id?: string
+          merchant_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          bank_name?: string | null
+          bic?: string | null
+          country?: string | null
+          created_at?: string | null
+          iban?: string | null
+          id?: string
+          merchant_id?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -1248,36 +1353,45 @@ export type Database = {
         Row: {
           card_brand: string | null
           card_last4: string | null
+          card_updater_enabled: boolean | null
           created_at: string
           customer_id: string
           exp_month: string | null
           exp_year: string | null
           id: string
           is_default: boolean
+          network_token_status: string | null
+          token_last_updated: string | null
           updated_at: string
           vgs_alias: string
         }
         Insert: {
           card_brand?: string | null
           card_last4?: string | null
+          card_updater_enabled?: boolean | null
           created_at?: string
           customer_id: string
           exp_month?: string | null
           exp_year?: string | null
           id?: string
           is_default?: boolean
+          network_token_status?: string | null
+          token_last_updated?: string | null
           updated_at?: string
           vgs_alias: string
         }
         Update: {
           card_brand?: string | null
           card_last4?: string | null
+          card_updater_enabled?: boolean | null
           created_at?: string
           customer_id?: string
           exp_month?: string | null
           exp_year?: string | null
           id?: string
           is_default?: boolean
+          network_token_status?: string | null
+          token_last_updated?: string | null
           updated_at?: string
           vgs_alias?: string
         }
@@ -1290,6 +1404,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payouts: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          external_id: string | null
+          id: string
+          merchant_id: string | null
+          method: string | null
+          processor: string | null
+          status: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          external_id?: string | null
+          id?: string
+          merchant_id?: string | null
+          method?: string | null
+          processor?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          external_id?: string | null
+          id?: string
+          merchant_id?: string | null
+          method?: string | null
+          processor?: string | null
+          status?: string | null
+        }
+        Relationships: []
       }
       processor_fee_profiles: {
         Row: {
@@ -1612,6 +1759,36 @@ export type Database = {
           },
         ]
       }
+      reserves: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          id: string
+          merchant_id: string | null
+          payment_id: string | null
+          release_date: string | null
+          status: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          id?: string
+          merchant_id?: string | null
+          payment_id?: string | null
+          release_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          id?: string
+          merchant_id?: string | null
+          payment_id?: string | null
+          release_date?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       risk_rules: {
         Row: {
           action: string
@@ -1918,6 +2095,57 @@ export type Database = {
           merchant_count?: number | null
           status?: string | null
           total_amount?: number | null
+        }
+        Relationships: []
+      }
+      settlements: {
+        Row: {
+          batch_id: string | null
+          created_at: string | null
+          currency: string | null
+          fee: number | null
+          gross_amount: number | null
+          id: string
+          merchant_id: string | null
+          net_amount: number | null
+          payment_id: string | null
+          processor: string | null
+          scheduled_at: string | null
+          settled_at: string | null
+          settlement_currency: string | null
+          status: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          fee?: number | null
+          gross_amount?: number | null
+          id?: string
+          merchant_id?: string | null
+          net_amount?: number | null
+          payment_id?: string | null
+          processor?: string | null
+          scheduled_at?: string | null
+          settled_at?: string | null
+          settlement_currency?: string | null
+          status?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          fee?: number | null
+          gross_amount?: number | null
+          id?: string
+          merchant_id?: string | null
+          net_amount?: number | null
+          payment_id?: string | null
+          processor?: string | null
+          scheduled_at?: string | null
+          settled_at?: string | null
+          settlement_currency?: string | null
+          status?: string | null
         }
         Relationships: []
       }
