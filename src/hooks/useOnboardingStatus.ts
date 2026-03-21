@@ -35,7 +35,7 @@ export function useOnboardingStatus() {
         .maybeSingle();
 
       if (!profile || profile.onboarding_status === 'pending') {
-        return { needsOnboarding: true, hasProfile: !!profile, merchantId: merchant.id };
+        return { needsOnboarding: true, hasProfile: !!profile, merchantId: merchant.id, status: profile?.onboarding_status };
       }
 
       return { needsOnboarding: false, hasProfile: true, merchantId: merchant.id };
