@@ -159,9 +159,9 @@ export default function AdminTransactionFees() {
 
     let error;
     if (editingFee) {
-      ({ error } = await supabase.from('transaction_fees').update(payload as any).eq('id', editingFee.id));
+      ({ error } = await supabase.from('transaction_fees' as any).update(payload as any).eq('id', editingFee.id));
     } else {
-      ({ error } = await supabase.from('transaction_fees').insert(payload as any));
+      ({ error } = await supabase.from('transaction_fees' as any).insert(payload as any));
     }
 
     if (error) {
