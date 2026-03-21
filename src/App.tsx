@@ -158,7 +158,7 @@ const AppRoutes = () => {
     <Route path="/payments/new" element={<ProtectedRoute><NewPayment /></ProtectedRoute>} />
     <Route path="/payment-links" element={<ProtectedRoute><PaymentLinks /></ProtectedRoute>} />
     <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
-    <Route path="/portal" element={<ProtectedRoute><CustomerPortal /></ProtectedRoute>} />
+    <Route path="/portal" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['user']}><CustomerPortal /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/chargebacks" element={<ProtectedRoute><Chargebacks /></ProtectedRoute>} />
     <Route path="/chargebacks/disputes" element={<ProtectedRoute><MerchantDisputes /></ProtectedRoute>} />
     <Route path="/chargebacks/evidence" element={<ProtectedRoute><MerchantEvidence /></ProtectedRoute>} />
