@@ -51,6 +51,8 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminRegulatoryExport from "./pages/admin/AdminRegulatoryExport";
 import AdminReservesDashboard from "./pages/admin/AdminReservesDashboard";
+import AdminTransactionFees from "./pages/admin/AdminTransactionFees";
+import ResellerPortal from "./pages/ResellerPortal";
 
 // Front site pages
 import FrontAbout from "./pages/front/About";
@@ -186,6 +188,8 @@ const AppRoutes = () => {
     <Route path="/enki/analytics" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminAnalytics /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/regulatory" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRegulatoryExport /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/reserves" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminReservesDashboard /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/fees" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminTransactionFees /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
 
     <Route path="*" element={<NotFound />} />
   </Routes>

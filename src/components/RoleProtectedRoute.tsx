@@ -24,8 +24,9 @@ export function RoleProtectedRoute({ children, allowedRoles }: RoleProtectedRout
 
   const hasAccess =
     userRole.isAdmin ||
+    userRole.isSuperAdmin ||
     allowedRoles.some(role => {
-      if (role === 'admin') return userRole.isAdmin;
+      if (role === 'reseller') return userRole.isReseller;
       return false;
     });
 
