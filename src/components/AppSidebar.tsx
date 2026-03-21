@@ -23,6 +23,9 @@ import {
   Package,
   CreditCard as CreditCardIcon,
   Store,
+  Users,
+  FileBarChart,
+  Landmark,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -101,10 +104,22 @@ const navItems: NavItem[] = [
   },
 ];
 
+const adminNavItems: NavItem[] = [
+  { to: "/enki", icon: LayoutDashboard, label: "Overview" },
+  { to: "/enki/merchants", icon: Store, label: "Merchants" },
+  { to: "/enki/users", icon: Users, label: "Users" },
+  { to: "/enki/analytics", icon: BarChart3, label: "Analytics" },
+  { to: "/enki/reserves", icon: Landmark, label: "Reserves" },
+  { to: "/enki/regulatory", icon: FileBarChart, label: "Regulatory Export" },
+];
+
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { data: userRole } = useUserRole();
+
+  const isAdmin = userRole?.isAdmin || false;
+  const isOnAdminRoute = location.pathname.startsWith("/enki");
 
   const isChildActive = (item: NavItem) =>
     item.children?.some((c) => location.pathname === c.to) || location.pathname === item.to;
@@ -113,13 +128,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     if (!item.visibleTo) return true;
     if (!userRole) return false;
     const roles = userRole.roles || [];
-    // 'user' role items: only show if user has no other roles or explicitly has 'user'
     if (
       item.visibleTo.includes("user") &&
       !item.visibleTo.includes("admin") &&
       !item.visibleTo.includes("super_admin")
     ) {
-      // Hide from merchants, resellers, agents, developers, admins
       const nonUserRoles = roles.filter((r: string) => r !== "user");
       if (nonUserRoles.length > 0) return false;
       return roles.includes("user") || roles.length === 0;
@@ -127,17 +140,21 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     return item.visibleTo.some((r) => roles.includes(r));
   });
 
+  const currentItems = isOnAdminRoute ? adminNavItems : visibleItems;
+
   return (
     <>
       <div className="flex h-16 items-center border-b border-border px-6">
         <div className="flex items-center gap-2.5">
           <img src={everpayIcon} alt="Everpay" className="h-8 w-8 rounded-lg" />
-          <span className="font-heading text-lg font-bold text-foreground tracking-tight">Everpay</span>
+          <span className="font-heading text-lg font-bold text-foreground tracking-tight">
+            {isOnAdminRoute ? "Enki Admin" : "Everpay"}
+          </span>
         </div>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-        {visibleItems.map((item) => {
+        {currentItems.map((item) => {
           if (item.children) {
             const active = isChildActive(item);
             return (
@@ -192,21 +209,36 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </NavLink>
           );
         })}
-        <NavLink
-          to="/settings"
-          onClick={onNavigate}
-          className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-            location.pathname === "/settings"
-              ? "bg-sidebar-accent text-foreground"
-              : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
-          }`}
-        >
-          <Settings className={`h-4 w-4 ${location.pathname === "/settings" ? "text-primary" : ""}`} />
-          Settings
-        </NavLink>
+
+        {!isOnAdminRoute && (
+          <NavLink
+            to="/settings"
+            onClick={onNavigate}
+            className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+              location.pathname === "/settings"
+                ? "bg-sidebar-accent text-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
+            }`}
+          >
+            <Settings className={`h-4 w-4 ${location.pathname === "/settings" ? "text-primary" : ""}`} />
+            Settings
+          </NavLink>
+        )}
       </nav>
 
       <div className="border-t border-border px-3 py-4 space-y-1">
+        {/* Admin toggle link */}
+        {isAdmin && (
+          <NavLink
+            to={isOnAdminRoute ? "/dashboard" : "/enki"}
+            onClick={onNavigate}
+            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
+            {isOnAdminRoute ? "Back to App" : "Admin Panel"}
+          </NavLink>
+        )}
+
         {user && (
           <div className="px-3 py-2 mb-1">
             <p className="text-xs text-muted-foreground truncate">{user.email}</p>

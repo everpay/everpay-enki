@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
 import Index from "./pages/Index";
 import Transactions from "./pages/Transactions";
 import Wallets from "./pages/Wallets";
@@ -42,6 +43,14 @@ import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import BigCommerce from "./pages/BigCommerce";
 import Shopify from "./pages/Shopify";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
+
+// Admin pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminMerchants from "./pages/admin/AdminMerchants";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminRegulatoryExport from "./pages/admin/AdminRegulatoryExport";
+import AdminReservesDashboard from "./pages/admin/AdminReservesDashboard";
 
 // Front site pages
 import FrontAbout from "./pages/front/About";
@@ -82,7 +91,6 @@ function ProtectedRoute({ children, skipOnboardingCheck }: { children: React.Rea
   if (loading || onboardingLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!user) return <Navigate to="/login" replace />;
 
-  // Redirect to onboarding if not completed (unless already on onboarding page)
   if (!skipOnboardingCheck && onboarding?.needsOnboarding && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
@@ -170,6 +178,15 @@ const AppRoutes = () => {
     <Route path="/shopify" element={<ProtectedRoute><Shopify /></ProtectedRoute>} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
+
+    {/* Admin pages — hidden under /enki, role-gated */}
+    <Route path="/enki" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/merchants" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminMerchants /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/users" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminUsers /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/analytics" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminAnalytics /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/regulatory" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRegulatoryExport /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/reserves" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminReservesDashboard /></RoleProtectedRoute></ProtectedRoute>} />
+
     <Route path="*" element={<NotFound />} />
   </Routes>
   );
