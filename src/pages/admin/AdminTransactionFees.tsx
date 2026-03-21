@@ -175,7 +175,7 @@ export default function AdminTransactionFees() {
   };
 
   const toggleFee = async (id: string, current: boolean) => {
-    const { error } = await supabase.from('transaction_fees').update({ is_active: !current } as any).eq('id', id);
+    const { error } = await supabase.from('transaction_fees' as any).update({ is_active: !current } as any).eq('id', id);
     if (error) { toast({ title: 'Error', variant: 'destructive' }); return; }
     setFees(prev => prev.map(f => f.id === id ? { ...f, is_active: !current } : f));
   };
