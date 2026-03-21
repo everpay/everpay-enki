@@ -221,7 +221,30 @@ serve(async (req) => {
     // ═══════════════════════════════════════════════════════════
     // STEP 2 — ROUTE & PROCESS PAYMENT (Everpay PSP routing)
     // ═══════════════════════════════════════════════════════════
-    const provider = resolveProviderFromRequest(paymentData);
+    // Check merchant-specific routing rules first
+    let provider: string;
+    const { data: routingRules } = await supabase
+      .from('routing_rules')
+      .select('target_provider, fallback_provider, currency_match, amount_min, amount_max')
+      .eq('merchant_id', merchant.id)
+      .eq('active', true)
+      .order('priority', { ascending: false })
+      .limit(10);
+
+    const matchedRule = routingRules?.find(rule => {
+      if (rule.currency_match?.length && !rule.currency_match.includes(currency)) return false;
+      if (rule.amount_min != null && totalAmount < rule.amount_min) return false;
+      if (rule.amount_max != null && totalAmount > rule.amount_max) return false;
+      return true;
+    });
+
+    if (matchedRule) {
+      provider = matchedRule.target_provider;
+      console.log(`ROUTING: Matched merchant rule → ${provider}`);
+    } else {
+      provider = resolveProviderFromRequest(paymentData);
+      console.log(`ROUTING: Country/currency fallback → ${provider}`);
+    }
     let providerResponse: any;
     const processingStart = Date.now();
 
