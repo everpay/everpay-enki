@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef, ReactNode } fro
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
+import { posthog } from '@/lib/posthog';
 
 interface AuthContextType {
   session: Session | null;
