@@ -82,8 +82,8 @@ export default function AdminTransactionFees() {
     try {
       setLoading(true);
       const [procRes, feesRes] = await Promise.all([
-        supabase.from('payment_processors').select('id, name, region, status, provider_type, cost').order('name'),
-        supabase.from('transaction_fees').select('*').order('created_at', { ascending: false }),
+        supabase.from('payment_processors' as any).select('id, name, region, status, provider_type, cost').order('name'),
+        supabase.from('transaction_fees' as any).select('*').order('created_at', { ascending: false }),
       ]);
       if (procRes.error) throw procRes.error;
       if (feesRes.error) throw feesRes.error;
