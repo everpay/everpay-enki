@@ -441,24 +441,20 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
   // Live 2D endpoint — EVERPAY 3D PTY (Mexico, USD, Visa/MC)
   const apiEndpoint = 'https://pgw.shieldhubpay.com/api/transaction';
 
-  for (const apiEndpoint of endpoints) {
-    try {
-      console.log(`ShieldHub → ${apiEndpoint}`);
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'client-id': clientId, 'client-hash': clientHash },
-        body: JSON.stringify(shieldHubBody),
-      });
-      const responseData = await response.json();
-      console.log('ShieldHub response:', JSON.stringify(responseData));
-      if (responseData.errorCode === '008' || responseData.errorMessage?.includes('disabled')) {
-        continue;
-      }
-      return { ...responseData, transaction_reference: transactionRef };
-    } catch (err) {
-      console.warn(`ShieldHub endpoint error:`, err);
-      continue;
-    }
+  try {
+    console.log(`ShieldHub LIVE → ${apiEndpoint}`);
+    const response = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'client-id': clientId, 'client-hash': clientHash },
+      body: JSON.stringify(shieldHubBody),
+    });
+    const responseData = await response.json();
+    console.log('ShieldHub response:', JSON.stringify(responseData));
+    return { ...responseData, transaction_reference: transactionRef };
+  } catch (err) {
+    console.error('ShieldHub live endpoint error:', err);
+    // Fallback to simulation only on network failure
+    return simulateShieldHubTestCard(data, transactionRef, amountStr);
   }
 
   console.log('ShieldHub: Using test-card simulation');
