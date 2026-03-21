@@ -313,15 +313,22 @@ export default function Onboarding() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                {['Business Registration', 'Government ID', 'Bank Verification', 'Tax Certificate'].map(docType => {
-                  const uploaded = documents.some(d => d.name.toLowerCase().includes(docType.toLowerCase().replace(/ /g, '_')));
-                  return (
-                    <div key={docType} className={`flex items-center justify-between rounded-lg border p-3 text-sm ${uploaded ? 'border-success/20 bg-success/5' : 'border-border'}`}>
-                      <span className={uploaded ? 'text-success' : 'text-muted-foreground'}>{docType}</span>
-                      {uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
-                    </div>
-                  );
-                })}
+                {[
+                  { label: 'Business Registration', required: true },
+                  { label: 'Government ID', required: true },
+                  { label: 'Bank Verification', required: true },
+                  { label: 'Tax Certificate', required: false },
+                ].map(({ label: docType, required }) => {
+                   const uploaded = documents.some(d => d.name.toLowerCase().includes(docType.toLowerCase().replace(/ /g, '_')));
+                   return (
+                     <div key={docType} className={`flex items-center justify-between rounded-lg border p-3 text-sm ${uploaded ? 'border-success/20 bg-success/5' : 'border-border'}`}>
+                       <span className={uploaded ? 'text-success' : 'text-muted-foreground'}>
+                         {docType} {required ? <span className="text-destructive">*</span> : <span className="text-muted-foreground text-xs">(optional)</span>}
+                       </span>
+                       {uploaded ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
+                     </div>
+                   );
+                 })}
               </div>
               <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
                 <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
