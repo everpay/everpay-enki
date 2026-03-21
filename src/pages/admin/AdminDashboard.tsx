@@ -103,10 +103,10 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { icon: Store, label: 'Merchants', href: '/admin/merchants' },
-                      { icon: CreditCard, label: 'Payments', href: '/admin/payments' },
-                      { icon: ArrowRightLeft, label: 'Routing', href: '/admin/payment-routing' },
-                      { icon: Wallet, label: 'Treasury', href: '/admin/treasury' },
+                      { icon: Store, label: 'Merchants', href: '/enki/merchants' },
+                      { icon: CreditCard, label: 'Payments', href: '/enki/payments' },
+                      { icon: ArrowRightLeft, label: 'Routing', href: '/enki/payment-routing' },
+                      { icon: Wallet, label: 'Treasury', href: '/enki/treasury' },
                     ].map(a => (
                       <Button key={a.label} variant="outline" className="h-auto py-4 flex flex-col items-center gap-2" onClick={() => navigate(a.href)}>
                         <a.icon className="h-5 w-5 text-primary" />
