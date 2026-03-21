@@ -128,6 +128,27 @@ export default function Onboarding() {
     }
   };
 
+  const REQUIRED_DOC_TYPES = ['business_registration', 'government_id', 'bank_verification'];
+
+  const checkAutoActivation = async (updatedDocs: { name: string; path: string }[]) => {
+    const hasRequired = REQUIRED_DOC_TYPES.every(docType =>
+      updatedDocs.some(d => d.name.toLowerCase().includes(docType))
+    );
+    if (hasRequired && merchantId && profile) {
+      const { error } = await supabase
+        .from('merchant_profiles')
+        .update({ onboarding_status: 'approved', kyb_verified_at: new Date().toISOString() } as any)
+        .eq('id', profile.id);
+      if (!error) {
+        toast.success('Account activated! Redirecting to dashboard...');
+        queryClient.invalidateQueries({ queryKey: ['onboarding-status'] });
+        queryClient.invalidateQueries({ queryKey: ['merchant-profile'] });
+        setTimeout(() => navigate('/dashboard'), 1500);
+        return;
+      }
+    }
+  };
+
   const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -138,8 +159,10 @@ export default function Onboarding() {
       const path = `${user.id}/${Date.now()}_${file.name}`;
       const { error } = await supabase.storage.from('kyb-documents').upload(path, file);
       if (error) throw error;
-      setDocuments(prev => [...prev, { name: file.name, path }]);
+      const updatedDocs = [...documents, { name: file.name, path }];
+      setDocuments(updatedDocs);
       toast.success('Document uploaded');
+      await checkAutoActivation(updatedDocs);
     } catch (err) {
       toast.error('Failed to upload document');
     } finally {
