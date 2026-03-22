@@ -31,6 +31,7 @@ export default function ContactPage() {
       message: formData.get("message") as string,
     }
 
+    trackFormSubmission('contact_form', 6, { inquiry_type: inquiryType });
     const result = { success: true, message: 'Thank you! We will be in touch shortly.' }
 
     setSubmitMessage({

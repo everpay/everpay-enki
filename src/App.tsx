@@ -110,6 +110,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 const AppRoutes = () => {
   useInactivityLogout();
+  usePostHogTracking();
   return (
   <Routes>
     {/* Front site pages (public) */}
