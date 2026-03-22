@@ -1,6 +1,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { trackFormSubmission } from "@/lib/posthog-events"
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
 import { Button } from "@/components/ui/button"
