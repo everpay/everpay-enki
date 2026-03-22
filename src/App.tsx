@@ -43,6 +43,7 @@ import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import BigCommerce from "./pages/BigCommerce";
 import Shopify from "./pages/Shopify";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
+import { usePostHogTracking } from "./hooks/usePostHogTracking";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
