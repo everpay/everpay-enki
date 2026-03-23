@@ -100,6 +100,13 @@ export default function Transactions() {
             <SelectItem value="GBP">GBP</SelectItem>
             <SelectItem value="BRL">BRL</SelectItem>
             <SelectItem value="MXN">MXN</SelectItem>
+            <SelectItem value="KES">KES</SelectItem>
+            <SelectItem value="NGN">NGN</SelectItem>
+            <SelectItem value="ZAR">ZAR</SelectItem>
+            <SelectItem value="CAD">CAD</SelectItem>
+            <SelectItem value="INR">INR</SelectItem>
+            <SelectItem value="PKR">PKR</SelectItem>
+            <SelectItem value="BDT">BDT</SelectItem>
           </SelectContent>
         </Select>
       </div>
