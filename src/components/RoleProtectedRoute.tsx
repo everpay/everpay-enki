@@ -30,6 +30,7 @@ export function RoleProtectedRoute({ children, allowedRoles }: RoleProtectedRout
       if (role === 'user') return userRole.isUser;
       if (role === 'merchant') return userRole.isMerchant;
       if (role === 'agent') return userRole.isAgent;
+      if (role === 'investor') return userRole.roles?.includes('investor');
       return false;
     });
 
