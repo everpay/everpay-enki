@@ -44,7 +44,7 @@ export function HeroSection() {
             Accept Payments Everywhere. <span className="text-primary">Grow Faster.</span>
           </h1>
 
-          <p className="text-2x1 md:text-[24px] lg:text-[32px] text-white/70 font-medium max-w-[660px] mx-auto mb-10 leading-relaxed font-body">
+          <p className="text-2x1 md:text-[24px] lg:text-[32px] text-white/70 font-medium max-w-[680px] mx-auto mb-10 leading-relaxed font-body">
             Everpay gives your business the same payment infrastructure as the biggest brands. One platform for cards,
             wallets, and local payment methods worldwide.
           </p>
