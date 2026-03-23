@@ -95,8 +95,10 @@ const countryProviderMap: Record<string, Provider> = {
   // Moneto: Canada
   CA: 'moneto',
   // Paygate10: India, Pakistan, Brazil, Argentina, Nigeria, Egypt, Mexico, South Africa, Kenya
-  IN: 'paygate10', PK: 'paygate10', NG: 'paygate10', EG: 'paygate10', ZA: 'paygate10', KE: 'paygate10',
+  IN: 'paygate10', PK: 'paygate10', EG: 'paygate10',
   AR: 'paygate10',
+  // Lipad: Africa
+  NG: 'lipad', ZA: 'lipad', KE: 'lipad', TZ: 'lipad', UG: 'lipad', GH: 'lipad', RW: 'lipad', ET: 'lipad', CI: 'lipad', SN: 'lipad', CM: 'lipad',
   // OFA: Asia-Pacific
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
