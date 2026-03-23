@@ -88,7 +88,7 @@ const navItems: NavItem[] = [
       { to: "/settlements", icon: Landmark, label: "Settlements" },
       { to: "/ledger", icon: BookOpen, label: "Ledger" },
       { to: "/audit-trail", icon: Shield, label: "Audit Trail" },
-      { to: "/fraud-graph", icon: Shield, label: "Fraud Intelligence" },
+      { to: "/fraud-graph", icon: Shield, label: "Fraud Intelligence", visibleTo: ["admin", "super_admin", "secops"] },
     ],
   },
   { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
