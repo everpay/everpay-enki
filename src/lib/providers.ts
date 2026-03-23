@@ -107,7 +107,7 @@ const countryProviderMap: Record<string, Provider> = {
   // Turkey: PayOK
   TR: 'payok',
   // LATAM shared: PG10 primary, FacilitaPay fallback
-  BR: 'paygate10', MX: 'paygate10', CO: 'facilitapay',
+  BR: 'facilitapay', MX: 'paygate10', CO: 'facilitapay',
 };
 
 // Currency → provider fallback
