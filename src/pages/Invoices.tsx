@@ -16,6 +16,7 @@ import { formatCurrency } from '@/lib/format';
 import { Currency } from '@/lib/types';
 import { InvoiceLineItems, LineItem } from '@/components/InvoiceLineItems';
 import { generateInvoicePDF } from '@/lib/invoice-pdf';
+import { EVERPAY_CONFIG } from '@/lib/everpay-api';
 
 const STATUS_FILTERS = ['all', 'draft', 'sent', 'paid', 'overdue'] as const;
 type StatusFilter = typeof STATUS_FILTERS[number];
