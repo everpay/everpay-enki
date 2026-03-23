@@ -30,6 +30,12 @@ export default function Checkout() {
   const [customAmount, setCustomAmount] = useState(amount);
   const [customerEmail, setCustomerEmail] = useState(email);
   const [customerName, setCustomerName] = useState(name);
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [billingAddress, setBillingAddress] = useState('');
+  const [billingCity, setBillingCity] = useState('');
+  const [billingState, setBillingState] = useState('');
+  const [billingZip, setBillingZip] = useState('');
+  const [billingCountry, setBillingCountry] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'openbanking'>(
     method === 'openbanking' ? 'openbanking' : 'card'
   );
