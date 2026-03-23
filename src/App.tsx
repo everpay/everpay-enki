@@ -65,6 +65,7 @@ import Treasury from "./pages/Treasury";
 import LiveAnalytics from "./pages/LiveAnalytics";
 import Settlements from "./pages/Settlements";
 import FraudGraph from "./pages/FraudGraph";
+import SupportDashboard from "./pages/SupportDashboard";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
