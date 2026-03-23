@@ -595,7 +595,7 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
   const shieldHubBody = {
     amount: amountStr, currency: data.currency, transaction_reference: transactionRef,
     descriptor: 'AXP*FER*AXP*FERES',
-    redirectback_url: 'https://everpay-os.lovable.app/transactions',
+    redirectback_url: 'https://checkout.everpayinc.com/result',
     notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/payment-link-webhook`,
     customer: {
       first: data.customerDetails?.firstName || 'Customer',
