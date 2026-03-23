@@ -14,14 +14,16 @@ const footerSections = [
     { to: '/payments', label: 'Payment Methods' }, { to: '/fraud-prevention', label: 'Fraud Prevention' },
     { to: '/funding', label: 'Funding' }, { to: '/card-issuing', label: 'Card Issuing' },
   ]},
-  { title: 'Resources', links: [
-    { to: '/blog', label: 'Blog' }, { to: '/docs', label: 'API Documentation' },
-    { to: '/demo', label: 'Request Demo' }, { to: '/contact', label: 'Help & Support' },
-    { to: '/pricing', label: 'Plans & Pricing' },
+  { title: 'Developers', links: [
+    { to: '/developers', label: 'Developer Portal' }, { to: '/developers/api/payments', label: 'API Reference' },
+    { to: '/developers/quickstart', label: 'Quick Start' }, { to: '/developers/keys', label: 'API Keys' },
+    { to: '/developers/webhooks', label: 'Webhooks' }, { to: '/developers/sdks', label: 'SDKs & Downloads' },
+    { to: '/developers/guides', label: 'Integration Guides' },
   ]},
   { title: 'Company', links: [
     { to: '/about', label: 'About Us' }, { to: '/careers', label: 'Careers' },
     { to: '/contact', label: 'Contact Us' }, { to: '/partners', label: 'Partners' },
+    { to: '/pricing', label: 'Plans & Pricing' }, { to: '/demo', label: 'Request Demo' },
   ]},
 ];
 
@@ -50,7 +52,7 @@ export function SiteFooter() {
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.to}>
-                    <Link to={link.to} className="text-sm text-muted-foreground hover:text-foreground transition-colors font-body">{link.label}</Link>
+                    <Link to={link.to} className="text-sm text-muted-foreground hover:text-primary transition-colors font-body">{link.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -58,7 +60,6 @@ export function SiteFooter() {
           ))}
         </div>
 
-        {/* Social icons + Security badges row */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mt-10">
           <div className="flex items-center gap-4">
             {[
@@ -68,35 +69,26 @@ export function SiteFooter() {
               { href: 'https://github.com/everpay/', icon: Github, label: 'GitHub' },
             ].map(({ href, icon: Icon, label }) => (
               <a key={label} href={href} className="hover:scale-110 transition-transform duration-200" aria-label={label}>
-                <Icon className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+                <Icon className="w-5 h-5 text-muted-foreground hover:text-primary" />
               </a>
             ))}
           </div>
           <div className="flex items-center gap-5 flex-wrap">
             {securityBadges.map((badge) => (
-              <img
-                key={badge.alt}
-                src={badge.src}
-                alt={badge.alt}
-                width={badge.width}
-                height={badge.height}
-                className="opacity-60 hover:opacity-100 transition-opacity duration-200"
-                loading="lazy"
-              />
+              <img key={badge.alt} src={badge.src} alt={badge.alt} width={badge.width} height={badge.height} className="opacity-60 hover:opacity-100 transition-opacity duration-200" loading="lazy" />
             ))}
           </div>
         </div>
 
-        {/* Sub-footer */}
         <div className="mt-10 pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <p className="text-xs text-muted-foreground font-body">© {new Date().getFullYear()} Everpay Corporation. All rights reserved.</p>
             <div className="flex flex-wrap gap-x-6 gap-y-2">
               {legalLinks.map((link) =>
                 'href' in link && link.href ? (
-                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-foreground transition-colors font-body">{link.label}</a>
+                  <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">{link.label}</a>
                 ) : (
-                  <Link key={link.label} to={link.to} className="text-xs text-muted-foreground hover:text-foreground transition-colors font-body">{link.label}</Link>
+                  <Link key={link.label} to={link.to} className="text-xs text-muted-foreground hover:text-primary transition-colors font-body">{link.label}</Link>
                 )
               )}
             </div>
