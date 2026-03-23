@@ -116,7 +116,7 @@ const currencyProviderMap: Record<string, Provider> = {
   EUR: 'mondo',
   GBP: 'mondo',
   CAD: 'moneto',
-  BRL: 'paygate10',
+  BRL: 'facilitapay',
   MXN: 'paygate10',
   COP: 'facilitapay',
   INR: 'paygate10',
