@@ -57,6 +57,7 @@ import AdminTransactionFees from "./pages/admin/AdminTransactionFees";
 import AdminPspRouting from "./pages/admin/AdminPspRouting";
 import Admin3dsControls from "./pages/admin/Admin3dsControls";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import BoardOverview from "./pages/admin/BoardOverview";
 import ResellerPortal from "./pages/ResellerPortal";
 
 // Front site pages
@@ -199,6 +200,7 @@ const AppRoutes = () => {
     <Route path="/enki/routing" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminPspRouting /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/3ds" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><Admin3dsControls /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/notifications" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminNotifications /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/board" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'investor']}><BoardOverview /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
 
     <Route path="*" element={<NotFound />} />

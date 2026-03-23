@@ -119,6 +119,7 @@ const adminNavItems: NavItem[] = [
   { to: "/enki/notifications", icon: Bell, label: "Notifications" },
   { to: "/enki/reserves", icon: Landmark, label: "Reserves" },
   { to: "/enki/regulatory", icon: FileBarChart, label: "Regulatory Export" },
+  { to: "/enki/board", icon: BarChart3, label: "Board Overview" },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {

@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { StatCard } from '@/components/StatCard';
 import { VolumeChart } from '@/components/VolumeChart';
@@ -8,58 +9,129 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useProfile } from '@/hooks/useProfile';
 import { formatCurrency } from '@/lib/format';
-import { DollarSign, ArrowUpRight, ArrowLeftRight, Clock } from 'lucide-react';
+import { DollarSign, ArrowUpRight, ArrowLeftRight, Clock, Filter, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
   const { data: transactions = [], isLoading: loadingTx } = useTransactions();
   const { data: accounts = [], isLoading: loadingAccounts } = useAccounts();
   const { data: profile } = useProfile();
 
-  // Calculate total balance across all currencies (simplified conversion)
-  const rates: Record<string, number> = { USD: 1, EUR: 1.08, GBP: 1.27, BRL: 0.195, MXN: 0.057, COP: 0.00024, CAD: 0.74 };
-  const totalBalance = accounts.reduce((sum, a) => {
-    return sum + a.balance * (rates[a.currency] || 1);
-  }, 0);
+  // Filters
+  const [providerFilter, setProviderFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<string>('30d');
 
-  // Calculate yesterday's balance
+  // Derive filter options from data
+  const allProviders = useMemo(() => [...new Set(transactions.map(tx => tx.provider))], [transactions]);
+
+  // Apply filters
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
+
+    if (providerFilter !== 'all') {
+      filtered = filtered.filter(tx => tx.provider === providerFilter);
+    }
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(tx => tx.status === statusFilter);
+    }
+    if (dateRange !== 'all') {
+      const days = parseInt(dateRange);
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      filtered = filtered.filter(tx => new Date(tx.created_at) >= cutoff);
+    }
+
+    return filtered;
+  }, [transactions, providerFilter, statusFilter, dateRange]);
+
+  const hasActiveFilters = providerFilter !== 'all' || statusFilter !== 'all' || dateRange !== '30d';
+
+  const clearFilters = () => {
+    setProviderFilter('all');
+    setStatusFilter('all');
+    setDateRange('30d');
+  };
+
+  // Calculate stats from filtered data
+  const rates: Record<string, number> = { USD: 1, EUR: 1.08, GBP: 1.27, BRL: 0.195, MXN: 0.057, COP: 0.00024, CAD: 0.74 };
+  const totalBalance = accounts.reduce((sum, a) => sum + a.balance * (rates[a.currency] || 1), 0);
+
+  const today = new Date().toISOString().split('T')[0];
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
-  
-  const yesterdayTransactions = transactions.filter(tx => tx.created_at.startsWith(yesterdayStr));
-  const yesterdayVolume = yesterdayTransactions.reduce((sum, tx) => sum + tx.amount, 0);
 
-  // Calculate today's transactions
-  const today = new Date().toISOString().split('T')[0];
-  const todayTransactions = transactions.filter(tx => tx.created_at.startsWith(today));
+  const todayTransactions = filteredTransactions.filter(tx => tx.created_at.startsWith(today));
   const todayVolume = todayTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const yesterdayVolume = filteredTransactions.filter(tx => tx.created_at.startsWith(yesterdayStr)).reduce((sum, tx) => sum + tx.amount, 0);
 
-  // Calculate percentage changes
   const balanceChange = yesterdayVolume > 0 ? ((todayVolume - yesterdayVolume) / yesterdayVolume * 100) : 0;
   const volumeChange = yesterdayVolume > 0 ? ((todayVolume - yesterdayVolume) / yesterdayVolume * 100) : 0;
 
-  // Calculate pending settlement and its change
-  const pendingTransactions = transactions.filter(tx => ['pending', 'processing'].includes(tx.status));
+  const pendingTransactions = filteredTransactions.filter(tx => ['pending', 'processing'].includes(tx.status));
   const pendingAmount = pendingTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-  
-  const completedTransactions = transactions.filter(tx => tx.status === 'completed');
-  const completedAmount = completedTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const completedAmount = filteredTransactions.filter(tx => tx.status === 'completed').reduce((sum, tx) => sum + tx.amount, 0);
   const pendingChange = completedAmount > 0 ? ((pendingAmount - completedAmount) / completedAmount * 100) : 0;
 
-  // Get unique providers
-  const providers = [...new Set(transactions.map(tx => tx.provider))];
-
-  // Get first name
+  const providers = [...new Set(filteredTransactions.map(tx => tx.provider))];
   const firstName = profile?.display_name?.split(' ')[0] || 'there';
 
   return (
     <AppLayout>
-      <div className="mb-8">
-        <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Hi, {firstName}! Here's an overview of your account
-        </p>
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Hi, {firstName}! Here's an overview of your account
+          </p>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          <span>Filters:</span>
+        </div>
+        <Select value={providerFilter} onValueChange={setProviderFilter}>
+          <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue placeholder="Provider" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Providers</SelectItem>
+            {allProviders.map(p => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="processing">Processing</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+            <SelectItem value="refunded">Refunded</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={dateRange} onValueChange={setDateRange}>
+          <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Date Range" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+            <SelectItem value="90">Last 90 days</SelectItem>
+            <SelectItem value="all">All time</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
+            <X className="h-3 w-3" />Clear
+          </Button>
+        )}
+        {hasActiveFilters && (
+          <Badge variant="secondary" className="text-xs">{filteredTransactions.length} of {transactions.length} transactions</Badge>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
@@ -125,7 +197,7 @@ const Index = () => {
             <p className="text-muted-foreground">Loading transactions...</p>
           </div>
         ) : (
-          <TransactionTable transactions={transactions.slice(0, 5)} compact />
+          <TransactionTable transactions={filteredTransactions.slice(0, 5)} compact />
         )}
       </div>
     </AppLayout>
