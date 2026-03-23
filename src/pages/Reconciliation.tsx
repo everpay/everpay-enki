@@ -90,7 +90,6 @@ function useReconciliationData(period: string) {
       });
 
       const rows: ReconciliationRow[] = Array.from(groups.values()).map((g, i) => {
-        const variance = g.ledgerTotal - g.processorTotal;
         const processorAmount = g.settlementTotal;
         const actualVariance = g.ledgerTotal - processorAmount;
         const variancePct = processorAmount > 0 ? (actualVariance / processorAmount) * 100 : 0;
