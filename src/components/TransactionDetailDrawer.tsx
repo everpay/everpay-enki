@@ -235,6 +235,23 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             </div>
           </div>
 
+          {/* Refund Button */}
+          {(transaction.status === 'completed' || transaction.status === 'settled') && (
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+              onClick={() => setRefundOpen(true)}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Initiate Refund
+            </Button>
+          )}
+
+          {/* Refund Modal */}
+          {refundOpen && transaction && (
+            <RefundModal transaction={transaction} open={refundOpen} onOpenChange={setRefundOpen} />
+          )}
+
           {/* Payment Method Section */}
           <div className="space-y-3">
             <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
