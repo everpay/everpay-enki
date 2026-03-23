@@ -18,7 +18,8 @@ export function useUserRole() {
         isMerchant: roles.includes('merchant'),
         isReseller: roles.includes('reseller'),
         isAgent: roles.includes('agent'),
-        isUser: roles.includes('user') || roles.length === 0, // default to user if no roles
+        isDeveloper: roles.includes('developer'),
+        isUser: roles.includes('user') || roles.length === 0,
       };
     },
   });
