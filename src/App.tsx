@@ -57,6 +57,7 @@ import AdminTransactionFees from "./pages/admin/AdminTransactionFees";
 import AdminPspRouting from "./pages/admin/AdminPspRouting";
 import Admin3dsControls from "./pages/admin/Admin3dsControls";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import BoardOverview from "./pages/admin/BoardOverview";
 import ResellerPortal from "./pages/ResellerPortal";
 
 // Front site pages
