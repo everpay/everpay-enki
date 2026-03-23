@@ -217,6 +217,7 @@ const AppRoutes = () => {
     <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
     <Route path="/audit-trail" element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
 
+    {/* Admin pages — hidden under /enki, role-gated */}
     <Route path="/enki" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/merchants" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminMerchants /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/users" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminUsers /></RoleProtectedRoute></ProtectedRoute>} />
