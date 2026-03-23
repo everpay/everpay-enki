@@ -160,7 +160,7 @@ export default function Docs() {
             <div className="hidden md:flex items-center gap-1">
               <ChevronRight className="h-4 w-4 text-gray-300" />
               <span className="text-sm font-semibold text-gray-900">API Documentation</span>
-              <Badge className="ml-2 bg-[#1aa478]/10 text-[#1aa478] border-[#1aa478]/20 text-[10px]">v1.0</Badge>
+              <Badge className="ml-2 bg-[#1aa478]/10 text-[#1aa478] border-[#1aa478]/20 text-[10px]">v2.0</Badge>
             </div>
           </div>
           <div className="flex items-center gap-3">
