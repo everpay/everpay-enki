@@ -227,6 +227,28 @@ const AppRoutes = () => {
     <Route path="/enki/board" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'investor']}><BoardOverview /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
 
+    {/* Developer portal — role-gated for developer & merchant */}
+    <Route path="/developers" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['developer', 'merchant', 'admin']}><DeveloperPortal /></RoleProtectedRoute></ProtectedRoute>}>
+      <Route index element={<OverviewPage />} />
+      <Route path="quick-start" element={<QuickStartPage />} />
+      <Route path="guides" element={<GuidesPage />} />
+      <Route path="examples" element={<ExamplesPage />} />
+      <Route path="api-keys" element={<ApiKeysPage />} />
+      <Route path="sdks" element={<SdkDownloadsPage />} />
+      <Route path="webhooks" element={<DevWebhooksPage />} />
+      <Route path="api/payments" element={<PaymentsApiPage />} />
+      <Route path="api/transactions" element={<TransactionsApiPage />} />
+      <Route path="api/customers" element={<CustomersApiPage />} />
+      <Route path="api/invoices" element={<InvoicesApiPage />} />
+      <Route path="api/subscriptions" element={<SubscriptionsApiPage />} />
+      <Route path="api/payouts" element={<PayoutsApiPage />} />
+      <Route path="api/wallets" element={<WalletsApiPage />} />
+      <Route path="api/products" element={<ProductsApiPage />} />
+      <Route path="api/merchants" element={<MerchantsApiPage />} />
+      <Route path="api/bank-accounts" element={<BankAccountsApiPage />} />
+      <Route path="api/authentication" element={<AuthenticationApiPage />} />
+    </Route>
+
     <Route path="*" element={<NotFound />} />
   </Routes>
   );
