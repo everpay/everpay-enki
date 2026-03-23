@@ -63,6 +63,8 @@ import BoardOverview from "./pages/admin/BoardOverview";
 import ResellerPortal from "./pages/ResellerPortal";
 import Treasury from "./pages/Treasury";
 import LiveAnalytics from "./pages/LiveAnalytics";
+import Settlements from "./pages/Settlements";
+import FraudGraph from "./pages/FraudGraph";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
