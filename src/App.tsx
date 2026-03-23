@@ -235,6 +235,7 @@ const AppRoutes = () => {
     <Route path="/enki/notifications" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminNotifications /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/board" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'investor']}><BoardOverview /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/support" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['support', 'admin']}><SupportDashboard /></RoleProtectedRoute></ProtectedRoute>} />
 
     {/* Developer portal — role-gated for developer & merchant */}
     <Route path="/developers" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['developer', 'merchant', 'admin']}><DeveloperPortal /></RoleProtectedRoute></ProtectedRoute>}>
