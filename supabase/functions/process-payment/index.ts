@@ -99,6 +99,16 @@ serve(async (req) => {
     const paymentData: PaymentRequest = await req.json();
     const { amount, currency, paymentMethod, customerEmail, description, idempotencyKey, cardDetails, deviceInfo } = paymentData;
 
+    // ─── Amount validation ───
+    if (!amount || amount <= 0) throw new Error('Invalid amount');
+    if (!currency) throw new Error('Currency is required');
+    if (amount > 999999) throw new Error('Amount exceeds maximum allowed');
+
+    // Validate expected amount if provided (prevents amount tampering)
+    if ((paymentData as any).expectedAmount && Number(amount) !== Number((paymentData as any).expectedAmount)) {
+      throw new Error('Amount mismatch — possible tampering detected');
+    }
+
     // Support two auth modes:
     // 1. Authenticated merchant (dashboard payments) — uses JWT to resolve merchant
     // 2. Guest checkout (payment links, hosted pages, invoices) — uses merchantId in body
@@ -219,31 +229,153 @@ serve(async (req) => {
       .eq('id', intent.id);
 
     // ═══════════════════════════════════════════════════════════
-    // STEP 2 — ROUTE & PROCESS PAYMENT (Everpay PSP routing)
+    // STEP 2A — FRAUD SCORING (pre-routing)
     // ═══════════════════════════════════════════════════════════
-    // Check merchant-specific routing rules first
-    let provider: string;
-    const { data: routingRules } = await supabase
-      .from('routing_rules')
-      .select('target_provider, fallback_provider, currency_match, amount_min, amount_max')
-      .eq('merchant_id', merchant.id)
-      .eq('active', true)
-      .order('priority', { ascending: false })
-      .limit(10);
+    let riskScore = 0;
+    const riskFactors: string[] = [];
+    const billingCountry = paymentData.billingDetails?.country || '';
+    const cardCountry = txMetadata.cardFirst6 ? '' : ''; // BIN lookup would resolve this
 
-    const matchedRule = routingRules?.find(rule => {
-      if (rule.currency_match?.length && !rule.currency_match.includes(currency)) return false;
-      if (rule.amount_min != null && totalAmount < rule.amount_min) return false;
-      if (rule.amount_max != null && totalAmount > rule.amount_max) return false;
+    if (paymentData.customerDetails?.ip) {
+      // Proxy detection placeholder
+    }
+    if (!paymentData.deviceInfo?.device_type) { riskScore += 15; riskFactors.push('missing_device_info'); }
+    if (billingCountry && cardCountry && billingCountry !== cardCountry) { riskScore += 40; riskFactors.push('country_mismatch'); }
+    if (totalAmount > 5000) { riskScore += 20; riskFactors.push('high_value'); }
+
+    // Check velocity
+    const { data: recentAttempts } = await supabase
+      .from('payment_attempts')
+      .select('id')
+      .gte('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString());
+    if ((recentAttempts?.length || 0) > 5) { riskScore += 30; riskFactors.push('high_velocity'); }
+
+    console.log(`STEP 2A: Risk score = ${riskScore}, factors = ${riskFactors.join(', ')}`);
+
+    // Block if extremely high risk
+    if (riskScore > 90) {
+      // Log fraud score
+      await supabase.from('fraud_scores').insert({
+        merchant_id: merchant.id,
+        total_score: riskScore,
+        risk_level: 'critical',
+        risk_factors: riskFactors,
+        action_taken: 'block',
+        customer_email: customerEmail,
+        card_bin: txMetadata.cardFirst6,
+      });
+      throw new Error('Transaction blocked by fraud engine');
+    }
+
+    // Store fraud score
+    await supabase.from('fraud_scores').insert({
+      merchant_id: merchant.id,
+      total_score: riskScore,
+      risk_level: riskScore > 70 ? 'high' : riskScore > 40 ? 'medium' : 'low',
+      risk_factors: riskFactors,
+      action_taken: riskScore > 70 ? 'flag' : 'allow',
+      customer_email: customerEmail,
+      card_bin: txMetadata.cardFirst6,
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 2B — ROUTE PAYMENT (psp_routes → routing_rules → country fallback)
+    // ═══════════════════════════════════════════════════════════
+    let provider: string;
+
+    // 1. Check admin-configured psp_routes first (from AdminPspRouting)
+    const { data: pspRoutes } = await supabase
+      .from('psp_routes')
+      .select('*')
+      .eq('merchant_id', merchant.id)
+      .order('priority', { ascending: true });
+
+    const matchedPspRoute = pspRoutes?.find(route => {
+      if (route.country && route.country !== billingCountry) return false;
+      if (route.card_brand && route.card_brand !== txMetadata.card_brand) return false;
+      if (route.risk_level) {
+        const riskLevel = riskScore > 70 ? 'high' : riskScore > 40 ? 'medium' : 'low';
+        if (route.risk_level !== riskLevel) return false;
+      }
       return true;
     });
 
-    if (matchedRule) {
-      provider = matchedRule.target_provider;
-      console.log(`ROUTING: Matched merchant rule → ${provider}`);
+    if (matchedPspRoute) {
+      provider = matchedPspRoute.processor;
+      console.log(`ROUTING: Matched psp_route → ${provider}`);
     } else {
-      provider = resolveProviderFromRequest(paymentData);
-      console.log(`ROUTING: Country/currency fallback → ${provider}`);
+      // 2. Check merchant routing_rules
+      const { data: routingRules } = await supabase
+        .from('routing_rules')
+        .select('target_provider, fallback_provider, currency_match, amount_min, amount_max')
+        .eq('merchant_id', merchant.id)
+        .eq('active', true)
+        .order('priority', { ascending: false })
+        .limit(10);
+
+      const matchedRule = routingRules?.find(rule => {
+        if (rule.currency_match?.length && !rule.currency_match.includes(currency)) return false;
+        if (rule.amount_min != null && totalAmount < rule.amount_min) return false;
+        if (rule.amount_max != null && totalAmount > rule.amount_max) return false;
+        return true;
+      });
+
+      if (matchedRule) {
+        provider = matchedRule.target_provider;
+        console.log(`ROUTING: Matched merchant rule → ${provider}`);
+      } else {
+        provider = resolveProviderFromRequest(paymentData);
+        console.log(`ROUTING: Country/currency fallback → ${provider}`);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // STEP 2C — 3DS DECISION ENGINE
+    // ═══════════════════════════════════════════════════════════
+    let requires3DS = false;
+    const { data: threeDSSettings } = await supabase
+      .from('merchant_3ds_settings')
+      .select('*')
+      .eq('merchant_id', merchant.id)
+      .single();
+
+    if (threeDSSettings?.enabled) {
+      // Skip if processor already handles 3DS
+      if (threeDSSettings.skip_if_processor_3ds && ['mondo', 'shieldhub'].includes(provider)) {
+        console.log('3DS: Skipped — processor handles 3DS natively');
+      } else {
+        // Auto-enable for high risk
+        if (threeDSSettings.auto_enable_high_risk && riskScore >= (threeDSSettings.risk_threshold || 70)) {
+          requires3DS = true;
+          console.log(`3DS: Auto-enabled — risk score ${riskScore} >= threshold ${threeDSSettings.risk_threshold}`);
+        }
+
+        // Check decline rate threshold
+        if (!requires3DS && threeDSSettings.decline_threshold) {
+          const { data: recentDeclines } = await supabase
+            .from('transactions')
+            .select('id')
+            .eq('merchant_id', merchant.id)
+            .eq('status', 'failed')
+            .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+          if ((recentDeclines?.length || 0) >= threeDSSettings.decline_threshold) {
+            requires3DS = true;
+            console.log(`3DS: Auto-enabled — ${recentDeclines?.length} declines in 24h >= threshold ${threeDSSettings.decline_threshold}`);
+          }
+        }
+
+        // Amount-based 3DS
+        if (!requires3DS && totalAmount > 100) {
+          requires3DS = true;
+          console.log('3DS: Enabled for transaction > $100');
+        }
+      }
+    }
+
+    // If 3DS required, add to metadata for downstream handling
+    if (requires3DS) {
+      txMetadata.requires_3ds = true;
+      txMetadata.threeds_status = 'pending';
     }
     let providerResponse: any;
     const processingStart = Date.now();
