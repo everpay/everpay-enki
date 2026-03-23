@@ -72,6 +72,13 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['TR'],
     methods: ['Card', 'Bank Transfer'],
   },
+  lipad: {
+    name: 'lipad',
+    displayName: 'Lipad.io',
+    supportedCurrencies: ['USD'],
+    regions: ['KE', 'TZ', 'UG', 'GH', 'ZA', 'RW', 'ET', 'NG', 'CI', 'SN', 'CM'],
+    methods: ['M-Pesa', 'Mobile Money', 'Bank Transfer', 'Card', 'Airtel Money'],
+  },
 };
 
 // Country → provider mapping for intelligent routing
