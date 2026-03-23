@@ -43,6 +43,8 @@ import KycAml from "./pages/KycAml";
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import BigCommerce from "./pages/BigCommerce";
 import Shopify from "./pages/Shopify";
+import Ledger from "./pages/Ledger";
+import AuditTrail from "./pages/AuditTrail";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 import { usePostHogTracking } from "./hooks/usePostHogTracking";
 
