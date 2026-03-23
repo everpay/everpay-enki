@@ -129,23 +129,38 @@ Deno.serve(async (req) => {
         .eq("id", account.id);
     }
 
-    // Mark refund as completed
     await supabaseAdmin.from("refunds").update({ status: "completed" }).eq("id", refund.id);
 
-    // Dispatch webhook
-    await supabaseAdmin.functions.invoke("webhook-dispatch", {
+    // Dispatch v2 webhook
+    const refundEventType = amount === transaction.amount ? 'payment.refunded' : 'payment.partially_refunded';
+    supabaseAdmin.functions.invoke("api-v2-webhooks", {
       body: {
         merchant_id: merchant.id,
-        event_type: "refund.created",
+        event_type: refundEventType,
         payload: {
           refund_id: refund.id,
           transaction_id,
           amount,
           currency: transaction.currency,
           status: "completed",
+          reason: reason || null,
         },
       },
-    });
+    }).catch(err => console.error("Refund webhook error:", err));
+
+    // Also dispatch refund.created
+    supabaseAdmin.functions.invoke("api-v2-webhooks", {
+      body: {
+        merchant_id: merchant.id,
+        event_type: "refund.completed",
+        payload: {
+          refund_id: refund.id,
+          transaction_id,
+          amount,
+          currency: transaction.currency,
+        },
+      },
+    }).catch(err => console.error("Refund webhook error:", err));
 
     return new Response(
       JSON.stringify({ refund_id: refund.id, status: "completed", amount, currency: transaction.currency }),

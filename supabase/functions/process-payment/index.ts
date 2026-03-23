@@ -535,6 +535,32 @@ serve(async (req) => {
     }
     console.log(`STEP 7: Payment flow complete`);
 
+    // ═══════════════════════════════════════════════════════════
+    // STEP 8 — DISPATCH WEBHOOKS (v2 format)
+    // ═══════════════════════════════════════════════════════════
+    const eventType = internalStatus === 'completed' ? 'payment.completed'
+      : internalStatus === 'failed' ? 'payment.failed'
+      : 'payment.created';
+
+    supabase.functions.invoke('api-v2-webhooks', {
+      body: {
+        merchant_id: merchant.id,
+        event_type: eventType,
+        payload: {
+          payment_id: transaction.id,
+          payment_intent_id: intent.id,
+          amount: totalAmount,
+          currency,
+          status: internalStatus,
+          provider,
+          customer_email: customerEmail,
+          provider_ref: transaction.provider_ref,
+          created_at: transaction.created_at,
+        },
+      },
+    }).catch(err => console.error('Webhook dispatch error:', err));
+    console.log(`STEP 8: Webhook dispatched for ${eventType}`);
+
     return new Response(
       JSON.stringify(responsePayload),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -569,7 +595,7 @@ async function processShieldHubPayment(data: PaymentRequest, req: Request) {
   const shieldHubBody = {
     amount: amountStr, currency: data.currency, transaction_reference: transactionRef,
     descriptor: 'AXP*FER*AXP*FERES',
-    redirectback_url: 'https://everpay-os.lovable.app/transactions',
+    redirectback_url: 'https://checkout.everpayinc.com/result',
     notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/payment-link-webhook`,
     customer: {
       first: data.customerDetails?.firstName || 'Customer',
