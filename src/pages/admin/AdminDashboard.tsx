@@ -163,6 +163,11 @@ export default function AdminDashboard() {
               ))}
             </div>
           </TabsContent>
+          <TabsContent value="integrations" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <LipadStatusPanel />
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
     </AppLayout>
