@@ -71,6 +71,7 @@ export function resolveProvider(params: {
   // Currency fallback
   if (['EUR', 'GBP'].includes(currency)) return 'mondo';
   if (['INR', 'BRL', 'MXN'].includes(currency)) return 'paygate10';
+  if (['KES', 'TZS', 'UGX', 'GHS', 'ZAR', 'XOF', 'XAF'].includes(currency)) return 'lipad';
   if (['CNY', 'VND', 'THB', 'JPY'].includes(currency)) return 'ofa';
 
   return 'shieldhub';

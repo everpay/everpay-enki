@@ -173,6 +173,7 @@ const AppRoutes = () => {
     <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
     <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
     <Route path="/refunds" element={<ProtectedRoute><Refunds /></ProtectedRoute>} />
+    <Route path="/reconciliation" element={<ProtectedRoute><Reconciliation /></ProtectedRoute>} />
     <Route path="/webhooks" element={<ProtectedRoute><Webhooks /></ProtectedRoute>} />
     <Route path="/onboarding" element={<ProtectedRoute skipOnboardingCheck><Onboarding /></ProtectedRoute>} />
     <Route path="/processor-transparency" element={<ProtectedRoute><ProcessorTransparency /></ProtectedRoute>} />

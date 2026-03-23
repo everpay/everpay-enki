@@ -83,6 +83,7 @@ const navItems: NavItem[] = [
       { to: "/analytics", icon: Eye, label: "Overview" },
       { to: "/processor-analytics", icon: BarChart3, label: "Processor Analytics" },
       { to: "/payment-methods", icon: CreditCardIcon, label: "Payment Methods" },
+      { to: "/reconciliation", icon: FileBarChart, label: "Reconciliation" },
     ],
   },
   { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
