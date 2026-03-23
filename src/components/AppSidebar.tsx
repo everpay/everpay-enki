@@ -28,6 +28,7 @@ import {
   Landmark,
   Globe,
   Bell,
+  BookOpen,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
