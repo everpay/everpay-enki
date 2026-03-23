@@ -68,7 +68,12 @@ export default function Transactions() {
             <SelectItem value="shieldhub">ShieldHub</SelectItem>
             <SelectItem value="mondo">Mondo</SelectItem>
             <SelectItem value="facilitapay">FacilitaPay</SelectItem>
-            <SelectItem value="stripe">Stripe</SelectItem>
+            <SelectItem value="lipad">Lipad</SelectItem>
+            <SelectItem value="moneto">Moneto</SelectItem>
+            <SelectItem value="paygate10">Paygate10</SelectItem>
+            <SelectItem value="makapay">Makapay</SelectItem>
+            <SelectItem value="payok">PayOK</SelectItem>
+            <SelectItem value="ofa">OFA</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>

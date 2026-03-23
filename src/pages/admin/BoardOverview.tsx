@@ -101,7 +101,19 @@ function exportCSV(data: any[], filename: string) {
 }
 
 export default function BoardOverview() {
-  const { data, isLoading } = useBoardData();
+  const { data, isLoading, refetch } = useBoardData();
+
+  // Realtime subscription for live updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('board-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'refunds' }, () => refetch())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [refetch]);
 
   if (isLoading) {
     return (
