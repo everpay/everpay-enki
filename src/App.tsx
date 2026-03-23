@@ -59,6 +59,8 @@ import Admin3dsControls from "./pages/admin/Admin3dsControls";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import BoardOverview from "./pages/admin/BoardOverview";
 import ResellerPortal from "./pages/ResellerPortal";
+import Treasury from "./pages/Treasury";
+import LiveAnalytics from "./pages/LiveAnalytics";
 
 // Front site pages
 import FrontAbout from "./pages/front/About";
