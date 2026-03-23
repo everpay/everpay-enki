@@ -65,6 +65,7 @@ import Treasury from "./pages/Treasury";
 import LiveAnalytics from "./pages/LiveAnalytics";
 import Settlements from "./pages/Settlements";
 import FraudGraph from "./pages/FraudGraph";
+import SupportDashboard from "./pages/SupportDashboard";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
@@ -219,7 +220,7 @@ const AppRoutes = () => {
     <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
     <Route path="/audit-trail" element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
     <Route path="/settlements" element={<ProtectedRoute><Settlements /></ProtectedRoute>} />
-    <Route path="/fraud-graph" element={<ProtectedRoute><FraudGraph /></ProtectedRoute>} />
+    <Route path="/fraud-graph" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'secops']}><FraudGraph /></RoleProtectedRoute></ProtectedRoute>} />
 
     {/* Admin pages — hidden under /enki, role-gated */}
     <Route path="/enki" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute></ProtectedRoute>} />
@@ -234,6 +235,7 @@ const AppRoutes = () => {
     <Route path="/enki/notifications" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminNotifications /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/board" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'investor']}><BoardOverview /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/support" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['support', 'admin']}><SupportDashboard /></RoleProtectedRoute></ProtectedRoute>} />
 
     {/* Developer portal — role-gated for developer & merchant */}
     <Route path="/developers" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['developer', 'merchant', 'admin']}><DeveloperPortal /></RoleProtectedRoute></ProtectedRoute>}>

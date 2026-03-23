@@ -19,6 +19,8 @@ export function useUserRole() {
         isReseller: roles.includes('reseller'),
         isAgent: roles.includes('agent'),
         isDeveloper: roles.includes('developer'),
+        isSecOps: roles.includes('secops'),
+        isSupport: roles.includes('support'),
         isUser: roles.includes('user') || roles.length === 0,
       };
     },
