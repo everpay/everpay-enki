@@ -30,11 +30,15 @@ export default function Auth() {
         toast.success('Signed in successfully');
         navigate('/dashboard');
       } else {
+        const isDeveloperPortal = window.location.hostname.startsWith('developers.');
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { display_name: displayName },
+            data: {
+              display_name: displayName,
+              ...(isDeveloperPortal ? { signup_source: 'developers' } : {}),
+            },
             emailRedirectTo: window.location.origin,
           },
         });
