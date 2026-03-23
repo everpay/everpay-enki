@@ -85,6 +85,18 @@ export default function Checkout() {
         description: description || `Payment ${ref}`,
         idempotencyKey: `link_${ref}_${Date.now()}`,
         merchantId: merchantId || undefined,
+        customerDetails: {
+          firstName: customerName.split(' ')[0] || '',
+          lastName: customerName.split(' ').slice(1).join(' ') || '',
+          phone: customerPhone,
+        },
+        billingDetails: {
+          address: billingAddress,
+          city: billingCity,
+          state: billingState,
+          postalCode: billingZip,
+          country: billingCountry,
+        },
       };
 
       if (paymentMethod === 'card' && cardNumber) {
