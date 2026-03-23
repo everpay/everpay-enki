@@ -44,7 +44,7 @@ interface NavItem {
   to: string;
   icon: React.ElementType;
   label: string;
-  children?: { to: string; icon: React.ElementType; label: string }[];
+  children?: NavItem[];
   visibleTo?: string[];
 }
 
