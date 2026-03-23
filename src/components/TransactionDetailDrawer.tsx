@@ -1,12 +1,19 @@
+import { useState } from 'react';
 import { Transaction } from '@/lib/types';
 import { useProviderEvents } from '@/hooks/useProviderEvents';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe, Building2, Wallet } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe, Building2, Wallet, RotateCcw } from 'lucide-react';
 import { CardBrandBadge } from '@/components/CardBrandBadge';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface TransactionDetailDrawerProps {
   transaction: Transaction | null;
@@ -53,7 +60,104 @@ function usePaymentMethod(transactionId: string | null, customerId?: string) {
   });
 }
 
+function RefundModal({ transaction, open, onOpenChange }: { transaction: Transaction; open: boolean; onOpenChange: (v: boolean) => void }) {
+  const [amount, setAmount] = useState(String(transaction.amount));
+  const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleSubmit = async () => {
+    const refundAmount = parseFloat(amount);
+    if (isNaN(refundAmount) || refundAmount <= 0) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+    if (refundAmount > transaction.amount) {
+      toast.error('Refund amount cannot exceed transaction amount');
+      return;
+    }
+    if (!reason.trim()) {
+      toast.error('Please provide a reason');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { data: merchant } = await supabase.from('merchants').select('id').eq('user_id', user.id).single();
+      if (!merchant) throw new Error('No merchant found');
+
+      const { error } = await supabase.from('refunds').insert({
+        transaction_id: transaction.id,
+        merchant_id: merchant.id,
+        amount: refundAmount,
+        currency: transaction.currency,
+        reason,
+        provider: transaction.provider,
+        status: 'pending',
+      });
+
+      if (error) throw error;
+
+      toast.success('Refund initiated successfully');
+      queryClient.invalidateQueries({ queryKey: ['refunds'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to initiate refund');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Initiate Refund</DialogTitle>
+          <DialogDescription>
+            Transaction {transaction.id.slice(0, 8)}... — {formatCurrency(transaction.amount, transaction.currency)}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div>
+            <Label>Payment ID</Label>
+            <Input value={transaction.id} readOnly className="font-mono text-xs bg-muted" />
+          </div>
+          <div>
+            <Label>Refund Amount ({transaction.currency})</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0.01"
+              max={transaction.amount}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Max: {formatCurrency(transaction.amount, transaction.currency)}
+            </p>
+          </div>
+          <div>
+            <Label>Reason</Label>
+            <Textarea
+              placeholder="Customer requested refund, duplicate charge, etc."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </div>
+          <Button className="w-full" onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Processing...' : `Refund ${amount ? formatCurrency(parseFloat(amount) || 0, transaction.currency) : ''}`}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TransactionDetailDrawer({ transaction, open, onOpenChange }: TransactionDetailDrawerProps) {
+  const [refundOpen, setRefundOpen] = useState(false);
   const { data: allEvents = [] } = useProviderEvents();
 
   // Extract customer_id from metadata for payment method lookup
@@ -130,6 +234,23 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
               {formatDate(transaction.created_at)}
             </div>
           </div>
+
+          {/* Refund Button */}
+          {(transaction.status === 'completed' || transaction.status === 'processing') && (
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+              onClick={() => setRefundOpen(true)}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Initiate Refund
+            </Button>
+          )}
+
+          {/* Refund Modal */}
+          {refundOpen && transaction && (
+            <RefundModal transaction={transaction} open={refundOpen} onOpenChange={setRefundOpen} />
+          )}
 
           {/* Payment Method Section */}
           <div className="space-y-3">

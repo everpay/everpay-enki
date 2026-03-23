@@ -68,7 +68,12 @@ export default function Transactions() {
             <SelectItem value="shieldhub">ShieldHub</SelectItem>
             <SelectItem value="mondo">Mondo</SelectItem>
             <SelectItem value="facilitapay">FacilitaPay</SelectItem>
-            <SelectItem value="stripe">Stripe</SelectItem>
+            <SelectItem value="lipad">Lipad</SelectItem>
+            <SelectItem value="moneto">Moneto</SelectItem>
+            <SelectItem value="paygate10">Paygate10</SelectItem>
+            <SelectItem value="makapay">Makapay</SelectItem>
+            <SelectItem value="payok">PayOK</SelectItem>
+            <SelectItem value="ofa">OFA</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -95,6 +100,13 @@ export default function Transactions() {
             <SelectItem value="GBP">GBP</SelectItem>
             <SelectItem value="BRL">BRL</SelectItem>
             <SelectItem value="MXN">MXN</SelectItem>
+            <SelectItem value="KES">KES</SelectItem>
+            <SelectItem value="NGN">NGN</SelectItem>
+            <SelectItem value="ZAR">ZAR</SelectItem>
+            <SelectItem value="CAD">CAD</SelectItem>
+            <SelectItem value="INR">INR</SelectItem>
+            <SelectItem value="PKR">PKR</SelectItem>
+            <SelectItem value="BDT">BDT</SelectItem>
           </SelectContent>
         </Select>
       </div>
