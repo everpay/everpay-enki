@@ -194,6 +194,9 @@ const AppRoutes = () => {
     <Route path="/enki/regulatory" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRegulatoryExport /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/reserves" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminReservesDashboard /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/fees" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminTransactionFees /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/routing" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminPspRouting /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/3ds" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><Admin3dsControls /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/notifications" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminNotifications /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
 
     <Route path="*" element={<NotFound />} />
