@@ -29,7 +29,7 @@ interface ProviderScore {
 const PROVIDER_REGIONS: Record<string, string[]> = {
   shieldhub: ['US', 'CA', 'GB', 'GLOBAL'],
   mondo: ['GB', 'DE', 'FR', 'NL', 'ES', 'IT', 'EU'],
-  facilitapay: ['BR', 'MX', 'CO'],
+  facilitapay: ['BR', 'CO'],
   paygate10: ['IN', 'PK', 'MX', 'AR', 'EG'],
   ofa: ['CN', 'VN', 'TH', 'JP', 'KR', 'ID', 'MY', 'PH', 'HK', 'AU'],
   moneto: ['CA'],
