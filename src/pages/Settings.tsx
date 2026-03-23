@@ -289,6 +289,7 @@ export default function Settings() {
     { key: "bank-accounts", label: "Bank Accounts", icon: Building2 },
     { key: "verification", label: "Business Verification", icon: Shield },
     { key: "webhooks", label: "Webhooks", icon: Webhook },
+    { key: "notifications", label: "Webhook Notifications", icon: Mail },
     { key: "surcharging", label: "Surcharging", icon: Hash },
     { key: "team", label: "Team", icon: Users },
     { key: "developers", label: "Developers & Activity", icon: Code },
