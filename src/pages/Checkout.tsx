@@ -390,7 +390,7 @@ export default function Checkout() {
         {/* Footer */}
         <div className="text-center space-y-1">
           <p className="text-xs text-muted-foreground">
-            Secured by <span className="font-medium text-foreground">Everpay</span> · everpayinc.com
+            Secured by <span className="font-medium text-foreground">Everpay</span> · checkout.everpayinc.com
           </p>
           {ref && (
             <p className="text-[10px] font-mono text-muted-foreground">Ref: {ref}</p>
