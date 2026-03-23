@@ -114,7 +114,7 @@ const sections = [
   { id: 'rate-limits', label: 'Rate Limits', icon: BarChart3 },
 ];
 
-const BASE_URL = 'https://ccqiuoilfvuetajyjyiv.supabase.co/functions/v1';
+const BASE_URL = 'https://api.everpayinc.com/v2';
 
 // ============= DOCS PAGE =============
 export default function Docs() {
