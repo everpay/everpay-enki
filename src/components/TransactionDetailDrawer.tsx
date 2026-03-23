@@ -236,7 +236,7 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
           </div>
 
           {/* Refund Button */}
-          {(transaction.status === 'completed' || transaction.status === 'settled') && (
+          {(transaction.status === 'completed' || transaction.status === 'processing') && (
             <Button
               variant="outline"
               className="w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
