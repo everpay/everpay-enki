@@ -83,7 +83,7 @@ export default function Invoices() {
     } catch { toast.error('Failed to send invoice'); }
   };
 
-  const copyPaymentLink = (invoiceId: string) => { navigator.clipboard.writeText(`${window.location.origin}/pay/${invoiceId}`); toast.success('Payment link copied'); };
+  const copyPaymentLink = (invoiceId: string) => { navigator.clipboard.writeText(`${EVERPAY_CONFIG.PAY_URL}/invoice/${invoiceId}`); toast.success('Payment link copied'); };
 
   const statusColor = (status: string) => {
     switch (status) { case 'paid': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'; case 'sent': return 'bg-blue-500/10 text-blue-600 border-blue-500/20'; case 'overdue': return 'bg-red-500/10 text-red-600 border-red-500/20'; default: return 'bg-muted text-muted-foreground border-border'; }
