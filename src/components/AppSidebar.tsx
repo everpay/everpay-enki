@@ -110,6 +110,7 @@ const navItems: NavItem[] = [
     ],
   },
   { to: "/live", icon: BarChart3, label: "Live Analytics" },
+  { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "merchant", "admin", "super_admin"] },
   { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
 ];
 
