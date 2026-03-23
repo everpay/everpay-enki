@@ -122,7 +122,7 @@ export default function Invoices() {
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="gap-1" onClick={() => generateInvoicePDF(inv)}><Download className="h-3 w-3" /> PDF</Button>
               {inv.status === 'draft' && <Button variant="outline" size="sm" className="gap-1" onClick={() => handleSend(inv.id)}><Send className="h-3 w-3" /> Send</Button>}
-              {['sent', 'overdue'].includes(inv.status) && <><Button variant="ghost" size="sm" className="gap-1" onClick={() => copyPaymentLink(inv.id)}><Copy className="h-3 w-3" /> Copy Link</Button><Button variant="ghost" size="sm" className="gap-1" onClick={() => window.open(`${window.location.origin}/pay/${inv.id}`, '_blank')}><ExternalLink className="h-3 w-3" /></Button></>}
+              {['sent', 'overdue'].includes(inv.status) && <><Button variant="ghost" size="sm" className="gap-1" onClick={() => copyPaymentLink(inv.id)}><Copy className="h-3 w-3" /> Copy Link</Button><Button variant="ghost" size="sm" className="gap-1" onClick={() => window.open(`${EVERPAY_CONFIG.PAY_URL}/invoice/${inv.id}`, '_blank')}><ExternalLink className="h-3 w-3" /></Button></>}
             </div>
           </CardContent></Card>
         ))}</div>
