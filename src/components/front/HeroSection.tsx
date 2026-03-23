@@ -40,13 +40,11 @@ export function HeroSection() {
             <span className="text-sm font-medium text-white/90">Trusted by 1,000+ merchants</span>
           </div>
 
-          <h1
-            className="text-4xl md:text-[62px] lg:text-[72px] font-extrabold text-white leading-[1.08] tracking-tight mb-6 font-heading"
-          >
+          <h1 className="text-4xl md:text-[62px] lg:text-[72px] font-extrabold text-white leading-[1.08] tracking-tight mb-6 font-heading">
             Accept Payments Everywhere. <span className="text-primary">Grow Faster.</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-white/70 max-w-[580px] mx-auto mb-10 leading-relaxed font-body">
+          <p className="text-2x1 md:text-[28px] lg:text-[36px] text-white/70 font-bold max-w-[580px] mx-auto mb-10 leading-relaxed font-body">
             Everpay gives your business the same payment infrastructure as the biggest brands. One platform for cards,
             wallets, and local payment methods worldwide.
           </p>
