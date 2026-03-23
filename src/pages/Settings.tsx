@@ -60,7 +60,7 @@ import { BusinessVerificationSection as BusinessVerificationSectionComponent } f
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CountrySelect } from "@/components/CountrySelect";
 
-type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "surcharging" | "deactivation";
+type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "surcharging" | "notifications" | "deactivation";
 
 interface SavedBankAccount {
   id: string;
