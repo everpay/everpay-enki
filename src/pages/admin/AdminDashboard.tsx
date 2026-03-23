@@ -10,6 +10,7 @@ import { useAdminDashboardData } from '@/hooks/useAdminDashboardData';
 import AdminVolumeChart from '@/components/admin/charts/AdminVolumeChart';
 import AdminRevenueChart from '@/components/admin/charts/AdminRevenueChart';
 import AdminChargebackChart from '@/components/admin/charts/AdminChargebackChart';
+import { LipadStatusPanel } from '@/components/admin/LipadStatusPanel';
 import { useNavigate } from 'react-router-dom';
 
 interface KPICardProps { title: string; value: string; change: string; trend: 'up' | 'down' | 'neutral'; icon: React.ElementType; description: string; }
