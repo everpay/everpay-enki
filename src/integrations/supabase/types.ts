@@ -94,6 +94,45 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notification_emails: {
+        Row: {
+          created_at: string | null
+          email_address: string
+          enabled: boolean | null
+          id: string
+          notify_on_chargeback: boolean | null
+          notify_on_failure: boolean | null
+          notify_on_high_risk: boolean | null
+          notify_on_refund: boolean | null
+          notify_on_success: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_address: string
+          enabled?: boolean | null
+          id?: string
+          notify_on_chargeback?: boolean | null
+          notify_on_failure?: boolean | null
+          notify_on_high_risk?: boolean | null
+          notify_on_refund?: boolean | null
+          notify_on_success?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_address?: string
+          enabled?: boolean | null
+          id?: string
+          notify_on_chargeback?: boolean | null
+          notify_on_failure?: boolean | null
+          notify_on_high_risk?: boolean | null
+          notify_on_refund?: boolean | null
+          notify_on_success?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       api_request_logs: {
         Row: {
           created_at: string | null
@@ -636,6 +675,33 @@ export type Database = {
         }
         Relationships: []
       }
+      everpay_webhooks: {
+        Row: {
+          created_at: string | null
+          id: string
+          payload: Json | null
+          processed: boolean | null
+          status: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
       fraud_graph_edges: {
         Row: {
           created_at: string | null
@@ -1073,6 +1139,50 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_3ds_settings: {
+        Row: {
+          auto_enable_high_risk: boolean | null
+          created_at: string | null
+          decline_threshold: number | null
+          enabled: boolean | null
+          id: string
+          merchant_id: string | null
+          risk_threshold: number | null
+          skip_if_processor_3ds: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_enable_high_risk?: boolean | null
+          created_at?: string | null
+          decline_threshold?: number | null
+          enabled?: boolean | null
+          id?: string
+          merchant_id?: string | null
+          risk_threshold?: number | null
+          skip_if_processor_3ds?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_enable_high_risk?: boolean | null
+          created_at?: string | null
+          decline_threshold?: number | null
+          enabled?: boolean | null
+          id?: string
+          merchant_id?: string | null
+          risk_threshold?: number | null
+          skip_if_processor_3ds?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_3ds_settings_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
         ]
@@ -1651,6 +1761,53 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      psp_routes: {
+        Row: {
+          active: boolean | null
+          card_brand: string | null
+          country: string | null
+          created_at: string | null
+          id: string
+          merchant_id: string | null
+          priority: number | null
+          processor: string
+          risk_level: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          card_brand?: string | null
+          country?: string | null
+          created_at?: string | null
+          id?: string
+          merchant_id?: string | null
+          priority?: number | null
+          processor: string
+          risk_level?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          card_brand?: string | null
+          country?: string | null
+          created_at?: string | null
+          id?: string
+          merchant_id?: string | null
+          priority?: number | null
+          processor?: string
+          risk_level?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psp_routes_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
         ]
@@ -2732,6 +2889,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "webhook_logs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_notification_settings: {
+        Row: {
+          created_at: string | null
+          email_address: string
+          enabled: boolean | null
+          id: string
+          merchant_id: string | null
+          notify_on_chargeback: boolean | null
+          notify_on_failure: boolean | null
+          notify_on_refund: boolean | null
+          notify_on_success: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_address: string
+          enabled?: boolean | null
+          id?: string
+          merchant_id?: string | null
+          notify_on_chargeback?: boolean | null
+          notify_on_failure?: boolean | null
+          notify_on_refund?: boolean | null
+          notify_on_success?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_address?: string
+          enabled?: boolean | null
+          id?: string
+          merchant_id?: string | null
+          notify_on_chargeback?: boolean | null
+          notify_on_failure?: boolean | null
+          notify_on_refund?: boolean | null
+          notify_on_success?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_notification_settings_merchant_id_fkey"
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"

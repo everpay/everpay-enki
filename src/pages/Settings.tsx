@@ -60,7 +60,7 @@ import { BusinessVerificationSection as BusinessVerificationSectionComponent } f
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CountrySelect } from "@/components/CountrySelect";
 
-type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "surcharging" | "deactivation";
+type SettingsSection = "main" | "account" | "business" | "bank-accounts" | "developers" | "team" | "webhooks" | "verification" | "surcharging" | "notifications" | "deactivation";
 
 interface SavedBankAccount {
   id: string;
@@ -289,6 +289,7 @@ export default function Settings() {
     { key: "bank-accounts", label: "Bank Accounts", icon: Building2 },
     { key: "verification", label: "Business Verification", icon: Shield },
     { key: "webhooks", label: "Webhooks", icon: Webhook },
+    { key: "notifications", label: "Webhook Notifications", icon: Mail },
     { key: "surcharging", label: "Surcharging", icon: Hash },
     { key: "team", label: "Team", icon: Users },
     { key: "developers", label: "Developers & Activity", icon: Code },
@@ -832,6 +833,9 @@ export default function Settings() {
       {/* BUSINESS VERIFICATION */}
       {section === "verification" && <BusinessVerificationSectionComponent />}
 
+      {/* NOTIFICATIONS */}
+      {section === "notifications" && <WebhookNotificationsSection merchantId={merchant?.id} />}
+
       {/* SURCHARGING */}
       {section === "surcharging" && <SurchargeSettingsSection merchantId={merchant?.id} />}
 
@@ -932,7 +936,149 @@ function DevelopersSection() {
   );
 }
 
-// ─── Surcharge Settings Section ───
+// ─── Webhook Notification Settings Section ───
+function WebhookNotificationsSection({ merchantId }: { merchantId?: string }) {
+  const queryClient = useQueryClient();
+  const [newEmail, setNewEmail] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ['webhook-notification-settings', merchantId],
+    queryFn: async () => {
+      if (!merchantId) return [];
+      const { data, error } = await supabase
+        .from('webhook_notification_settings')
+        .select('*')
+        .eq('merchant_id', merchantId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!merchantId,
+  });
+
+  const handleAdd = async () => {
+    if (!newEmail || !merchantId) return;
+    setIsAdding(true);
+    try {
+      const { error } = await supabase.from('webhook_notification_settings').insert({
+        merchant_id: merchantId,
+        email_address: newEmail.trim(),
+      });
+      if (error) throw error;
+      toast.success('Notification email added');
+      setNewEmail('');
+      queryClient.invalidateQueries({ queryKey: ['webhook-notification-settings'] });
+    } catch {
+      toast.error('Failed to add email');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleToggle = async (id: string, field: string, value: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('webhook_notification_settings')
+        .update({ [field]: value, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['webhook-notification-settings'] });
+    } catch {
+      toast.error('Failed to update');
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    try {
+      const { error } = await supabase.from('webhook_notification_settings').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Removed');
+      queryClient.invalidateQueries({ queryKey: ['webhook-notification-settings'] });
+    } catch {
+      toast.error('Failed to remove');
+    }
+  };
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-primary" />
+            Webhook Email Notifications
+          </CardTitle>
+          <CardDescription>
+            Receive email alerts when payment events occur (success, failure, refund, chargeback).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="alerts@yourbusiness.com"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              className="bg-background border-border"
+            />
+            <Button onClick={handleAdd} disabled={isAdding || !newEmail}>
+              <Plus className="h-4 w-4 mr-1" /> Add
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          ) : !settings?.length ? (
+            <p className="text-sm text-muted-foreground">No notification emails configured.</p>
+          ) : (
+            <div className="space-y-3">
+              {settings.map((s: any) => (
+                <div key={s.id} className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{s.email_address}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant={s.enabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleToggle(s.id, 'enabled', !s.enabled)}
+                      >
+                        {s.enabled ? 'Active' : 'Disabled'}
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleRemove(s.id)}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {['success', 'failure', 'refund', 'chargeback'].map((type) => {
+                      const field = `notify_on_${type}`;
+                      const isOn = s[field];
+                      return (
+                        <Badge
+                          key={type}
+                          variant={isOn ? "default" : "outline"}
+                          className="cursor-pointer capitalize"
+                          onClick={() => handleToggle(s.id, field, !isOn)}
+                        >
+                          {type}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
 function SurchargeSettingsSection({ merchantId }: { merchantId?: string }) {
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(false);

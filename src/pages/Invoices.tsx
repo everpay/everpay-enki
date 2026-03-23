@@ -16,6 +16,7 @@ import { formatCurrency } from '@/lib/format';
 import { Currency } from '@/lib/types';
 import { InvoiceLineItems, LineItem } from '@/components/InvoiceLineItems';
 import { generateInvoicePDF } from '@/lib/invoice-pdf';
+import { EVERPAY_CONFIG } from '@/lib/everpay-api';
 
 const STATUS_FILTERS = ['all', 'draft', 'sent', 'paid', 'overdue'] as const;
 type StatusFilter = typeof STATUS_FILTERS[number];
@@ -82,7 +83,7 @@ export default function Invoices() {
     } catch { toast.error('Failed to send invoice'); }
   };
 
-  const copyPaymentLink = (invoiceId: string) => { navigator.clipboard.writeText(`${window.location.origin}/pay/${invoiceId}`); toast.success('Payment link copied'); };
+  const copyPaymentLink = (invoiceId: string) => { navigator.clipboard.writeText(`${EVERPAY_CONFIG.PAY_URL}/invoice/${invoiceId}`); toast.success('Payment link copied'); };
 
   const statusColor = (status: string) => {
     switch (status) { case 'paid': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'; case 'sent': return 'bg-blue-500/10 text-blue-600 border-blue-500/20'; case 'overdue': return 'bg-red-500/10 text-red-600 border-red-500/20'; default: return 'bg-muted text-muted-foreground border-border'; }
@@ -121,7 +122,7 @@ export default function Invoices() {
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="gap-1" onClick={() => generateInvoicePDF(inv)}><Download className="h-3 w-3" /> PDF</Button>
               {inv.status === 'draft' && <Button variant="outline" size="sm" className="gap-1" onClick={() => handleSend(inv.id)}><Send className="h-3 w-3" /> Send</Button>}
-              {['sent', 'overdue'].includes(inv.status) && <><Button variant="ghost" size="sm" className="gap-1" onClick={() => copyPaymentLink(inv.id)}><Copy className="h-3 w-3" /> Copy Link</Button><Button variant="ghost" size="sm" className="gap-1" onClick={() => window.open(`${window.location.origin}/pay/${inv.id}`, '_blank')}><ExternalLink className="h-3 w-3" /></Button></>}
+              {['sent', 'overdue'].includes(inv.status) && <><Button variant="ghost" size="sm" className="gap-1" onClick={() => copyPaymentLink(inv.id)}><Copy className="h-3 w-3" /> Copy Link</Button><Button variant="ghost" size="sm" className="gap-1" onClick={() => window.open(`${EVERPAY_CONFIG.PAY_URL}/invoice/${inv.id}`, '_blank')}><ExternalLink className="h-3 w-3" /></Button></>}
             </div>
           </CardContent></Card>
         ))}</div>

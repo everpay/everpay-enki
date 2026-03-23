@@ -12,11 +12,7 @@ import { Currency } from '@/lib/types';
 import { Link2, Copy, ExternalLink, Mail, MessageSquare, QrCode, Check, Code, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined') return window.location.origin;
-  return 'https://everpayinc.com';
-};
+import { EVERPAY_CONFIG } from '@/lib/everpay-api';
 
 export default function PaymentLinks() {
   const [amount, setAmount] = useState('');
@@ -58,7 +54,7 @@ export default function PaymentLinks() {
     if (successUrl) params.set('success_url', encodeURIComponent(successUrl));
     if (cancelUrl) params.set('cancel_url', encodeURIComponent(cancelUrl));
     
-    return `${getBaseUrl()}/checkout?${params.toString()}`;
+    return `${EVERPAY_CONFIG.CHECKOUT_URL}/pay?${params.toString()}`;
   };
 
   const paymentLink = generatePaymentLink();
