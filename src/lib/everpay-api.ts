@@ -55,7 +55,7 @@ export function resolveProvider(params: {
     const countryMap: Record<string, string> = {
       US: 'shieldhub', CA: 'moneto',
       GB: 'mondo', DE: 'mondo', FR: 'mondo', NL: 'mondo',
-      IN: 'paygate10', PK: 'paygate10', BR: 'paygate10', MX: 'paygate10', NG: 'lipad',
+      IN: 'paygate10', PK: 'paygate10', BR: 'facilitapay', MX: 'paygate10', NG: 'lipad',
       CN: 'ofa', VN: 'ofa', TH: 'ofa', JP: 'ofa', KR: 'ofa',
       CO: 'facilitapay',
       TR: 'payok',
@@ -70,7 +70,8 @@ export function resolveProvider(params: {
 
   // Currency fallback
   if (['EUR', 'GBP'].includes(currency)) return 'mondo';
-  if (['INR', 'BRL', 'MXN'].includes(currency)) return 'paygate10';
+  if (['INR', 'MXN'].includes(currency)) return 'paygate10';
+  if (currency === 'BRL') return 'facilitapay';
   if (['KES', 'TZS', 'UGX', 'GHS', 'ZAR', 'XOF', 'XAF'].includes(currency)) return 'lipad';
   if (['CNY', 'VND', 'THB', 'JPY'].includes(currency)) return 'ofa';
 

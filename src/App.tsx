@@ -63,6 +63,8 @@ import BoardOverview from "./pages/admin/BoardOverview";
 import ResellerPortal from "./pages/ResellerPortal";
 import Treasury from "./pages/Treasury";
 import LiveAnalytics from "./pages/LiveAnalytics";
+import Settlements from "./pages/Settlements";
+import FraudGraph from "./pages/FraudGraph";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
@@ -216,6 +218,8 @@ const AppRoutes = () => {
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
     <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
     <Route path="/audit-trail" element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
+    <Route path="/settlements" element={<ProtectedRoute><Settlements /></ProtectedRoute>} />
+    <Route path="/fraud-graph" element={<ProtectedRoute><FraudGraph /></ProtectedRoute>} />
 
     {/* Admin pages — hidden under /enki, role-gated */}
     <Route path="/enki" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute></ProtectedRoute>} />

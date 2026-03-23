@@ -29,8 +29,8 @@ interface ProviderScore {
 const PROVIDER_REGIONS: Record<string, string[]> = {
   shieldhub: ['US', 'CA', 'GB', 'GLOBAL'],
   mondo: ['GB', 'DE', 'FR', 'NL', 'ES', 'IT', 'EU'],
-  facilitapay: ['BR', 'MX', 'CO'],
-  paygate10: ['IN', 'PK', 'BR', 'MX', 'AR', 'EG'],
+  facilitapay: ['BR', 'CO'],
+  paygate10: ['IN', 'PK', 'MX', 'AR', 'EG'],
   ofa: ['CN', 'VN', 'TH', 'JP', 'KR', 'ID', 'MY', 'PH', 'HK', 'AU'],
   moneto: ['CA'],
   makapay: ['BD'],
@@ -40,7 +40,7 @@ const PROVIDER_REGIONS: Record<string, string[]> = {
 
 const CURRENCY_PROVIDERS: Record<string, string> = {
   USD: 'shieldhub', EUR: 'mondo', GBP: 'mondo', CAD: 'moneto',
-  BRL: 'paygate10', MXN: 'paygate10', COP: 'facilitapay',
+  BRL: 'facilitapay', MXN: 'paygate10', COP: 'facilitapay',
   INR: 'paygate10', PKR: 'paygate10',
   KES: 'lipad', TZS: 'lipad', UGX: 'lipad', GHS: 'lipad', ZAR: 'lipad', NGN: 'lipad',
   CNY: 'ofa', JPY: 'ofa', KRW: 'ofa', THB: 'ofa', VND: 'ofa',

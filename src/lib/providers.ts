@@ -48,8 +48,8 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     name: 'paygate10',
     displayName: 'Paygate10',
     supportedCurrencies: ['USD', 'BRL', 'MXN', 'COP', 'PKR'],
-    regions: ['IN', 'PK', 'BR', 'AR', 'NG', 'EG', 'MX', 'ZA', 'KE'],
-    methods: ['UPI', 'NB', 'PIX', 'LBT', 'Bank Deposit', 'SPEI', 'Cash', 'Bank Transfer', 'Wallet', 'UPIQRCode', 'JazzCash', 'EasyPaisa'],
+    regions: ['IN', 'PK', 'AR', 'EG', 'MX'],
+    methods: ['UPI', 'NB', 'LBT', 'Bank Deposit', 'SPEI', 'Cash', 'Bank Transfer', 'Wallet', 'UPIQRCode', 'JazzCash', 'EasyPaisa'],
   },
   ofa: {
     name: 'ofa',
@@ -107,7 +107,7 @@ const countryProviderMap: Record<string, Provider> = {
   // Turkey: PayOK
   TR: 'payok',
   // LATAM shared: PG10 primary, FacilitaPay fallback
-  BR: 'paygate10', MX: 'paygate10', CO: 'facilitapay',
+  BR: 'facilitapay', MX: 'paygate10', CO: 'facilitapay',
 };
 
 // Currency → provider fallback
@@ -116,7 +116,7 @@ const currencyProviderMap: Record<string, Provider> = {
   EUR: 'mondo',
   GBP: 'mondo',
   CAD: 'moneto',
-  BRL: 'paygate10',
+  BRL: 'facilitapay',
   MXN: 'paygate10',
   COP: 'facilitapay',
   INR: 'paygate10',
