@@ -10,10 +10,18 @@
 
 export const EVERPAY_CONFIG = {
   API_BASE_URL: 'https://api.everpayinc.com',
+  API_V2_URL: 'https://api.everpayinc.com/v2',
   CHECKOUT_URL: 'https://checkout.everpayinc.com',
   PAY_URL: 'https://pay.everpayinc.com',
-  VERSION: 'v1',
+  VERSION: 'v2',
 } as const;
+
+/**
+ * Construct a v2 API endpoint URL
+ */
+export function apiUrl(path: string): string {
+  return `${EVERPAY_CONFIG.API_V2_URL}${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 /**
  * 3DS2 Authentication States
