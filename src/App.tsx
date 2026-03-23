@@ -32,6 +32,7 @@ import MerchantEvidence from "./pages/merchant/MerchantEvidence";
 import MerchantAnalytics from "./pages/merchant/MerchantAnalytics";
 import Webhooks from "./pages/Webhooks";
 import Refunds from "./pages/Refunds";
+import Reconciliation from "./pages/Reconciliation";
 import Onboarding from "./pages/Onboarding";
 import ProcessorTransparency from "./pages/ProcessorTransparency";
 import Products from "./pages/Products";
