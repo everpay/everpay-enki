@@ -55,10 +55,11 @@ export function resolveProvider(params: {
     const countryMap: Record<string, string> = {
       US: 'shieldhub', CA: 'moneto',
       GB: 'mondo', DE: 'mondo', FR: 'mondo', NL: 'mondo',
-      IN: 'paygate10', PK: 'paygate10', BR: 'paygate10', MX: 'paygate10', NG: 'paygate10',
+      IN: 'paygate10', PK: 'paygate10', BR: 'paygate10', MX: 'paygate10', NG: 'lipad',
       CN: 'ofa', VN: 'ofa', TH: 'ofa', JP: 'ofa', KR: 'ofa',
       CO: 'facilitapay',
       TR: 'payok',
+      KE: 'lipad', TZ: 'lipad', UG: 'lipad', GH: 'lipad', ZA: 'lipad', RW: 'lipad', ET: 'lipad', CI: 'lipad', SN: 'lipad', CM: 'lipad',
     };
     if (countryMap[country]) return countryMap[country];
   }
@@ -70,6 +71,7 @@ export function resolveProvider(params: {
   // Currency fallback
   if (['EUR', 'GBP'].includes(currency)) return 'mondo';
   if (['INR', 'BRL', 'MXN'].includes(currency)) return 'paygate10';
+  if (['KES', 'TZS', 'UGX', 'GHS', 'ZAR', 'XOF', 'XAF'].includes(currency)) return 'lipad';
   if (['CNY', 'VND', 'THB', 'JPY'].includes(currency)) return 'ofa';
 
   return 'shieldhub';

@@ -32,6 +32,7 @@ import MerchantEvidence from "./pages/merchant/MerchantEvidence";
 import MerchantAnalytics from "./pages/merchant/MerchantAnalytics";
 import Webhooks from "./pages/Webhooks";
 import Refunds from "./pages/Refunds";
+import Reconciliation from "./pages/Reconciliation";
 import Onboarding from "./pages/Onboarding";
 import ProcessorTransparency from "./pages/ProcessorTransparency";
 import Products from "./pages/Products";
@@ -172,6 +173,7 @@ const AppRoutes = () => {
     <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
     <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
     <Route path="/refunds" element={<ProtectedRoute><Refunds /></ProtectedRoute>} />
+    <Route path="/reconciliation" element={<ProtectedRoute><Reconciliation /></ProtectedRoute>} />
     <Route path="/webhooks" element={<ProtectedRoute><Webhooks /></ProtectedRoute>} />
     <Route path="/onboarding" element={<ProtectedRoute skipOnboardingCheck><Onboarding /></ProtectedRoute>} />
     <Route path="/processor-transparency" element={<ProtectedRoute><ProcessorTransparency /></ProtectedRoute>} />

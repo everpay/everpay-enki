@@ -10,6 +10,7 @@ import { useAdminDashboardData } from '@/hooks/useAdminDashboardData';
 import AdminVolumeChart from '@/components/admin/charts/AdminVolumeChart';
 import AdminRevenueChart from '@/components/admin/charts/AdminRevenueChart';
 import AdminChargebackChart from '@/components/admin/charts/AdminChargebackChart';
+import { LipadStatusPanel } from '@/components/admin/LipadStatusPanel';
 import { useNavigate } from 'react-router-dom';
 
 interface KPICardProps { title: string; value: string; change: string; trend: 'up' | 'down' | 'neutral'; icon: React.ElementType; description: string; }
@@ -80,6 +81,7 @@ export default function AdminDashboard() {
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="health">PSP Health</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -119,10 +121,10 @@ export default function AdminDashboard() {
               <Card>
                 <CardHeader><CardTitle className="text-lg">System Health</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
-                  {['ShieldHub', 'Mondo', 'FacilitaPay', 'Paygate10', 'VGS Vault'].map(name => (
+                  {['ShieldHub', 'Mondo', 'FacilitaPay', 'Paygate10', 'Lipad.io', 'VGS Vault'].map(name => (
                     <div key={name} className="flex items-center justify-between py-2 border-b last:border-0">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <div className="w-2 h-2 rounded-full bg-success" />
                         <span className="text-sm font-medium">{name}</span>
                       </div>
                       <Badge variant="default" className="text-xs">operational</Badge>
@@ -148,7 +150,7 @@ export default function AdminDashboard() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                        <div className="w-3 h-3 rounded-full bg-success" />
                         <span className="font-semibold">{proc.name}</span>
                       </div>
                       <Badge>active</Badge>
@@ -160,6 +162,11 @@ export default function AdminDashboard() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+          <TabsContent value="integrations" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <LipadStatusPanel />
             </div>
           </TabsContent>
         </Tabs>

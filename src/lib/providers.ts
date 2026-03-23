@@ -72,6 +72,13 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['TR'],
     methods: ['Card', 'Bank Transfer'],
   },
+  lipad: {
+    name: 'lipad',
+    displayName: 'Lipad.io',
+    supportedCurrencies: ['USD'],
+    regions: ['KE', 'TZ', 'UG', 'GH', 'ZA', 'RW', 'ET', 'NG', 'CI', 'SN', 'CM'],
+    methods: ['M-Pesa', 'Mobile Money', 'Bank Transfer', 'Card', 'Airtel Money'],
+  },
 };
 
 // Country → provider mapping for intelligent routing
@@ -88,8 +95,10 @@ const countryProviderMap: Record<string, Provider> = {
   // Moneto: Canada
   CA: 'moneto',
   // Paygate10: India, Pakistan, Brazil, Argentina, Nigeria, Egypt, Mexico, South Africa, Kenya
-  IN: 'paygate10', PK: 'paygate10', NG: 'paygate10', EG: 'paygate10', ZA: 'paygate10', KE: 'paygate10',
+  IN: 'paygate10', PK: 'paygate10', EG: 'paygate10',
   AR: 'paygate10',
+  // Lipad: Africa
+  NG: 'lipad', ZA: 'lipad', KE: 'lipad', TZ: 'lipad', UG: 'lipad', GH: 'lipad', RW: 'lipad', ET: 'lipad', CI: 'lipad', SN: 'lipad', CM: 'lipad',
   // OFA: Asia-Pacific
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
@@ -111,12 +120,15 @@ const currencyProviderMap: Record<string, Provider> = {
   MXN: 'paygate10',
   COP: 'facilitapay',
   INR: 'paygate10',
-  NGN: 'paygate10',
+  NGN: 'lipad',
   EGP: 'paygate10',
-  ZAR: 'paygate10',
-  KES: 'paygate10',
+  ZAR: 'lipad',
+  KES: 'lipad',
   ARS: 'paygate10',
   PKR: 'paygate10',
+  TZS: 'lipad',
+  UGX: 'lipad',
+  GHS: 'lipad',
   CNY: 'ofa',
   VND: 'ofa',
   THB: 'ofa',
@@ -156,6 +168,7 @@ export function getProviderColor(provider: Provider): string {
     case 'ofa': return 'hsl(340 75% 55%)';
     case 'makapay': return 'hsl(160 70% 45%)';
     case 'payok': return 'hsl(200 80% 50%)';
+    case 'lipad': return 'hsl(35 90% 50%)';
     default: return 'hsl(var(--chart-1))';
   }
 }

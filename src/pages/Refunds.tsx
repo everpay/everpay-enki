@@ -9,11 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { RotateCcw, DollarSign, CheckCircle2, XCircle, Clock, Search } from 'lucide-react';
+import { RotateCcw, DollarSign, CheckCircle2, XCircle, Clock, Search, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { RefundChargebackPanel } from '@/components/RefundChargebackPanel';
 
 function useRefunds() {
   return useQuery({
@@ -65,6 +66,7 @@ export default function Refunds() {
   const [reason, setReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedRefund, setExpandedRefund] = useState<string | null>(null);
 
   const selectedTransaction = transactions?.find(t => t.id === selectedTxn);
 
@@ -208,7 +210,8 @@ export default function Refunds() {
             </TableHeader>
             <TableBody>
               {filteredRefunds?.map((r: any) => (
-                <TableRow key={r.id}>
+                <>
+                <TableRow key={r.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setExpandedRefund(expandedRefund === r.id ? null : r.id)}>
                   <TableCell className="text-sm">{r.transaction?.customer_email || '—'}</TableCell>
                   <TableCell className="font-mono">{formatCurrency(r.amount, r.currency)}</TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{r.reason || '—'}</TableCell>
@@ -216,6 +219,14 @@ export default function Refunds() {
                   <TableCell>{getStatusBadge(r.status)}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{formatDate(r.created_at)}</TableCell>
                 </TableRow>
+                {expandedRefund === r.id && r.transaction_id && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-3 bg-muted/10">
+                      <RefundChargebackPanel transactionId={r.transaction_id} />
+                    </TableCell>
+                  </TableRow>
+                )}
+                </>
               ))}
               {!filteredRefunds?.length && (
                 <TableRow>
