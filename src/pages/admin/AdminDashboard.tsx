@@ -150,7 +150,7 @@ export default function AdminDashboard() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                        <div className="w-3 h-3 rounded-full bg-success" />
                         <span className="font-semibold">{proc.name}</span>
                       </div>
                       <Badge>active</Badge>
