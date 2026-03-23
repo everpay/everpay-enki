@@ -29,6 +29,7 @@ import {
   Globe,
   Bell,
   BookOpen,
+  Headphones,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
