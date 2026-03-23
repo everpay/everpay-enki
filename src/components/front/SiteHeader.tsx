@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import {
   ChevronDown, Menu, X, ShoppingBag, UtensilsCrossed, ShoppingCart,
   Smartphone, Laptop, Store, Building2, CreditCard, Plug, Globe,
-  Shield, Lock, DollarSign,
+  Shield, Lock, DollarSign, Code2,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,17 +56,21 @@ export function SiteHeader() {
     { icon: CreditCard, label: 'Card Issuing', to: '/card-issuing' },
   ];
   const resourceItems = [
-    { label: 'Blog', to: '/blog' },
-    { label: 'API Documentation', to: '/docs' },
-    { label: 'Request Demo', to: '/demo' },
-    { label: 'Help & Support', to: '/contact' },
-    { label: 'Plans & Pricing', to: '/pricing' },
+    { label: 'Blog', to: '/blog', icon: undefined },
+    { label: 'Developer Portal', to: '/developers', icon: Code2 },
+    { label: 'API Reference', to: '/developers/api/payments', icon: undefined },
+    { label: 'Request Demo', to: '/demo', icon: undefined },
+    { label: 'Help & Support', to: '/contact', icon: undefined },
+    { label: 'Plans & Pricing', to: '/pricing', icon: undefined },
   ];
   const mobileSections = [
     { title: 'Solutions', key: 'solutions', items: [...solutionItems, ...platformItems] },
     { title: 'Products', key: 'products', items: productItems },
     { title: 'Resources', key: 'resources', items: resourceItems },
   ];
+
+  const hoverLink = "text-foreground/70 hover:text-primary rounded-lg hover:bg-primary/5 transition-colors";
+  const megaLink = "flex items-center gap-3 rounded-xl p-3 text-sm text-foreground/70 hover:bg-primary/5 hover:text-primary transition-colors font-body";
 
   return (
     <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-white'}`}>
@@ -79,7 +83,7 @@ export function SiteHeader() {
         <nav className="hidden lg:flex items-center gap-1">
           {/* Solutions */}
           <div className="relative" onMouseEnter={() => handleMenuEnter('solutions')} onMouseLeave={handleMenuLeave}>
-            <button className="flex items-center gap-1 px-4 py-2 text-[15px] font-medium text-foreground/70 hover:text-foreground rounded-lg hover:bg-secondary transition-colors font-body">
+            <button className={`flex items-center gap-1 px-4 py-2 text-[15px] font-medium ${hoverLink} font-body`}>
               Solutions
               <ChevronDown className={`h-3.5 w-3.5 opacity-50 transition-transform ${activeMegaMenu === 'solutions' ? 'rotate-180' : ''}`} />
             </button>
@@ -90,7 +94,7 @@ export function SiteHeader() {
                   <div className="grid grid-cols-2 gap-1">
                     <p className="col-span-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3 font-body">By Business Type</p>
                     {solutionItems.map((item) => (
-                      <Link key={item.label} to={item.to} className="flex items-center gap-3 rounded-xl p-3 text-sm text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors font-body" onClick={() => setActiveMegaMenu(null)}>
+                      <Link key={item.label} to={item.to} className={megaLink} onClick={() => setActiveMegaMenu(null)}>
                         <item.icon className="h-4 w-4 text-primary" />
                         <span className="font-medium">{item.label}</span>
                       </Link>
@@ -98,7 +102,7 @@ export function SiteHeader() {
                     <div className="col-span-2 border-t border-border my-2" />
                     <p className="col-span-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3 font-body">By Platform</p>
                     {platformItems.map((item) => (
-                      <Link key={item.label} to={item.to} className="flex items-center gap-3 rounded-xl p-3 text-sm text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors font-body" onClick={() => setActiveMegaMenu(null)}>
+                      <Link key={item.label} to={item.to} className={megaLink} onClick={() => setActiveMegaMenu(null)}>
                         <item.icon className="h-4 w-4 text-primary" />
                         <span className="font-medium">{item.label}</span>
                       </Link>
@@ -111,7 +115,7 @@ export function SiteHeader() {
 
           {/* Products */}
           <div className="relative" onMouseEnter={() => handleMenuEnter('products')} onMouseLeave={handleMenuLeave}>
-            <button className="flex items-center gap-1 px-4 py-2 text-[15px] font-medium text-foreground/70 hover:text-foreground rounded-lg hover:bg-secondary transition-colors font-body">
+            <button className={`flex items-center gap-1 px-4 py-2 text-[15px] font-medium ${hoverLink} font-body`}>
               Products
               <ChevronDown className={`h-3.5 w-3.5 opacity-50 transition-transform ${activeMegaMenu === 'products' ? 'rotate-180' : ''}`} />
             </button>
@@ -121,7 +125,7 @@ export function SiteHeader() {
                 <div className="bg-card rounded-2xl shadow-xl border border-border p-6">
                   <div className="grid grid-cols-2 gap-1">
                     {productItems.map((item) => (
-                      <Link key={item.label} to={item.to} className="flex items-center gap-3 rounded-xl p-3 text-sm text-foreground/70 hover:bg-secondary hover:text-foreground transition-colors font-body" onClick={() => setActiveMegaMenu(null)}>
+                      <Link key={item.label} to={item.to} className={megaLink} onClick={() => setActiveMegaMenu(null)}>
                         <item.icon className="h-4 w-4 text-primary" />
                         <span className="font-medium">{item.label}</span>
                       </Link>
@@ -132,18 +136,18 @@ export function SiteHeader() {
             )}
           </div>
 
-          <Link to="/pricing" className="px-4 py-2 text-[15px] font-medium text-foreground/70 hover:text-foreground rounded-lg hover:bg-secondary transition-colors font-body">Pricing</Link>
-          <Link to="/about" className="px-4 py-2 text-[15px] font-medium text-foreground/70 hover:text-foreground rounded-lg hover:bg-secondary transition-colors font-body">About</Link>
-          <Link to="/blog" className="px-4 py-2 text-[15px] font-medium text-foreground/70 hover:text-foreground rounded-lg hover:bg-secondary transition-colors font-body">Blog</Link>
+          <Link to="/pricing" className={`px-4 py-2 text-[15px] font-medium ${hoverLink} font-body`}>Pricing</Link>
+          <Link to="/developers" className={`px-4 py-2 text-[15px] font-medium ${hoverLink} font-body`}>Developers</Link>
+          <Link to="/about" className={`px-4 py-2 text-[15px] font-medium ${hoverLink} font-body`}>About</Link>
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
-          <Link to="/docs" className="text-[15px] font-medium text-foreground/60 hover:text-foreground px-4 py-2 transition-colors font-body">Docs</Link>
-          <Link to={user ? '/dashboard' : '/login'} className="text-[15px] font-medium text-foreground/60 hover:text-foreground px-4 py-2 transition-colors font-body">
+          <Link to="/developers" className="text-[15px] font-medium text-foreground/60 hover:text-primary px-4 py-2 transition-colors font-body">Docs</Link>
+          <Link to={user ? '/dashboard' : '/login'} className="text-[15px] font-medium text-foreground/60 hover:text-primary px-4 py-2 transition-colors font-body">
             {user ? 'Dashboard' : 'Login'}
           </Link>
           <Link to="/demo">
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 h-10 text-[15px] font-semibold shadow-none active:scale-[0.97] transition-all">
+            <Button className="bg-primary hover:bg-primary/85 text-primary-foreground rounded-full px-6 h-10 text-[15px] font-semibold shadow-none active:scale-[0.97] transition-all">
               Get a free demo
             </Button>
           </Link>
@@ -151,7 +155,7 @@ export function SiteHeader() {
 
         <div className="flex lg:hidden items-center gap-3">
           <Link to="/demo">
-            <Button variant="outline" className="rounded-full h-9 px-4 text-sm font-medium border-border active:scale-[0.97] transition-all">
+            <Button variant="outline" className="rounded-full h-9 px-4 text-sm font-medium border-border hover:border-primary hover:text-primary active:scale-[0.97] transition-all">
               Book your demo
             </Button>
           </Link>
@@ -173,10 +177,10 @@ export function SiteHeader() {
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openMobileSection === section.key ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
                   <div className="px-6 pb-5 space-y-1">
                     {section.items.map((item) => (
-                      <Link key={item.label} to={item.to} className="flex items-center gap-3 py-3 text-[15px] text-foreground/70 hover:text-foreground transition-colors font-body" onClick={() => setIsMenuOpen(false)}>
-                        {'icon' in item && (
-                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-secondary">
-                            {(() => { const Icon = (item as any).icon; return <Icon className="h-4 w-4 text-foreground/70" />; })()}
+                      <Link key={item.label} to={item.to} className="flex items-center gap-3 py-3 text-[15px] text-foreground/70 hover:text-primary transition-colors font-body" onClick={() => setIsMenuOpen(false)}>
+                        {'icon' in item && item.icon && (
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/5">
+                            {(() => { const Icon = (item as any).icon; return <Icon className="h-4 w-4 text-primary" />; })()}
                           </div>
                         )}
                         <span className="font-medium text-foreground">{item.label}</span>
@@ -191,15 +195,15 @@ export function SiteHeader() {
             <div className="px-6 py-6 space-y-3">
               {user ? (
                 <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-border active:scale-[0.97] transition-all">Dashboard</Button>
+                  <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-border hover:border-primary hover:text-primary active:scale-[0.97] transition-all">Dashboard</Button>
                 </Link>
               ) : (
                 <div className="flex gap-3">
                   <Link to="/login" className="flex-1" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-border active:scale-[0.97] transition-all">Log in</Button>
+                    <Button variant="outline" className="w-full rounded-full h-12 text-[15px] font-semibold border-border hover:border-primary hover:text-primary active:scale-[0.97] transition-all">Log in</Button>
                   </Link>
                   <Link to="/signup" className="flex-1" onClick={() => setIsMenuOpen(false)}>
-                    <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 text-[15px] font-semibold active:scale-[0.97] transition-all">Sign up</Button>
+                    <Button className="w-full bg-primary hover:bg-primary/85 text-primary-foreground rounded-full h-12 text-[15px] font-semibold active:scale-[0.97] transition-all">Sign up</Button>
                   </Link>
                 </div>
               )}
