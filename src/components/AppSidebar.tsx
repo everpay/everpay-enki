@@ -101,10 +101,12 @@ const navItems: NavItem[] = [
     icon: Wallet,
     label: "Treasury",
     children: [
-      { to: "/wallets", icon: Eye, label: "Overview" },
+      { to: "/wallets", icon: Eye, label: "Wallets" },
+      { to: "/treasury", icon: Landmark, label: "Liquidity & FX" },
       { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
     ],
   },
+  { to: "/live", icon: BarChart3, label: "Live Analytics" },
   { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
 ];
 

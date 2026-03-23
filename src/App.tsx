@@ -189,6 +189,8 @@ const AppRoutes = () => {
     <Route path="/bigcommerce" element={<ProtectedRoute><BigCommerce /></ProtectedRoute>} />
     <Route path="/shopify" element={<ProtectedRoute><Shopify /></ProtectedRoute>} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+    <Route path="/treasury" element={<ProtectedRoute><Treasury /></ProtectedRoute>} />
+    <Route path="/live" element={<ProtectedRoute><LiveAnalytics /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
 
     {/* Admin pages — hidden under /enki, role-gated */}
