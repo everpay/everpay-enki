@@ -30,7 +30,7 @@ const PROVIDER_REGIONS: Record<string, string[]> = {
   shieldhub: ['US', 'CA', 'GB', 'GLOBAL'],
   mondo: ['GB', 'DE', 'FR', 'NL', 'ES', 'IT', 'EU'],
   facilitapay: ['BR', 'MX', 'CO'],
-  paygate10: ['IN', 'PK', 'BR', 'MX', 'AR', 'EG'],
+  paygate10: ['IN', 'PK', 'MX', 'AR', 'EG'],
   ofa: ['CN', 'VN', 'TH', 'JP', 'KR', 'ID', 'MY', 'PH', 'HK', 'AU'],
   moneto: ['CA'],
   makapay: ['BD'],
