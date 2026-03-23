@@ -229,7 +229,7 @@ export default function Checkout() {
           {/* Customer Info */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-xs">Name</Label>
+              <Label className="text-xs">Full Name</Label>
               <Input
                 placeholder="John Doe"
                 value={customerName}
@@ -248,6 +248,64 @@ export default function Checkout() {
                 onChange={(e) => setCustomerEmail(e.target.value)}
                 className="bg-background border-border"
                 disabled={!!email}
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Phone Number</Label>
+            <Input
+              type="tel"
+              placeholder="+1 (555) 000-0000"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              className="bg-background border-border"
+              required
+            />
+          </div>
+
+          {/* Billing Address */}
+          <div className="space-y-3">
+            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Billing Address</Label>
+            <div className="space-y-2">
+              <Input
+                placeholder="Street address"
+                value={billingAddress}
+                onChange={(e) => setBillingAddress(e.target.value)}
+                className="bg-background border-border"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                placeholder="City"
+                value={billingCity}
+                onChange={(e) => setBillingCity(e.target.value)}
+                className="bg-background border-border"
+                required
+              />
+              <Input
+                placeholder="State / Province"
+                value={billingState}
+                onChange={(e) => setBillingState(e.target.value)}
+                className="bg-background border-border"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                placeholder="Zip / Postal code"
+                value={billingZip}
+                onChange={(e) => setBillingZip(e.target.value)}
+                className="bg-background border-border"
+                required
+              />
+              <Input
+                placeholder="Country (e.g. US)"
+                value={billingCountry}
+                onChange={(e) => setBillingCountry(e.target.value.toUpperCase())}
+                className="bg-background border-border"
+                maxLength={2}
                 required
               />
             </div>
