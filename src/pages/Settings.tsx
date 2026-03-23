@@ -833,6 +833,9 @@ export default function Settings() {
       {/* BUSINESS VERIFICATION */}
       {section === "verification" && <BusinessVerificationSectionComponent />}
 
+      {/* NOTIFICATIONS */}
+      {section === "notifications" && <WebhookNotificationsSection merchantId={merchant?.id} />}
+
       {/* SURCHARGING */}
       {section === "surcharging" && <SurchargeSettingsSection merchantId={merchant?.id} />}
 
