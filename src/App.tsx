@@ -43,6 +43,8 @@ import KycAml from "./pages/KycAml";
 import PaymentMethodsPage from "./pages/PaymentMethodsPage";
 import BigCommerce from "./pages/BigCommerce";
 import Shopify from "./pages/Shopify";
+import Ledger from "./pages/Ledger";
+import AuditTrail from "./pages/AuditTrail";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 import { usePostHogTracking } from "./hooks/usePostHogTracking";
 
@@ -212,6 +214,8 @@ const AppRoutes = () => {
     <Route path="/treasury" element={<ProtectedRoute><Treasury /></ProtectedRoute>} />
     <Route path="/live" element={<ProtectedRoute><LiveAnalytics /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
+    <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
+    <Route path="/audit-trail" element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
 
     {/* Admin pages — hidden under /enki, role-gated */}
     <Route path="/enki" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute></ProtectedRoute>} />

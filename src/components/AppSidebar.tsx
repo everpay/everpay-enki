@@ -28,6 +28,7 @@ import {
   Landmark,
   Globe,
   Bell,
+  BookOpen,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -84,6 +85,8 @@ const navItems: NavItem[] = [
       { to: "/processor-analytics", icon: BarChart3, label: "Processor Analytics" },
       { to: "/payment-methods", icon: CreditCardIcon, label: "Payment Methods" },
       { to: "/reconciliation", icon: FileBarChart, label: "Reconciliation" },
+      { to: "/ledger", icon: BookOpen, label: "Ledger" },
+      { to: "/audit-trail", icon: Shield, label: "Audit Trail" },
     ],
   },
   { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
@@ -107,6 +110,7 @@ const navItems: NavItem[] = [
     ],
   },
   { to: "/live", icon: BarChart3, label: "Live Analytics" },
+  { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "merchant", "admin", "super_admin"] },
   { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
 ];
 
