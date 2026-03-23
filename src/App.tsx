@@ -62,7 +62,27 @@ import ResellerPortal from "./pages/ResellerPortal";
 import Treasury from "./pages/Treasury";
 import LiveAnalytics from "./pages/LiveAnalytics";
 
-// Front site pages
+// Developer portal pages
+import DeveloperPortal from "./pages/developer/DeveloperPortal";
+import OverviewPage from "./pages/developer/OverviewPage";
+import QuickStartPage from "./pages/developer/QuickStartPage";
+import GuidesPage from "./pages/developer/GuidesPage";
+import ExamplesPage from "./pages/developer/ExamplesPage";
+import ApiKeysPage from "./pages/developer/ApiKeysPage";
+import SdkDownloadsPage from "./pages/developer/SdkDownloadsPage";
+import DevWebhooksPage from "./pages/developer/WebhooksPage";
+import PaymentsApiPage from "./pages/developer/api/PaymentsApiPage";
+import TransactionsApiPage from "./pages/developer/api/TransactionsApiPage";
+import CustomersApiPage from "./pages/developer/api/CustomersApiPage";
+import InvoicesApiPage from "./pages/developer/api/InvoicesApiPage";
+import SubscriptionsApiPage from "./pages/developer/api/SubscriptionsApiPage";
+import PayoutsApiPage from "./pages/developer/api/PayoutsApiPage";
+import WalletsApiPage from "./pages/developer/api/WalletsApiPage";
+import ProductsApiPage from "./pages/developer/api/ProductsApiPage";
+import MerchantsApiPage from "./pages/developer/api/MerchantsApiPage";
+import BankAccountsApiPage from "./pages/developer/api/BankAccountsApiPage";
+import AuthenticationApiPage from "./pages/developer/api/AuthenticationApiPage";
+
 import FrontAbout from "./pages/front/About";
 import FrontPricing from "./pages/front/Pricing";
 import FrontContact from "./pages/front/Contact";
