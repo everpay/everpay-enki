@@ -66,6 +66,7 @@ export default function Refunds() {
   const [reason, setReason] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedRefund, setExpandedRefund] = useState<string | null>(null);
 
   const selectedTransaction = transactions?.find(t => t.id === selectedTxn);
 
