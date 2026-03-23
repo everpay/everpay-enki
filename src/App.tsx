@@ -59,6 +59,8 @@ import Admin3dsControls from "./pages/admin/Admin3dsControls";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import BoardOverview from "./pages/admin/BoardOverview";
 import ResellerPortal from "./pages/ResellerPortal";
+import Treasury from "./pages/Treasury";
+import LiveAnalytics from "./pages/LiveAnalytics";
 
 // Front site pages
 import FrontAbout from "./pages/front/About";
@@ -187,6 +189,8 @@ const AppRoutes = () => {
     <Route path="/bigcommerce" element={<ProtectedRoute><BigCommerce /></ProtectedRoute>} />
     <Route path="/shopify" element={<ProtectedRoute><Shopify /></ProtectedRoute>} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+    <Route path="/treasury" element={<ProtectedRoute><Treasury /></ProtectedRoute>} />
+    <Route path="/live" element={<ProtectedRoute><LiveAnalytics /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
 
     {/* Admin pages — hidden under /enki, role-gated */}
