@@ -11,7 +11,9 @@ const corsHeaders = {
  * 
  * 1. Verify X-Everpay-Signature (HMAC-SHA256)
  * 2. Insert into everpay_webhooks (trigger syncs to transactions)
- * 3. Send email alerts via Resend for configured events
+ * 3. Handle chargebacks → create disputes
+ * 4. Complete Shopify draft orders on payment success
+ * 5. Send email alerts via Resend for configured events
  */
 
 async function verifySignature(rawBody: string, signature: string | null, secret: string): Promise<boolean> {
@@ -66,6 +68,62 @@ async function sendEmailAlert(
   }
 }
 
+/**
+ * Complete a Shopify draft order when payment succeeds
+ */
+async function completeShopifyDraftOrder(
+  supabase: any,
+  orderId: string,
+  transactionId: string,
+  merchantId: string
+) {
+  try {
+    // Find the Shopify store for this merchant
+    const { data: store } = await supabase
+      .from('shopify_stores')
+      .select('shop_domain, access_token')
+      .eq('merchant_id', merchantId)
+      .eq('active', true)
+      .single();
+
+    if (!store?.access_token || !store?.shop_domain) {
+      console.log('No active Shopify store for merchant, skipping draft order completion');
+      return;
+    }
+
+    // Complete the draft order → converts to a real Shopify order
+    const completeRes = await fetch(
+      `https://${store.shop_domain}/admin/api/2025-01/draft_orders/${orderId}/complete.json`,
+      {
+        method: 'PUT',
+        headers: {
+          'X-Shopify-Access-Token': store.access_token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (completeRes.ok) {
+      const result = await completeRes.json();
+      console.log(`Shopify draft order ${orderId} completed → Order #${result.draft_order?.order_id}`);
+
+      // Update shopify_orders table
+      await supabase.from('shopify_orders').insert({
+        store_id: store.id,
+        shopify_order_id: String(result.draft_order?.order_id || orderId),
+        amount: result.draft_order?.total_price ? parseFloat(result.draft_order.total_price) : null,
+        currency: result.draft_order?.currency || 'USD',
+        status: 'paid',
+      }).onConflict('shopify_order_id').merge({ status: 'paid' });
+    } else {
+      const errText = await completeRes.text();
+      console.error(`Failed to complete Shopify draft order ${orderId}:`, errText);
+    }
+  } catch (err) {
+    console.error('Shopify draft order completion error:', err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -96,7 +154,7 @@ serve(async (req) => {
     }
 
     const payload = JSON.parse(rawBody);
-    const { transaction_id, status, amount, currency, order_id, event, ...rest } = payload;
+    const { transaction_id, status, amount, currency, order_id, event, source, ...rest } = payload;
 
     if (!transaction_id || !status) {
       return new Response(JSON.stringify({ error: 'Invalid webhook payload' }), {
@@ -128,7 +186,7 @@ serve(async (req) => {
     const { error: insertError } = await supabase.from('everpay_webhooks').insert({
       transaction_id,
       status,
-      payload: { amount, currency, order_id, event, ...rest },
+      payload: { amount, currency, order_id, event, source, ...rest },
     });
 
     if (insertError) {
@@ -139,27 +197,61 @@ serve(async (req) => {
       });
     }
 
-    // Handle chargeback events — update transaction status
+    // Handle chargeback events
     if (event === 'chargeback.created') {
-      await supabase
+      const { data: tx } = await supabase
         .from('transactions')
-        .update({ status: 'chargeback' })
-        .eq('provider_ref', transaction_id);
+        .select('id, merchant_id')
+        .eq('provider_ref', transaction_id)
+        .single();
+
+      if (tx) {
+        await supabase
+          .from('transactions')
+          .update({ status: 'chargeback' })
+          .eq('id', tx.id);
+
+        // Auto-create dispute
+        await supabase.from('disputes').insert({
+          merchant_id: tx.merchant_id,
+          transaction_id: tx.id,
+          amount: parseFloat(amount) || 0,
+          currency: currency || 'USD',
+          status: 'open',
+          reason: rest.reason || 'fraud',
+          description: `Chargeback received - ${rest.reason || 'Unknown reason'}`,
+        });
+
+        console.log(`Chargeback dispute created for transaction ${tx.id}`);
+      }
+    }
+
+    // Handle successful payment → complete Shopify draft orders
+    const isSuccess = status === 'succeeded' || status === 'completed' || status === 'Approved';
+    if (isSuccess && order_id && source === 'shopify') {
+      const { data: tx } = await supabase
+        .from('transactions')
+        .select('merchant_id')
+        .eq('provider_ref', transaction_id)
+        .single();
+
+      if (tx?.merchant_id) {
+        await completeShopifyDraftOrder(supabase, order_id, transaction_id, tx.merchant_id);
+      }
     }
 
     // Send email notifications
     const resendKey = Deno.env.get('RESEND_API_KEY');
     if (resendKey) {
-      // Determine notification type
-      const isSuccess = status === 'succeeded' || status === 'completed' || status === 'Approved';
       const isFailure = status === 'failed' || status === 'Failed' || status === 'Declined';
       const isRefund = event === 'refund.created' || status === 'refunded';
       const isChargeback = event === 'chargeback.created';
+      const isHighRisk = rest.risk_score && parseInt(rest.risk_score) > 70;
 
       // Admin notification emails
       const { data: adminEmails } = await supabase
         .from('admin_notification_emails')
-        .select('email_address, notify_on_success, notify_on_failure, notify_on_refund, notify_on_chargeback')
+        .select('email_address, notify_on_success, notify_on_failure, notify_on_refund, notify_on_chargeback, notify_on_high_risk')
         .eq('enabled', true);
 
       if (adminEmails) {
@@ -168,7 +260,8 @@ serve(async (req) => {
             (isSuccess && admin.notify_on_success) ||
             (isFailure && admin.notify_on_failure) ||
             (isRefund && admin.notify_on_refund) ||
-            (isChargeback && admin.notify_on_chargeback);
+            (isChargeback && admin.notify_on_chargeback) ||
+            (isHighRisk && admin.notify_on_high_risk);
 
           if (shouldNotify) {
             await sendEmailAlert(resendKey, admin.email_address, transaction_id, status, amount, currency, order_id);
@@ -177,7 +270,6 @@ serve(async (req) => {
       }
 
       // Merchant webhook notification settings
-      // Find the merchant from the transaction
       const { data: tx } = await supabase
         .from('transactions')
         .select('merchant_id')

@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-shopify-hmac-sha256, x-shopify-shop-domain',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-shopify-hmac-sha256, x-shopify-shop-domain, x-shopify-topic',
 };
 
 /**
@@ -12,6 +12,7 @@ const corsHeaders = {
  * Handles:
  * - refunds/create → triggers Everpay refund + updates Supabase
  * - chargeback tagging on Shopify orders
+ * - orders/paid → syncs completed orders
  */
 
 async function verifyShopifyHmac(rawBody: string, hmac: string | null, secret: string): Promise<boolean> {
@@ -30,19 +31,40 @@ async function verifyShopifyHmac(rawBody: string, hmac: string | null, secret: s
 
 async function tagShopifyOrder(shopDomain: string, accessToken: string, orderId: string, tag: string) {
   try {
-    await fetch(`https://${shopDomain}/admin/api/2024-01/orders/${orderId}.json`, {
+    // First get existing tags
+    const getRes = await fetch(`https://${shopDomain}/admin/api/2025-01/orders/${orderId}.json`, {
+      headers: { 'X-Shopify-Access-Token': accessToken },
+    });
+    const orderData = await getRes.json();
+    const existingTags = orderData?.order?.tags || '';
+    const newTags = existingTags ? `${existingTags}, ${tag}` : tag;
+
+    await fetch(`https://${shopDomain}/admin/api/2025-01/orders/${orderId}.json`, {
       method: 'PUT',
       headers: {
         'X-Shopify-Access-Token': accessToken,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        order: { id: orderId, tags: tag },
+        order: { id: orderId, tags: newTags },
       }),
     });
     console.log(`Tagged Shopify order ${orderId} with ${tag}`);
   } catch (err) {
     console.error('Failed to tag Shopify order:', err);
+  }
+}
+
+async function dispatchMerchantWebhook(supabase: any, merchantId: string, eventType: string, payload: any) {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    await fetch(`${supabaseUrl}/functions/v1/api-v2-webhooks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ merchant_id: merchantId, event: eventType, data: payload }),
+    });
+  } catch (err) {
+    console.error('Failed to dispatch merchant webhook:', err);
   }
 }
 
@@ -54,6 +76,8 @@ serve(async (req) => {
   try {
     const rawBody = await req.text();
     const shopDomain = req.headers.get('x-shopify-shop-domain') || '';
+    const shopifyTopic = req.headers.get('x-shopify-topic') || '';
+    const shopifyHmac = req.headers.get('x-shopify-hmac-sha256') || null;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -64,7 +88,7 @@ serve(async (req) => {
     // Look up the store to get credentials
     const { data: store } = await supabase
       .from('shopify_stores')
-      .select('id, merchant_id, access_token, shop_domain')
+      .select('id, merchant_id, access_token, shop_domain, webhook_secret')
       .eq('shop_domain', shopDomain)
       .single();
 
@@ -76,23 +100,34 @@ serve(async (req) => {
       });
     }
 
-    // Determine event type from payload structure
-    const isRefund = payload.transactions && Array.isArray(payload.transactions);
-    const isChargeback = payload.event === 'chargeback.created' || payload.reason;
+    // Verify Shopify HMAC if webhook_secret is configured
+    if (store.webhook_secret && shopifyHmac) {
+      const valid = await verifyShopifyHmac(rawBody, shopifyHmac, store.webhook_secret);
+      if (!valid) {
+        console.error('Invalid Shopify webhook HMAC');
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Determine event type
+    const isRefund = shopifyTopic === 'refunds/create' || (payload.transactions && Array.isArray(payload.transactions));
+    const isChargeback = payload.event === 'chargeback.created' || shopifyTopic === 'disputes/create';
 
     if (isRefund) {
-      // Handle refund
       const refundTransaction = payload.transactions?.[0];
       const parentTransactionId = refundTransaction?.parent_id;
       const refundAmount = refundTransaction?.amount || payload.amount;
       const currency = payload.currency || 'USD';
 
-      // Find the original transaction in our system
+      // Find the original transaction
       const { data: originalTx } = await supabase
         .from('transactions')
         .select('id, merchant_id, amount')
         .eq('merchant_id', store.merchant_id)
-        .or(`provider_ref.eq.${parentTransactionId},metadata->>'shopify_order_id'.eq.${payload.order_id}`)
+        .or(`provider_ref.eq.${parentTransactionId},metadata->>shopify_order_id.eq.${payload.order_id}`)
         .single();
 
       if (originalTx) {
@@ -103,7 +138,7 @@ serve(async (req) => {
           amount: parseFloat(refundAmount),
           currency,
           status: 'completed',
-          reason: 'Shopify refund',
+          reason: payload.note || 'Shopify refund',
           provider: 'shopify',
         });
 
@@ -115,22 +150,30 @@ serve(async (req) => {
           .eq('id', originalTx.id);
 
         // Tag Shopify order
-        if (store.access_token && store.shop_domain) {
+        if (store.access_token && store.shop_domain && payload.order_id) {
           await tagShopifyOrder(store.shop_domain, store.access_token, payload.order_id, isPartial ? 'PARTIAL_REFUND' : 'REFUNDED');
         }
+
+        // Dispatch merchant webhook
+        await dispatchMerchantWebhook(supabase, originalTx.merchant_id, isPartial ? 'payment.partially_refunded' : 'refund.completed', {
+          transaction_id: originalTx.id,
+          amount: parseFloat(refundAmount),
+          currency,
+          source: 'shopify',
+        });
 
         console.log(`Refund processed for transaction ${originalTx.id}`);
       }
     }
 
-    if (isChargeback || payload.event === 'chargeback.created') {
-      const transactionId = payload.transaction_id;
+    if (isChargeback) {
+      const transactionId = payload.transaction_id || payload.evidence?.customer_purchase_ip;
 
-      // Find and update the transaction
       const { data: tx } = await supabase
         .from('transactions')
-        .select('id, merchant_id')
-        .eq('provider_ref', transactionId)
+        .select('id, merchant_id, amount')
+        .eq('merchant_id', store.merchant_id)
+        .or(`provider_ref.eq.${transactionId},metadata->>shopify_order_id.eq.${payload.order_id}`)
         .single();
 
       if (tx) {
@@ -143,17 +186,26 @@ serve(async (req) => {
         await supabase.from('disputes').insert({
           merchant_id: tx.merchant_id,
           transaction_id: tx.id,
-          amount: payload.amount || 0,
+          amount: payload.amount || tx.amount || 0,
           currency: payload.currency || 'USD',
           status: 'open',
           reason: payload.reason || 'fraud',
           description: `Chargeback via Shopify - ${payload.reason || 'Unknown reason'}`,
+          provider: 'shopify',
         });
 
         // Tag Shopify order
         if (store.access_token && store.shop_domain && payload.order_id) {
           await tagShopifyOrder(store.shop_domain, store.access_token, payload.order_id, 'CHARGEBACK');
         }
+
+        // Dispatch merchant webhook
+        await dispatchMerchantWebhook(supabase, tx.merchant_id, 'dispute.created', {
+          transaction_id: tx.id,
+          amount: payload.amount || tx.amount,
+          reason: payload.reason || 'fraud',
+          source: 'shopify',
+        });
 
         console.log(`Chargeback processed for transaction ${tx.id}`);
       }
