@@ -99,6 +99,16 @@ serve(async (req) => {
     const paymentData: PaymentRequest = await req.json();
     const { amount, currency, paymentMethod, customerEmail, description, idempotencyKey, cardDetails, deviceInfo } = paymentData;
 
+    // ─── Amount validation ───
+    if (!amount || amount <= 0) throw new Error('Invalid amount');
+    if (!currency) throw new Error('Currency is required');
+    if (amount > 999999) throw new Error('Amount exceeds maximum allowed');
+
+    // Validate expected amount if provided (prevents amount tampering)
+    if ((paymentData as any).expectedAmount && Number(amount) !== Number((paymentData as any).expectedAmount)) {
+      throw new Error('Amount mismatch — possible tampering detected');
+    }
+
     // Support two auth modes:
     // 1. Authenticated merchant (dashboard payments) — uses JWT to resolve merchant
     // 2. Guest checkout (payment links, hosted pages, invoices) — uses merchantId in body
