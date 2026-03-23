@@ -9,11 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { RotateCcw, DollarSign, CheckCircle2, XCircle, Clock, Search } from 'lucide-react';
+import { RotateCcw, DollarSign, CheckCircle2, XCircle, Clock, Search, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { RefundChargebackPanel } from '@/components/RefundChargebackPanel';
 
 function useRefunds() {
   return useQuery({
