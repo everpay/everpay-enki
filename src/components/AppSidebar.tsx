@@ -185,7 +185,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-3">
-                    {item.children.map((child) => {
+                    {item.children.filter((child) => {
+                      if (!child.visibleTo) return true;
+                      const roles = userRole?.roles || [];
+                      return child.visibleTo.some((r) => roles.includes(r));
+                    }).map((child) => {
                       const childActive = location.pathname === child.to;
                       return (
                         <NavLink
