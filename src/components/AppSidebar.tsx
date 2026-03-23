@@ -29,7 +29,6 @@ import {
   Globe,
   Bell,
   BookOpen,
-  Headphones,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -45,7 +44,7 @@ interface NavItem {
   to: string;
   icon: React.ElementType;
   label: string;
-  children?: NavItem[];
+  children?: { to: string; icon: React.ElementType; label: string }[];
   visibleTo?: string[];
 }
 
@@ -89,7 +88,7 @@ const navItems: NavItem[] = [
       { to: "/settlements", icon: Landmark, label: "Settlements" },
       { to: "/ledger", icon: BookOpen, label: "Ledger" },
       { to: "/audit-trail", icon: Shield, label: "Audit Trail" },
-      { to: "/fraud-graph", icon: Shield, label: "Fraud Intelligence", visibleTo: ["admin", "super_admin", "secops"] },
+      { to: "/fraud-graph", icon: Shield, label: "Fraud Intelligence" },
     ],
   },
   { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
@@ -115,7 +114,6 @@ const navItems: NavItem[] = [
   { to: "/live", icon: BarChart3, label: "Live Analytics" },
   { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "merchant", "admin", "super_admin"] },
   { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
-  { to: "/support", icon: Headphones, label: "Support Dashboard", visibleTo: ["support", "admin", "super_admin"] },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -187,11 +185,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-3">
-                    {item.children.filter((child) => {
-                      if (!child.visibleTo) return true;
-                      const roles = userRole?.roles || [];
-                      return child.visibleTo.some((r) => roles.includes(r));
-                    }).map((child) => {
+                    {item.children.map((child) => {
                       const childActive = location.pathname === child.to;
                       return (
                         <NavLink
