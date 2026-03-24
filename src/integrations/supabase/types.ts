@@ -2382,27 +2382,42 @@ export type Database = {
       shopify_stores: {
         Row: {
           access_token: string | null
+          auth_tag: string | null
+          encrypted_token: string | null
           id: string
           installed_at: string | null
+          iv: string | null
           merchant_id: string | null
           scope: string | null
           shop_domain: string | null
+          uninstalled: boolean | null
+          webhook_secret: string | null
         }
         Insert: {
           access_token?: string | null
+          auth_tag?: string | null
+          encrypted_token?: string | null
           id?: string
           installed_at?: string | null
+          iv?: string | null
           merchant_id?: string | null
           scope?: string | null
           shop_domain?: string | null
+          uninstalled?: boolean | null
+          webhook_secret?: string | null
         }
         Update: {
           access_token?: string | null
+          auth_tag?: string | null
+          encrypted_token?: string | null
           id?: string
           installed_at?: string | null
+          iv?: string | null
           merchant_id?: string | null
           scope?: string | null
           shop_domain?: string | null
+          uninstalled?: boolean | null
+          webhook_secret?: string | null
         }
         Relationships: [
           {
