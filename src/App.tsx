@@ -141,9 +141,11 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 }
 
 const AppRoutes = () => {
-  useInactivityLogout();
+  const { showWarning, secondsLeft, handleStayActive } = useInactivityLogout();
   usePostHogTracking();
   return (
+  <>
+  <InactivityWarningDialog open={showWarning} secondsLeft={secondsLeft} onStayActive={handleStayActive} />
   <Routes>
     {/* Front site pages (public) */}
     <Route path="/" element={<Landing />} />
