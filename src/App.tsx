@@ -47,6 +47,7 @@ import Ledger from "./pages/Ledger";
 import AuditTrail from "./pages/AuditTrail";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 import { usePostHogTracking } from "./hooks/usePostHogTracking";
+import { InactivityWarningDialog } from "./components/InactivityWarningDialog";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
