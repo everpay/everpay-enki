@@ -305,30 +305,63 @@ export default function Shopify() {
                 {stores.map((store) => (
                   <div
                     key={store.id}
-                    className="flex items-center justify-between rounded-lg border border-border p-4"
+                    className="rounded-lg border border-border p-4 space-y-3"
                   >
-                    <div className="flex items-center gap-3">
-                      <Store className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {store.shop_domain || 'Unknown Store'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Connected {store.installed_at ? new Date(store.installed_at).toLocaleDateString() : 'recently'}
-                        </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Store className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {store.shop_domain || 'Unknown Store'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Connected {store.installed_at ? new Date(store.installed_at).toLocaleDateString() : 'recently'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {store.scope ? (
+                          <Badge variant="default" className="gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Live
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="gap-1">
+                            <AlertCircle className="h-3 w-3" /> Simulation
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {store.scope ? (
-                        <Badge variant="default" className="gap-1">
-                          <CheckCircle2 className="h-3 w-3" /> Live
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="gap-1">
-                          <AlertCircle className="h-3 w-3" /> Simulation
-                        </Badge>
-                      )}
-                    </div>
+                    {store.access_token && (
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                        <Key className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <code className="text-xs font-mono flex-1 truncate">
+                          {visibleTokenStoreId === store.id
+                            ? store.access_token
+                            : store.access_token.slice(0, 8) + '•'.repeat(20)}
+                        </code>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground p-1"
+                          onClick={() => setVisibleTokenStoreId(visibleTokenStoreId === store.id ? null : store.id)}
+                          title={visibleTokenStoreId === store.id ? 'Hide token' : 'Show token'}
+                        >
+                          {visibleTokenStoreId === store.id ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground p-1"
+                          onClick={() => {
+                            navigator.clipboard.writeText(store.access_token!);
+                            setCopiedTokenStoreId(store.id);
+                            toast.success('Access token copied');
+                            setTimeout(() => setCopiedTokenStoreId(null), 2000);
+                          }}
+                          title="Copy token"
+                        >
+                          {copiedTokenStoreId === store.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
