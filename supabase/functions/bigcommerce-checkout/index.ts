@@ -72,6 +72,7 @@ serve(async (req) => {
     }
 
     // Process payment via Everpay (calls process-payment internally)
+    // Pass merchantId so process-payment can resolve the merchant without JWT
     const paymentResult = await supabase.functions.invoke('process-payment', {
       body: {
         amount: verifiedAmount,
@@ -81,8 +82,8 @@ serve(async (req) => {
         customerEmail: body.customer_email,
         cardDetails: body.card_details,
         billingDetails: body.billing_details,
+        merchantId: store.merchant_id,
       },
-      headers: req.headers,
     });
 
     if (paymentResult.error) {
