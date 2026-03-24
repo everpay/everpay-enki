@@ -106,7 +106,7 @@ export function useBigCommerce() {
     }
   };
 
-  const saveConfig = async (config: Partial<BCConfig> & { store_id: string }) => {
+  const saveConfig = async (config: Partial<BCConfig> & { store_id: string; everpay_secret?: string }) => {
     try {
       const { data, error } = await supabase.functions.invoke('bigcommerce-oauth', {
         body: { action: 'save_config', ...config },
