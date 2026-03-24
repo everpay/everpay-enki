@@ -731,6 +731,33 @@ export default function Settings() {
                   </Button>
                 </div>
               </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wider">Webhook Secret Key</Label>
+                <p className="text-xs text-muted-foreground">Used to verify webhook signatures via the <code className="text-primary">X-Everpay-Signature</code> header.</p>
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Input type={showWebhookSecret ? "text" : "password"} value={webhookSecret || "No secret generated"} readOnly className="pr-10 font-mono text-xs" />
+                    <button type="button" onClick={() => setShowWebhookSecret(!showWebhookSecret)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {showWebhookSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(webhookSecret); toast.success("Webhook secret copied"); }}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => {
+                    const newSecret = `whsec_${crypto.randomUUID().replace(/-/g, "")}`;
+                    setWebhookSecret(newSecret);
+                    navigator.clipboard.writeText(newSecret);
+                    toast.success("New webhook secret generated and copied. Store it securely!");
+                  }} className="gap-1.5">
+                    <RefreshCw className="h-3.5 w-3.5" /> {webhookSecret ? "Rotate" : "Generate"}
+                  </Button>
+                </div>
+              </div>
+
               <div className="rounded-lg border border-border bg-muted/50 p-4">
                 <h4 className="font-medium text-sm mb-2">Webhook Events</h4>
                 <div className="flex flex-wrap gap-2">
