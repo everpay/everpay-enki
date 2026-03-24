@@ -116,6 +116,8 @@ export default function Settings() {
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [showWebhookSecret, setShowWebhookSecret] = useState(false);
 
   // Team invite
   const [inviteEmail, setInviteEmail] = useState("");
