@@ -286,6 +286,69 @@ export type Database = {
           },
         ]
       }
+      bigcommerce_configs: {
+        Row: {
+          button_bg_color: string | null
+          button_text: string | null
+          button_text_color: string | null
+          checkout_script_enabled: boolean | null
+          created_at: string | null
+          everpay_public_key: string | null
+          everpay_secret_encrypted: string | null
+          header_text: string | null
+          id: string
+          merchant_id: string
+          store_id: string
+          test_mode: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          button_bg_color?: string | null
+          button_text?: string | null
+          button_text_color?: string | null
+          checkout_script_enabled?: boolean | null
+          created_at?: string | null
+          everpay_public_key?: string | null
+          everpay_secret_encrypted?: string | null
+          header_text?: string | null
+          id?: string
+          merchant_id: string
+          store_id: string
+          test_mode?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          button_bg_color?: string | null
+          button_text?: string | null
+          button_text_color?: string | null
+          checkout_script_enabled?: boolean | null
+          created_at?: string | null
+          everpay_public_key?: string | null
+          everpay_secret_encrypted?: string | null
+          header_text?: string | null
+          id?: string
+          merchant_id?: string
+          store_id?: string
+          test_mode?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bigcommerce_configs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bigcommerce_configs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "bigcommerce_stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bigcommerce_orders: {
         Row: {
           amount: number | null
@@ -341,9 +404,13 @@ export type Database = {
           id: string
           installed_at: string | null
           merchant_id: string | null
+          refresh_token: string | null
           scope: string | null
           shop_domain: string | null
           store_hash: string
+          token_updated_at: string | null
+          uninstalled: boolean | null
+          webhook_registered: boolean | null
         }
         Insert: {
           access_token?: string | null
@@ -351,9 +418,13 @@ export type Database = {
           id?: string
           installed_at?: string | null
           merchant_id?: string | null
+          refresh_token?: string | null
           scope?: string | null
           shop_domain?: string | null
           store_hash: string
+          token_updated_at?: string | null
+          uninstalled?: boolean | null
+          webhook_registered?: boolean | null
         }
         Update: {
           access_token?: string | null
@@ -361,9 +432,13 @@ export type Database = {
           id?: string
           installed_at?: string | null
           merchant_id?: string | null
+          refresh_token?: string | null
           scope?: string | null
           shop_domain?: string | null
           store_hash?: string
+          token_updated_at?: string | null
+          uninstalled?: boolean | null
+          webhook_registered?: boolean | null
         }
         Relationships: [
           {
@@ -371,6 +446,44 @@ export type Database = {
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bigcommerce_webhook_logs: {
+        Row: {
+          created_at: string | null
+          event_type: string | null
+          id: string
+          payload: Json | null
+          processed: boolean | null
+          source: string | null
+          store_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          source?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean | null
+          source?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bigcommerce_webhook_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "bigcommerce_stores"
             referencedColumns: ["id"]
           },
         ]
