@@ -14,7 +14,7 @@ export interface CountryPaymentConfig {
 export const COUNTRY_PAYMENT_CONFIGS: CountryPaymentConfig[] = [
   // Paygate10 countries
   { code: 'IN', name: 'India', flag: '🇮🇳', currency: 'INR', currencySymbol: '₹', provider: 'paygate10', paymentMethods: ['UPI', 'NB', 'UPIQRCode', 'Bank Transfer', 'Wallet'] },
-  { code: 'BR', name: 'Brazil', flag: '🇧🇷', currency: 'BRL', currencySymbol: 'R$', provider: 'paygate10', paymentMethods: ['PIX', 'Boleto', 'Bank Transfer'] },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷', currency: 'BRL', currencySymbol: 'R$', provider: 'facilitapay', paymentMethods: ['PIX', 'Boleto', 'Bank Transfer'] },
   { code: 'AR', name: 'Argentina', flag: '🇦🇷', currency: 'ARS', currencySymbol: '$', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Cash'] },
   { code: 'NG', name: 'Nigeria', flag: '🇳🇬', currency: 'NGN', currencySymbol: '₦', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Bank Deposit'] },
   { code: 'EG', name: 'Egypt', flag: '🇪🇬', currency: 'EGP', currencySymbol: 'E£', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Cash'] },
