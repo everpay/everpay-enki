@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle, Package, Key, Eye, EyeOff } from 'lucide-react';
+import { Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle, Package, Key, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
 
@@ -18,6 +18,7 @@ interface ShopifyStore {
   merchant_id: string | null;
   installed_at: string | null;
   scope: string | null;
+  access_token: string | null;
 }
 
 export default function Shopify() {
@@ -35,13 +36,14 @@ export default function Shopify() {
   const [showWebhookSecret, setShowWebhookSecret] = useState(false);
   const [isSavingKeys, setIsSavingKeys] = useState(false);
   const [sandboxMode, setSandboxMode] = useState(true);
-
+  const [visibleTokenStoreId, setVisibleTokenStoreId] = useState<string | null>(null);
+  const [copiedTokenStoreId, setCopiedTokenStoreId] = useState<string | null>(null);
   const fetchStores = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('shopify_stores')
-        .select('id, shop_domain, merchant_id, installed_at, scope')
+        .select('id, shop_domain, merchant_id, installed_at, scope, access_token')
         .order('installed_at', { ascending: false });
 
       if (error) throw error;
@@ -303,30 +305,63 @@ export default function Shopify() {
                 {stores.map((store) => (
                   <div
                     key={store.id}
-                    className="flex items-center justify-between rounded-lg border border-border p-4"
+                    className="rounded-lg border border-border p-4 space-y-3"
                   >
-                    <div className="flex items-center gap-3">
-                      <Store className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {store.shop_domain || 'Unknown Store'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Connected {store.installed_at ? new Date(store.installed_at).toLocaleDateString() : 'recently'}
-                        </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Store className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {store.shop_domain || 'Unknown Store'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Connected {store.installed_at ? new Date(store.installed_at).toLocaleDateString() : 'recently'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {store.scope ? (
+                          <Badge variant="default" className="gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Live
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="gap-1">
+                            <AlertCircle className="h-3 w-3" /> Simulation
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {store.scope ? (
-                        <Badge variant="default" className="gap-1">
-                          <CheckCircle2 className="h-3 w-3" /> Live
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="gap-1">
-                          <AlertCircle className="h-3 w-3" /> Simulation
-                        </Badge>
-                      )}
-                    </div>
+                    {store.access_token && (
+                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                        <Key className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <code className="text-xs font-mono flex-1 truncate">
+                          {visibleTokenStoreId === store.id
+                            ? store.access_token
+                            : store.access_token.slice(0, 8) + '•'.repeat(20)}
+                        </code>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground p-1"
+                          onClick={() => setVisibleTokenStoreId(visibleTokenStoreId === store.id ? null : store.id)}
+                          title={visibleTokenStoreId === store.id ? 'Hide token' : 'Show token'}
+                        >
+                          {visibleTokenStoreId === store.id ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground p-1"
+                          onClick={() => {
+                            navigator.clipboard.writeText(store.access_token!);
+                            setCopiedTokenStoreId(store.id);
+                            toast.success('Access token copied');
+                            setTimeout(() => setCopiedTokenStoreId(null), 2000);
+                          }}
+                          title="Copy token"
+                        >
+                          {copiedTokenStoreId === store.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
