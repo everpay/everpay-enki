@@ -292,7 +292,7 @@ export default function Settings() {
     { key: "notifications", label: "Webhook Notifications", icon: Mail },
     { key: "surcharging", label: "Surcharging", icon: Hash },
     { key: "team", label: "Team", icon: Users },
-    { key: "developers", label: "Developers & Activity", icon: Code },
+    { key: "developers", label: "Developers", icon: Code },
     { key: "processor-routing" as any, label: "Processor Routing", icon: Globe, link: "/processor-transparency" },
     { key: "multi-acquirer" as any, label: "Multi-Acquirer", icon: Globe, link: "/multi-acquirer" },
     { key: "smart-retry" as any, label: "Smart Retry AI", icon: Zap, link: "/smart-retry" },
