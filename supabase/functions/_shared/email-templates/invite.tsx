@@ -8,14 +8,16 @@ import {
   Container,
   Head,
   Heading,
+  Hr,
   Html,
   Img,
   Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
-const LOGO_URL = 'https://ccqiuoilfvuetajyjyiv.supabase.co/storage/v1/object/public/email-assets/everpay-icon.png'
+const LOGO_URL = 'https://dhobjuetzkvnkdoqeavy.supabase.co/storage/v1/object/public/email-assets/everpay-icon.png'
 
 interface InviteEmailProps {
   siteName: string
@@ -33,23 +35,27 @@ export const InviteEmail = ({
     <Preview>You've been invited to Everpay</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} width="40" height="40" alt="Everpay" style={logoImg} />
-        <Text style={logo}>Everpay</Text>
-        <Heading style={h1}>You've been invited</Heading>
+        <Section style={logoSection}>
+          <Img src={LOGO_URL} width="36" height="36" alt="Everpay" style={logoImg} />
+          <Text style={logoText}>Everpay</Text>
+        </Section>
+        <Hr style={divider} />
+        <Heading style={h1}>You've been invited to Everpay</Heading>
         <Text style={text}>
           You've been invited to join{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>Everpay</strong>
-          </Link>
-          . Click the button below to accept the invitation and set up your merchant account.
+          <Link href={siteUrl} style={link}><strong>Everpay</strong></Link>.
+          Click the button below to accept the invitation and set up your merchant account.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Accept Invitation
-        </Button>
+        <Section style={buttonSection}>
+          <Button style={button} href={confirmationUrl}>
+            Accept invitation
+          </Button>
+        </Section>
+        <Hr style={divider} />
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          If you weren't expecting this invitation, you can safely ignore this email.
         </Text>
+        <Text style={footerAddress}>Everpay Inc.</Text>
       </Container>
     </Body>
   </Html>
@@ -57,37 +63,43 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif" }
-const container = { padding: '32px 28px', maxWidth: '480px', margin: '0 auto' }
-const logoImg = { borderRadius: '8px', margin: '0 0 12px' }
-const logo = {
-  fontSize: '20px',
-  fontWeight: 'bold' as const,
-  fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-  color: 'hsl(172, 72%, 48%)',
-  margin: '0 0 24px',
+const main = { backgroundColor: '#f6f9fc', fontFamily: "Manrope, 'Helvetica Neue', Arial, sans-serif" }
+const container = { backgroundColor: '#ffffff', padding: '40px 32px', maxWidth: '520px', margin: '40px auto', borderRadius: '8px' }
+const logoSection = { display: 'flex' as const, alignItems: 'center' as const, gap: '10px', marginBottom: '0' }
+const logoImg = { borderRadius: '8px', verticalAlign: 'middle' as const }
+const logoText = {
+  fontSize: '22px',
+  fontWeight: '700' as const,
+  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
+  color: '#0f1419',
+  margin: '0',
 }
+const divider = { borderColor: '#e6ebf1', margin: '24px 0' }
 const h1 = {
-  fontSize: '24px',
-  fontWeight: 'bold' as const,
-  fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-  color: '#0f172a',
+  fontSize: '22px',
+  fontWeight: '700' as const,
+  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
+  color: '#0f1419',
   margin: '0 0 16px',
+  lineHeight: '1.4',
 }
 const text = {
   fontSize: '15px',
-  color: '#64748b',
-  lineHeight: '1.6',
+  color: '#525f7f',
+  lineHeight: '1.7',
   margin: '0 0 20px',
 }
-const link = { color: 'hsl(172, 72%, 42%)', textDecoration: 'underline' }
+const link = { color: '#1aa478', textDecoration: 'underline' }
+const buttonSection = { textAlign: 'center' as const, margin: '28px 0' }
 const button = {
-  backgroundColor: 'hsl(172, 72%, 48%)',
-  color: '#0f1419',
+  backgroundColor: '#1aa478',
+  color: '#ffffff',
   fontSize: '15px',
   fontWeight: '600' as const,
-  borderRadius: '8px',
-  padding: '14px 24px',
+  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
+  borderRadius: '999px',
+  padding: '14px 32px',
   textDecoration: 'none',
 }
-const footer = { fontSize: '13px', color: '#94a3b8', margin: '32px 0 0' }
+const footer = { fontSize: '13px', color: '#8898aa', margin: '0 0 8px', lineHeight: '1.5' }
+const footerAddress = { fontSize: '12px', color: '#aab7c4', margin: '0' }
