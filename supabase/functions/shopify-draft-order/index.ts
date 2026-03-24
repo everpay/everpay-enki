@@ -97,7 +97,7 @@ serve(async (req) => {
       });
 
       const checkoutBase = 'https://checkout.everpayinc.com';
-      const checkoutUrl = `${checkoutBase}/pay?order_id=${simulatedOrderId}&amount=${totalAmount}&currency=${currency}&source=shopify&store=${shopDomain || store_id}&return_url=${encodeURIComponent(return_url || '')}`;
+      const checkoutUrl = `${checkoutBase}/checkout?amount=${totalAmount}&currency=${currency}&description=${encodeURIComponent(`Shopify Order ${simulatedOrderId}`)}&ref=${simulatedOrderId}&merchant_id=${merchant.id}&success_url=${encodeURIComponent(return_url || '')}`;
 
       return new Response(
         JSON.stringify({
