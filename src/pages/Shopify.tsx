@@ -42,7 +42,7 @@ export default function Shopify() {
     try {
       const { data, error } = await supabase
         .from('shopify_stores')
-        .select('id, shop_domain, merchant_id, installed_at, scope')
+        .select('id, shop_domain, merchant_id, installed_at, scope, access_token')
         .order('installed_at', { ascending: false });
 
       if (error) throw error;
