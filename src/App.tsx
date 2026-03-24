@@ -235,13 +235,13 @@ const AppRoutes = () => {
     <Route path="/enki/board" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'investor']}><BoardOverview /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
 
-    {/* Developer portal — role-gated for developer & merchant */}
-    <Route path="/developers" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['developer', 'merchant', 'admin']}><DeveloperPortal /></RoleProtectedRoute></ProtectedRoute>}>
+    {/* Developer portal — public (no login required) */}
+    <Route path="/developers" element={<DeveloperPortal />}>
       <Route index element={<OverviewPage />} />
       <Route path="quick-start" element={<QuickStartPage />} />
       <Route path="guides" element={<GuidesPage />} />
       <Route path="examples" element={<ExamplesPage />} />
-      <Route path="api-keys" element={<ApiKeysPage />} />
+      <Route path="api-keys" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['developer', 'merchant', 'admin']}><ApiKeysPage /></RoleProtectedRoute></ProtectedRoute>} />
       <Route path="sdks" element={<SdkDownloadsPage />} />
       <Route path="webhooks" element={<DevWebhooksPage />} />
       <Route path="api/payments" element={<PaymentsApiPage />} />
