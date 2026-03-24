@@ -54,7 +54,8 @@ const countryProviderMap: Record<string, string> = {
   DK: 'mondo', NO: 'mondo', CH: 'mondo', PL: 'mondo', CZ: 'mondo', GR: 'mondo',
   CA: 'moneto',
   IN: 'paygate10', NG: 'paygate10', EG: 'paygate10', ZA: 'paygate10', KE: 'paygate10',
-  AR: 'paygate10', BR: 'paygate10', MX: 'paygate10',
+  AR: 'paygate10', MX: 'paygate10', PK: 'paygate10',
+  BR: 'facilitapay',
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
   BD: 'makapay',
@@ -68,8 +69,9 @@ function resolveProviderFromRequest(data: PaymentRequest): string {
     return countryProviderMap[country];
   }
   if (['EUR', 'GBP'].includes(data.currency)) return 'mondo';
-  if (['INR', 'NGN', 'EGP', 'ZAR', 'KES', 'ARS'].includes(data.currency)) return 'paygate10';
-  if (data.country === 'BD') return 'makapay';
+  if (data.currency === 'BRL') return 'facilitapay';
+  if (['INR', 'NGN', 'EGP', 'ZAR', 'KES', 'ARS', 'PKR'].includes(data.currency)) return 'paygate10';
+  if (data.currency === 'BDT') return 'makapay';
   if (['CNY', 'VND', 'THB', 'IDR', 'MYR', 'PHP', 'JPY', 'KRW', 'HKD', 'AUD'].includes(data.currency)) return 'ofa';
   if (data.currency === 'CAD') return 'moneto';
   if (data.currency === 'COP') return 'facilitapay';

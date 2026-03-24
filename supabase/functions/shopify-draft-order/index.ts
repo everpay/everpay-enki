@@ -97,7 +97,7 @@ serve(async (req) => {
       });
 
       const checkoutBase = 'https://checkout.everpayinc.com';
-      const checkoutUrl = `${checkoutBase}/pay?order_id=${simulatedOrderId}&amount=${totalAmount}&currency=${currency}&source=shopify&store=${shopDomain || store_id}&return_url=${encodeURIComponent(return_url || '')}`;
+      const checkoutUrl = `${checkoutBase}/checkout?amount=${totalAmount}&currency=${currency}&description=${encodeURIComponent(`Shopify Order ${simulatedOrderId}`)}&ref=${simulatedOrderId}&merchant_id=${merchant.id}&success_url=${encodeURIComponent(return_url || '')}`;
 
       return new Response(
         JSON.stringify({
@@ -170,7 +170,7 @@ serve(async (req) => {
 
     // Build Everpay checkout URL
     const checkoutBase = 'https://checkout.everpayinc.com';
-    const everpayCheckoutUrl = `${checkoutBase}/pay?order_id=${draftOrder.id}&amount=${draftOrder.total_price}&currency=${draftOrder.currency}&source=shopify&store=${shopDomain}&return_url=${encodeURIComponent(return_url || `https://${shopDomain}/orders`)}`;
+    const everpayCheckoutUrl = `${checkoutBase}/checkout?amount=${draftOrder.total_price}&currency=${draftOrder.currency}&description=${encodeURIComponent(`Shopify Order #${draftOrder.id}`)}&ref=${draftOrder.id}&merchant_id=${merchant.id}&success_url=${encodeURIComponent(return_url || `https://${shopDomain}/orders`)}`;
 
     return new Response(
       JSON.stringify({
