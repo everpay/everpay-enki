@@ -18,6 +18,7 @@ interface ShopifyStore {
   merchant_id: string | null;
   installed_at: string | null;
   scope: string | null;
+  access_token: string | null;
 }
 
 export default function Shopify() {
