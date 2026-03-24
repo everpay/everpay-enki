@@ -36,7 +36,8 @@ export default function Shopify() {
   const [showWebhookSecret, setShowWebhookSecret] = useState(false);
   const [isSavingKeys, setIsSavingKeys] = useState(false);
   const [sandboxMode, setSandboxMode] = useState(true);
-
+  const [visibleTokenStoreId, setVisibleTokenStoreId] = useState<string | null>(null);
+  const [copiedTokenStoreId, setCopiedTokenStoreId] = useState<string | null>(null);
   const fetchStores = async () => {
     setIsLoading(true);
     try {
