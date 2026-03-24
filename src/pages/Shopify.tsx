@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle, Package, Key, Eye, EyeOff } from 'lucide-react';
+import { Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle, Package, Key, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
 
