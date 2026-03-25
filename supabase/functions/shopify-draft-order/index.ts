@@ -31,6 +31,7 @@ interface DraftOrderRequest {
   currency?: string;
   note?: string;
   return_url?: string;
+  cancel_url?: string;
 }
 
 serve(async (req) => {
@@ -52,7 +53,7 @@ serve(async (req) => {
     if (userError || !user) throw new Error('Unauthorized');
 
     const body: DraftOrderRequest = await req.json();
-    const { store_id, line_items, customer, currency = 'USD', note, return_url } = body;
+    const { store_id, line_items, customer, currency = 'USD', note, return_url, cancel_url } = body;
 
     if (!store_id || !line_items?.length) {
       throw new Error('store_id and line_items are required');
@@ -97,7 +98,7 @@ serve(async (req) => {
       });
 
       const checkoutBase = 'https://checkout.everpayinc.com';
-      const checkoutUrl = `${checkoutBase}/checkout?amount=${totalAmount}&currency=${currency}&description=${encodeURIComponent(`Shopify Order ${simulatedOrderId}`)}&ref=${simulatedOrderId}&merchant_id=${merchant.id}&success_url=${encodeURIComponent(return_url || '')}`;
+      const checkoutUrl = `${checkoutBase}/checkout?amount=${totalAmount}&currency=${currency}&description=${encodeURIComponent(`Shopify Order ${simulatedOrderId}`)}&ref=${simulatedOrderId}&merchant_id=${merchant.id}&source=shopify&order_id=${simulatedOrderId}&success_url=${encodeURIComponent(return_url || '')}&cancel_url=${encodeURIComponent(cancel_url || return_url || '')}`;
 
       return new Response(
         JSON.stringify({
@@ -170,7 +171,9 @@ serve(async (req) => {
 
     // Build Everpay checkout URL
     const checkoutBase = 'https://checkout.everpayinc.com';
-    const everpayCheckoutUrl = `${checkoutBase}/checkout?amount=${draftOrder.total_price}&currency=${draftOrder.currency}&description=${encodeURIComponent(`Shopify Order #${draftOrder.id}`)}&ref=${draftOrder.id}&merchant_id=${merchant.id}&success_url=${encodeURIComponent(return_url || `https://${shopDomain}/orders`)}`;
+    const successRedirect = return_url || `https://${shopDomain}/orders`;
+    const cancelRedirect = cancel_url || return_url || `https://${shopDomain}/cart`;
+    const everpayCheckoutUrl = `${checkoutBase}/checkout?amount=${draftOrder.total_price}&currency=${draftOrder.currency}&description=${encodeURIComponent(`Shopify Order #${draftOrder.id}`)}&ref=${draftOrder.id}&merchant_id=${merchant.id}&source=shopify&order_id=${draftOrder.id}&success_url=${encodeURIComponent(successRedirect)}&cancel_url=${encodeURIComponent(cancelRedirect)}`;
 
     return new Response(
       JSON.stringify({
