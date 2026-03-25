@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Upload, Plus, Trash2, Send, FileSpreadsheet, Users, DollarSign, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface PayoutRecipient {
   id: string;
