@@ -91,6 +91,9 @@ import ProductsApiPage from "./pages/developer/api/ProductsApiPage";
 import MerchantsApiPage from "./pages/developer/api/MerchantsApiPage";
 import BankAccountsApiPage from "./pages/developer/api/BankAccountsApiPage";
 import AuthenticationApiPage from "./pages/developer/api/AuthenticationApiPage";
+import PaymentMethodsApiPage from "./pages/developer/api/PaymentMethodsApiPage";
+import PaymentLinksApiPage from "./pages/developer/api/PaymentLinksApiPage";
+import PlansApiPage from "./pages/developer/api/PlansApiPage";
 
 import FrontAbout from "./pages/front/About";
 import FrontPricing from "./pages/front/Pricing";
