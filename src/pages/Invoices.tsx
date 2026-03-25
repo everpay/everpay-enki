@@ -67,6 +67,20 @@ export default function Invoices() {
 
   const handleLineItemsChange = (items: LineItem[]) => { setLineItems(items); if (items.length > 0) setAmount(items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0).toFixed(2)); };
 
+  const handleProductsChange = (products: SelectedProduct[]) => {
+    setSelectedProducts(products);
+    // Convert selected products to line items
+    const newItems: LineItem[] = products.map(p => ({
+      description: p.name,
+      quantity: p.quantity,
+      unit_price: p.price,
+    }));
+    setLineItems(newItems);
+    if (products.length > 0) {
+      setAmount(products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2));
+    }
+  };
+
   const handleCreate = async () => {
     if (!amount || !customerEmail) { toast.error('Amount and email are required'); return; }
     setIsCreating(true);
