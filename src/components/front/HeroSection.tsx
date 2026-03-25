@@ -28,7 +28,7 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-black/55" />
 
       <div className="container relative z-10 mx-auto px-6">
-        <div className="max-w-[800px] mx-auto text-center">
+        <div className="max-w-[900px] mx-auto text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-1.5 mb-8">
             <div className="flex items-center gap-0.5">
               {[...Array(5)].map((_, i) => (
@@ -40,13 +40,13 @@ export function HeroSection() {
             <span className="text-sm font-medium text-white/90">Trusted by 1,000+ merchants</span>
           </div>
 
-          <h1 className="text-4xl md:text-[62px] lg:text-[72px] font-extrabold text-white leading-[1.08] tracking-tight mb-6 font-heading">
-            Accept Payments Everywhere. <span className="text-primary">Grow Faster.</span>
+          <h1 className="text-5xl md:text-[72px] lg:text-[88px] font-extrabold text-white leading-[1.05] tracking-tight mb-6 font-heading">
+            Payment infrastructure to{' '}
+            <span className="text-primary">grow your revenue.</span>
           </h1>
 
-          <p className="text-2x1 md:text-[24px] lg:text-[32px] text-white/70 font-medium max-w-[680px] mx-auto mb-10 leading-relaxed font-body">
-            Everpay gives your business the same payment infrastructure as the biggest brands. One platform for cards,
-            wallets, and local payment methods worldwide.
+          <p className="text-lg md:text-[22px] lg:text-[26px] text-white/65 font-medium max-w-[720px] mx-auto mb-12 leading-relaxed font-body">
+            Accept payments, offer financial services, and implement custom revenue models — from your first transaction to your billionth.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -55,16 +55,16 @@ export function HeroSection() {
                 size="lg"
                 className="bg-primary hover:bg-primary/85 text-primary-foreground rounded-full px-8 h-12 text-base font-semibold shadow-none min-w-[200px] active:scale-[0.97] transition-all"
               >
-                Get a free demo
+                Get started →
               </Button>
             </Link>
-            <Link to="/login">
+            <Link to="/contact">
               <Button
                 size="lg"
                 variant="outline"
                 className="border-2 border-white/30 bg-transparent text-white hover:bg-white/10 hover:border-white/50 rounded-full px-8 h-12 text-base font-semibold shadow-none min-w-[200px] active:scale-[0.97] transition-all"
               >
-                Start accepting payments
+                Contact sales
               </Button>
             </Link>
           </div>

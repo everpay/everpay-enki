@@ -32,9 +32,17 @@ export const MagicLinkEmail = ({
     <Preview>Your Everpay sign-in link</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={logoSection}>
-          <Img src={LOGO_URL} width="36" height="36" alt="Everpay" style={logoImg} />
-          <Text style={logoText}>Everpay</Text>
+        <Section>
+          <table cellPadding="0" cellSpacing="0" style={{ border: 'none' }}>
+            <tr>
+              <td style={{ verticalAlign: 'middle', paddingRight: '10px' }}>
+                <Img src={LOGO_URL} width="36" height="36" alt="Everpay" style={logoImg} />
+              </td>
+              <td style={{ verticalAlign: 'middle' }}>
+                <Text style={logoText}>Everpay</Text>
+              </td>
+            </tr>
+          </table>
         </Section>
         <Hr style={divider} />
         <Heading style={h1}>Sign in to Everpay</Heading>
@@ -63,8 +71,7 @@ export default MagicLinkEmail
 
 const main = { backgroundColor: '#f6f9fc', fontFamily: "Manrope, 'Helvetica Neue', Arial, sans-serif" }
 const container = { backgroundColor: '#ffffff', padding: '40px 32px', maxWidth: '520px', margin: '40px auto', borderRadius: '8px' }
-const logoSection = { display: 'flex' as const, alignItems: 'center' as const, gap: '10px', marginBottom: '0' }
-const logoImg = { borderRadius: '8px', verticalAlign: 'middle' as const }
+const logoImg = { borderRadius: '8px' }
 const logoText = {
   fontSize: '22px',
   fontWeight: '700' as const,
