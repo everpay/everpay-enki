@@ -27,18 +27,16 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
     <Preview>Your Everpay verification code: {token}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section>
-          <table cellPadding="0" cellSpacing="0" style={{ border: 'none' }}>
-            <tr>
-              <td style={{ verticalAlign: 'middle', paddingRight: '10px' }}>
-                <Img src={LOGO_URL} width="36" height="36" alt="Everpay" style={logoImg} />
-              </td>
-              <td style={{ verticalAlign: 'middle' }}>
-                <Text style={logoText}>Everpay</Text>
-              </td>
-            </tr>
-          </table>
-        </Section>
+        <table cellPadding="0" cellSpacing="0" border={0} style={{ border: 'none', borderCollapse: 'collapse' }}>
+          <tr>
+            <td style={{ verticalAlign: 'middle', paddingRight: '12px', lineHeight: '1' }}>
+              <Img src={LOGO_URL} width="40" height="40" alt="Everpay" style={logoImg} />
+            </td>
+            <td style={{ verticalAlign: 'middle', lineHeight: '1' }}>
+              <span style={{ fontSize: '24px', fontWeight: 700, fontFamily: "Sora, 'Helvetica Neue', sans-serif", color: '#0f1419', lineHeight: '1' }}>Everpay</span>
+            </td>
+          </tr>
+        </table>
         <Hr style={divider} />
         <Heading style={h1}>Your verification code</Heading>
         <Text style={text}>Your Everpay verification code is:</Text>
