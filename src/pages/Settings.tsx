@@ -786,6 +786,39 @@ export default function Settings() {
           </Card>
 
           <DevelopersSection />
+
+          {/* Quick Reference Links */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5" /> API Documentation</CardTitle>
+              <CardDescription>Quick access to API references and integration guides.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { label: "Quick Start Guide", to: "/developers/quickstart", icon: Zap },
+                  { label: "Payments API", to: "/developers/api/payments", icon: CreditCard },
+                  { label: "Customers API", to: "/developers/api/customers", icon: User },
+                  { label: "Transactions API", to: "/developers/api/transactions", icon: ArrowLeftRight },
+                  { label: "Subscriptions API", to: "/developers/api/subscriptions", icon: RefreshCw },
+                  { label: "Webhooks Guide", to: "/developers/webhooks", icon: Webhook },
+                  { label: "SDK Downloads", to: "/developers/sdks", icon: Code },
+                  { label: "Code Examples", to: "/developers/examples", icon: Code },
+                ].map((link) => (
+                  <Button
+                    key={link.to}
+                    variant="outline"
+                    className="justify-start gap-2 h-auto py-3"
+                    onClick={() => navigate(link.to)}
+                  >
+                    <link.icon className="h-4 w-4 text-primary" />
+                    <span className="text-sm">{link.label}</span>
+                    <ChevronRight className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

@@ -112,7 +112,7 @@ const navItems: NavItem[] = [
       { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
     ],
   },
-  { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "merchant", "admin", "super_admin"] },
+  { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "admin", "super_admin"] },
   { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
 ];
 
