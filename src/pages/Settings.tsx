@@ -38,6 +38,9 @@ import {
   UserPlus,
   Shield,
   DollarSign,
+  BookOpen,
+  CreditCard,
+  ArrowLeftRight,
 } from "lucide-react";
 import { useProviderEvents } from "@/hooks/useProviderEvents";
 import { formatDate } from "@/lib/format";
