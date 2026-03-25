@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle,
-  Package, Key, Eye, EyeOff, Copy, Check, Trash2, Pencil, ExternalLink, RefreshCw,
+  Package, Key, Eye, EyeOff, Copy, Check, Trash2, Pencil, ExternalLink, RefreshCw, Download,
 } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
