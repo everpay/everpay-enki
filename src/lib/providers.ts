@@ -176,6 +176,7 @@ export function getProviderColor(provider: Provider): string {
     case 'makapay': return 'hsl(160 70% 45%)';
     case 'payok': return 'hsl(200 80% 50%)';
     case 'lipad': return 'hsl(35 90% 50%)';
+    case 'prometeo': return 'hsl(155 65% 42%)';
     default: return 'hsl(var(--chart-1))';
   }
 }
