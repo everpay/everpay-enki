@@ -111,6 +111,7 @@ const navItems: NavItem[] = [
       { to: "/treasury", icon: Landmark, label: "Liquidity & FX", visibleTo: ["admin", "super_admin"] },
       { to: "/settlements", icon: Landmark, label: "Settlements" },
       { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
+      { to: "/mass-payouts", icon: Users, label: "Mass Payouts" },
     ],
   },
   { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "admin", "super_admin"] },
