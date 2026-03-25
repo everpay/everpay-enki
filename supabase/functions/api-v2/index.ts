@@ -124,6 +124,38 @@ const json = (status: number, body: unknown, reqId?: string) =>
  *   GET    /events/:id            — Get event detail
  */
 
+// ─── Rate Limiting (in-memory, per-merchant) ───
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RL_WINDOW_MS = 60_000;
+const RL_MAX_REQUESTS = 120; // 120 req/min per API key
+
+function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetAt: number } {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + RL_WINDOW_MS });
+    return { allowed: true, remaining: RL_MAX_REQUESTS - 1, resetAt: now + RL_WINDOW_MS };
+  }
+  entry.count++;
+  return { allowed: entry.count <= RL_MAX_REQUESTS, remaining: Math.max(0, RL_MAX_REQUESTS - entry.count), resetAt: entry.resetAt };
+}
+
+// ─── Input sanitization ───
+function sanitizeInput(val: unknown): unknown {
+  if (typeof val === 'string') {
+    return val.replace(/<[^>]*>/g, '').slice(0, 10000);
+  }
+  if (Array.isArray(val)) return val.map(sanitizeInput);
+  if (val && typeof val === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+      out[k.replace(/[^\w.-]/g, '')] = sanitizeInput(v);
+    }
+    return out;
+  }
+  return val;
+}
+
 // ─── Helpers ───
 function parsePagination(url: URL) {
   const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '25'), 1), 100);
@@ -187,6 +219,29 @@ Deno.serve(async (req) => {
         doc_url: 'https://developers.everpayinc.com/api/authentication',
       }
     }, reqId);
+  }
+
+  // ─── Rate Limit (per merchant) ───
+  const rl = checkRateLimit(merchantId);
+  if (!rl.allowed) {
+    return new Response(JSON.stringify({
+      error: {
+        type: 'rate_limit_error',
+        code: 'rate_limit_exceeded',
+        message: `Rate limit exceeded. Max ${RL_MAX_REQUESTS} requests per minute.`,
+      }
+    }), {
+      status: 429,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'X-Request-Id': reqId,
+        'X-RateLimit-Limit': String(RL_MAX_REQUESTS),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': String(Math.ceil(rl.resetAt / 1000)),
+        'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+      },
+    });
   }
 
   // ─── Idempotency ───
