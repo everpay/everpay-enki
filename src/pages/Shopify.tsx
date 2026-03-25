@@ -73,6 +73,39 @@ export default function Shopify() {
   const [deleteStore, setDeleteStore] = useState<ShopifyStore | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Import products state
+  const [importingStoreId, setImportingStoreId] = useState<string | null>(null);
+
+  const handleImportProducts = async (store: ShopifyStore) => {
+    if (!store.access_token) {
+      toast.error('No access token. Connect via OAuth first.');
+      return;
+    }
+    setImportingStoreId(store.id);
+    try {
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+      if (!merchant) throw new Error('Merchant not found');
+
+      const { data, error } = await supabase.functions.invoke('shopify-sync-products', {
+        body: { store_id: store.id, merchant_id: merchant.id },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success(`Imported ${data.imported} new products, updated ${data.updated} existing (${data.errors} errors)`);
+      } else {
+        toast.error(data?.error || 'Import failed');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to import products');
+    } finally {
+      setImportingStoreId(null);
+    }
+  };
+
   // Fetch token via OAuth
   const [fetchingTokenStoreId, setFetchingTokenStoreId] = useState<string | null>(null);
 
