@@ -33,6 +33,10 @@ const navSections = [
       { label: "Payouts", icon: Banknote, to: "/developers/api/payouts" },
       { label: "Wallets", icon: Wallet, to: "/developers/api/wallets" },
       { label: "Bank Accounts", icon: Landmark, to: "/developers/api/bank-accounts" },
+      { label: "3D Secure", icon: Key, to: "/developers/api/3d-secure" },
+      { label: "Disputes", icon: Users, to: "/developers/api/disputes" },
+      { label: "Bank Debits", icon: Landmark, to: "/developers/api/bank-debits" },
+      { label: "Bank Redirects", icon: ArrowLeftRight, to: "/developers/api/bank-redirects" },
     ],
   },
   {
