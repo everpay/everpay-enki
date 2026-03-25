@@ -5,87 +5,425 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Globe, Server, CreditCard, Banknote, Shield, ExternalLink } from 'lucide-react';
+import { Globe, Server, CreditCard, Banknote, Shield, ExternalLink, Building2, Landmark, Wallet, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
+// ─── Types ───────────────────────────────────────────────────
 interface FeeRow {
   id: string;
-  currency: string;
-  geo: string;
-  trafficType: string;
-  brands: string;
-  depositFee: string;
-  payoutFee: string;
-  minDeposit: string;
-  maxDeposit: string;
-  chargebackFee: string;
-  refundFee: string;
-  rollingReserve: string;
-  settlementCurrency: string;
-  settlementPeriod: string;
-  settlementFee: string;
-  // Markup fields
+  method: string;
+  fee: string;
+  extra?: string;
   markupType: 'percentage' | 'fixed';
   markupValue: number;
 }
 
-const pacopayCardFees: FeeRow[] = [
-  { id: 'eur-ftd-mc-visa', currency: 'EUR', geo: 'Worldwide', trafficType: 'FTD', brands: 'Mastercard, Visa', depositFee: '11.5% + €0.60', payoutFee: '—', minDeposit: '€10', maxDeposit: '€9,000', chargebackFee: '€50', refundFee: '€5', rollingReserve: '5%, 180 days', settlementCurrency: 'USDC', settlementPeriod: 'T+3', settlementFee: '1.5%', markupType: 'percentage', markupValue: 0 },
-  { id: 'eur-ftd-mc', currency: 'EUR', geo: 'Worldwide', trafficType: 'FTD', brands: 'Mastercard', depositFee: '8.3% + €0.30', payoutFee: '—', minDeposit: '€1', maxDeposit: '€1,000', chargebackFee: '€65–80', refundFee: '€6', rollingReserve: '5%, 180 days', settlementCurrency: 'USDC', settlementPeriod: 'T+3', settlementFee: '1.5%', markupType: 'percentage', markupValue: 0 },
-  { id: 'eur-trusted-mc', currency: 'EUR', geo: 'Worldwide', trafficType: 'Trusted', brands: 'Mastercard', depositFee: '6% + €0.30', payoutFee: '2%', minDeposit: '€1', maxDeposit: '€1,000', chargebackFee: '€50', refundFee: '€5', rollingReserve: '5%, 180 days', settlementCurrency: 'USDT', settlementPeriod: 'T+7', settlementFee: '1.5%', markupType: 'percentage', markupValue: 0 },
-  { id: 'usd-trusted-kz', currency: 'USD', geo: 'Kazakhstan', trafficType: 'Trusted', brands: 'Mastercard, Visa', depositFee: '8% + $0.50', payoutFee: '—', minDeposit: '$10', maxDeposit: '$2,500', chargebackFee: '€75', refundFee: '€5', rollingReserve: '5%, 180 days', settlementCurrency: 'USDC', settlementPeriod: 'T+3', settlementFee: '1.5%', markupType: 'percentage', markupValue: 0 },
-  { id: 'azn-trusted', currency: 'AZN (EUR)', geo: 'Azerbaijan', trafficType: 'Trusted', brands: 'Mastercard, Visa', depositFee: '15% + ₼0.70', payoutFee: '—', minDeposit: '₼18', maxDeposit: '₼16,980', chargebackFee: '$100', refundFee: '€6', rollingReserve: '5%, 180 days', settlementCurrency: 'USDC', settlementPeriod: 'T+3', settlementFee: '1.5%', markupType: 'percentage', markupValue: 0 },
+interface ProcessorConfig {
+  id: string;
+  name: string;
+  displayName: string;
+  status: 'live' | 'active' | 'payouts-only' | 'referral';
+  statusLabel: string;
+  description: string;
+  regions: string[];
+  currencies: string[];
+  apiEndpoint?: string;
+  docsUrl?: string;
+  authMethod?: string;
+  settlementTerms: string;
+  rollingReserve: string;
+  contractEntity?: string;
+  icon: React.ReactNode;
+  endpoints: { method: string; path: string; desc: string; status: 'live' | 'disabled' }[];
+  fees: FeeRow[];
+}
+
+// ─── Processor Data ───────────────────────────────────────────
+const processors: ProcessorConfig[] = [
+  {
+    id: 'shieldhub',
+    name: 'shieldhub',
+    displayName: 'ShieldHub (CBCG)',
+    status: 'live',
+    statusLabel: 'Live — Primary Card Processor',
+    description: 'Global credit/debit card processing via CBCG/ShieldHub. Visa & Mastercard. 2D & 3DS flows.',
+    regions: ['US', 'MX', 'Global'],
+    currencies: ['USD'],
+    apiEndpoint: 'pgw.shieldhubpay.com',
+    contractEntity: 'Corporate Business Consulting Group (CBCG), Panama',
+    authMethod: 'Client ID + API Secret',
+    settlementTerms: 'T+7 (Weekly) — SWIFT at cost (1.5%) or Crypto (USDT/USDC). Min settlement $10,000',
+    rollingReserve: '10% held for 180 days',
+    icon: <Shield className="h-5 w-5 text-primary" />,
+    endpoints: [
+      { method: 'POST', path: '/api/v2/payments', desc: 'Process card payment', status: 'live' },
+      { method: 'POST', path: '/api/v2/payments/3ds', desc: '3DS authentication', status: 'live' },
+      { method: 'GET', path: '/api/v2/payments/:id', desc: 'Query payment status', status: 'live' },
+    ],
+    fees: [
+      { id: 'sh-mdr', method: 'Card MDR (2DS & 3DS)', fee: '6.50%', markupType: 'percentage', markupValue: 0 },
+      { id: 'sh-gw', method: 'Approved Gateway Fee', fee: '$0.30 / tx', markupType: 'fixed', markupValue: 0 },
+      { id: 'sh-gwdec', method: 'Declined Gateway Fee', fee: '$0.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'sh-refund', method: 'Refund Fee', fee: '$12.00 / refund', markupType: 'fixed', markupValue: 0 },
+      { id: 'sh-cb', method: 'Chargeback Fee', fee: '$60.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'sh-settle-swift', method: 'Settlement — SWIFT', fee: '1.5%', markupType: 'percentage', markupValue: 0 },
+      { id: 'sh-settle-crypto', method: 'Settlement — Crypto', fee: 'At cost', markupType: 'percentage', markupValue: 0 },
+      { id: 'sh-velocity', method: 'Card Velocity Limit', fee: '3 per card/day', markupType: 'fixed', markupValue: 0 },
+      { id: 'sh-txlimit', method: 'Transaction Limits', fee: '$5.00 – $1,000.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'sh-cbpenalty', method: 'CB Penalty (>1% rate)', fee: '+1% on processing rate', markupType: 'percentage', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'mondo',
+    name: 'mondo',
+    displayName: 'Mondo (GetMondo)',
+    status: 'live',
+    statusLabel: 'Live — EU/UK Card Processing',
+    description: 'European card processing via Mondax Technology. Visa, Mastercard, SEPA, Open Banking, Virtual IBAN.',
+    regions: ['EU', 'UK'],
+    currencies: ['EUR', 'GBP'],
+    apiEndpoint: 'server-to-server.getmondo.co',
+    docsUrl: 'https://getmondo.co',
+    contractEntity: 'Mondax Technology Sp Z OO, Poland (KRS0000965698)',
+    authMethod: 'Account ID + Gateway Secret Key',
+    settlementTerms: 'T+5 initial, then Weekly. Currency conversion at market + 1.0% settlement fee.',
+    rollingReserve: '10% for 180 days (reducible to 5% after 6 months clean processing)',
+    icon: <Globe className="h-5 w-5 text-blue-500" />,
+    endpoints: [
+      { method: 'POST', path: '/payment/create/', desc: 'Create payment session', status: 'live' },
+      { method: 'POST', path: '/payment/status/', desc: 'Check payment status', status: 'live' },
+      { method: 'POST', path: '/payment/refund/', desc: 'Process refund', status: 'live' },
+    ],
+    fees: [
+      { id: 'mo-eu-tx-fixed', method: 'Card Transaction (EU) — Fixed', fee: '€0.40 / tx', markupType: 'fixed', markupValue: 0 },
+      { id: 'mo-eu-tx-pct', method: 'Card Transaction (EU) — %', fee: 'Negotiated %', markupType: 'percentage', markupValue: 0 },
+      { id: 'mo-noneu-tx-fixed', method: 'Card Transaction (Non-EU) — Fixed', fee: '€0.40 / tx', markupType: 'fixed', markupValue: 0 },
+      { id: 'mo-noneu-tx-pct', method: 'Card Transaction (Non-EU) — %', fee: 'Negotiated %', markupType: 'percentage', markupValue: 0 },
+      { id: 'mo-refund', method: 'Refund Fee', fee: '€1.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mo-cb', method: 'Chargeback Fee', fee: '€50.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mo-sepa-in', method: 'SEPA Pay-In', fee: 'Negotiated %', markupType: 'percentage', markupValue: 0 },
+      { id: 'mo-sepa-out', method: 'SEPA Pay-Out', fee: 'Negotiated %', markupType: 'percentage', markupValue: 0 },
+      { id: 'mo-ob', method: 'Open Banking', fee: 'Negotiated % + €0.00 fixed', markupType: 'percentage', markupValue: 0 },
+      { id: 'mo-ob-refund', method: 'Open Banking Refund', fee: '€1.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mo-iban-setup', method: 'Virtual IBAN — Setup', fee: '€200 one-time', markupType: 'fixed', markupValue: 0 },
+      { id: 'mo-iban-monthly', method: 'Virtual IBAN — Monthly', fee: '€100 / month', markupType: 'fixed', markupValue: 0 },
+      { id: 'mo-settle-fx', method: 'FX Settlement Fee', fee: '1.0%', markupType: 'percentage', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'facilitapay',
+    name: 'facilitapay',
+    displayName: 'FacilitaPay',
+    status: 'live',
+    statusLabel: 'Live — LATAM Processing',
+    description: 'Unified LATAM payment processing. PIX, Boleto, SPEI, PSE, Cards. Brazil, Mexico, Colombia.',
+    regions: ['BR', 'MX', 'CO'],
+    currencies: ['BRL', 'MXN', 'COP'],
+    docsUrl: 'https://www.facilitapay.com',
+    contractEntity: 'Facilita Inc., Miami FL / Nova Lima MG, Brazil',
+    authMethod: 'API Key',
+    settlementTerms: 'SWIFT — FREE for transfers >$5k USD ($45 fee if <$5k). USDC/USDT +0.20%.',
+    rollingReserve: 'None specified',
+    icon: <Banknote className="h-5 w-5 text-emerald-500" />,
+    endpoints: [
+      { method: 'POST', path: '/v1/payments', desc: 'Create payment', status: 'live' },
+      { method: 'POST', path: '/v1/payouts', desc: 'Create payout', status: 'live' },
+    ],
+    fees: [
+      // Brazil
+      { id: 'fp-br-spread-500k', method: '🇧🇷 FX Spread (≤500k/mo)', fee: '0.90%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-br-spread-1m', method: '🇧🇷 FX Spread (500k–1M/mo)', fee: '0.70%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-br-spread-1m+', method: '🇧🇷 FX Spread (>1M/mo)', fee: '0.50%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-br-pix', method: '🇧🇷 PIX Pay-In', fee: '0.30 BRL', markupType: 'fixed', markupValue: 0 },
+      { id: 'fp-br-ted', method: '🇧🇷 TED Pay-In', fee: '0.30 BRL', markupType: 'fixed', markupValue: 0 },
+      { id: 'fp-br-boleto', method: '🇧🇷 Boleto Bancário', fee: '2.00 BRL', markupType: 'fixed', markupValue: 0 },
+      { id: 'fp-br-debit', method: '🇧🇷 Debit Card', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-br-credit', method: '🇧🇷 Credit Card (D+30)', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-br-pix-out', method: '🇧🇷 PIX Payout', fee: '0.40 BRL', markupType: 'fixed', markupValue: 0 },
+      { id: 'fp-br-ted-out', method: '🇧🇷 TED Payout', fee: '0.40 BRL', markupType: 'fixed', markupValue: 0 },
+      // Mexico
+      { id: 'fp-mx-spread-500k', method: '🇲🇽 FX Spread (≤500k/mo)', fee: '1.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-mx-spread-1m', method: '🇲🇽 FX Spread (500k–1M/mo)', fee: '0.80%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-mx-spread-1m+', method: '🇲🇽 FX Spread (>1M/mo)', fee: '0.60%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-mx-spei', method: '🇲🇽 SPEI Pay-In', fee: '4.50 MXN', markupType: 'fixed', markupValue: 0 },
+      { id: 'fp-mx-card', method: '🇲🇽 Credit/Debit Card', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-mx-spei-out', method: '🇲🇽 SPEI Payout', fee: '5.00 MXN', markupType: 'fixed', markupValue: 0 },
+      // Colombia
+      { id: 'fp-co-spread-500k', method: '🇨🇴 FX Spread (≤500k/mo)', fee: '1.20%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-co-spread-1m', method: '🇨🇴 FX Spread (500k–1M/mo)', fee: '1.10%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-co-spread-1m+', method: '🇨🇴 FX Spread (>1M/mo)', fee: '1.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-co-pse', method: '🇨🇴 PSE/Bank Transfer Pay-In', fee: '1,800 COP', markupType: 'fixed', markupValue: 0 },
+      { id: 'fp-co-card', method: '🇨🇴 Credit/Debit Card', fee: '4.30%', markupType: 'percentage', markupValue: 0 },
+      { id: 'fp-co-pse-out', method: '🇨🇴 PSE/Bank Transfer Payout', fee: '3,000 COP', markupType: 'fixed', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'moneto',
+    name: 'moneto',
+    displayName: 'Moneto',
+    status: 'referral',
+    statusLabel: 'Active — Referral Partner (Canada)',
+    description: 'Canadian payout services, digital wallet, and payment processing. Referral partnership with revenue split.',
+    regions: ['CA'],
+    currencies: ['CAD', 'USD'],
+    docsUrl: 'https://moneto.ca',
+    contractEntity: '14705203 Canada Inc o/a Moneto, Montreal QC',
+    authMethod: 'Partner API',
+    settlementTerms: 'Per Moneto Client Agreement. Revenue split 50/50 on added fees.',
+    rollingReserve: 'Per client agreement',
+    icon: <Wallet className="h-5 w-5 text-violet-500" />,
+    endpoints: [
+      { method: 'POST', path: '/api/wallet/create', desc: 'Create wallet', status: 'live' },
+      { method: 'POST', path: '/api/wallet/transfer', desc: 'Transfer funds', status: 'live' },
+    ],
+    fees: [
+      { id: 'mn-swift-in', method: 'SWIFT In', fee: '$30 + 0.4%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-swift-out', method: 'SWIFT Out', fee: '$30 + 0.4%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-ach-in', method: 'ACH In', fee: '$0.35 + 0.2%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-ach-out', method: 'ACH Out', fee: '$0.35 + 0.2%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-fed-in', method: 'Fedwire In', fee: '$20 + 0.2%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-fed-out', method: 'Fedwire Out', fee: '$20 + 0.2%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-sepa-in', method: 'SEPA In', fee: '€4.50 + 0.2%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-sepa-out', method: 'SEPA Out', fee: '€4.50 + 0.2%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-maint', method: 'Account Maintenance', fee: '$1,000 / month', markupType: 'fixed', markupValue: 0 },
+      { id: 'mn-onboard', method: 'Onboarding Fee', fee: '$2,500 one-time', markupType: 'fixed', markupValue: 0 },
+      { id: 'mn-fx', method: 'FX Conversions', fee: '1.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-stable', method: 'Stablecoin Exchange', fee: '1.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-mdr-3m', method: 'Card MDR ($0–3M)', fee: '5.85%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-mdr-5m', method: 'Card MDR ($3–5M)', fee: '5.65%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-mdr-5m+', method: 'Card MDR ($5M+)', fee: '5.50%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mn-tx-fee', method: 'Transaction Fee', fee: '$0.30 / tx', markupType: 'fixed', markupValue: 0 },
+      { id: 'mn-cb', method: 'Chargeback Fee', fee: '$45.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mn-refund', method: 'Refund Fee', fee: '$20.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mn-3ds', method: '3DS per Transaction', fee: '$0.40', markupType: 'fixed', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'makapay',
+    name: 'makapay',
+    displayName: 'MakaPay',
+    status: 'live',
+    statusLabel: 'Live — Bangladesh',
+    description: 'Bangladesh payment processing. SSLCommerz, SurjoPay, bKash, Nagad. Everpay acts as Provider.',
+    regions: ['BD'],
+    currencies: ['USD'],
+    apiEndpoint: 'makapp.xyz/api/v1',
+    contractEntity: 'Makapp Bangladesh (Merchant) — Everpay Corporation (Provider)',
+    authMethod: 'API Key + Secret',
+    settlementTerms: 'T+2 (Weekly, 2 payments). SWIFT free. Crypto 1.25% at cost. Min settlement $5,000.',
+    rollingReserve: 'None',
+    icon: <Building2 className="h-5 w-5 text-teal-500" />,
+    endpoints: [
+      { method: 'POST', path: '/api/v1/initiate', desc: 'Initiate payment', status: 'live' },
+      { method: 'POST', path: '/api/v1/verify', desc: 'Verify payment', status: 'live' },
+    ],
+    fees: [
+      { id: 'mk-mdr', method: 'Card MDR (2DS & 3DS)', fee: '8.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'mk-gw', method: 'Approved Gateway Fee', fee: '$0.30 / tx', markupType: 'fixed', markupValue: 0 },
+      { id: 'mk-gwdec', method: 'Declined Gateway Fee', fee: '$0.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mk-refund', method: 'Refund Fee', fee: '$12.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mk-cb', method: 'Chargeback Fee', fee: '$60.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mk-settle-swift', method: 'Settlement — SWIFT', fee: 'Free', markupType: 'fixed', markupValue: 0 },
+      { id: 'mk-settle-crypto', method: 'Settlement — Crypto', fee: '1.25% at cost', markupType: 'percentage', markupValue: 0 },
+      { id: 'mk-velocity', method: 'Card Velocity', fee: '3 per card/day', markupType: 'fixed', markupValue: 0 },
+      { id: 'mk-txlimit', method: 'Transaction Limits', fee: '$5.00 – $1,000.00', markupType: 'fixed', markupValue: 0 },
+      { id: 'mk-cbpenalty', method: 'CB Penalty (>1.5% rate)', fee: '+1% on processing rate', markupType: 'percentage', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'pacopay',
+    name: 'pacopay',
+    displayName: 'PacoPay',
+    status: 'payouts-only',
+    statusLabel: 'Live — Payouts (USD)',
+    description: 'Card processing, APMs, LATAM local payments, and Payout to Card. Currently enabled for USD payouts only.',
+    regions: ['Worldwide', 'LATAM', 'EU', 'KZ', 'AZ'],
+    currencies: ['EUR', 'USD', 'UYU', 'CLP', 'ARS', 'MXN', 'KZT', 'AZN'],
+    apiEndpoint: 'gateway.paco-pay.com',
+    docsUrl: 'https://docs.paco-pay.com',
+    authMethod: 'Basic Auth (Shop ID + Secret)',
+    settlementTerms: 'T+3 to T+7 — USDC/USDT via crypto. Min $10,000.',
+    rollingReserve: '5% for 180 days (Card); 10% for 180 days (LATAM)',
+    icon: <Server className="h-5 w-5 text-orange-500" />,
+    endpoints: [
+      { method: 'POST', path: '/ctp/api/checkouts', desc: 'Create checkout token', status: 'disabled' },
+      { method: 'POST', path: '/transactions/payments', desc: 'Process card / APM payment', status: 'disabled' },
+      { method: 'POST', path: '/transactions/payouts', desc: 'Payout to card (USD)', status: 'live' },
+      { method: 'GET', path: '/transactions/:uid', desc: 'Query transaction status', status: 'live' },
+    ],
+    fees: [
+      // Card
+      { id: 'pp-eur-ftd-mcvisa', method: 'Card EUR FTD (MC+Visa)', fee: '11.5% + €0.60', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-eur-ftd-mc', method: 'Card EUR FTD (MC only)', fee: '8.3% + €0.30', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-eur-trust-mc', method: 'Card EUR Trusted (MC)', fee: '6% + €0.30', extra: 'Payout: 2%', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-usd-kz', method: 'Card USD Kazakhstan', fee: '8% + $0.50', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-azn', method: 'Card AZN Azerbaijan', fee: '15% + ₼0.70', markupType: 'percentage', markupValue: 0 },
+      // APM
+      { id: 'pp-apple-ftd', method: 'Apple/Google Pay FTD', fee: '8.3% + €0.30', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-apple-trust', method: 'Apple/Google Pay Trusted', fee: '8% + €0.30', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-mbway', method: 'MbWay (Portugal)', fee: '8.5% + €0.25', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-openbank', method: 'Open Banking (EU)', fee: '5% / 4.5%', markupType: 'percentage', markupValue: 0 },
+      // LATAM
+      { id: 'pp-uyu', method: 'Uruguay (UYU)', fee: '4% + $2', extra: 'Payout: 3.5% + $2', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-clp', method: 'Chile (CLP)', fee: '3.5% + $3', extra: 'Payout: 3.5% + $2', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-ars', method: 'Argentina (ARS)', fee: '3.5% + $3', extra: 'Payout: 3.5% + $2', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-mxn', method: 'Mexico SPEI (MXN)', fee: '3.5% + $1.50', extra: 'Payout: 3.5% + $2', markupType: 'percentage', markupValue: 0 },
+      // Payouts
+      { id: 'pp-po-eur-mc', method: 'Payout EUR (MC)', fee: '2% USDT', markupType: 'percentage', markupValue: 0 },
+      { id: 'pp-po-eur-revolut', method: 'Payout EUR (Revolut MC/Visa)', fee: '2.1% + €0.40', markupType: 'percentage', markupValue: 0 },
+      // General
+      { id: 'pp-cb', method: 'Chargeback', fee: '€50–€100', markupType: 'fixed', markupValue: 0 },
+      { id: 'pp-refund', method: 'Refund', fee: '€1–€6', markupType: 'fixed', markupValue: 0 },
+      { id: 'pp-settle', method: 'Settlement Fee', fee: '1–1.5%', markupType: 'percentage', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'paygate10',
+    name: 'paygate10',
+    displayName: 'Paygate10',
+    status: 'live',
+    statusLabel: 'Live — India, Pakistan, LATAM',
+    description: 'Regional payment processing for India (UPI, NB), Pakistan (JazzCash, EasyPaisa), Argentina, Egypt, Mexico.',
+    regions: ['IN', 'PK', 'AR', 'EG', 'MX'],
+    currencies: ['USD', 'PKR', 'MXN'],
+    authMethod: 'API Key + MID',
+    settlementTerms: 'T+5 — Wire/Crypto',
+    rollingReserve: 'Varies by region',
+    icon: <Globe className="h-5 w-5 text-amber-500" />,
+    endpoints: [
+      { method: 'POST', path: '/api/payment/initiate', desc: 'Initiate payment', status: 'live' },
+      { method: 'GET', path: '/api/payment/status', desc: 'Check status', status: 'live' },
+    ],
+    fees: [
+      { id: 'pg-upi', method: 'UPI (India)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'pg-jc', method: 'JazzCash (Pakistan)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'pg-ep', method: 'EasyPaisa (Pakistan)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'pg-spei', method: 'SPEI (Mexico)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'ofa',
+    name: 'ofa',
+    displayName: 'OFA Pay',
+    status: 'live',
+    statusLabel: 'Live — Asia-Pacific',
+    description: 'Asia-Pacific payment rails. Alipay, VietQR, MOMO, QRIS, GCash, Maya, UPI. Crypto payouts (TRC/ERC).',
+    regions: ['CN', 'VN', 'TH', 'ID', 'MY', 'PH', 'JP', 'KR', 'HK', 'AU'],
+    currencies: ['USD', 'CNY', 'VND', 'IDR', 'PHP'],
+    apiEndpoint: 'www.jzc899.com',
+    authMethod: 'API Key + IP Whitelist',
+    settlementTerms: 'Per agreement — 2-step Google Authenticator required',
+    rollingReserve: 'Per agreement',
+    icon: <Globe className="h-5 w-5 text-rose-500" />,
+    endpoints: [
+      { method: 'POST', path: '/api/pay', desc: 'Create payment', status: 'live' },
+      { method: 'POST', path: '/api/payout', desc: 'Create payout', status: 'live' },
+    ],
+    fees: [
+      { id: 'ofa-alipay', method: 'Alipay (CNY)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'ofa-vietqr', method: 'VietQR (VND)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'ofa-qris', method: 'QRIS (IDR)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'ofa-gcash', method: 'GCash (PHP)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'ofa-crypto', method: 'Crypto Payout (TRC/ERC)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'lipad',
+    name: 'lipad',
+    displayName: 'Lipad.io',
+    status: 'live',
+    statusLabel: 'Live — Africa',
+    description: 'African payment processing. M-Pesa, Mobile Money, Airtel Money, Bank Transfer, Card.',
+    regions: ['KE', 'TZ', 'UG', 'GH', 'ZA', 'RW', 'ET', 'NG', 'CI', 'SN', 'CM'],
+    currencies: ['USD', 'KES', 'TZS', 'UGX', 'GHS', 'ZAR', 'NGN'],
+    apiEndpoint: 'api.lipad.io',
+    docsUrl: 'https://lipad.io',
+    authMethod: 'API Key',
+    settlementTerms: 'Per agreement',
+    rollingReserve: 'Per agreement',
+    icon: <Globe className="h-5 w-5 text-yellow-600" />,
+    endpoints: [
+      { method: 'POST', path: '/v1/checkout', desc: 'Create checkout', status: 'live' },
+      { method: 'GET', path: '/v1/status/:id', desc: 'Check status', status: 'live' },
+    ],
+    fees: [
+      { id: 'li-mpesa', method: 'M-Pesa', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-mm', method: 'Mobile Money', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-airtel', method: 'Airtel Money', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-card', method: 'Card (Africa)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'payok',
+    name: 'payok',
+    displayName: 'PayOK',
+    status: 'live',
+    statusLabel: 'Live — Turkey',
+    description: 'Turkish payment processing. Card and Bank Transfer.',
+    regions: ['TR'],
+    currencies: ['USD', 'TRY'],
+    authMethod: 'API Key',
+    settlementTerms: 'Per agreement',
+    rollingReserve: 'Per agreement',
+    icon: <Landmark className="h-5 w-5 text-cyan-500" />,
+    endpoints: [
+      { method: 'POST', path: '/api/payment', desc: 'Process payment', status: 'live' },
+    ],
+    fees: [
+      { id: 'pk-card', method: 'Card (Turkey)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      { id: 'pk-bank', method: 'Bank Transfer', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+    ],
+  },
+  {
+    id: 'plaid',
+    name: 'plaid',
+    displayName: 'Plaid',
+    status: 'active',
+    statusLabel: 'Active — Banking Data & Identity',
+    description: 'Financial data connectivity via Plaid API. Account verification, identity, balance checks, transaction history.',
+    regions: ['US', 'CA', 'UK', 'EU'],
+    currencies: ['USD', 'CAD', 'GBP', 'EUR'],
+    docsUrl: 'https://plaid.com/docs',
+    contractEntity: 'Plaid Inc., San Francisco CA (MSA + Partnership Agreement)',
+    authMethod: 'Client ID + Secret',
+    settlementTerms: 'N/A — Data service',
+    rollingReserve: 'N/A',
+    icon: <Landmark className="h-5 w-5 text-indigo-500" />,
+    endpoints: [
+      { method: 'POST', path: '/link/token/create', desc: 'Create Link token', status: 'live' },
+      { method: 'POST', path: '/auth/get', desc: 'Get account & routing', status: 'live' },
+      { method: 'POST', path: '/identity/get', desc: 'Get account identity', status: 'live' },
+      { method: 'POST', path: '/transactions/get', desc: 'Get transactions', status: 'live' },
+    ],
+    fees: [
+      { id: 'pl-auth', method: 'Auth (per connection)', fee: 'Per Plaid Order', markupType: 'fixed', markupValue: 0 },
+      { id: 'pl-identity', method: 'Identity (per check)', fee: 'Per Plaid Order', markupType: 'fixed', markupValue: 0 },
+      { id: 'pl-transactions', method: 'Transactions (per item)', fee: 'Per Plaid Order', markupType: 'fixed', markupValue: 0 },
+    ],
+  },
 ];
 
-const pacopayApmFees: FeeRow[] = [
-  { id: 'apm-apple-ftd', currency: 'EUR', geo: 'Worldwide', trafficType: 'FTD', brands: 'Apple Pay, Google Pay', depositFee: '8.3% + €0.30', payoutFee: '—', minDeposit: '€1', maxDeposit: '€1,000', chargebackFee: '€65', refundFee: '€6', rollingReserve: '5%, 180 days', settlementCurrency: 'USDT', settlementPeriod: 'T+7', settlementFee: '1.5%', markupType: 'percentage', markupValue: 0 },
-  { id: 'apm-apple-trust', currency: 'EUR', geo: 'Worldwide', trafficType: 'Trusted', brands: 'Apple Pay, Google Pay', depositFee: '8% + €0.30', payoutFee: '—', minDeposit: '€6', maxDeposit: '€1,000', chargebackFee: '€65', refundFee: '€6', rollingReserve: '5%, 180 days', settlementCurrency: 'USDT', settlementPeriod: 'T+7', settlementFee: '1.5%', markupType: 'percentage', markupValue: 0 },
-  { id: 'apm-mbway-ftd', currency: 'EUR', geo: 'Portugal', trafficType: 'FTD', brands: 'MbWay', depositFee: '8.5% + €0.25', payoutFee: '—', minDeposit: '€1', maxDeposit: '€5,000', chargebackFee: '—', refundFee: '€1', rollingReserve: '—', settlementCurrency: 'EUR (fiat)', settlementPeriod: 'T+1', settlementFee: '—', markupType: 'percentage', markupValue: 0 },
-  { id: 'apm-openbank', currency: 'EUR', geo: 'EU', trafficType: 'FTD', brands: 'Open Banking', depositFee: '5% / 4.5%', payoutFee: '—', minDeposit: '€5', maxDeposit: '€15,000', chargebackFee: '—', refundFee: '€50', rollingReserve: '—', settlementCurrency: 'USDT', settlementPeriod: 'T+2', settlementFee: '1%', markupType: 'percentage', markupValue: 0 },
-];
-
-const pacopayLatamFees: FeeRow[] = [
-  { id: 'latam-uyu', currency: 'UYU', geo: 'Uruguay', trafficType: 'FTD', brands: 'Bank Transfer, RedPagos', depositFee: '4% + $2', payoutFee: '3.5% + $2', minDeposit: '$10', maxDeposit: '$5,000', chargebackFee: '$30', refundFee: '$2 + 2.5%', rollingReserve: '10%, 180 days', settlementCurrency: 'USDT', settlementPeriod: 'T+3', settlementFee: '1%', markupType: 'percentage', markupValue: 0 },
-  { id: 'latam-clp', currency: 'CLP', geo: 'Chile', trafficType: 'FTD', brands: 'Bank Transfer, Cash', depositFee: '3.5% + $3', payoutFee: '3.5% + $2', minDeposit: '$10', maxDeposit: '$5,000', chargebackFee: '—', refundFee: '$3 + 2%', rollingReserve: '10%, 180 days', settlementCurrency: 'USDT', settlementPeriod: 'T+3', settlementFee: '1%', markupType: 'percentage', markupValue: 0 },
-  { id: 'latam-ars', currency: 'ARS', geo: 'Argentina', trafficType: 'FTD', brands: 'Bank Transfer, APM Wallets', depositFee: '3.5% + $3', payoutFee: '3.5% + $2', minDeposit: '$10', maxDeposit: '$5,000', chargebackFee: '$30', refundFee: '$3 + 2%', rollingReserve: '10%, 180 days', settlementCurrency: 'USDT', settlementPeriod: 'T+3', settlementFee: '1%', markupType: 'percentage', markupValue: 0 },
-  { id: 'latam-mxn', currency: 'MXN', geo: 'Mexico', trafficType: 'FTD', brands: 'SPEI', depositFee: '3.5% + $1.50', payoutFee: '3.5% + $2', minDeposit: '$10', maxDeposit: '$5,000', chargebackFee: '$30', refundFee: '$1.50 + 2%', rollingReserve: '10%, 180 days', settlementCurrency: 'USDT', settlementPeriod: 'T+3', settlementFee: '1%', markupType: 'percentage', markupValue: 0 },
-];
-
-const pacopayPayoutFees = [
-  { id: 'po-kzt', currency: 'KZT', geo: 'Kazakhstan', brands: 'Mastercard, Visa', topUpFee: 'USDT, 3%, manual', payoutFee: '0%', minPayout: '₸30,000', maxPayout: '₸300,000', dailyLimit: 'n/a', monthlyLimit: 'n/a' },
-  { id: 'po-eur-mc', currency: 'EUR', geo: 'Worldwide', brands: 'Mastercard', topUpFee: '1%', payoutFee: 'USDT 2%', minPayout: '€1', maxPayout: '€1,000', dailyLimit: '—', monthlyLimit: '€5,000' },
-  { id: 'po-eur-revolut', currency: 'EUR', geo: 'Worldwide', brands: 'Mastercard, Visa (Revolut)', topUpFee: 'USDC, 2.5%', payoutFee: '2.1% + €0.40', minPayout: '€1', maxPayout: '€1,000', dailyLimit: '€30,000', monthlyLimit: '€420,000' },
-];
-
-function FeeTable({ fees, onMarkupChange }: { fees: FeeRow[]; onMarkupChange: (id: string, type: 'percentage' | 'fixed', value: number) => void }) {
+// ─── Fee Table Component ──────────────────────────────────────
+function ProcessorFeeTable({ fees, onMarkupChange }: { fees: FeeRow[]; onMarkupChange: (id: string, type: 'percentage' | 'fixed', value: number) => void }) {
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Currency</TableHead>
-            <TableHead>Geo</TableHead>
-            <TableHead>Traffic</TableHead>
-            <TableHead>Brands</TableHead>
-            <TableHead>Base Deposit Fee</TableHead>
-            <TableHead>Payout Fee</TableHead>
+            <TableHead className="w-[250px]">Method / Fee Type</TableHead>
+            <TableHead>Base Rate</TableHead>
+            <TableHead>Extra</TableHead>
             <TableHead className="bg-primary/5 border-l border-primary/20">Markup Type</TableHead>
             <TableHead className="bg-primary/5">Markup Value</TableHead>
-            <TableHead>Chargeback</TableHead>
-            <TableHead>Refund</TableHead>
-            <TableHead>RR / SD</TableHead>
-            <TableHead>Settlement</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {fees.map(fee => (
             <TableRow key={fee.id}>
-              <TableCell><Badge variant="outline">{fee.currency}</Badge></TableCell>
-              <TableCell className="text-sm">{fee.geo}</TableCell>
-              <TableCell><Badge variant={fee.trafficType === 'FTD' ? 'default' : 'secondary'}>{fee.trafficType}</Badge></TableCell>
-              <TableCell className="text-xs max-w-[120px]">{fee.brands}</TableCell>
-              <TableCell className="font-mono text-xs">{fee.depositFee}</TableCell>
-              <TableCell className="font-mono text-xs">{fee.payoutFee}</TableCell>
+              <TableCell className="font-medium text-sm">{fee.method}</TableCell>
+              <TableCell className="font-mono text-xs">{fee.fee}</TableCell>
+              <TableCell className="text-xs text-muted-foreground">{fee.extra || '—'}</TableCell>
               <TableCell className="bg-primary/5 border-l border-primary/20">
                 <Select
                   value={fee.markupType}
@@ -111,10 +449,6 @@ function FeeTable({ fees, onMarkupChange }: { fees: FeeRow[]; onMarkupChange: (i
                   className="w-20 h-8 text-xs font-mono"
                 />
               </TableCell>
-              <TableCell className="text-xs">{fee.chargebackFee}</TableCell>
-              <TableCell className="text-xs">{fee.refundFee}</TableCell>
-              <TableCell className="text-xs">{fee.rollingReserve}</TableCell>
-              <TableCell className="text-xs">{fee.settlementCurrency} {fee.settlementPeriod} ({fee.settlementFee})</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -123,206 +457,210 @@ function FeeTable({ fees, onMarkupChange }: { fees: FeeRow[]; onMarkupChange: (i
   );
 }
 
-export default function AdminProcessorInfo() {
-  const [cardFees, setCardFees] = useState(pacopayCardFees);
-  const [apmFees, setApmFees] = useState(pacopayApmFees);
-  const [latamFees, setLatamFees] = useState(pacopayLatamFees);
+// ─── Processor Card Component ─────────────────────────────────
+function ProcessorCard({ processor, feeState, onMarkupChange }: {
+  processor: ProcessorConfig;
+  feeState: FeeRow[];
+  onMarkupChange: (id: string, type: 'percentage' | 'fixed', value: number) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
 
-  const updateFee = (setter: React.Dispatch<React.SetStateAction<FeeRow[]>>) =>
+  const statusColor = {
+    live: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+    active: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+    'payouts-only': 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+    referral: 'bg-violet-500/10 text-violet-600 border-violet-500/20',
+  };
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card className="mb-4">
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {processor.icon}
+                <div>
+                  <CardTitle className="text-lg">{processor.displayName}</CardTitle>
+                  <CardDescription className="mt-0.5">{processor.description}</CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge className={statusColor[processor.status]}>{processor.statusLabel}</Badge>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <CardContent className="space-y-6 pt-0">
+            {/* Info Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                {processor.apiEndpoint && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">API Endpoint</span>
+                    <code className="text-xs font-mono bg-muted px-2 py-1 rounded">{processor.apiEndpoint}</code>
+                  </div>
+                )}
+                {processor.docsUrl && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Documentation</span>
+                    <a href={processor.docsUrl} target="_blank" rel="noopener noreferrer" className="text-primary text-xs flex items-center gap-1 hover:underline">
+                      {processor.docsUrl.replace('https://', '')} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+                {processor.authMethod && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Auth Method</span>
+                    <span className="text-xs">{processor.authMethod}</span>
+                  </div>
+                )}
+                {processor.contractEntity && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Contract Entity</span>
+                    <span className="text-xs text-right max-w-[250px]">{processor.contractEntity}</span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Regions</span>
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    {processor.regions.map(r => <Badge key={r} variant="outline" className="text-[10px]">{r}</Badge>)}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Currencies</span>
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    {processor.currencies.map(c => <Badge key={c} variant="outline" className="text-[10px]">{c}</Badge>)}
+                  </div>
+                </div>
+                <div className="flex items-start justify-between text-sm">
+                  <span className="text-muted-foreground">Settlement</span>
+                  <span className="text-xs text-right max-w-[280px]">{processor.settlementTerms}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Rolling Reserve</span>
+                  <span className="text-xs">{processor.rollingReserve}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* API Endpoints */}
+            {processor.endpoints.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2 text-muted-foreground">API Endpoints</h4>
+                <div className="space-y-1.5">
+                  {processor.endpoints.map((ep, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                      <Badge variant="outline" className="font-mono text-[10px] w-12 justify-center">{ep.method}</Badge>
+                      <code className="text-xs font-mono flex-1">{ep.path}</code>
+                      <span className="text-xs text-muted-foreground">{ep.desc}</span>
+                      <Badge variant={ep.status === 'live' ? 'default' : 'secondary'} className="text-[10px]">
+                        {ep.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fee Schedule */}
+            <div>
+              <h4 className="text-sm font-medium mb-2 text-muted-foreground">Fee Schedule & Markup</h4>
+              <ProcessorFeeTable fees={feeState} onMarkupChange={onMarkupChange} />
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────
+export default function AdminProcessorInfo() {
+  const [feeStates, setFeeStates] = useState<Record<string, FeeRow[]>>(
+    Object.fromEntries(processors.map(p => [p.id, [...p.fees]]))
+  );
+
+  const updateFee = (processorId: string) =>
     (id: string, type: 'percentage' | 'fixed', value: number) => {
-      setter(prev => prev.map(f => f.id === id ? { ...f, markupType: type, markupValue: value } : f));
+      setFeeStates(prev => ({
+        ...prev,
+        [processorId]: prev[processorId].map(f =>
+          f.id === id ? { ...f, markupType: type, markupValue: value } : f
+        ),
+      }));
     };
+
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+
+  const filtered = filterStatus === 'all'
+    ? processors
+    : processors.filter(p => p.status === filterStatus);
 
   return (
     <AppLayout>
-      <div className="mb-6">
-        <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Processor Information</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Processor details, API endpoints, fee schedules, and markup configuration</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Processor Information</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            All payment processors — API endpoints, fees, terms, and markup configuration.
+            {' '}<span className="font-mono text-xs text-muted-foreground/60">Edge Functions: https://dhobjuetzkvnkdoqeavy.supabase.co/functions/v1/</span>
+          </p>
+        </div>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Filter..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Processors</SelectItem>
+            <SelectItem value="live">Live</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="payouts-only">Payouts Only</SelectItem>
+            <SelectItem value="referral">Referral</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Processor Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Server className="h-5 w-5 text-primary" /> PacoPay</CardTitle>
-            <CardDescription>Payment gateway — Card processing, APMs, Payouts</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Status</span>
-              <Badge className="bg-primary/10 text-primary border-primary/20">Live — Payouts (USD)</Badge>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Gateway API</span>
-              <code className="text-xs font-mono bg-muted px-2 py-1 rounded">gateway.paco-pay.com</code>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Checkout API</span>
-              <code className="text-xs font-mono bg-muted px-2 py-1 rounded">payment.paco-pay.com</code>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Auth Method</span>
-              <span className="text-xs">Basic Auth (Shop ID + Secret)</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Documentation</span>
-              <a href="https://docs.paco-pay.com" target="_blank" rel="noopener noreferrer" className="text-primary text-xs flex items-center gap-1 hover:underline">
-                docs.paco-pay.com <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Settlement</span>
-              <span className="text-xs">USDC/USDT via crypto — min $10,000</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Business Type</span>
-              <Badge variant="outline">iGaming</Badge>
-            </div>
-          </CardContent>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <Card className="p-3">
+          <div className="text-2xl font-bold text-foreground">{processors.length}</div>
+          <div className="text-xs text-muted-foreground">Total Processors</div>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5 text-primary" /> API Endpoints</CardTitle>
-            <CardDescription>PacoPay REST API routes</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[
-                { method: 'POST', path: '/ctp/api/checkouts', desc: 'Create checkout token', status: 'disabled' },
-                { method: 'POST', path: '/transactions/payments', desc: 'Process card / APM payment', status: 'disabled' },
-                { method: 'POST', path: '/transactions/payouts', desc: 'Payout to card (USD)', status: 'live' },
-                { method: 'GET', path: '/transactions/:uid', desc: 'Query transaction status', status: 'live' },
-              ].map((ep, i) => (
-                <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
-                  <Badge variant="outline" className="font-mono text-[10px] w-12 justify-center">{ep.method}</Badge>
-                  <code className="text-xs font-mono flex-1">{ep.path}</code>
-                  <span className="text-xs text-muted-foreground">{ep.desc}</span>
-                  <Badge variant={ep.status === 'live' ? 'default' : 'secondary'} className="text-[10px]">
-                    {ep.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
+        <Card className="p-3">
+          <div className="text-2xl font-bold text-emerald-600">{processors.filter(p => p.status === 'live').length}</div>
+          <div className="text-xs text-muted-foreground">Live</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-2xl font-bold text-foreground">{new Set(processors.flatMap(p => p.regions)).size}</div>
+          <div className="text-xs text-muted-foreground">Regions Covered</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-2xl font-bold text-foreground">{new Set(processors.flatMap(p => p.currencies)).size}</div>
+          <div className="text-xs text-muted-foreground">Currencies</div>
+        </Card>
+        <Card className="p-3">
+          <div className="text-2xl font-bold text-foreground">{processors.reduce((a, p) => a + p.endpoints.length, 0)}</div>
+          <div className="text-xs text-muted-foreground">API Endpoints</div>
         </Card>
       </div>
 
-      {/* Fee Schedules */}
-      <Tabs defaultValue="cards" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="cards" className="gap-1.5"><CreditCard className="h-3.5 w-3.5" /> Card Fees</TabsTrigger>
-          <TabsTrigger value="apm" className="gap-1.5"><Globe className="h-3.5 w-3.5" /> APM Fees</TabsTrigger>
-          <TabsTrigger value="latam" className="gap-1.5"><Banknote className="h-3.5 w-3.5" /> LATAM</TabsTrigger>
-          <TabsTrigger value="payouts" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Payout Fees</TabsTrigger>
-          <TabsTrigger value="crypto" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Crypto</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="cards">
-          <Card>
-            <CardHeader>
-              <CardTitle>Card Processing Fees</CardTitle>
-              <CardDescription>Visa & Mastercard deposit fees by region and traffic type. Add your markup in the highlighted columns.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FeeTable fees={cardFees} onMarkupChange={updateFee(setCardFees)} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="apm">
-          <Card>
-            <CardHeader>
-              <CardTitle>Alternative Payment Method Fees</CardTitle>
-              <CardDescription>Apple Pay, Google Pay, MbWay, Open Banking</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FeeTable fees={apmFees} onMarkupChange={updateFee(setApmFees)} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="latam">
-          <Card>
-            <CardHeader>
-              <CardTitle>LATAM Local Payment Methods</CardTitle>
-              <CardDescription>Bank transfers and local payment rails for Latin America</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FeeTable fees={latamFees} onMarkupChange={updateFee(setLatamFees)} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payouts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payout to Card Fees</CardTitle>
-              <CardDescription>Direct card payout fee structure</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Currency</TableHead>
-                      <TableHead>Geo</TableHead>
-                      <TableHead>Brands</TableHead>
-                      <TableHead>Top-Up Fee</TableHead>
-                      <TableHead>Payout Fee</TableHead>
-                      <TableHead>Min Payout</TableHead>
-                      <TableHead>Max Payout</TableHead>
-                      <TableHead>Daily Limit</TableHead>
-                      <TableHead>Monthly Limit</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pacopayPayoutFees.map(pf => (
-                      <TableRow key={pf.id}>
-                        <TableCell><Badge variant="outline">{pf.currency}</Badge></TableCell>
-                        <TableCell className="text-sm">{pf.geo}</TableCell>
-                        <TableCell className="text-xs">{pf.brands}</TableCell>
-                        <TableCell className="font-mono text-xs">{pf.topUpFee}</TableCell>
-                        <TableCell className="font-mono text-xs">{pf.payoutFee}</TableCell>
-                        <TableCell className="text-xs">{pf.minPayout}</TableCell>
-                        <TableCell className="text-xs">{pf.maxPayout}</TableCell>
-                        <TableCell className="text-xs">{pf.dailyLimit}</TableCell>
-                        <TableCell className="text-xs">{pf.monthlyLimit}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="crypto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Crypto Processing Rates</CardTitle>
-              <CardDescription>Volume-based crypto processing tiers</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Volume Tier</TableHead>
-                    <TableHead>Rate</TableHead>
-                    <TableHead>Minimum</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow><TableCell className="font-mono">$100,000 – $500,000</TableCell><TableCell className="font-mono">1.5%</TableCell><TableCell className="font-mono">2 USDT</TableCell></TableRow>
-                  <TableRow><TableCell className="font-mono">$500,000 – $1,000,000</TableCell><TableCell className="font-mono">1.2%</TableCell><TableCell className="font-mono">2 USDT</TableCell></TableRow>
-                  <TableRow><TableCell className="font-mono">&gt; $1,000,000</TableCell><TableCell className="font-mono">1.0%</TableCell><TableCell className="font-mono">2 USDT</TableCell></TableRow>
-                  <TableRow><TableCell className="font-mono">&gt; $2,000,000</TableCell><TableCell className="font-mono">Individual</TableCell><TableCell className="font-mono">—</TableCell></TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Processor List */}
+      <div className="space-y-0">
+        {filtered.map(processor => (
+          <ProcessorCard
+            key={processor.id}
+            processor={processor}
+            feeState={feeStates[processor.id]}
+            onMarkupChange={updateFee(processor.id)}
+          />
+        ))}
+      </div>
     </AppLayout>
   );
 }
