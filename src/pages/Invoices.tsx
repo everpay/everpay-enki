@@ -44,6 +44,7 @@ export default function Invoices() {
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
 
   const { data: invoices, isLoading } = useQuery({ queryKey: ['invoices'], queryFn: async () => {
     const { data: { user } } = await supabase.auth.getUser();
