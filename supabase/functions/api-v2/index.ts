@@ -2,50 +2,147 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-everpay-api-key, x-idempotency-key',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-everpay-api-key, x-idempotency-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
 };
 
-const json = (status: number, body: unknown) =>
+const requestId = () => `req_${crypto.randomUUID().replace(/-/g, '')}`;
+
+const json = (status: number, body: unknown, reqId?: string) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+      'X-Request-Id': reqId || requestId(),
+      'X-Everpay-Version': '2026-03-25',
+    },
   });
 
 /**
  * Everpay API v2 — RESTful merchant gateway
- *
- * All endpoints mirror https://api.everpayinc.com/v2/*
+ * Modeled after Stripe's API conventions
  *
  * Auth: Bearer <JWT> or X-Everpay-Api-Key: <merchant_api_key>
  *
  * Routes:
+ *   --- Core Payment ---
  *   POST   /payments              — Create a payment
+ *   GET    /payments              — List payments
  *   GET    /payments/:id          — Retrieve a payment
  *   POST   /payments/:id/refund   — Refund a payment
  *   POST   /payments/:id/capture  — Capture an authorized payment
+ *   POST   /payment-intents       — Create a payment intent
+ *   GET    /payment-intents/:id   — Get payment intent
+ *   PATCH  /payment-intents/:id   — Update payment intent
+ *
+ *   --- Payment Methods ---
+ *   POST   /payment-methods       — Attach a payment method
+ *   GET    /payment-methods       — List payment methods
+ *   GET    /payment-methods/:id   — Retrieve a payment method
+ *   DELETE /payment-methods/:id   — Detach a payment method
+ *
+ *   --- Payment Links ---
+ *   POST   /payment-links         — Create a payment link
+ *   GET    /payment-links         — List payment links
+ *   GET    /payment-links/:id     — Get payment link
+ *   PATCH  /payment-links/:id     — Update payment link
+ *
+ *   --- Transactions ---
  *   GET    /transactions          — List transactions
  *   GET    /transactions/:id      — Get transaction detail
+ *
+ *   --- Refunds ---
  *   POST   /refunds               — Create a refund
  *   GET    /refunds               — List refunds
  *   GET    /refunds/:id           — Get refund detail
- *   GET    /customers             — List customers
+ *
+ *   --- Customers ---
  *   POST   /customers             — Create a customer
+ *   GET    /customers             — List customers
  *   GET    /customers/:id         — Get customer detail
+ *   PATCH  /customers/:id         — Update customer
+ *   DELETE /customers/:id         — Delete customer
+ *
+ *   --- Products ---
+ *   POST   /products              — Create a product
+ *   GET    /products              — List products
+ *   GET    /products/:id          — Get product detail
+ *   PATCH  /products/:id          — Update a product
+ *   DELETE /products/:id          — Delete a product
+ *
+ *   --- Subscriptions ---
+ *   POST   /subscriptions         — Create a subscription
+ *   GET    /subscriptions         — List subscriptions
+ *   GET    /subscriptions/:id     — Get subscription detail
+ *   POST   /subscriptions/:id/cancel — Cancel a subscription
+ *   PATCH  /subscriptions/:id     — Update subscription
+ *
+ *   --- Subscription Plans ---
+ *   POST   /plans                 — Create a plan
+ *   GET    /plans                 — List plans
+ *   GET    /plans/:id             — Get plan detail
+ *   PATCH  /plans/:id             — Update plan
+ *
+ *   --- Disputes ---
  *   GET    /disputes              — List disputes
  *   GET    /disputes/:id          — Get dispute detail
- *   POST   /payment-intents       — Create a payment intent
- *   GET    /payment-intents/:id   — Get payment intent
+ *
+ *   --- Invoices ---
+ *   POST   /invoices              — Create an invoice
+ *   GET    /invoices              — List invoices
+ *   GET    /invoices/:id          — Get invoice
+ *   POST   /invoices/:id/send     — Send invoice
+ *   POST   /invoices/:id/void     — Void invoice
+ *
+ *   --- Payouts ---
+ *   POST   /payouts               — Create a payout
+ *   GET    /payouts               — List payouts
+ *   GET    /payouts/:id           — Get payout detail
+ *
+ *   --- Bank Accounts ---
+ *   POST   /bank-accounts         — Create a bank account
+ *   GET    /bank-accounts         — List bank accounts
+ *   GET    /bank-accounts/:id     — Get bank account
+ *   DELETE /bank-accounts/:id     — Remove bank account
+ *
+ *   --- Wallets ---
+ *   POST   /wallets               — Create a wallet
+ *   GET    /wallets               — List wallets
+ *   POST   /wallets/transfer      — Transfer between wallets
+ *
+ *   --- Webhooks ---
  *   POST   /webhooks/endpoints    — Register a webhook endpoint
  *   GET    /webhooks/endpoints    — List webhook endpoints
- *   DELETE /webhooks/endpoints/:id — Delete a webhook endpoint
+ *   DELETE /webhooks/endpoints/:id — Delete endpoint
+ *
+ *   --- Balance ---
  *   GET    /balance               — Get account balances
+ *
+ *   --- Events ---
+ *   GET    /events                — List events
+ *   GET    /events/:id            — Get event detail
  */
+
+// ─── Helpers ───
+function parsePagination(url: URL) {
+  const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '25'), 1), 100);
+  const offset = Math.max(parseInt(url.searchParams.get('offset') || '0'), 0);
+  const starting_after = url.searchParams.get('starting_after');
+  const ending_before = url.searchParams.get('ending_before');
+  return { limit, offset, starting_after, ending_before };
+}
+
+function listResponse(data: unknown[], total: number | null, hasMore: boolean, url: string) {
+  return { object: 'list', data, has_more: hasMore, total_count: total, url };
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const reqId = requestId();
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -70,7 +167,6 @@ Deno.serve(async (req) => {
       if (merchant) merchantId = merchant.id;
     }
   } else if (apiKey) {
-    // Hash the API key and match against stored hashes
     const encoder = new TextEncoder();
     const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(apiKey));
     const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -83,17 +179,49 @@ Deno.serve(async (req) => {
   }
 
   if (!merchantId) {
-    return json(401, { error: { code: 'unauthorized', message: 'Invalid or missing authentication' } });
+    return json(401, {
+      error: {
+        type: 'authentication_error',
+        code: 'unauthorized',
+        message: 'Invalid or missing authentication. Provide a valid Bearer token or X-Everpay-Api-Key header.',
+        doc_url: 'https://developers.everpayinc.com/api/authentication',
+      }
+    }, reqId);
+  }
+
+  // ─── Idempotency ───
+  const idempotencyKey = req.headers.get('X-Idempotency-Key');
+  if (idempotencyKey && req.method === 'POST') {
+    const { data: existing } = await supabase
+      .from('idempotency_keys')
+      .select('response')
+      .eq('key', idempotencyKey)
+      .eq('merchant_id', merchantId)
+      .single();
+    if (existing?.response) {
+      return json(200, existing.response, reqId);
+    }
   }
 
   // ─── Parse route ───
   const url = new URL(req.url);
-  // Extract path after the function name — handles both /api-v2/payments and /v2/payments
   const pathParts = url.pathname.replace(/^\/api-v2/, '').replace(/^\/v2/, '').split('/').filter(Boolean);
   const method = req.method;
   const resource = pathParts[0] || '';
   const resourceId = pathParts[1] || '';
   const subResource = pathParts[2] || '';
+
+  // Helper to store idempotency response
+  const storeIdempotency = async (response: unknown) => {
+    if (idempotencyKey && method === 'POST') {
+      await supabase.from('idempotency_keys').insert({
+        key: idempotencyKey,
+        merchant_id: merchantId!,
+        response: response as any,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      }).onConflict('key,merchant_id' as any);
+    }
+  };
 
   try {
     // ═══════════════════════════════════════
@@ -101,14 +229,18 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════
     if (resource === 'payments') {
       if (method === 'POST' && !resourceId) {
-        // Create a payment — proxy to process-payment
         const body = await req.json();
+        if (!body.amount || !body.currency) {
+          return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'amount and currency are required', param: !body.amount ? 'amount' : 'currency' } }, reqId);
+        }
         const { data, error } = await supabase.functions.invoke('process-payment', {
           body: { ...body, merchantId },
           headers: authHeader ? { Authorization: authHeader } : {},
         });
-        if (error) return json(500, { error: { code: 'payment_failed', message: 'Payment processing failed' } });
-        return json(200, { object: 'payment', ...data });
+        if (error) return json(500, { error: { type: 'api_error', code: 'payment_failed', message: 'Payment processing failed' } }, reqId);
+        const result = { object: 'payment', ...data };
+        await storeIdempotency(result);
+        return json(200, result, reqId);
       }
 
       if (method === 'GET' && resourceId && !subResource) {
@@ -118,8 +250,8 @@ Deno.serve(async (req) => {
           .eq('id', resourceId)
           .eq('merchant_id', merchantId)
           .single();
-        if (error || !tx) return json(404, { error: { code: 'not_found', message: 'Payment not found' } });
-        return json(200, { object: 'payment', ...tx });
+        if (error || !tx) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: `Payment '${resourceId}' not found` } }, reqId);
+        return json(200, { object: 'payment', ...tx }, reqId);
       }
 
       if (method === 'POST' && resourceId && subResource === 'refund') {
@@ -128,12 +260,13 @@ Deno.serve(async (req) => {
           body: { transaction_id: resourceId, amount: body.amount, reason: body.reason },
           headers: authHeader ? { Authorization: authHeader } : {},
         });
-        if (error) return json(500, { error: { code: 'refund_failed', message: 'Refund processing failed' } });
-        return json(200, { object: 'refund', ...data });
+        if (error) return json(500, { error: { type: 'api_error', code: 'refund_failed', message: 'Refund processing failed' } }, reqId);
+        const result = { object: 'refund', ...data };
+        await storeIdempotency(result);
+        return json(200, result, reqId);
       }
 
       if (method === 'POST' && resourceId && subResource === 'capture') {
-        // Capture authorized payment
         const { data: tx } = await supabase
           .from('transactions')
           .select('*')
@@ -141,19 +274,18 @@ Deno.serve(async (req) => {
           .eq('merchant_id', merchantId)
           .eq('status', 'authorized')
           .single();
-        if (!tx) return json(404, { error: { code: 'not_found', message: 'Authorized payment not found' } });
-
+        if (!tx) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Authorized payment not found' } }, reqId);
         await supabase.from('transactions').update({ status: 'completed' }).eq('id', tx.id);
-        return json(200, { object: 'payment', id: tx.id, status: 'completed', captured: true });
+        const result = { object: 'payment', id: tx.id, status: 'completed', captured: true };
+        await storeIdempotency(result);
+        return json(200, result, reqId);
       }
 
-      // GET /payments — list
       if (method === 'GET' && !resourceId) {
-        const limit = parseInt(url.searchParams.get('limit') || '25');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
+        const { limit, offset } = parsePagination(url);
         const status = url.searchParams.get('status');
-        const from = url.searchParams.get('from');
-        const to = url.searchParams.get('to');
+        const from = url.searchParams.get('created[gte]') || url.searchParams.get('from');
+        const to = url.searchParams.get('created[lte]') || url.searchParams.get('to');
 
         let query = supabase
           .from('transactions')
@@ -167,8 +299,203 @@ Deno.serve(async (req) => {
         if (to) query = query.lte('created_at', to);
 
         const { data, count, error } = await query;
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payments'), reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // PAYMENT INTENTS
+    // ═══════════════════════════════════════
+    if (resource === 'payment-intents') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.amount) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'amount is required', param: 'amount' } }, reqId);
+        const { data: intent, error } = await supabase
+          .from('payment_intents')
+          .insert({
+            merchant_id: merchantId,
+            amount: body.amount,
+            currency: body.currency || 'USD',
+            status: 'requires_payment_method',
+            payment_method: body.payment_method,
+            metadata: body.metadata || {},
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'payment_intent', client_secret: `pi_${intent.id}_secret_${crypto.randomUUID().slice(0, 8)}`, ...intent };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && resourceId) {
+        const { data: intent, error } = await supabase
+          .from('payment_intents')
+          .select('*')
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .single();
+        if (error || !intent) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Payment intent not found' } }, reqId);
+        return json(200, { object: 'payment_intent', ...intent }, reqId);
+      }
+
+      if (method === 'PATCH' && resourceId) {
+        const body = await req.json();
+        const updates: Record<string, unknown> = {};
+        if (body.amount !== undefined) updates.amount = body.amount;
+        if (body.currency) updates.currency = body.currency;
+        if (body.metadata) updates.metadata = body.metadata;
+        if (body.payment_method) updates.payment_method = body.payment_method;
+
+        const { data: intent, error } = await supabase
+          .from('payment_intents')
+          .update(updates)
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .select()
+          .single();
+        if (error || !intent) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Payment intent not found' } }, reqId);
+        return json(200, { object: 'payment_intent', ...intent }, reqId);
+      }
+
+      if (method === 'GET' && !resourceId) {
+        const { limit, offset } = parsePagination(url);
+        const { data, count, error } = await supabase
+          .from('payment_intents')
+          .select('*', { count: 'exact' })
+          .eq('merchant_id', merchantId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payment-intents'), reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // PAYMENT METHODS
+    // ═══════════════════════════════════════
+    if (resource === 'payment-methods') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.customer_id || !body.vgs_alias) {
+          return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'customer_id and vgs_alias are required' } }, reqId);
+        }
+        const { data: pm, error } = await supabase
+          .from('payment_methods')
+          .insert({
+            customer_id: body.customer_id,
+            vgs_alias: body.vgs_alias,
+            card_brand: body.card_brand,
+            card_last4: body.card_last4,
+            exp_month: body.exp_month,
+            exp_year: body.exp_year,
+            is_default: body.is_default || false,
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'payment_method', ...pm };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && resourceId) {
+        const { data: pm, error } = await supabase
+          .from('payment_methods')
+          .select('*')
+          .eq('id', resourceId)
+          .single();
+        if (error || !pm) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Payment method not found' } }, reqId);
+        return json(200, { object: 'payment_method', ...pm }, reqId);
+      }
+
+      if (method === 'GET' && !resourceId) {
+        const customerId = url.searchParams.get('customer');
+        const { limit, offset } = parsePagination(url);
+        let query = supabase
+          .from('payment_methods')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (customerId) query = query.eq('customer_id', customerId);
+        const { data, count, error } = await query;
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payment-methods'), reqId);
+      }
+
+      if (method === 'DELETE' && resourceId) {
+        const { error } = await supabase.from('payment_methods').delete().eq('id', resourceId);
+        if (error) return json(500, { error: { type: 'api_error', code: 'delete_failed', message: error.message } }, reqId);
+        return json(200, { id: resourceId, object: 'payment_method', deleted: true }, reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // PAYMENT LINKS
+    // ═══════════════════════════════════════
+    if (resource === 'payment-links') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.amount) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'amount is required', param: 'amount' } }, reqId);
+        const linkId = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+        const { data: link, error } = await supabase
+          .from('payment_links')
+          .insert({
+            merchant_id: merchantId,
+            amount: body.amount,
+            currency: body.currency || 'USD',
+            description: body.description,
+            redirect_url: body.redirect_url,
+            metadata: body.metadata || {},
+            active: true,
+            short_code: linkId,
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'payment_link', url: `https://checkout.everpayinc.com/pay/${link.short_code}`, ...link };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && resourceId) {
+        const { data: link, error } = await supabase
+          .from('payment_links')
+          .select('*')
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .single();
+        if (error || !link) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Payment link not found' } }, reqId);
+        return json(200, { object: 'payment_link', url: `https://checkout.everpayinc.com/pay/${link.short_code}`, ...link }, reqId);
+      }
+
+      if (method === 'PATCH' && resourceId) {
+        const body = await req.json();
+        const updates: Record<string, unknown> = {};
+        if (body.active !== undefined) updates.active = body.active;
+        if (body.metadata) updates.metadata = body.metadata;
+        const { data: link, error } = await supabase
+          .from('payment_links')
+          .update(updates)
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .select()
+          .single();
+        if (error || !link) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Payment link not found' } }, reqId);
+        return json(200, { object: 'payment_link', ...link }, reqId);
+      }
+
+      if (method === 'GET' && !resourceId) {
+        const { limit, offset } = parsePagination(url);
+        const { data, count, error } = await supabase
+          .from('payment_links')
+          .select('*', { count: 'exact' })
+          .eq('merchant_id', merchantId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payment-links'), reqId);
       }
     }
 
@@ -183,16 +510,14 @@ Deno.serve(async (req) => {
           .eq('id', resourceId)
           .eq('merchant_id', merchantId)
           .single();
-        if (error || !tx) return json(404, { error: { code: 'not_found', message: 'Transaction not found' } });
-        return json(200, { object: 'transaction', ...tx });
+        if (error || !tx) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Transaction not found' } }, reqId);
+        return json(200, { object: 'transaction', ...tx }, reqId);
       }
 
       if (method === 'GET') {
-        const limit = parseInt(url.searchParams.get('limit') || '25');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
+        const { limit, offset } = parsePagination(url);
         const provider = url.searchParams.get('provider');
-        const country = url.searchParams.get('country');
-        const paymentMethod = url.searchParams.get('payment_method');
+        const status = url.searchParams.get('status');
 
         let query = supabase
           .from('transactions')
@@ -202,12 +527,11 @@ Deno.serve(async (req) => {
           .range(offset, offset + limit - 1);
 
         if (provider) query = query.eq('provider', provider);
-        if (country) query = query.eq('metadata->>billing_country', country);
-        if (paymentMethod) query = query.eq('metadata->>payment_method', paymentMethod);
+        if (status) query = query.eq('status', status);
 
         const { data, count, error } = await query;
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/transactions'), reqId);
       }
     }
 
@@ -217,12 +541,15 @@ Deno.serve(async (req) => {
     if (resource === 'refunds') {
       if (method === 'POST' && !resourceId) {
         const body = await req.json();
+        if (!body.transaction_id) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'transaction_id is required', param: 'transaction_id' } }, reqId);
         const { data, error } = await supabase.functions.invoke('refund-payment', {
           body: { transaction_id: body.transaction_id, amount: body.amount, reason: body.reason },
           headers: authHeader ? { Authorization: authHeader } : {},
         });
-        if (error) return json(500, { error: { code: 'refund_failed', message: 'Refund failed' } });
-        return json(200, { object: 'refund', ...data });
+        if (error) return json(500, { error: { type: 'api_error', code: 'refund_failed', message: 'Refund failed' } }, reqId);
+        const result = { object: 'refund', ...data };
+        await storeIdempotency(result);
+        return json(200, result, reqId);
       }
 
       if (method === 'GET' && resourceId) {
@@ -232,21 +559,20 @@ Deno.serve(async (req) => {
           .eq('id', resourceId)
           .eq('merchant_id', merchantId)
           .single();
-        if (error || !refund) return json(404, { error: { code: 'not_found', message: 'Refund not found' } });
-        return json(200, { object: 'refund', ...refund });
+        if (error || !refund) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Refund not found' } }, reqId);
+        return json(200, { object: 'refund', ...refund }, reqId);
       }
 
       if (method === 'GET') {
-        const limit = parseInt(url.searchParams.get('limit') || '25');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
+        const { limit, offset } = parsePagination(url);
         const { data, count, error } = await supabase
           .from('refunds')
           .select('*', { count: 'exact' })
           .eq('merchant_id', merchantId)
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/refunds'), reqId);
       }
     }
 
@@ -256,13 +582,16 @@ Deno.serve(async (req) => {
     if (resource === 'customers') {
       if (method === 'POST' && !resourceId) {
         const body = await req.json();
+        if (!body.email) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'email is required', param: 'email' } }, reqId);
         const { data: customer, error } = await supabase
           .from('customers')
           .insert({ merchant_id: merchantId, email: body.email, first_name: body.first_name, last_name: body.last_name, billing_address: body.billing_address })
           .select()
           .single();
-        if (error) return json(400, { error: { code: 'create_failed', message: error.message } });
-        return json(201, { object: 'customer', ...customer });
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'customer', ...customer };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
       }
 
       if (method === 'GET' && resourceId) {
@@ -272,13 +601,36 @@ Deno.serve(async (req) => {
           .eq('id', resourceId)
           .eq('merchant_id', merchantId)
           .single();
-        if (error || !customer) return json(404, { error: { code: 'not_found', message: 'Customer not found' } });
-        return json(200, { object: 'customer', ...customer });
+        if (error || !customer) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Customer not found' } }, reqId);
+        return json(200, { object: 'customer', ...customer }, reqId);
+      }
+
+      if (method === 'PATCH' && resourceId) {
+        const body = await req.json();
+        const updates: Record<string, unknown> = {};
+        if (body.email) updates.email = body.email;
+        if (body.first_name !== undefined) updates.first_name = body.first_name;
+        if (body.last_name !== undefined) updates.last_name = body.last_name;
+        if (body.billing_address) updates.billing_address = body.billing_address;
+        const { data: customer, error } = await supabase
+          .from('customers')
+          .update(updates)
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .select()
+          .single();
+        if (error || !customer) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Customer not found' } }, reqId);
+        return json(200, { object: 'customer', ...customer }, reqId);
+      }
+
+      if (method === 'DELETE' && resourceId) {
+        const { error } = await supabase.from('customers').delete().eq('id', resourceId).eq('merchant_id', merchantId);
+        if (error) return json(500, { error: { type: 'api_error', code: 'delete_failed', message: error.message } }, reqId);
+        return json(200, { id: resourceId, object: 'customer', deleted: true }, reqId);
       }
 
       if (method === 'GET') {
-        const limit = parseInt(url.searchParams.get('limit') || '25');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
+        const { limit, offset } = parsePagination(url);
         const email = url.searchParams.get('email');
         let query = supabase
           .from('customers')
@@ -288,8 +640,241 @@ Deno.serve(async (req) => {
           .range(offset, offset + limit - 1);
         if (email) query = query.ilike('email', `%${email}%`);
         const { data, count, error } = await query;
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/customers'), reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // PRODUCTS
+    // ═══════════════════════════════════════
+    if (resource === 'products') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.name) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'name is required', param: 'name' } }, reqId);
+        const { data: product, error } = await supabase
+          .from('products')
+          .insert({
+            merchant_id: merchantId,
+            name: body.name,
+            description: body.description || '',
+            price: body.price || 0,
+            cost_price: body.cost_price,
+            stock: body.stock ?? 0,
+            product_type: body.product_type || 'service',
+            sku: body.sku,
+            category: body.category,
+            tags: body.tags,
+            image_url: body.image_url,
+            metadata: body.metadata,
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'product', ...product };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && resourceId) {
+        const { data: product, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .single();
+        if (error || !product) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Product not found' } }, reqId);
+        return json(200, { object: 'product', ...product }, reqId);
+      }
+
+      if (method === 'PATCH' && resourceId) {
+        const body = await req.json();
+        const updates: Record<string, unknown> = {};
+        for (const key of ['name', 'description', 'price', 'cost_price', 'stock', 'product_type', 'sku', 'category', 'tags', 'image_url', 'metadata']) {
+          if (body[key] !== undefined) updates[key] = body[key];
+        }
+        const { data: product, error } = await supabase
+          .from('products')
+          .update(updates)
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .select()
+          .single();
+        if (error || !product) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Product not found' } }, reqId);
+        return json(200, { object: 'product', ...product }, reqId);
+      }
+
+      if (method === 'DELETE' && resourceId) {
+        const { error } = await supabase.from('products').delete().eq('id', resourceId).eq('merchant_id', merchantId);
+        if (error) return json(500, { error: { type: 'api_error', code: 'delete_failed', message: error.message } }, reqId);
+        return json(200, { id: resourceId, object: 'product', deleted: true }, reqId);
+      }
+
+      if (method === 'GET') {
+        const { limit, offset } = parsePagination(url);
+        const active = url.searchParams.get('active');
+        let query = supabase
+          .from('products')
+          .select('*', { count: 'exact' })
+          .eq('merchant_id', merchantId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (active === 'true') query = query.gt('stock', 0);
+        const { data, count, error } = await query;
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/products'), reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // SUBSCRIPTIONS
+    // ═══════════════════════════════════════
+    if (resource === 'subscriptions') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.customer_id || !body.plan_id) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'customer_id and plan_id are required' } }, reqId);
+        const { data: sub, error } = await supabase
+          .from('subscriptions')
+          .insert({
+            merchant_id: merchantId,
+            customer_id: body.customer_id,
+            plan_id: body.plan_id,
+            status: body.trial_days ? 'trialing' : 'active',
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + (body.trial_days || 30) * 86400000).toISOString(),
+            cancel_at_period_end: false,
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'subscription', ...sub };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && resourceId && !subResource) {
+        const { data: sub, error } = await supabase
+          .from('subscriptions')
+          .select('*, customer:customers(email, first_name, last_name), plan:subscription_plans(name, amount, currency, interval)')
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .single();
+        if (error || !sub) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Subscription not found' } }, reqId);
+        return json(200, { object: 'subscription', ...sub }, reqId);
+      }
+
+      if (method === 'POST' && resourceId && subResource === 'cancel') {
+        const body = req.headers.get('content-type')?.includes('json') ? await req.json().catch(() => ({})) : {};
+        const cancelNow = body.cancel_now === true;
+        const updates = cancelNow
+          ? { status: 'canceled', canceled_at: new Date().toISOString() }
+          : { cancel_at_period_end: true };
+        const { error } = await supabase
+          .from('subscriptions')
+          .update(updates)
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId);
+        if (error) return json(500, { error: { type: 'api_error', code: 'cancel_failed', message: error.message } }, reqId);
+        return json(200, { object: 'subscription', id: resourceId, ...updates }, reqId);
+      }
+
+      if (method === 'PATCH' && resourceId) {
+        const body = await req.json();
+        const updates: Record<string, unknown> = {};
+        if (body.plan_id) updates.plan_id = body.plan_id;
+        if (body.cancel_at_period_end !== undefined) updates.cancel_at_period_end = body.cancel_at_period_end;
+        if (body.metadata) updates.metadata = body.metadata;
+        const { data: sub, error } = await supabase
+          .from('subscriptions')
+          .update(updates)
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .select()
+          .single();
+        if (error || !sub) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Subscription not found' } }, reqId);
+        return json(200, { object: 'subscription', ...sub }, reqId);
+      }
+
+      if (method === 'GET' && !resourceId) {
+        const { limit, offset } = parsePagination(url);
+        const status = url.searchParams.get('status');
+        let query = supabase
+          .from('subscriptions')
+          .select('*', { count: 'exact' })
+          .eq('merchant_id', merchantId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (status) query = query.eq('status', status);
+        const { data, count, error } = await query;
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/subscriptions'), reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // SUBSCRIPTION PLANS
+    // ═══════════════════════════════════════
+    if (resource === 'plans') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.name || !body.amount || !body.interval) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'name, amount, and interval are required' } }, reqId);
+        const { data: plan, error } = await supabase
+          .from('subscription_plans')
+          .insert({
+            merchant_id: merchantId,
+            name: body.name,
+            amount: body.amount,
+            currency: body.currency || 'USD',
+            interval: body.interval,
+            trial_days: body.trial_days || 0,
+            active: body.active !== false,
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'plan', ...plan };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && resourceId) {
+        const { data: plan, error } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .single();
+        if (error || !plan) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Plan not found' } }, reqId);
+        return json(200, { object: 'plan', ...plan }, reqId);
+      }
+
+      if (method === 'PATCH' && resourceId) {
+        const body = await req.json();
+        const updates: Record<string, unknown> = {};
+        for (const key of ['name', 'amount', 'currency', 'interval', 'trial_days', 'active']) {
+          if (body[key] !== undefined) updates[key] = body[key];
+        }
+        const { data: plan, error } = await supabase
+          .from('subscription_plans')
+          .update(updates)
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .select()
+          .single();
+        if (error || !plan) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Plan not found' } }, reqId);
+        return json(200, { object: 'plan', ...plan }, reqId);
+      }
+
+      if (method === 'GET') {
+        const { limit, offset } = parsePagination(url);
+        const { data, count, error } = await supabase
+          .from('subscription_plans')
+          .select('*', { count: 'exact' })
+          .eq('merchant_id', merchantId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/plans'), reqId);
       }
     }
 
@@ -304,13 +889,12 @@ Deno.serve(async (req) => {
           .eq('id', resourceId)
           .eq('merchant_id', merchantId)
           .single();
-        if (error || !dispute) return json(404, { error: { code: 'not_found', message: 'Dispute not found' } });
-        return json(200, { object: 'dispute', ...dispute });
+        if (error || !dispute) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Dispute not found' } }, reqId);
+        return json(200, { object: 'dispute', ...dispute }, reqId);
       }
 
       if (method === 'GET') {
-        const limit = parseInt(url.searchParams.get('limit') || '25');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
+        const { limit, offset } = parsePagination(url);
         const status = url.searchParams.get('status');
         let query = supabase
           .from('disputes')
@@ -320,105 +904,9 @@ Deno.serve(async (req) => {
           .range(offset, offset + limit - 1);
         if (status) query = query.eq('status', status);
         const { data, count, error } = await query;
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/disputes'), reqId);
       }
-    }
-
-    // ═══════════════════════════════════════
-    // PAYMENT INTENTS
-    // ═══════════════════════════════════════
-    if (resource === 'payment-intents') {
-      if (method === 'POST' && !resourceId) {
-        const body = await req.json();
-        const { data: intent, error } = await supabase
-          .from('payment_intents')
-          .insert({
-            merchant_id: merchantId,
-            amount: body.amount,
-            currency: body.currency || 'USD',
-            status: 'requires_payment_method',
-            payment_method: body.payment_method,
-            metadata: body.metadata || {},
-          })
-          .select()
-          .single();
-        if (error) return json(400, { error: { code: 'create_failed', message: error.message } });
-        return json(201, { object: 'payment_intent', ...intent });
-      }
-
-      if (method === 'GET' && resourceId) {
-        const { data: intent, error } = await supabase
-          .from('payment_intents')
-          .select('*')
-          .eq('id', resourceId)
-          .eq('merchant_id', merchantId)
-          .single();
-        if (error || !intent) return json(404, { error: { code: 'not_found', message: 'Payment intent not found' } });
-        return json(200, { object: 'payment_intent', ...intent });
-      }
-    }
-
-    // ═══════════════════════════════════════
-    // WEBHOOK ENDPOINTS (merchant-managed)
-    // ═══════════════════════════════════════
-    if (resource === 'webhooks' && (pathParts[1] === 'endpoints' || !pathParts[1])) {
-      const endpointId = pathParts[2] || '';
-
-      if (method === 'POST' && !endpointId) {
-        const body = await req.json();
-        if (!body.url) return json(400, { error: { code: 'missing_url', message: 'Webhook URL is required' } });
-
-        // Generate a webhook secret for the merchant
-        const secret = `whsec_${crypto.randomUUID().replace(/-/g, '')}`;
-
-        const { data: endpoint, error } = await supabase
-          .from('webhook_endpoints')
-          .insert({
-            merchant_id: merchantId,
-            url: body.url,
-            events: body.events || ['*'],
-            secret,
-            active: true,
-            description: body.description || null,
-          })
-          .select()
-          .single();
-        if (error) return json(400, { error: { code: 'create_failed', message: error.message } });
-        return json(201, { object: 'webhook_endpoint', ...endpoint, secret });
-      }
-
-      if (method === 'GET' && !endpointId) {
-        const { data: endpoints, error } = await supabase
-          .from('webhook_endpoints')
-          .select('id, url, events, active, description, created_at')
-          .eq('merchant_id', merchantId)
-          .order('created_at', { ascending: false });
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data: endpoints });
-      }
-
-      if (method === 'DELETE' && endpointId) {
-        const { error } = await supabase
-          .from('webhook_endpoints')
-          .delete()
-          .eq('id', endpointId)
-          .eq('merchant_id', merchantId);
-        if (error) return json(500, { error: { code: 'delete_failed', message: error.message } });
-        return json(200, { deleted: true, id: endpointId });
-      }
-    }
-
-    // ═══════════════════════════════════════
-    // BALANCE
-    // ═══════════════════════════════════════
-    if (resource === 'balance' && method === 'GET') {
-      const { data: accounts, error } = await supabase
-        .from('accounts')
-        .select('currency, balance, available_balance, pending_balance')
-        .eq('merchant_id', merchantId);
-      if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-      return json(200, { object: 'balance', accounts: accounts || [] });
     }
 
     // ═══════════════════════════════════════
@@ -427,6 +915,7 @@ Deno.serve(async (req) => {
     if (resource === 'invoices') {
       if (method === 'POST' && !resourceId) {
         const body = await req.json();
+        if (!body.customer_email || !body.amount) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'customer_email and amount are required' } }, reqId);
         const { data: invoice, error } = await supabase
           .from('invoices')
           .insert({
@@ -443,74 +932,46 @@ Deno.serve(async (req) => {
           })
           .select()
           .single();
-        if (error) return json(400, { error: { code: 'create_failed', message: error.message } });
-        return json(201, { object: 'invoice', ...invoice });
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'invoice', ...invoice };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
       }
 
-      if (method === 'GET' && resourceId) {
+      if (method === 'GET' && resourceId && !subResource) {
         const { data: invoice, error } = await supabase
           .from('invoices')
           .select('*')
           .eq('id', resourceId)
           .eq('merchant_id', merchantId)
           .single();
-        if (error || !invoice) return json(404, { error: { code: 'not_found', message: 'Invoice not found' } });
-        return json(200, { object: 'invoice', ...invoice });
+        if (error || !invoice) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Invoice not found' } }, reqId);
+        return json(200, { object: 'invoice', ...invoice }, reqId);
+      }
+
+      if (method === 'POST' && resourceId && subResource === 'send') {
+        await supabase.from('invoices').update({ status: 'sent' }).eq('id', resourceId).eq('merchant_id', merchantId);
+        return json(200, { object: 'invoice', id: resourceId, status: 'sent' }, reqId);
+      }
+
+      if (method === 'POST' && resourceId && subResource === 'void') {
+        await supabase.from('invoices').update({ status: 'void' }).eq('id', resourceId).eq('merchant_id', merchantId);
+        return json(200, { object: 'invoice', id: resourceId, status: 'void' }, reqId);
       }
 
       if (method === 'GET') {
-        const limit = parseInt(url.searchParams.get('limit') || '25');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
-        const { data, count, error } = await supabase
-          .from('invoices')
-          .select('*', { count: 'exact' })
-          .eq('merchant_id', merchantId)
-          .order('created_at', { ascending: false })
-          .range(offset, offset + limit - 1);
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
-      }
-    }
-
-    // ═══════════════════════════════════════
-    // SUBSCRIPTIONS
-    // ═══════════════════════════════════════
-    if (resource === 'subscriptions') {
-      if (method === 'GET' && resourceId) {
-        const { data: sub, error } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('id', resourceId)
-          .eq('merchant_id', merchantId)
-          .single();
-        if (error || !sub) return json(404, { error: { code: 'not_found', message: 'Subscription not found' } });
-        return json(200, { object: 'subscription', ...sub });
-      }
-
-      if (method === 'GET') {
-        const limit = parseInt(url.searchParams.get('limit') || '25');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
+        const { limit, offset } = parsePagination(url);
         const status = url.searchParams.get('status');
         let query = supabase
-          .from('subscriptions')
+          .from('invoices')
           .select('*', { count: 'exact' })
           .eq('merchant_id', merchantId)
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
         if (status) query = query.eq('status', status);
         const { data, count, error } = await query;
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
-      }
-
-      if (method === 'POST' && resourceId && subResource === 'cancel') {
-        const { error } = await supabase
-          .from('subscriptions')
-          .update({ status: 'canceled', cancel_at_period_end: true })
-          .eq('id', resourceId)
-          .eq('merchant_id', merchantId);
-        if (error) return json(500, { error: { code: 'cancel_failed', message: error.message } });
-        return json(200, { object: 'subscription', id: resourceId, status: 'canceled' });
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/invoices'), reqId);
       }
     }
 
@@ -518,42 +979,275 @@ Deno.serve(async (req) => {
     // PAYOUTS
     // ═══════════════════════════════════════
     if (resource === 'payouts') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.amount || !body.currency) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'amount and currency are required' } }, reqId);
+
+        // Support card payouts via PacoPay
+        if (body.method === 'card' && body.card) {
+          const { data, error } = await supabase.functions.invoke('pacopay-process', {
+            body: {
+              action: 'payout_to_card',
+              amount: body.amount,
+              currency: body.currency,
+              description: body.description || 'Payout',
+              card: body.card,
+              recipient: body.recipient,
+              tracking_id: body.tracking_id || `po_${crypto.randomUUID().slice(0, 8)}`,
+            },
+          });
+          if (error) return json(500, { error: { type: 'api_error', code: 'payout_failed', message: 'Card payout failed' } }, reqId);
+          const result = { object: 'payout', method: 'card', ...data };
+          await storeIdempotency(result);
+          return json(200, result, reqId);
+        }
+
+        // Standard bank payout
+        const { data: payout, error } = await supabase
+          .from('payouts')
+          .insert({
+            merchant_id: merchantId,
+            amount: body.amount,
+            currency: body.currency,
+            destination: body.destination || 'bank',
+            status: 'pending',
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'payout', ...payout };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && resourceId) {
+        const { data: payout, error } = await supabase
+          .from('payouts')
+          .select('*')
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .single();
+        if (error || !payout) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Payout not found' } }, reqId);
+        return json(200, { object: 'payout', ...payout }, reqId);
+      }
+
       if (method === 'GET') {
-        const limit = parseInt(url.searchParams.get('limit') || '25');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
-        const { data, count, error } = await supabase
+        const { limit, offset } = parsePagination(url);
+        const status = url.searchParams.get('status');
+        let query = supabase
           .from('payouts')
           .select('*', { count: 'exact' })
           .eq('merchant_id', merchantId)
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
+        if (status) query = query.eq('status', status);
+        const { data, count, error } = await query;
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payouts'), reqId);
       }
+    }
+
+    // ═══════════════════════════════════════
+    // BANK ACCOUNTS
+    // ═══════════════════════════════════════
+    if (resource === 'bank-accounts' || resource === 'bank_accounts') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.bank_name || !body.account_number) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'bank_name and account_number are required' } }, reqId);
+        const { data: ba, error } = await supabase
+          .from('bank_accounts')
+          .insert({
+            merchant_id: merchantId,
+            bank_name: body.bank_name,
+            account_number: body.account_number,
+            sort_code: body.sort_code || body.routing_number,
+            iban: body.iban,
+            country: body.country,
+            currency: body.currency,
+            status: 'new',
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'bank_account', ...ba };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && resourceId) {
+        const { data: ba, error } = await supabase
+          .from('bank_accounts')
+          .select('*')
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .single();
+        if (error || !ba) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Bank account not found' } }, reqId);
+        return json(200, { object: 'bank_account', ...ba }, reqId);
+      }
+
+      if (method === 'DELETE' && resourceId) {
+        const { error } = await supabase.from('bank_accounts').delete().eq('id', resourceId).eq('merchant_id', merchantId);
+        if (error) return json(500, { error: { type: 'api_error', code: 'delete_failed', message: error.message } }, reqId);
+        return json(200, { id: resourceId, object: 'bank_account', deleted: true }, reqId);
+      }
+
+      if (method === 'GET') {
+        const { limit, offset } = parsePagination(url);
+        const { data, count, error } = await supabase
+          .from('bank_accounts')
+          .select('*', { count: 'exact' })
+          .eq('merchant_id', merchantId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/bank-accounts'), reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // WALLETS
+    // ═══════════════════════════════════════
+    if (resource === 'wallets') {
+      if (method === 'POST' && resourceId === 'transfer') {
+        const body = await req.json();
+        if (!body.from_wallet_id || !body.to_wallet_id || !body.amount) {
+          return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'from_wallet_id, to_wallet_id, and amount are required' } }, reqId);
+        }
+        const { data, error } = await supabase.functions.invoke('moneto-wallet', {
+          body: { action: 'transfer', ...body },
+        });
+        if (error) return json(500, { error: { type: 'api_error', code: 'transfer_failed', message: 'Transfer failed' } }, reqId);
+        const result = { object: 'transfer', ...data };
+        await storeIdempotency(result);
+        return json(200, result, reqId);
+      }
+
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        const { data, error } = await supabase.functions.invoke('moneto-wallet', {
+          body: { action: 'create', currency: body.currency || 'USD', merchant_id: merchantId },
+        });
+        if (error) return json(500, { error: { type: 'api_error', code: 'create_failed', message: 'Wallet creation failed' } }, reqId);
+        const result = { object: 'wallet', ...data };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && !resourceId) {
+        const { data: wallets, error } = await supabase
+          .from('merchant_accounts')
+          .select('*')
+          .eq('merchant_id', merchantId);
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, { object: 'list', data: (wallets || []).map(w => ({ object: 'wallet', ...w })), has_more: false, url: '/v2/wallets' }, reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // WEBHOOK ENDPOINTS
+    // ═══════════════════════════════════════
+    if (resource === 'webhooks') {
+      const endpointId = pathParts[2] || '';
+
+      if (method === 'POST' && !endpointId) {
+        const body = await req.json();
+        if (!body.url) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'url is required', param: 'url' } }, reqId);
+        const secret = `whsec_${crypto.randomUUID().replace(/-/g, '')}`;
+        const { data: endpoint, error } = await supabase
+          .from('webhook_endpoints')
+          .insert({
+            merchant_id: merchantId,
+            url: body.url,
+            events: body.events || ['*'],
+            secret,
+            active: true,
+            description: body.description || null,
+          })
+          .select()
+          .single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        const result = { object: 'webhook_endpoint', ...endpoint, secret };
+        await storeIdempotency(result);
+        return json(201, result, reqId);
+      }
+
+      if (method === 'GET' && !endpointId) {
+        const { data: endpoints, error } = await supabase
+          .from('webhook_endpoints')
+          .select('id, url, events, active, description, created_at')
+          .eq('merchant_id', merchantId)
+          .order('created_at', { ascending: false });
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, { object: 'list', data: endpoints || [], has_more: false, url: '/v2/webhooks/endpoints' }, reqId);
+      }
+
+      if (method === 'DELETE' && endpointId) {
+        const { error } = await supabase
+          .from('webhook_endpoints')
+          .delete()
+          .eq('id', endpointId)
+          .eq('merchant_id', merchantId);
+        if (error) return json(500, { error: { type: 'api_error', code: 'delete_failed', message: error.message } }, reqId);
+        return json(200, { id: endpointId, object: 'webhook_endpoint', deleted: true }, reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // BALANCE
+    // ═══════════════════════════════════════
+    if (resource === 'balance' && method === 'GET') {
+      const { data: accounts, error } = await supabase
+        .from('accounts')
+        .select('currency, balance, available_balance, pending_balance')
+        .eq('merchant_id', merchantId);
+      if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+
+      const available = (accounts || []).map(a => ({ amount: a.available_balance, currency: a.currency }));
+      const pending = (accounts || []).map(a => ({ amount: a.pending_balance, currency: a.currency }));
+
+      return json(200, {
+        object: 'balance',
+        available,
+        pending,
+        livemode: true,
+      }, reqId);
     }
 
     // ═══════════════════════════════════════
     // EVENTS (audit log)
     // ═══════════════════════════════════════
     if (resource === 'events') {
+      if (method === 'GET' && resourceId) {
+        const { data: event, error } = await supabase
+          .from('provider_events')
+          .select('*')
+          .eq('id', resourceId)
+          .eq('merchant_id', merchantId)
+          .single();
+        if (error || !event) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Event not found' } }, reqId);
+        return json(200, { object: 'event', ...event }, reqId);
+      }
+
       if (method === 'GET') {
-        const limit = parseInt(url.searchParams.get('limit') || '50');
-        const offset = parseInt(url.searchParams.get('offset') || '0');
-        const { data, count, error } = await supabase
+        const { limit, offset } = parsePagination(url);
+        const type = url.searchParams.get('type');
+        let query = supabase
           .from('provider_events')
           .select('*', { count: 'exact' })
           .eq('merchant_id', merchantId)
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
-        if (error) return json(500, { error: { code: 'query_failed', message: error.message } });
-        return json(200, { object: 'list', data, total: count, limit, offset });
+        if (type) query = query.eq('event_type', type);
+        const { data, count, error } = await query;
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/events'), reqId);
       }
     }
 
-    return json(404, { error: { code: 'not_found', message: `Route ${method} /${pathParts.join('/')} not found` } });
+    return json(404, { error: { type: 'invalid_request_error', code: 'route_not_found', message: `No such route: ${method} /${pathParts.join('/')}`, doc_url: 'https://developers.everpayinc.com/api' } }, reqId);
 
   } catch (err) {
     console.error('API v2 error:', err);
-    return json(500, { error: { code: 'internal_error', message: 'An internal error occurred' } });
+    return json(500, { error: { type: 'api_error', code: 'internal_error', message: 'An unexpected error occurred. Please retry the request.' } }, reqId);
   }
 });

@@ -4,7 +4,7 @@ import {
   BookOpen, Code2, Key, Webhook, Download, Compass,
   CreditCard, Users, ArrowLeftRight, ChevronLeft, Zap,
   UserCircle, FileText, Package, RefreshCw, Banknote,
-  Wallet, Landmark
+  Wallet, Landmark, Link2, ListOrdered, CreditCard as CardIcon
 } from "lucide-react";
 
 const navSections = [
@@ -20,11 +20,15 @@ const navSections = [
     items: [
       { label: "Authentication", icon: Key, to: "/developers/api/authentication" },
       { label: "Payments", icon: CreditCard, to: "/developers/api/payments" },
+      { label: "Payment Intents", icon: Zap, to: "/developers/api/payments" },
+      { label: "Payment Methods", icon: CardIcon, to: "/developers/api/payment-methods" },
+      { label: "Payment Links", icon: Link2, to: "/developers/api/payment-links" },
       { label: "Customers", icon: UserCircle, to: "/developers/api/customers" },
       { label: "Merchants", icon: Users, to: "/developers/api/merchants" },
       { label: "Transactions", icon: ArrowLeftRight, to: "/developers/api/transactions" },
       { label: "Invoices", icon: FileText, to: "/developers/api/invoices" },
       { label: "Products", icon: Package, to: "/developers/api/products" },
+      { label: "Plans", icon: ListOrdered, to: "/developers/api/plans" },
       { label: "Subscriptions", icon: RefreshCw, to: "/developers/api/subscriptions" },
       { label: "Payouts", icon: Banknote, to: "/developers/api/payouts" },
       { label: "Wallets", icon: Wallet, to: "/developers/api/wallets" },
