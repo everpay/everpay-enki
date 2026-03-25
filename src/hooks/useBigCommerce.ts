@@ -192,6 +192,19 @@ export function useBigCommerce() {
     }
   };
 
+  const importProducts = async (params: { store_id: string; merchant_id: string }) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('bigcommerce-sync-products', {
+        body: params,
+      });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error importing BC products:', error);
+      throw error;
+    }
+  };
+
   return {
     stores,
     isLoading,
@@ -204,5 +217,6 @@ export function useBigCommerce() {
     registerWebhooks,
     refreshToken,
     processCheckout,
+    importProducts,
   };
 }
