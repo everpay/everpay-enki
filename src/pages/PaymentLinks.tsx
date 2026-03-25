@@ -124,6 +124,16 @@ export default function PaymentLinks() {
               <CardDescription>Configure your payment link parameters</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              {/* Product Selection */}
+              <div className="space-y-2">
+                <Label>Products (optional)</Label>
+                <ProductSelector
+                  selectedProducts={selectedProducts}
+                  onProductsChange={setSelectedProducts}
+                  currency={currency}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Amount</Label>
