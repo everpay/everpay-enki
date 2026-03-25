@@ -8,13 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { useBigCommerce } from '@/hooks/useBigCommerce';
-import { Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle, RefreshCw, Webhook, Settings2, ShoppingBag, Eye, EyeOff, Copy, Code } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle, RefreshCw, Webhook, Settings2, ShoppingBag, Eye, EyeOff, Copy, Code, Download } from 'lucide-react';
 
 export default function BigCommerce() {
+  const { user } = useAuth();
   const {
     stores, isLoading, listStores, connectStore,
     getConfig, saveConfig, getOrders, getWebhookLogs,
-    registerWebhooks, refreshToken
+    registerWebhooks, refreshToken, importProducts
   } = useBigCommerce();
 
   const [storeHash, setStoreHash] = useState('');
@@ -41,6 +44,7 @@ export default function BigCommerce() {
 
   // Access token visibility
   const [showToken, setShowToken] = useState(false);
+  const [importingStoreId, setImportingStoreId] = useState<string | null>(null);
 
   useEffect(() => { listStores(); }, []);
 
@@ -130,6 +134,46 @@ export default function BigCommerce() {
       toast.success('Token refreshed');
       listStores();
     } catch { toast.error('Failed to refresh token'); }
+  };
+
+  const handleImportProducts = async (store: any, event?: any) => {
+    event?.stopPropagation?.();
+
+    if (!store?.id) return;
+
+    if (!store.access_token || store.access_token.startsWith('sim_')) {
+      toast.error('This store needs a live OAuth token before products can be imported.');
+      return;
+    }
+
+    setImportingStoreId(store.id);
+    try {
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+
+      if (!merchant?.id) {
+        toast.error('Merchant not found');
+        return;
+      }
+
+      const result = await importProducts({
+        store_id: store.id,
+        merchant_id: merchant.id,
+      });
+
+      if (result?.success) {
+        toast.success(`Imported ${result.imported} new products, updated ${result.updated} existing (${result.errors} errors)`);
+      } else {
+        toast.error(result?.error || 'Import failed');
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to import products');
+    } finally {
+      setImportingStoreId(null);
+    }
   };
 
   const maskToken = (token: string) => {
@@ -238,6 +282,24 @@ export default function BigCommerce() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleImportProducts(store, e)}
+                      disabled={
+                        importingStoreId === store.id ||
+                        !store.access_token ||
+                        store.access_token.startsWith('sim_')
+                      }
+                      title={
+                        store.access_token?.startsWith('sim_')
+                          ? 'OAuth required to import products'
+                          : 'Import products to Everpay'
+                      }
+                    >
+                      <Download className={`h-3.5 w-3.5 mr-1 ${importingStoreId === store.id ? 'animate-bounce' : ''}`} />
+                      {importingStoreId === store.id ? 'Importing…' : 'Import Products'}
+                    </Button>
                     {store.webhook_registered && (
                       <Badge variant="outline" className="text-xs">
                         <Webhook className="h-3 w-3 mr-1" /> Webhooks

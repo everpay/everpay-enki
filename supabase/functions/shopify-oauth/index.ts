@@ -236,16 +236,64 @@ serve(async (req) => {
         storeData.merchant_id = merchant_id;
       }
 
-      const { data: store, error: storeErr } = await supabase
-        .from('shopify_stores')
-        .upsert(storeData, { onConflict: 'shop_domain' })
-        .select('id')
-        .single();
+      let targetStoreId: string | null = null;
 
-      if (storeErr) {
-        // If upsert fails (no unique on shop_domain), try insert
-        const { error: insertErr } = await supabase.from('shopify_stores').insert(storeData);
+      if (merchant_id) {
+        const { data: merchantStore } = await supabase
+          .from('shopify_stores')
+          .select('id')
+          .eq('merchant_id', merchant_id)
+          .eq('shop_domain', normalizedShop)
+          .order('installed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        targetStoreId = merchantStore?.id || null;
+      }
+
+      if (!targetStoreId) {
+        const { data: domainStore } = await supabase
+          .from('shopify_stores')
+          .select('id, merchant_id')
+          .eq('shop_domain', normalizedShop)
+          .order('installed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (domainStore && (!merchant_id || domainStore.merchant_id === merchant_id)) {
+          targetStoreId = domainStore.id;
+        }
+      }
+
+      if (targetStoreId) {
+        const { error: updateErr } = await supabase
+          .from('shopify_stores')
+          .update({
+            ...storeData,
+            merchant_id: merchant_id || storeData.merchant_id,
+          })
+          .eq('id', targetStoreId);
+
+        if (updateErr) throw updateErr;
+      } else {
+        const { data: insertedStore, error: insertErr } = await supabase
+          .from('shopify_stores')
+          .insert(storeData)
+          .select('id')
+          .single();
+
         if (insertErr) throw insertErr;
+        targetStoreId = insertedStore?.id || null;
+      }
+
+      if (merchant_id && targetStoreId) {
+        // Clean up accidental duplicate rows for the same merchant + domain.
+        await supabase
+          .from('shopify_stores')
+          .delete()
+          .eq('merchant_id', merchant_id)
+          .eq('shop_domain', normalizedShop)
+          .neq('id', targetStoreId);
       }
 
       // 5. Register webhooks

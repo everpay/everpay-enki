@@ -26,10 +26,10 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { store_hash, order_id, payment_token, amount, currency } = body;
+    const { store_hash, order_id, checkout_id, payment_token, amount, currency } = body;
 
-    if (!store_hash || !order_id || !amount) {
-      throw new Error('store_hash, order_id, and amount are required');
+    if (!store_hash || amount == null) {
+      throw new Error('store_hash and amount are required');
     }
 
     // Fetch store
@@ -41,9 +41,9 @@ serve(async (req) => {
 
     if (!store) throw new Error('Store not found');
 
-    // Server-side amount verification (prevent tampering)
+    // Server-side amount verification (prevent tampering when order_id is available)
     let verifiedAmount = amount;
-    if (store.access_token && !store.access_token.startsWith('sim_')) {
+    if (order_id && store.access_token && !store.access_token.startsWith('sim_')) {
       const orderResp = await fetch(
         `https://api.bigcommerce.com/stores/${store_hash}/v2/orders/${order_id}`,
         {
@@ -78,7 +78,9 @@ serve(async (req) => {
         amount: verifiedAmount,
         currency: currency || 'USD',
         paymentMethod: 'card',
-        description: `BigCommerce Order #${order_id}`,
+        description: order_id
+          ? `BigCommerce Order #${order_id}`
+          : `BigCommerce Checkout ${checkout_id ? `#${checkout_id}` : ''}`.trim(),
         customerEmail: body.customer_email,
         cardDetails: body.card_details,
         billingDetails: body.billing_details,
@@ -93,7 +95,7 @@ serve(async (req) => {
     const paymentData = paymentResult.data;
 
     // Update BigCommerce order with transaction reference
-    if (paymentData?.transaction?.id) {
+    if (order_id && paymentData?.transaction?.id) {
       await supabase
         .from('bigcommerce_orders')
         .update({
@@ -123,6 +125,8 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         payment: paymentData,
+        order_id: order_id || null,
+        checkout_id: checkout_id || null,
         verified_amount: verifiedAmount,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

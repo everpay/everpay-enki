@@ -54,6 +54,25 @@ serve(async (req) => {
     return null;
   }
 
+  function getOrderId() {
+    try {
+      if (window.BC_ORDER && window.BC_ORDER.id) return String(window.BC_ORDER.id);
+      if (window.checkoutConfig && window.checkoutConfig.orderId) return String(window.checkoutConfig.orderId);
+      var orderInput = document.querySelector('input[name="order_id"]');
+      if (orderInput && orderInput.value) return String(orderInput.value);
+    } catch (e) {}
+    return null;
+  }
+
+  function getCheckoutId() {
+    try {
+      if (window.checkoutConfig && window.checkoutConfig.checkoutId) return String(window.checkoutConfig.checkoutId);
+      var match = (window.location.pathname || '').match(/\/checkouts\/([^/?#]+)/i);
+      if (match && match[1]) return match[1];
+    } catch (e) {}
+    return null;
+  }
+
   function createCardForm(theme) {
     var wrapper = document.createElement('div');
     wrapper.id = 'everpay-card-form-wrapper';
@@ -155,14 +174,29 @@ serve(async (req) => {
                 var amount = null;
                 try {
                   var totalEl = document.querySelector('[data-test="order-total"], .order-total, .checkout-total');
-                  if (totalEl) amount = Math.round(parseFloat(totalEl.innerText.replace(/[^0-9.,]/g,'').replace(',','.')) * 100);
+                  if (totalEl) amount = parseFloat(totalEl.innerText.replace(/[^0-9.,]/g,'').replace(',','.'));
                 } catch(e) {}
+
+                if (!amount || amount <= 0) {
+                  msg.textContent = 'Could not determine checkout amount.';
+                  return;
+                }
+
+                var orderId = getOrderId();
+                var checkoutId = getCheckoutId();
 
                 // Process payment
                 var payResp = await fetch(CHECKOUT_URL, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ store_hash: storeHash, amount: amount, currency: 'USD', payment_token: tok.id })
+                  body: JSON.stringify({
+                    store_hash: storeHash,
+                    order_id: orderId,
+                    checkout_id: checkoutId,
+                    amount: amount,
+                    currency: 'USD',
+                    payment_token: tok.id
+                  })
                 });
                 var payResult = await payResp.json();
                 if (!payResp.ok) { msg.textContent = payResult.error || 'Payment failed'; return; }

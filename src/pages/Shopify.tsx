@@ -44,6 +44,40 @@ function isValidShopDomain(value: string): boolean {
   return /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i.test(value);
 }
 
+function dedupeStoresByDomain(rows: ShopifyStore[]): ShopifyStore[] {
+  const seen = new Set<string>();
+  const deduped: ShopifyStore[] = [];
+
+  for (const store of rows) {
+    const key = normalizeShopDomain(store.shop_domain || '') || store.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(store);
+  }
+
+  return deduped;
+}
+
+function launchOAuthInBestContext(installUrl: string) {
+  const isEmbedded = (() => {
+    try {
+      return window.top !== window.self;
+    } catch {
+      return true;
+    }
+  })();
+
+  if (isEmbedded) {
+    const popup = window.open(installUrl, '_blank', 'noopener,noreferrer');
+    if (popup) {
+      toast.info('OAuth opened in a new tab. Complete install, then return here.');
+      return;
+    }
+  }
+
+  window.location.assign(installUrl);
+}
+
 export default function Shopify() {
   const { user } = useAuth();
   const [stores, setStores] = useState<ShopifyStore[]>([]);
@@ -75,6 +109,10 @@ export default function Shopify() {
 
   // Import products state
   const [importingStoreId, setImportingStoreId] = useState<string | null>(null);
+
+  // OAuth callback state
+  const [pendingOAuthQuery, setPendingOAuthQuery] = useState<Record<string, string> | null>(null);
+  const [isHandlingOAuthCallback, setIsHandlingOAuthCallback] = useState(false);
 
   const handleImportProducts = async (store: ShopifyStore) => {
     if (!store.access_token) {
@@ -132,7 +170,7 @@ export default function Shopify() {
         .order('installed_at', { ascending: false });
 
       if (error) throw error;
-      setStores((data || []).filter(s => !s.uninstalled));
+      setStores(dedupeStoresByDomain((data || []).filter(s => !s.uninstalled)));
     } catch (err: any) {
       console.error('Failed to fetch Shopify stores:', err);
     } finally {
@@ -150,34 +188,46 @@ export default function Shopify() {
     const callbackQuery = Object.fromEntries(params.entries());
 
     if (callbackQuery.code && callbackQuery.shop) {
-      // We have an OAuth callback — exchange for token
-      handleOAuthCallback(callbackQuery);
-      // Clean URL
+      setPendingOAuthQuery(callbackQuery);
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
+  useEffect(() => {
+    if (!user || !pendingOAuthQuery || isHandlingOAuthCallback) return;
+    handleOAuthCallback(pendingOAuthQuery);
+  }, [user, pendingOAuthQuery, isHandlingOAuthCallback]);
+
   const handleOAuthCallback = async (query: Record<string, string>) => {
+    if (!user) return;
+    setIsHandlingOAuthCallback(true);
     try {
       const { data: merchant } = await supabase
         .from('merchants')
         .select('id')
-        .eq('user_id', user?.id ?? '')
+        .eq('user_id', user.id)
         .single();
 
+      if (!merchant?.id) {
+        throw new Error('Merchant account not found for OAuth callback');
+      }
+
       const { data, error } = await supabase.functions.invoke('shopify-oauth', {
-        body: { action: 'callback', query, merchant_id: merchant?.id },
+        body: { action: 'callback', query, merchant_id: merchant.id },
       });
 
       if (error) throw error;
       if (data?.success) {
         toast.success(`Store ${data.shop} connected via OAuth (${data.mode} mode)`);
+        setPendingOAuthQuery(null);
         fetchStores();
       } else {
         toast.error(data?.error || 'OAuth callback failed');
       }
     } catch (err: any) {
       toast.error(err.message || 'OAuth callback error');
+    } finally {
+      setIsHandlingOAuthCallback(false);
     }
   };
 
@@ -209,8 +259,7 @@ export default function Shopify() {
       if (error) throw error;
 
       if (data?.install_url) {
-        // Redirect to Shopify OAuth consent screen
-        window.location.href = data.install_url;
+        launchOAuthInBestContext(data.install_url);
       } else if (data?.mode === 'simulation') {
         toast.info(data.message || 'Running in simulation mode — no Shopify API keys configured.');
       } else {
@@ -292,7 +341,7 @@ export default function Shopify() {
       });
       if (error) throw error;
       if (data?.install_url) {
-        window.location.href = data.install_url;
+        launchOAuthInBestContext(data.install_url);
       } else {
         toast.info(data?.message || 'Simulation mode — no OAuth redirect available');
       }
@@ -355,13 +404,36 @@ export default function Shopify() {
     if (!deleteStore) return;
     setIsDeleting(true);
     try {
-      const { error } = await supabase
+      let query = supabase
         .from('shopify_stores')
-        .delete()
-        .eq('id', deleteStore.id);
+        .update({
+          uninstalled: true,
+          active: false,
+          access_token: null,
+          scope: null,
+        });
+
+      if (deleteStore.shop_domain && deleteStore.merchant_id) {
+        query = query
+          .eq('shop_domain', deleteStore.shop_domain)
+          .eq('merchant_id', deleteStore.merchant_id);
+      } else {
+        query = query.eq('id', deleteStore.id);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
       toast.success('Store disconnected');
+
+      const targetDomain = normalizeShopDomain(deleteStore.shop_domain || '');
+      setStores((prev) => prev.filter((store) => {
+        if (targetDomain && normalizeShopDomain(store.shop_domain || '') === targetDomain) {
+          return false;
+        }
+        return store.id !== deleteStore.id;
+      }));
+
       setDeleteStore(null);
       fetchStores();
     } catch (err: any) {
