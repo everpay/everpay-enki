@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { VGSCardForm } from '@/components/VGSCardForm';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 import { useFraudDetection, FraudRiskResult } from '@/hooks/useFraudDetection';
