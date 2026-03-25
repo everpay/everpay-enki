@@ -81,7 +81,7 @@ const BankRedirectsApiPage = () => {
         params={[
           { name: "amount", type: "integer", required: true, desc: "Amount in smallest currency unit" },
           { name: "currency", type: "string", required: true, desc: "ISO currency code (eur, gbp, usd, brl)" },
-          { name: "method", type: "string", required: true, desc: "Redirect method: ideal, bancontact, open_banking, pix, plaid_pay" },
+          { name: "method", type: "string", required: true, desc: "Redirect method: ideal, bancontact, open_banking, pix, plaid_pay, spei, pse, prometeo_redirect" },
           { name: "return_url", type: "string", required: true, desc: "URL to redirect customer after bank authorization" },
           { name: "customer_id", type: "string", required: false, desc: "Customer ID for the payment" },
           { name: "bank_code", type: "string", required: false, desc: "Bank identifier (required for iDEAL)" },

@@ -79,6 +79,13 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['KE', 'TZ', 'UG', 'GH', 'ZA', 'RW', 'ET', 'NG', 'CI', 'SN', 'CM'],
     methods: ['M-Pesa', 'Mobile Money', 'Bank Transfer', 'Card', 'Airtel Money'],
   },
+  prometeo: {
+    name: 'prometeo',
+    displayName: 'Prometeo',
+    supportedCurrencies: ['BRL', 'MXN', 'COP'],
+    regions: ['MX', 'CO', 'BR', 'CL', 'PE', 'UY', 'EC', 'AR', 'PA'],
+    methods: ['Bank Redirect', 'SPEI', 'PSE', 'Open Finance', 'Bank Transfer'],
+  },
 };
 
 // Country → provider mapping for intelligent routing
