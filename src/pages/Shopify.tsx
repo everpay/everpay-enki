@@ -8,9 +8,19 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle, Package, Key, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import {
+  Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle,
+  Package, Key, Eye, EyeOff, Copy, Check, Trash2, Pencil, ExternalLink, RefreshCw,
+} from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ShopifyStore {
   id: string;
@@ -19,6 +29,7 @@ interface ShopifyStore {
   installed_at: string | null;
   scope: string | null;
   access_token: string | null;
+  uninstalled: boolean | null;
 }
 
 export default function Shopify() {
@@ -27,6 +38,7 @@ export default function Shopify() {
   const [isLoading, setIsLoading] = useState(true);
   const [shopDomain, setShopDomain] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isOAuthConnecting, setIsOAuthConnecting] = useState(false);
   const [shopifyAccessToken, setShopifyAccessToken] = useState('');
   const [showAccessToken, setShowAccessToken] = useState(false);
   const [everpayPublicKey, setEverpayPublicKey] = useState('');
@@ -38,16 +50,44 @@ export default function Shopify() {
   const [sandboxMode, setSandboxMode] = useState(true);
   const [visibleTokenStoreId, setVisibleTokenStoreId] = useState<string | null>(null);
   const [copiedTokenStoreId, setCopiedTokenStoreId] = useState<string | null>(null);
+
+  // Edit state
+  const [editStore, setEditStore] = useState<ShopifyStore | null>(null);
+  const [editDomain, setEditDomain] = useState('');
+  const [editToken, setEditToken] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Delete state
+  const [deleteStore, setDeleteStore] = useState<ShopifyStore | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fetch token via OAuth
+  const [fetchingTokenStoreId, setFetchingTokenStoreId] = useState<string | null>(null);
+
   const fetchStores = async () => {
     setIsLoading(true);
     try {
+      // Scope to current merchant
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+
+      if (!merchant) {
+        setStores([]);
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('shopify_stores')
-        .select('id, shop_domain, merchant_id, installed_at, scope, access_token')
+        .select('id, shop_domain, merchant_id, installed_at, scope, access_token, uninstalled')
+        .eq('merchant_id', merchant.id)
         .order('installed_at', { ascending: false });
 
       if (error) throw error;
-      setStores(data || []);
+      setStores((data || []).filter(s => !s.uninstalled));
     } catch (err: any) {
       console.error('Failed to fetch Shopify stores:', err);
     } finally {
@@ -56,10 +96,86 @@ export default function Shopify() {
   };
 
   useEffect(() => {
-    fetchStores();
+    if (user) fetchStores();
+  }, [user]);
+
+  // Listen for OAuth callback via URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const shop = params.get('shop');
+    const hmac = params.get('hmac');
+    const state = params.get('state');
+    const timestamp = params.get('timestamp');
+
+    if (code && shop) {
+      // We have an OAuth callback — exchange for token
+      handleOAuthCallback({ code, shop, hmac, state, timestamp });
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
-  const handleConnect = async () => {
+  const handleOAuthCallback = async (query: Record<string, string | null>) => {
+    try {
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+
+      const { data, error } = await supabase.functions.invoke('shopify-oauth', {
+        body: { action: 'callback', query, merchant_id: merchant?.id },
+      });
+
+      if (error) throw error;
+      if (data?.success) {
+        toast.success(`Store ${data.shop} connected via OAuth (${data.mode} mode)`);
+        fetchStores();
+      } else {
+        toast.error(data?.error || 'OAuth callback failed');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'OAuth callback error');
+    }
+  };
+
+  const handleOAuthConnect = async () => {
+    if (!shopDomain.trim()) {
+      toast.error('Please enter a Shopify store domain');
+      return;
+    }
+
+    setIsOAuthConnecting(true);
+    try {
+      const redirectUri = `${window.location.origin}/shopify`;
+
+      const { data, error } = await supabase.functions.invoke('shopify-oauth', {
+        body: {
+          action: 'install',
+          shop: shopDomain.trim(),
+          redirect_uri: redirectUri,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.install_url) {
+        // Redirect to Shopify OAuth consent screen
+        window.location.href = data.install_url;
+      } else if (data?.mode === 'simulation') {
+        toast.info(data.message || 'Running in simulation mode — no Shopify API keys configured.');
+      } else {
+        toast.error('Failed to generate OAuth URL');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to start OAuth');
+    } finally {
+      setIsOAuthConnecting(false);
+    }
+  };
+
+  const handleManualConnect = async () => {
     if (!shopDomain.trim()) {
       toast.error('Please enter a Shopify store domain');
       return;
@@ -83,14 +199,12 @@ export default function Shopify() {
         merchant_id: merchant.id,
       };
 
-      // If access token provided, include it
       if (shopifyAccessToken.trim()) {
         insertData.access_token = shopifyAccessToken.trim();
         insertData.scope = 'read_orders,write_orders,read_draft_orders,write_draft_orders';
       }
 
       const { error } = await supabase.from('shopify_stores').insert(insertData);
-
       if (error) throw error;
 
       toast.success('Shopify store connected successfully');
@@ -104,16 +218,89 @@ export default function Shopify() {
     }
   };
 
+  const handleFetchTokenViaOAuth = async (store: ShopifyStore) => {
+    if (!store.shop_domain) return;
+    setFetchingTokenStoreId(store.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('shopify-oauth', {
+        body: {
+          action: 'install',
+          shop: store.shop_domain,
+          redirect_uri: `${window.location.origin}/shopify`,
+        },
+      });
+      if (error) throw error;
+      if (data?.install_url) {
+        window.location.href = data.install_url;
+      } else {
+        toast.info(data?.message || 'Simulation mode — no OAuth redirect available');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to initiate OAuth');
+    } finally {
+      setFetchingTokenStoreId(null);
+    }
+  };
+
   const handleSaveApiKeys = async () => {
     setIsSavingKeys(true);
     try {
-      // In a real implementation, these would be stored securely
-      // For now, we'll store the public key in the merchant profile
       toast.success('API keys saved. Webhook secret and environment configured.');
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to save API keys');
     } finally {
       setIsSavingKeys(false);
+    }
+  };
+
+  // ── Edit Store ──
+  const openEditDialog = (store: ShopifyStore) => {
+    setEditStore(store);
+    setEditDomain(store.shop_domain || '');
+    setEditToken(store.access_token || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editStore) return;
+    setIsSavingEdit(true);
+    try {
+      const updates: any = { shop_domain: editDomain.trim() };
+      if (editToken.trim()) updates.access_token = editToken.trim();
+
+      const { error } = await supabase
+        .from('shopify_stores')
+        .update(updates)
+        .eq('id', editStore.id);
+
+      if (error) throw error;
+      toast.success('Store updated');
+      setEditStore(null);
+      fetchStores();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update store');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // ── Delete Store ──
+  const handleDeleteStore = async () => {
+    if (!deleteStore) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('shopify_stores')
+        .delete()
+        .eq('id', deleteStore.id);
+
+      if (error) throw error;
+      toast.success('Store disconnected');
+      setDeleteStore(null);
+      fetchStores();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete store');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -159,8 +346,7 @@ export default function Shopify() {
               Everpay API Configuration
             </CardTitle>
             <CardDescription>
-              Configure your Everpay API keys for payment processing. These are used to authenticate
-              Shopify checkout flows through Everpay.
+              Configure your Everpay API keys for payment processing.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -168,7 +354,7 @@ export default function Shopify() {
               <div>
                 <p className="text-sm font-medium text-foreground">Environment</p>
                 <p className="text-xs text-muted-foreground">
-                  {sandboxMode ? 'Sandbox — test mode, no real charges' : 'Live — real payments processed'}
+                  {sandboxMode ? 'Sandbox — test mode' : 'Live — real payments'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -180,29 +366,14 @@ export default function Shopify() {
 
             <div className="space-y-2">
               <Label className="text-xs">Everpay Public Key</Label>
-              <Input
-                placeholder="pk_live_..."
-                value={everpayPublicKey}
-                onChange={(e) => setEverpayPublicKey(e.target.value)}
-                className="font-mono text-sm"
-              />
+              <Input placeholder="pk_live_..." value={everpayPublicKey} onChange={(e) => setEverpayPublicKey(e.target.value)} className="font-mono text-sm" />
             </div>
 
             <div className="space-y-2">
               <Label className="text-xs">Everpay Secret Key</Label>
               <div className="relative">
-                <Input
-                  type={showSecretKey ? 'text' : 'password'}
-                  placeholder="sk_live_..."
-                  value={everpaySecretKey}
-                  onChange={(e) => setEverpaySecretKey(e.target.value)}
-                  className="font-mono text-sm pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowSecretKey(!showSecretKey)}
-                >
+                <Input type={showSecretKey ? 'text' : 'password'} placeholder="sk_live_..." value={everpaySecretKey} onChange={(e) => setEverpaySecretKey(e.target.value)} className="font-mono text-sm pr-10" />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowSecretKey(!showSecretKey)}>
                   {showSecretKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -211,18 +382,8 @@ export default function Shopify() {
             <div className="space-y-2">
               <Label className="text-xs">Webhook Secret</Label>
               <div className="relative">
-                <Input
-                  type={showWebhookSecret ? 'text' : 'password'}
-                  placeholder="whsec_..."
-                  value={webhookSecret}
-                  onChange={(e) => setWebhookSecret(e.target.value)}
-                  className="font-mono text-sm pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowWebhookSecret(!showWebhookSecret)}
-                >
+                <Input type={showWebhookSecret ? 'text' : 'password'} placeholder="whsec_..." value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} className="font-mono text-sm pr-10" />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowWebhookSecret(!showWebhookSecret)}>
                   {showWebhookSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -245,40 +406,38 @@ export default function Shopify() {
               Connect Shopify Store
             </CardTitle>
             <CardDescription>
-              Enter your Shopify store domain and access token to enable Draft Order checkout.
+              Connect via OAuth (recommended) or enter an access token manually.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="shop-domain">Store Domain</Label>
-              <Input
-                id="shop-domain"
-                placeholder="your-store.myshopify.com"
-                value={shopDomain}
-                onChange={(e) => setShopDomain(e.target.value)}
-              />
+              <Input id="shop-domain" placeholder="your-store.myshopify.com" value={shopDomain} onChange={(e) => setShopDomain(e.target.value)} />
             </div>
+
+            <div className="flex gap-3">
+              <Button onClick={handleOAuthConnect} disabled={isOAuthConnecting || !shopDomain.trim()} className="gap-2">
+                <ExternalLink className="h-4 w-4" />
+                {isOAuthConnecting ? 'Redirecting…' : 'Connect via OAuth'}
+              </Button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">or connect manually</span></div>
+            </div>
+
             <div className="space-y-2">
-              <Label>Shopify Access Token <span className="text-muted-foreground text-xs">(optional for simulation)</span></Label>
+              <Label>Shopify Access Token <span className="text-muted-foreground text-xs">(shpat_…)</span></Label>
               <div className="relative">
-                <Input
-                  type={showAccessToken ? 'text' : 'password'}
-                  placeholder="shpat_..."
-                  value={shopifyAccessToken}
-                  onChange={(e) => setShopifyAccessToken(e.target.value)}
-                  className="font-mono text-sm pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowAccessToken(!showAccessToken)}
-                >
+                <Input type={showAccessToken ? 'text' : 'password'} placeholder="shpat_..." value={shopifyAccessToken} onChange={(e) => setShopifyAccessToken(e.target.value)} className="font-mono text-sm pr-10" />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowAccessToken(!showAccessToken)}>
                   {showAccessToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
-            <Button onClick={handleConnect} disabled={isConnecting}>
-              {isConnecting ? 'Connecting…' : 'Connect Store'}
+            <Button variant="outline" onClick={handleManualConnect} disabled={isConnecting || !shopDomain.trim()}>
+              {isConnecting ? 'Connecting…' : 'Connect Manually'}
             </Button>
           </CardContent>
         </Card>
@@ -303,17 +462,12 @@ export default function Shopify() {
             ) : (
               <div className="space-y-3">
                 {stores.map((store) => (
-                  <div
-                    key={store.id}
-                    className="rounded-lg border border-border p-4 space-y-3"
-                  >
+                  <div key={store.id} className="rounded-lg border border-border p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Store className="h-5 w-5 text-muted-foreground" />
                         <div>
-                          <p className="font-medium text-foreground">
-                            {store.shop_domain || 'Unknown Store'}
-                          </p>
+                          <p className="font-medium text-foreground">{store.shop_domain || 'Unknown Store'}</p>
                           <p className="text-xs text-muted-foreground">
                             Connected {store.installed_at ? new Date(store.installed_at).toLocaleDateString() : 'recently'}
                           </p>
@@ -321,46 +475,45 @@ export default function Shopify() {
                       </div>
                       <div className="flex items-center gap-2">
                         {store.scope ? (
-                          <Badge variant="default" className="gap-1">
-                            <CheckCircle2 className="h-3 w-3" /> Live
-                          </Badge>
+                          <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Live</Badge>
                         ) : (
-                          <Badge variant="secondary" className="gap-1">
-                            <AlertCircle className="h-3 w-3" /> Simulation
-                          </Badge>
+                          <Badge variant="secondary" className="gap-1"><AlertCircle className="h-3 w-3" /> Simulation</Badge>
                         )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(store)} title="Edit store">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteStore(store)} title="Delete store">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </div>
-                    {store.access_token && (
-                      <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
-                        <Key className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <code className="text-xs font-mono flex-1 truncate">
-                          {visibleTokenStoreId === store.id
-                            ? store.access_token
-                            : store.access_token.slice(0, 8) + '•'.repeat(20)}
-                        </code>
-                        <button
-                          type="button"
-                          className="text-muted-foreground hover:text-foreground p-1"
-                          onClick={() => setVisibleTokenStoreId(visibleTokenStoreId === store.id ? null : store.id)}
-                          title={visibleTokenStoreId === store.id ? 'Hide token' : 'Show token'}
-                        >
-                          {visibleTokenStoreId === store.id ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                        </button>
-                        <button
-                          type="button"
-                          className="text-muted-foreground hover:text-foreground p-1"
-                          onClick={() => {
-                            navigator.clipboard.writeText(store.access_token!);
-                            setCopiedTokenStoreId(store.id);
-                            toast.success('Access token copied');
-                            setTimeout(() => setCopiedTokenStoreId(null), 2000);
-                          }}
-                          title="Copy token"
-                        >
-                          {copiedTokenStoreId === store.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-                        </button>
-                      </div>
+
+                    {/* Admin API Token display */}
+                    <div className="flex items-center gap-2 bg-muted/50 rounded-md p-2">
+                      <Key className="h-4 w-4 text-muted-foreground shrink-0" />
+                      {store.access_token ? (
+                        <>
+                          <code className="text-xs font-mono flex-1 truncate">
+                            {visibleTokenStoreId === store.id ? store.access_token : store.access_token.slice(0, 8) + '•'.repeat(20)}
+                          </code>
+                          <button type="button" className="text-muted-foreground hover:text-foreground p-1" onClick={() => setVisibleTokenStoreId(visibleTokenStoreId === store.id ? null : store.id)} title={visibleTokenStoreId === store.id ? 'Hide token' : 'Show token'}>
+                            {visibleTokenStoreId === store.id ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          </button>
+                          <button type="button" className="text-muted-foreground hover:text-foreground p-1" onClick={() => { navigator.clipboard.writeText(store.access_token!); setCopiedTokenStoreId(store.id); toast.success('Access token copied'); setTimeout(() => setCopiedTokenStoreId(null), 2000); }} title="Copy token">
+                            {copiedTokenStoreId === store.id ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground flex-1">No Admin API token — connect via OAuth to fetch one</span>
+                      )}
+                      <Button variant="outline" size="sm" className="h-7 text-xs gap-1 shrink-0" disabled={fetchingTokenStoreId === store.id} onClick={() => handleFetchTokenViaOAuth(store)}>
+                        <RefreshCw className={`h-3 w-3 ${fetchingTokenStoreId === store.id ? 'animate-spin' : ''}`} />
+                        {store.access_token ? 'Re-auth' : 'Fetch via OAuth'}
+                      </Button>
+                    </div>
+
+                    {store.scope && (
+                      <p className="text-[11px] text-muted-foreground">Scopes: {store.scope}</p>
                     )}
                   </div>
                 ))}
@@ -372,23 +525,18 @@ export default function Shopify() {
         {/* How It Works */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Link2 className="h-5 w-5" />
-              How It Works
-            </CardTitle>
+            <CardTitle className="flex items-center gap-2"><Link2 className="h-5 w-5" /> How It Works</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid gap-4 md:grid-cols-2">
               {[
-                { step: '1', title: 'Connect Store', desc: 'Link your Shopify store domain and access token to Everpay' },
+                { step: '1', title: 'Connect Store', desc: 'Link your Shopify store via OAuth or access token' },
                 { step: '2', title: 'Draft Orders', desc: 'Everpay creates Shopify Draft Orders for each checkout' },
                 { step: '3', title: 'Hosted Checkout', desc: `Customers pay via ${EVERPAY_CONFIG.CHECKOUT_URL}` },
                 { step: '4', title: 'Order Completion', desc: 'On payment success, the draft order is marked as paid automatically' },
               ].map((item) => (
                 <div key={item.step} className="flex gap-3 items-start">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">
-                    {item.step}
-                  </div>
+                  <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">{item.step}</div>
                   <div>
                     <p className="font-medium text-foreground">{item.title}</p>
                     <p className="text-sm text-muted-foreground">{item.desc}</p>
@@ -399,6 +547,48 @@ export default function Shopify() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Store Dialog */}
+      <Dialog open={!!editStore} onOpenChange={(open) => !open && setEditStore(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Store</DialogTitle>
+            <DialogDescription>Update the store domain or access token.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Store Domain</Label>
+              <Input value={editDomain} onChange={(e) => setEditDomain(e.target.value)} placeholder="your-store.myshopify.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>Access Token</Label>
+              <Input value={editToken} onChange={(e) => setEditToken(e.target.value)} placeholder="shpat_..." className="font-mono text-sm" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditStore(null)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={isSavingEdit}>{isSavingEdit ? 'Saving…' : 'Save'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteStore} onOpenChange={(open) => !open && setDeleteStore(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect Store</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to disconnect <strong>{deleteStore?.shop_domain}</strong>? This will remove the store and its access token.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteStore} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isDeleting ? 'Deleting…' : 'Disconnect'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
