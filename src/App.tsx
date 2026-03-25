@@ -13,6 +13,8 @@ import Payouts from "./pages/Payouts";
 import NewPayment from "./pages/NewPayment";
 import PaymentLinks from "./pages/PaymentLinks";
 import Checkout from "./pages/Checkout";
+import CheckoutThankYou from "./pages/CheckoutThankYou";
+import CheckoutDeclined from "./pages/CheckoutDeclined";
 import Activity from "./pages/Activity";
 import Subscriptions from "./pages/Subscriptions";
 import CustomerPortal from "./pages/CustomerPortal";
@@ -184,6 +186,8 @@ const AppRoutes = () => {
     <Route path="/docs" element={<Docs />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/checkout" element={<Checkout />} />
+    <Route path="/checkout/thank-you" element={<CheckoutThankYou />} />
+    <Route path="/checkout/declined" element={<CheckoutDeclined />} />
     <Route path="/pay/:id" element={<PayInvoice />} />
 
     {/* App pages (protected) */}

@@ -22,6 +22,8 @@ export default function Checkout() {
   const email = searchParams.get('email') ? decodeURIComponent(searchParams.get('email')!) : '';
   const name = searchParams.get('name') ? decodeURIComponent(searchParams.get('name')!) : '';
   const ref = searchParams.get('ref') || '';
+  const source = searchParams.get('source') || '';
+  const orderId = searchParams.get('order_id') || ref;
   const method = searchParams.get('method') || 'all';
   const merchantId = searchParams.get('merchant_id') || '';
   const successUrl = searchParams.get('success_url') ? decodeURIComponent(searchParams.get('success_url')!) : '';
@@ -49,18 +51,28 @@ export default function Checkout() {
   const [threeDSTransactionId, setThreeDSTransactionId] = useState('');
   const [showThreeDS, setShowThreeDS] = useState(false);
 
+  const redirectToOutcome = (outcome: 'success' | 'failed', transactionId?: string) => {
+    const target = outcome === 'success'
+      ? (successUrl || `/checkout/thank-you?amount=${encodeURIComponent(displayAmount)}&currency=${encodeURIComponent(currency)}`)
+      : (cancelUrl || `/checkout/declined?amount=${encodeURIComponent(displayAmount)}&currency=${encodeURIComponent(currency)}`);
+
+    const url = new URL(target, window.location.origin);
+    if (transactionId) url.searchParams.set('transaction_id', transactionId);
+    if (ref) url.searchParams.set('ref', ref);
+    window.location.href = url.toString();
+  };
+
   const { isPolling, startPolling } = usePaymentPolling({
     transactionId: null,
     enabled: false,
     onComplete: () => {
       setPaymentComplete(true);
       setShowThreeDS(false);
-      if (successUrl) {
-        const redirectUrl = new URL(successUrl);
-        redirectUrl.searchParams.set('TRANSACTION_ID', threeDSTransactionId);
-        redirectUrl.searchParams.set('PARTNER_SESSION_ID', ref);
-        setTimeout(() => { window.location.href = redirectUrl.toString(); }, 2000);
-      }
+      setTimeout(() => redirectToOutcome('success', threeDSTransactionId), 1200);
+    },
+    onFailed: () => {
+      setShowThreeDS(false);
+      setTimeout(() => redirectToOutcome('failed', threeDSTransactionId), 600);
     },
   });
 
@@ -85,6 +97,10 @@ export default function Checkout() {
         description: description || `Payment ${ref}`,
         idempotencyKey: `link_${ref}_${Date.now()}`,
         merchantId: merchantId || undefined,
+        source: source || undefined,
+        orderId: orderId || undefined,
+        successUrl: successUrl || undefined,
+        cancelUrl: cancelUrl || undefined,
         customerDetails: {
           firstName: customerName.split(' ')[0] || '',
           lastName: customerName.split(' ').slice(1).join(' ') || '',
@@ -129,6 +145,14 @@ export default function Checkout() {
       // Start polling for pending payments
       if (data?.transaction?.status === 'pending' && data?.transaction?.id) {
         startPolling(data.transaction.id);
+        toast.info('Payment is processing. We will update shortly.');
+        return;
+      }
+
+      if (!data?.success || data?.transaction?.status === 'failed') {
+        toast.error('Payment declined');
+        redirectToOutcome('failed', data?.transaction?.id);
+        return;
       }
 
       // Send payment receipt email to customer
@@ -155,15 +179,7 @@ export default function Checkout() {
       }
 
       setPaymentComplete(true);
-
-      if (successUrl) {
-        const redirectUrl = new URL(successUrl);
-        redirectUrl.searchParams.set('TRANSACTION_ID', data.transaction?.id || '');
-        redirectUrl.searchParams.set('PARTNER_SESSION_ID', ref);
-        setTimeout(() => {
-          window.location.href = redirectUrl.toString();
-        }, 2000);
-      }
+      setTimeout(() => redirectToOutcome('success', data.transaction?.id || ''), 1200);
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Payment failed', {
