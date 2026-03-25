@@ -68,6 +68,8 @@ import Treasury from "./pages/Treasury";
 import LiveAnalytics from "./pages/LiveAnalytics";
 import Settlements from "./pages/Settlements";
 import FraudGraph from "./pages/FraudGraph";
+import PaymentWidget from "./pages/PaymentWidget";
+import MassPayouts from "./pages/MassPayouts";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
