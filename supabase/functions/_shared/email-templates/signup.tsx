@@ -11,7 +11,6 @@ import {
   Hr,
   Html,
   Img,
-  Link,
   Preview,
   Section,
   Text,
@@ -37,9 +36,17 @@ export const SignupEmail = ({
     <Preview>Welcome to Everpay — confirm your email</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={logoSection}>
-          <Img src={LOGO_URL} width="36" height="36" alt="Everpay" style={logoImg} />
-          <Text style={logoText}>Everpay</Text>
+        <Section>
+          <table cellPadding="0" cellSpacing="0" style={{ border: 'none' }}>
+            <tr>
+              <td style={{ verticalAlign: 'middle', paddingRight: '10px' }}>
+                <Img src={LOGO_URL} width="36" height="36" alt="Everpay" style={logoImg} />
+              </td>
+              <td style={{ verticalAlign: 'middle' }}>
+                <Text style={logoText}>Everpay</Text>
+              </td>
+            </tr>
+          </table>
         </Section>
         <Hr style={divider} />
         <Heading style={h1}>You're ready to get started with Everpay</Heading>
@@ -58,9 +65,7 @@ export const SignupEmail = ({
         <Text style={footer}>
           If you didn't create an account, you can safely ignore this email.
         </Text>
-        <Text style={footerAddress}>
-          Everpay Inc.
-        </Text>
+        <Text style={footerAddress}>Everpay Inc.</Text>
       </Container>
     </Body>
   </Html>
@@ -70,16 +75,13 @@ export default SignupEmail
 
 const main = { backgroundColor: '#f6f9fc', fontFamily: "Manrope, 'Helvetica Neue', Arial, sans-serif" }
 const container = { backgroundColor: '#ffffff', padding: '40px 32px', maxWidth: '520px', margin: '40px auto', borderRadius: '8px' }
-const logoSection = { display: 'flex' as const, alignItems: 'center' as const, gap: '10px', marginBottom: '0' }
-const logoImg = { borderRadius: '8px', verticalAlign: 'middle' as const }
+const logoImg = { borderRadius: '8px' }
 const logoText = {
   fontSize: '22px',
   fontWeight: '700' as const,
   fontFamily: "Sora, 'Helvetica Neue', sans-serif",
   color: '#0f1419',
   margin: '0',
-  display: 'inline' as const,
-  verticalAlign: 'middle' as const,
 }
 const divider = { borderColor: '#e6ebf1', margin: '24px 0' }
 const h1 = {
