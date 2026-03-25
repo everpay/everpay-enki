@@ -452,7 +452,7 @@ export default function Payouts() {
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <div className="p-4 border-b border-border">
-            <h2 className="font-heading font-semibold">Recent Payouts</h2>
+            <h2 className="font-heading font-semibold">Recent Bank Payouts</h2>
           </div>
           <div className="divide-y divide-border">
             {payouts.map((payout) => (
@@ -482,7 +482,6 @@ export default function Payouts() {
         </div>
       )}
 
-      {/* Moneto Payout Info */}
       <div className="mt-8 rounded-xl border border-border bg-card/50 p-6">
         <div className="flex items-start gap-4">
           <div className="p-3 rounded-lg bg-primary/10">
@@ -501,6 +500,143 @@ export default function Payouts() {
           </div>
         </div>
       </div>
+        </TabsContent>
+
+        {/* Payout to Card Tab */}
+        <TabsContent value="card">
+          <div className="rounded-xl border border-border bg-card p-6 space-y-5 max-w-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              <h2 className="font-heading font-semibold text-foreground">Payout to Card</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Push funds directly to a recipient's Visa or Mastercard via PacoPay
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Amount</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={cardPayoutAmount}
+                    onChange={(e) => setCardPayoutAmount(e.target.value)}
+                    className="pl-7"
+                    step="0.01"
+                    min="0"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                <Select value={cardPayoutCurrency} onValueChange={setCardPayoutCurrency}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="CAD">CAD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Card Number</Label>
+              <Input
+                placeholder="4111 1111 1111 1111"
+                value={cardNumber}
+                onChange={(e) => setCardNumber(e.target.value)}
+                maxLength={19}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Card Holder Name</Label>
+              <Input
+                placeholder="John Doe"
+                value={cardHolder}
+                onChange={(e) => setCardHolder(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Exp Month</Label>
+                <Input placeholder="MM" value={cardExpMonth} onChange={(e) => setCardExpMonth(e.target.value)} maxLength={2} />
+              </div>
+              <div className="space-y-2">
+                <Label>Exp Year</Label>
+                <Input placeholder="YYYY" value={cardExpYear} onChange={(e) => setCardExpYear(e.target.value)} maxLength={4} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Recipient Email</Label>
+              <Input
+                type="email"
+                placeholder="recipient@example.com"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+              />
+            </div>
+
+            <Button
+              className="w-full gap-2"
+              disabled={isCardPayoutProcessing || !cardPayoutAmount || !cardNumber || !cardHolder}
+              onClick={async () => {
+                setIsCardPayoutProcessing(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('pacopay-process', {
+                    body: {
+                      action: 'payout_to_card',
+                      amount: parseFloat(cardPayoutAmount),
+                      currency: cardPayoutCurrency,
+                      description: `Card payout to ${cardHolder}`,
+                      card: {
+                        number: cardNumber.replace(/\s/g, ''),
+                        holder: cardHolder,
+                        exp_month: cardExpMonth,
+                        exp_year: cardExpYear,
+                      },
+                      recipient: { email: recipientEmail },
+                      tracking_id: crypto.randomUUID(),
+                    },
+                  });
+
+                  if (error) throw error;
+                  toast.success('Card payout initiated successfully');
+                  setCardPayoutAmount('');
+                  setCardNumber('');
+                  setCardHolder('');
+                  setCardExpMonth('');
+                  setCardExpYear('');
+                  setRecipientEmail('');
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : 'Card payout failed');
+                } finally {
+                  setIsCardPayoutProcessing(false);
+                }
+              }}
+            >
+              {isCardPayoutProcessing ? 'Processing...' : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Send Payout to Card
+                </>
+              )}
+            </Button>
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Badge variant="outline">PacoPay Powered</Badge>
+              <Badge variant="outline">Visa & Mastercard</Badge>
+              <Badge variant="outline">Instant Push</Badge>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </AppLayout>
   );
 }
