@@ -221,6 +221,29 @@ Deno.serve(async (req) => {
     }, reqId);
   }
 
+  // ─── Rate Limit (per merchant) ───
+  const rl = checkRateLimit(merchantId);
+  if (!rl.allowed) {
+    return new Response(JSON.stringify({
+      error: {
+        type: 'rate_limit_error',
+        code: 'rate_limit_exceeded',
+        message: `Rate limit exceeded. Max ${RL_MAX_REQUESTS} requests per minute.`,
+      }
+    }), {
+      status: 429,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'X-Request-Id': reqId,
+        'X-RateLimit-Limit': String(RL_MAX_REQUESTS),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': String(Math.ceil(rl.resetAt / 1000)),
+        'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)),
+      },
+    });
+  }
+
   // ─── Idempotency ───
   const idempotencyKey = req.headers.get('X-Idempotency-Key');
   if (idempotencyKey && req.method === 'POST') {

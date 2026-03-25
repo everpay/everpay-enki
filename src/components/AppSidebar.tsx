@@ -130,6 +130,7 @@ const adminNavItems: NavItem[] = [
   { to: "/enki/reserves", icon: Landmark, label: "Reserves" },
   { to: "/enki/regulatory", icon: FileBarChart, label: "Regulatory Export" },
   { to: "/enki/board", icon: BarChart3, label: "Board Overview" },
+  { to: "/enki/processors", icon: Globe, label: "Processor Info" },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
