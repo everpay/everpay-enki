@@ -228,20 +228,47 @@ export default function Payouts() {
     }
   };
 
+  // Payout to Card state
+  const [cardPayoutAmount, setCardPayoutAmount] = useState('');
+  const [cardPayoutCurrency, setCardPayoutCurrency] = useState('USD');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardExpMonth, setCardExpMonth] = useState('');
+  const [cardExpYear, setCardExpYear] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [isCardPayoutProcessing, setIsCardPayoutProcessing] = useState(false);
+
   return (
     <AppLayout>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">Payouts</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Withdraw funds to your bank accounts via Moneto</p>
+          <p className="mt-1 text-sm text-muted-foreground">Withdraw funds to bank accounts or cards</p>
         </div>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Payout
-            </Button>
-          </DialogTrigger>
+      </div>
+
+      <Tabs defaultValue="bank" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="bank" className="gap-2">
+            <Building2 className="h-4 w-4" />
+            Bank Payout
+          </TabsTrigger>
+          <TabsTrigger value="card" className="gap-2">
+            <CreditCard className="h-4 w-4" />
+            Payout to Card
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="bank">
+          {/* Original bank payout content */}
+          <div className="flex justify-end mb-4">
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  New Bank Payout
+                </Button>
+              </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Create Payout</DialogTitle>
