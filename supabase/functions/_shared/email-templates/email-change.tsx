@@ -40,7 +40,7 @@ export const EmailChangeEmail = ({
         <table cellPadding="0" cellSpacing="0" border={0} style={{ border: 'none', borderCollapse: 'collapse' }}>
           <tr>
             <td style={{ verticalAlign: 'middle', paddingRight: '12px', lineHeight: '1' }}>
-              <Img src={LOGO_URL} width="40" height="40" alt="Everpay" style={logoImg} />
+              <Img src={LOGO_URL} width="32" height="32" alt="Everpay" style={logoImg} />
             </td>
             <td style={{ verticalAlign: 'middle', lineHeight: '1' }}>
               <span style={{ fontSize: '24px', fontWeight: 700, fontFamily: "Sora, 'Helvetica Neue', sans-serif", color: '#0f1419', lineHeight: '1' }}>Everpay</span>
