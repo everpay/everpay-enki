@@ -18,6 +18,7 @@ import { InvoiceLineItems, LineItem } from '@/components/InvoiceLineItems';
 import { generateInvoicePDF } from '@/lib/invoice-pdf';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
 import { ProductSelector } from '@/components/product/ProductSelector';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface SelectedProduct {
   id: string;
