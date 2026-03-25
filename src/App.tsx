@@ -63,6 +63,7 @@ import AdminPspRouting from "./pages/admin/AdminPspRouting";
 import Admin3dsControls from "./pages/admin/Admin3dsControls";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import BoardOverview from "./pages/admin/BoardOverview";
+import AdminProcessorInfo from "./pages/admin/AdminProcessorInfo";
 import ResellerPortal from "./pages/ResellerPortal";
 import Treasury from "./pages/Treasury";
 import LiveAnalytics from "./pages/LiveAnalytics";
