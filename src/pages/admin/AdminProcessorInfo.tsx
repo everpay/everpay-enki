@@ -150,7 +150,7 @@ export default function AdminProcessorInfo() {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Status</span>
-              <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Live — Payouts (USD)</Badge>
+              <Badge className="bg-primary/10 text-primary border-primary/20">Live — Payouts (USD)</Badge>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Gateway API</span>
