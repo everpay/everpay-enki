@@ -334,11 +334,12 @@ const processors: ProcessorConfig[] = [
     displayName: 'Lipad.io',
     status: 'live',
     statusLabel: 'Live — Africa',
-    description: 'African payment processing. M-Pesa, Mobile Money, Airtel Money, Bank Transfer, Card.',
-    regions: ['KE', 'TZ', 'UG', 'GH', 'ZA', 'RW', 'ET', 'NG', 'CI', 'SN', 'CM'],
-    currencies: ['USD', 'KES', 'TZS', 'UGX', 'GHS', 'ZAR', 'NGN'],
+    description: 'African mobile money & bank transfer processing across 13 countries. M-Pesa, MTN, Airtel, Orange, Vodacom, Tigo, Halotel, TNM, Free Money.',
+    regions: ['KE', 'UG', 'TZ', 'ZM', 'MW', 'SN', 'CI', 'CM', 'RW', 'DRC', 'BJ', 'GH', 'ZA', 'NG'],
+    currencies: ['KES', 'UGX', 'TZS', 'ZMW', 'MWK', 'XOF', 'XAF', 'RWF', 'CDF', 'GHS', 'ZAR', 'NGN', 'USD'],
     apiEndpoint: 'api.lipad.io',
-    docsUrl: 'https://lipad.io',
+    docsUrl: 'https://developer.lipad.io',
+    contractEntity: 'Lipad Africa (MMO Network — Everpay Reseller Agreement)',
     authMethod: 'API Key',
     settlementTerms: 'Per agreement',
     rollingReserve: 'Per agreement',
@@ -348,10 +349,41 @@ const processors: ProcessorConfig[] = [
       { method: 'GET', path: '/v1/status/:id', desc: 'Check status', status: 'live' },
     ],
     fees: [
-      { id: 'li-mpesa', method: 'M-Pesa', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
-      { id: 'li-mm', method: 'Mobile Money', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
-      { id: 'li-airtel', method: 'Airtel Money', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
-      { id: 'li-card', method: 'Card (Africa)', fee: 'Per agreement', markupType: 'percentage', markupValue: 0 },
+      // Kenya
+      { id: 'li-ke-mpesa-paybill', method: '🇰🇪 Safaricom M-Pesa Paybill', fee: '2.75%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-ke-mpesa-till', method: '🇰🇪 Safaricom M-Pesa Till', fee: '2.75%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-ke-airtel', method: '🇰🇪 Airtel Money KE', fee: '2.75%', markupType: 'percentage', markupValue: 0 },
+      // Zambia
+      { id: 'li-zm-mtn', method: '🇿🇲 MTN Money ZM', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-zm-airtel', method: '🇿🇲 Airtel Money ZM', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      // Uganda
+      { id: 'li-ug-airtel', method: '🇺🇬 Airtel Money UG', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-ug-mtn', method: '🇺🇬 MTN UG', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      // Tanzania
+      { id: 'li-tz-airtel', method: '🇹🇿 Airtel TZ', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-tz-tigo', method: '🇹🇿 Tigo TZ', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-tz-vodacom', method: '🇹🇿 Vodacom M-Pesa TZ', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-tz-halotel', method: '🇹🇿 Halotel TZ', fee: '3.00%', markupType: 'percentage', markupValue: 0 },
+      // Malawi
+      { id: 'li-mw-tnm', method: '🇲🇼 TNM Malawi', fee: '3.25%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-mw-airtel', method: '🇲🇼 Airtel Malawi', fee: '3.25%', markupType: 'percentage', markupValue: 0 },
+      // Senegal
+      { id: 'li-sn-orange', method: '🇸🇳 Orange Money SN', fee: '3.25%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-sn-free', method: '🇸🇳 Free Money SN', fee: '3.25%', markupType: 'percentage', markupValue: 0 },
+      // Côte d'Ivoire
+      { id: 'li-ci-mtn', method: '🇨🇮 MTN CI', fee: '3.25%', markupType: 'percentage', markupValue: 0 },
+      // Cameroon
+      { id: 'li-cm-mtn', method: '🇨🇲 MTN Cameroon', fee: '3.25%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-cm-orange', method: '🇨🇲 Orange Money CM', fee: '3.25%', markupType: 'percentage', markupValue: 0 },
+      // Rwanda
+      { id: 'li-rw-mtn', method: '🇷🇼 MTN Rwanda', fee: '4.25%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-rw-airtel', method: '🇷🇼 Airtel Rwanda', fee: '4.25%', markupType: 'percentage', markupValue: 0 },
+      // DRC
+      { id: 'li-cd-airtel', method: '🇨🇩 Airtel DRC', fee: '4.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-cd-orange', method: '🇨🇩 Orange DRC', fee: '4.00%', markupType: 'percentage', markupValue: 0 },
+      { id: 'li-cd-vodacom', method: '🇨🇩 Vodacom DRC', fee: '4.00%', markupType: 'percentage', markupValue: 0 },
+      // Benin
+      { id: 'li-bj-mtn', method: '🇧🇯 MTN Benin', fee: '3.75%', markupType: 'percentage', markupValue: 0 },
     ],
   },
   {
