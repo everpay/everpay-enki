@@ -13,6 +13,15 @@ import { Link2, Copy, ExternalLink, Mail, MessageSquare, QrCode, Check, Code, Gl
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
+import { ProductSelector } from '@/components/product/ProductSelector';
+
+interface SelectedProduct {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image_url?: string;
+}
 
 export default function PaymentLinks() {
   const [amount, setAmount] = useState('');
@@ -26,6 +35,7 @@ export default function PaymentLinks() {
   const [cancelUrl, setCancelUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [merchantId, setMerchantId] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
 
   useEffect(() => {
     const fetchMerchantId = async () => {
@@ -41,6 +51,17 @@ export default function PaymentLinks() {
     fetchMerchantId();
   }, []);
 
+  // Auto-calculate amount from selected products
+  useEffect(() => {
+    if (selectedProducts.length > 0) {
+      const total = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
+      setAmount(total.toFixed(2));
+      if (!description) {
+        setDescription(selectedProducts.map(p => `${p.name} x${p.quantity}`).join(', '));
+      }
+    }
+  }, [selectedProducts]);
+
   const generatePaymentLink = () => {
     const params = new URLSearchParams();
     if (amount) params.set('amount', amount);
@@ -53,6 +74,9 @@ export default function PaymentLinks() {
     if (merchantId) params.set('merchant_id', merchantId);
     if (successUrl) params.set('success_url', encodeURIComponent(successUrl));
     if (cancelUrl) params.set('cancel_url', encodeURIComponent(cancelUrl));
+    if (selectedProducts.length > 0) {
+      params.set('products', encodeURIComponent(JSON.stringify(selectedProducts.map(p => ({ id: p.id, name: p.name, price: p.price, qty: p.quantity })))));
+    }
     
     return `${EVERPAY_CONFIG.CHECKOUT_URL}/pay?${params.toString()}`;
   };
@@ -100,6 +124,16 @@ export default function PaymentLinks() {
               <CardDescription>Configure your payment link parameters</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
+              {/* Product Selection */}
+              <div className="space-y-2">
+                <Label>Products (optional)</Label>
+                <ProductSelector
+                  selectedProducts={selectedProducts}
+                  onProductsChange={setSelectedProducts}
+                  currency={currency}
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Amount</Label>

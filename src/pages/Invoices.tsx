@@ -17,6 +17,15 @@ import { Currency } from '@/lib/types';
 import { InvoiceLineItems, LineItem } from '@/components/InvoiceLineItems';
 import { generateInvoicePDF } from '@/lib/invoice-pdf';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
+import { ProductSelector } from '@/components/product/ProductSelector';
+
+interface SelectedProduct {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image_url?: string;
+}
 
 const STATUS_FILTERS = ['all', 'draft', 'sent', 'paid', 'overdue'] as const;
 type StatusFilter = typeof STATUS_FILTERS[number];
@@ -35,6 +44,7 @@ export default function Invoices() {
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
 
   const { data: invoices, isLoading } = useQuery({ queryKey: ['invoices'], queryFn: async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -56,6 +66,20 @@ export default function Invoices() {
   const statusCounts = invoices?.reduce((acc: Record<string, number>, inv: any) => { acc[inv.status] = (acc[inv.status] || 0) + 1; acc.all = (acc.all || 0) + 1; return acc; }, { all: 0 } as Record<string, number>) || { all: 0 };
 
   const handleLineItemsChange = (items: LineItem[]) => { setLineItems(items); if (items.length > 0) setAmount(items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0).toFixed(2)); };
+
+  const handleProductsChange = (products: SelectedProduct[]) => {
+    setSelectedProducts(products);
+    // Convert selected products to line items
+    const newItems: LineItem[] = products.map(p => ({
+      description: p.name,
+      quantity: p.quantity,
+      unit_price: p.price,
+    }));
+    setLineItems(newItems);
+    if (products.length > 0) {
+      setAmount(products.reduce((sum, p) => sum + p.price * p.quantity, 0).toFixed(2));
+    }
+  };
 
   const handleCreate = async () => {
     if (!amount || !customerEmail) { toast.error('Amount and email are required'); return; }
@@ -97,6 +121,14 @@ export default function Invoices() {
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>New Invoice</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label className="text-xs">Customer Name</Label><Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" /></div><div className="space-y-2"><Label className="text-xs">Customer Email *</Label><Input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="john@example.com" required /></div></div>
+              <div className="space-y-2">
+                <Label className="text-xs">Add Products</Label>
+                <ProductSelector
+                  selectedProducts={selectedProducts}
+                  onProductsChange={handleProductsChange}
+                  currency={currency}
+                />
+              </div>
               <InvoiceLineItems items={lineItems} onChange={handleLineItemsChange} currency={currency} />
               <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label className="text-xs">Total Amount *</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" min="0.01" step="0.01" readOnly={lineItems.length > 0} className={lineItems.length > 0 ? 'bg-muted' : ''} /></div><div className="space-y-2"><Label className="text-xs">Currency</Label><Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="USD">USD</SelectItem><SelectItem value="EUR">EUR</SelectItem><SelectItem value="GBP">GBP</SelectItem><SelectItem value="BRL">BRL</SelectItem><SelectItem value="CAD">CAD</SelectItem></SelectContent></Select></div></div>
               <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>

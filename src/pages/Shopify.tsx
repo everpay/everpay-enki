@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Store, ShoppingCart, Link2, Plug, CheckCircle2, AlertCircle,
-  Package, Key, Eye, EyeOff, Copy, Check, Trash2, Pencil, ExternalLink, RefreshCw,
+  Package, Key, Eye, EyeOff, Copy, Check, Trash2, Pencil, ExternalLink, RefreshCw, Download,
 } from 'lucide-react';
 import { AppLayout } from '@/components/AppLayout';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
@@ -72,6 +72,39 @@ export default function Shopify() {
   // Delete state
   const [deleteStore, setDeleteStore] = useState<ShopifyStore | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Import products state
+  const [importingStoreId, setImportingStoreId] = useState<string | null>(null);
+
+  const handleImportProducts = async (store: ShopifyStore) => {
+    if (!store.access_token) {
+      toast.error('No access token. Connect via OAuth first.');
+      return;
+    }
+    setImportingStoreId(store.id);
+    try {
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+      if (!merchant) throw new Error('Merchant not found');
+
+      const { data, error } = await supabase.functions.invoke('shopify-sync-products', {
+        body: { store_id: store.id, merchant_id: merchant.id },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success(`Imported ${data.imported} new products, updated ${data.updated} existing (${data.errors} errors)`);
+      } else {
+        toast.error(data?.error || 'Import failed');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to import products');
+    } finally {
+      setImportingStoreId(null);
+    }
+  };
 
   // Fetch token via OAuth
   const [fetchingTokenStoreId, setFetchingTokenStoreId] = useState<string | null>(null);
@@ -545,6 +578,20 @@ export default function Shopify() {
                         {store.access_token ? 'Re-auth' : 'Fetch via OAuth'}
                       </Button>
                     </div>
+
+                    {/* Import Products */}
+                    {store.access_token && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        disabled={importingStoreId === store.id}
+                        onClick={() => handleImportProducts(store)}
+                      >
+                        <Download className={`h-4 w-4 ${importingStoreId === store.id ? 'animate-bounce' : ''}`} />
+                        {importingStoreId === store.id ? 'Importing Products…' : 'Import Products to Everpay'}
+                      </Button>
+                    )}
 
                     {store.scope && (
                       <p className="text-[11px] text-muted-foreground">Scopes: {store.scope}</p>
