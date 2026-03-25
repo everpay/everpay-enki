@@ -13,6 +13,10 @@ interface PaymentRequest {
   customerEmail?: string;
   description?: string;
   idempotencyKey?: string;
+  source?: string;
+  orderId?: string;
+  successUrl?: string;
+  cancelUrl?: string;
   sandboxMode?: boolean;
   cardDetails?: {
     number: string;
@@ -88,6 +92,51 @@ async function generateHash(clientId: string, amount: string, transactionRef: st
     .join('');
 }
 
+async function completeShopifyDraftOrder(
+  supabase: any,
+  merchantId: string,
+  draftOrderId: string,
+) {
+  try {
+    const { data: stores } = await supabase
+      .from('shopify_stores')
+      .select('id, shop_domain, access_token')
+      .eq('merchant_id', merchantId)
+      .eq('uninstalled', false)
+      .not('access_token', 'is', null)
+      .order('installed_at', { ascending: false })
+      .limit(1);
+
+    const store = stores?.[0];
+    if (!store?.shop_domain || !store?.access_token) return;
+
+    const completeRes = await fetch(
+      `https://${store.shop_domain}/admin/api/2025-01/draft_orders/${draftOrderId}/complete.json`,
+      {
+        method: 'PUT',
+        headers: {
+          'X-Shopify-Access-Token': store.access_token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!completeRes.ok) {
+      const errText = await completeRes.text();
+      console.error(`Shopify draft completion failed for ${draftOrderId}:`, errText);
+      return;
+    }
+
+    await supabase
+      .from('shopify_orders')
+      .update({ status: 'paid' })
+      .eq('store_id', store.id)
+      .eq('shopify_order_id', String(draftOrderId));
+  } catch (err) {
+    console.error('Shopify draft order completion error:', err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -160,6 +209,10 @@ serve(async (req) => {
     if (deviceInfo) {
       txMetadata.device_info = deviceInfo;
     }
+    if (paymentData.source) txMetadata.source = paymentData.source;
+    if (paymentData.orderId) txMetadata.order_id = String(paymentData.orderId);
+    if (paymentData.successUrl) txMetadata.success_url = paymentData.successUrl;
+    if (paymentData.cancelUrl) txMetadata.cancel_url = paymentData.cancelUrl;
 
     // Check idempotency
     if (idempotencyKey) {
@@ -557,11 +610,17 @@ serve(async (req) => {
           provider,
           customer_email: customerEmail,
           provider_ref: transaction.provider_ref,
+          source: paymentData.source || null,
+          order_id: paymentData.orderId || null,
           created_at: transaction.created_at,
         },
       },
     }).catch(err => console.error('Webhook dispatch error:', err));
     console.log(`STEP 8: Webhook dispatched for ${eventType}`);
+
+    if (internalStatus === 'completed' && paymentData.source === 'shopify' && paymentData.orderId) {
+      await completeShopifyDraftOrder(supabase, merchant.id, String(paymentData.orderId));
+    }
 
     return new Response(
       JSON.stringify(responsePayload),
