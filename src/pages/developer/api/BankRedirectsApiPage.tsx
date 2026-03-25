@@ -10,7 +10,7 @@ const BankRedirectsApiPage = () => {
       <div>
         <Badge variant="secondary" className="mb-3">API Reference</Badge>
         <h1 className="text-3xl font-bold tracking-tight">Bank Redirects API</h1>
-        <p className="text-muted-foreground mt-2">Accept payments via bank redirect methods like iDEAL, Bancontact, and Open Banking. Customers are redirected to their bank to authorize the payment, then returned to your site. Powered by Mondo Open Banking and Plaid.</p>
+        <p className="text-muted-foreground mt-2">Accept payments via bank redirect methods like iDEAL, Bancontact, Open Banking, and LATAM Open Banking (Prometeo). Customers are redirected to their bank to authorize the payment, then returned to your site. Powered by Mondo Open Banking, Plaid, and Prometeo.</p>
       </div>
 
       <Card>
@@ -24,6 +24,13 @@ const BankRedirectsApiPage = () => {
               { method: 'Bancontact', region: 'Belgium', currency: 'EUR', provider: 'Mondo', logo: '/logos/bancontact.svg' },
               { method: 'PIX', region: 'Brazil', currency: 'BRL', provider: 'FacilitaPay', logo: null },
               { method: 'Plaid Pay', region: 'United States', currency: 'USD', provider: 'Plaid', logo: null },
+              { method: 'SPEI (Mexico)', region: 'Mexico', currency: 'MXN', provider: 'Prometeo', logo: null },
+              { method: 'PSE (Colombia)', region: 'Colombia', currency: 'COP', provider: 'Prometeo', logo: null },
+              { method: 'Open Finance (Brazil)', region: 'Brazil', currency: 'BRL', provider: 'Prometeo', logo: null },
+              { method: 'Bank Redirect (Chile)', region: 'Chile', currency: 'CLP', provider: 'Prometeo', logo: null },
+              { method: 'Bank Redirect (Peru)', region: 'Peru', currency: 'PEN', provider: 'Prometeo', logo: null },
+              { method: 'Bank Redirect (Uruguay)', region: 'Uruguay', currency: 'UYU', provider: 'Prometeo', logo: null },
+              { method: 'Bank Redirect (Argentina)', region: 'Argentina', currency: 'ARS', provider: 'Prometeo', logo: null },
             ].map((m) => (
               <div key={m.method} className="border rounded-lg p-4 space-y-2">
                 <div className="flex items-center gap-2">
@@ -74,7 +81,7 @@ const BankRedirectsApiPage = () => {
         params={[
           { name: "amount", type: "integer", required: true, desc: "Amount in smallest currency unit" },
           { name: "currency", type: "string", required: true, desc: "ISO currency code (eur, gbp, usd, brl)" },
-          { name: "method", type: "string", required: true, desc: "Redirect method: ideal, bancontact, open_banking, pix, plaid_pay" },
+          { name: "method", type: "string", required: true, desc: "Redirect method: ideal, bancontact, open_banking, pix, plaid_pay, spei, pse, prometeo_redirect" },
           { name: "return_url", type: "string", required: true, desc: "URL to redirect customer after bank authorization" },
           { name: "customer_id", type: "string", required: false, desc: "Customer ID for the payment" },
           { name: "bank_code", type: "string", required: false, desc: "Bank identifier (required for iDEAL)" },

@@ -2,7 +2,7 @@ export type Currency = 'USD' | 'EUR' | 'GBP' | 'BRL' | 'MXN' | 'COP' | 'CAD' | '
 
 export type TransactionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
 export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed';
-export type Provider = 'facilitapay' | 'mondo' | 'stripe' | 'shieldhub' | 'moneto' | 'paygate10' | 'ofa' | 'makapay' | 'payok' | 'lipad';
+export type Provider = 'facilitapay' | 'mondo' | 'stripe' | 'shieldhub' | 'moneto' | 'paygate10' | 'ofa' | 'makapay' | 'payok' | 'lipad' | 'prometeo';
 
 export interface Merchant {
   id: string;

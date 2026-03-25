@@ -79,6 +79,13 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['KE', 'TZ', 'UG', 'GH', 'ZA', 'RW', 'ET', 'NG', 'CI', 'SN', 'CM'],
     methods: ['M-Pesa', 'Mobile Money', 'Bank Transfer', 'Card', 'Airtel Money'],
   },
+  prometeo: {
+    name: 'prometeo',
+    displayName: 'Prometeo',
+    supportedCurrencies: ['BRL', 'MXN', 'COP'],
+    regions: ['MX', 'CO', 'BR', 'CL', 'PE', 'UY', 'EC', 'AR', 'PA'],
+    methods: ['Bank Redirect', 'SPEI', 'PSE', 'Open Finance', 'Bank Transfer'],
+  },
 };
 
 // Country → provider mapping for intelligent routing
@@ -169,6 +176,7 @@ export function getProviderColor(provider: Provider): string {
     case 'makapay': return 'hsl(160 70% 45%)';
     case 'payok': return 'hsl(200 80% 50%)';
     case 'lipad': return 'hsl(35 90% 50%)';
+    case 'prometeo': return 'hsl(155 65% 42%)';
     default: return 'hsl(var(--chart-1))';
   }
 }
