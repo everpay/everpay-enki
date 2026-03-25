@@ -1,30 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Transaction } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
 import { TransactionDetailDrawer } from './TransactionDetailDrawer';
-import { enrichWithTapix } from '@/lib/tapix';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ChevronLeft, ChevronRight, Eye, CreditCard, Smartphone, Building2, Wallet } from 'lucide-react';
-
-function getGravatarUrl(email: string | undefined | null, size = 32): string {
-  if (!email) return '';
-  const trimmed = email.trim().toLowerCase();
-  // Use a simple hash for gravatar - we'll use the email directly with UI Avatars as fallback
-  return `https://www.gravatar.com/avatar/${hashCode(trimmed)}?s=${size}&d=404`;
-}
-
-function hashCode(str: string): string {
-  // Simple MD5-like hash for gravatar (using built-in crypto would be better but this works client-side)
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(16);
-}
+import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 
 function getUIAvatarUrl(email: string | undefined | null, size = 32): string {
   if (!email) return `https://ui-avatars.com/api/?name=?&size=${size}&background=6366f1&color=fff&font-size=0.4`;
@@ -32,45 +13,66 @@ function getUIAvatarUrl(email: string | undefined | null, size = 32): string {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=6366f1&color=fff&font-size=0.4&rounded=true`;
 }
 
-function getPaymentMethodInfo(tx: Transaction): { icon: React.ReactNode; label: string } {
+const BRAND_LOGOS: Record<string, string> = {
+  visa: '/logos/visa.svg',
+  mastercard: '/logos/mastercard.svg',
+  amex: '/logos/american-express.svg',
+  'american express': '/logos/american-express.svg',
+  discover: '/logos/discover.svg',
+  jcb: '/logos/jcb.svg',
+  unionpay: '/logos/unionpay.svg',
+  apple_pay: '/logos/apple-pay.svg',
+  google_pay: '/logos/google-pay.svg',
+  paypal: '/logos/paypal.svg',
+  klarna: '/logos/klarna.svg',
+  ideal: '/logos/ideal.svg',
+  bancontact: '/logos/bancontact.svg',
+  alipay: '/logos/alipay.svg',
+};
+
+function getCardBrand(first6: string): string {
+  if (!first6 || first6.includes('•')) return 'unknown';
+  if (first6.startsWith('4')) return 'visa';
+  if (first6.startsWith('5') || (first6.startsWith('2') && parseInt(first6.slice(0, 4)) >= 2221 && parseInt(first6.slice(0, 4)) <= 2720)) return 'mastercard';
+  if (first6.startsWith('34') || first6.startsWith('37')) return 'amex';
+  if (first6.startsWith('6')) return 'discover';
+  return 'unknown';
+}
+
+function getPaymentMethodInfo(tx: Transaction): { logoSrc?: string; label: string } {
   const meta = (tx as any).metadata || {};
   const method = meta.payment_method || meta.paymentMethod || '';
-  const brand = meta.card_brand || meta.cardBrand || '';
+  const brand = (meta.card_brand || meta.cardBrand || '').toLowerCase();
 
-  if (method === 'mobile_money' || method === 'mpesa') return { icon: <Smartphone className="h-3.5 w-3.5" />, label: 'Mobile Money' };
-  if (method === 'bank_transfer' || method === 'sepa' || method === 'pix' || method === 'spei') return { icon: <Building2 className="h-3.5 w-3.5" />, label: method.toUpperCase() };
-  if (method === 'wallet' || method === 'apple_pay' || method === 'google_pay') return { icon: <Wallet className="h-3.5 w-3.5" />, label: method.replace('_', ' ') };
-  if (brand || meta.cardFirst6 || meta.card_first6) return { icon: <CreditCard className="h-3.5 w-3.5" />, label: brand || 'Card' };
+  if (method === 'apple_pay') return { logoSrc: BRAND_LOGOS.apple_pay, label: 'Apple Pay' };
+  if (method === 'google_pay') return { logoSrc: BRAND_LOGOS.google_pay, label: 'Google Pay' };
+  if (method === 'paypal') return { logoSrc: BRAND_LOGOS.paypal, label: 'PayPal' };
+  if (method === 'klarna') return { logoSrc: BRAND_LOGOS.klarna, label: 'Klarna' };
+  if (method === 'ideal') return { logoSrc: BRAND_LOGOS.ideal, label: 'iDEAL' };
+  if (method === 'mobile_money' || method === 'mpesa') return { label: 'Mobile Money' };
+  if (method === 'bank_transfer' || method === 'sepa' || method === 'pix' || method === 'spei') return { label: method.toUpperCase() };
+  if (method === 'wallet') return { label: 'Wallet' };
+
+  // Card brand from metadata
+  if (brand && BRAND_LOGOS[brand]) return { logoSrc: BRAND_LOGOS[brand], label: brand.charAt(0).toUpperCase() + brand.slice(1) };
+
+  // BIN detection
+  const cardFirst6 = meta.cardFirst6 || meta.card_first6 || '';
+  if (cardFirst6) {
+    const detected = getCardBrand(cardFirst6);
+    if (detected !== 'unknown') return { logoSrc: BRAND_LOGOS[detected], label: detected.charAt(0).toUpperCase() + detected.slice(1) };
+    return { label: 'Card' };
+  }
 
   // Infer from provider
-  const provider = tx.provider;
-  if (provider === 'lipad') return { icon: <Smartphone className="h-3.5 w-3.5" />, label: 'Mobile Money' };
-  if (provider === 'facilitapay') return { icon: <Building2 className="h-3.5 w-3.5" />, label: 'Local Payment' };
-  return { icon: <CreditCard className="h-3.5 w-3.5" />, label: 'Card' };
+  if (tx.provider === 'lipad') return { label: 'Mobile Money' };
+  if (tx.provider === 'facilitapay') return { label: 'Local Payment' };
+  return { label: 'Card' };
 }
 
 interface TransactionTableProps {
   transactions: Transaction[];
   compact?: boolean;
-}
-
-function getCardBrand(first6: string): string {
-  if (!first6 || first6.includes('•')) return 'Unknown';
-  if (first6.startsWith('4')) return 'Visa';
-  if (first6.startsWith('5') || (first6.startsWith('2') && parseInt(first6.slice(0, 4)) >= 2221 && parseInt(first6.slice(0, 4)) <= 2720)) return 'Mastercard';
-  if (first6.startsWith('34') || first6.startsWith('37')) return 'Amex';
-  if (first6.startsWith('6')) return 'Discover';
-  return 'Unknown';
-}
-
-function CardBrandBadge({ brand }: { brand: string }) {
-  const colors: Record<string, string> = {
-    Visa: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-    Mastercard: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-    Amex: 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20',
-    Discover: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-  };
-  return <Badge variant="outline" className={`text-[10px] ${colors[brand] || ''}`}>{brand}</Badge>;
 }
 
 export function TransactionTable({ transactions, compact = false }: TransactionTableProps) {
@@ -89,10 +91,10 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Amount</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Method</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Currency</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Provider</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Method</th>
               {!compact && (
                 <>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Card</th>
@@ -137,6 +139,14 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                     {formatCurrency(tx.amount, tx.currency)}
                   </td>
                   <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      {pmInfo.logoSrc ? (
+                        <img src={pmInfo.logoSrc} alt={pmInfo.label} className="h-5 w-auto rounded-sm" />
+                      ) : null}
+                      <span className="text-xs text-muted-foreground capitalize">{pmInfo.label}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
                     <Badge variant="outline" className="font-mono text-[10px]">{tx.currency}</Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -145,19 +155,15 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                   <td className="px-4 py-3 hidden sm:table-cell">
                     <Badge variant="provider">{tx.provider}</Badge>
                   </td>
-                  <td className="px-4 py-3 hidden sm:table-cell">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      {pmInfo.icon}
-                      <span className="capitalize">{pmInfo.label}</span>
-                    </div>
-                  </td>
                   {!compact && (
                     <>
                       <td className="px-4 py-3 hidden lg:table-cell">
                         {cardFirst6 ? (
-                          <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            {brand !== 'unknown' && BRAND_LOGOS[brand] && (
+                              <img src={BRAND_LOGOS[brand]} alt={brand} className="h-4 w-auto rounded-sm" />
+                            )}
                             <span className="font-mono text-xs">{cardFirst6} •••• {cardLast4}</span>
-                            <CardBrandBadge brand={brand} />
                           </div>
                         ) : <span className="text-muted-foreground text-xs">—</span>}
                       </td>

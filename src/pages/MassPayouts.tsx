@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Upload, Plus, Trash2, Send, FileSpreadsheet, Users, DollarSign, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 import { formatCurrency } from '@/lib/format';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface PayoutRecipient {
   id: string;
@@ -311,27 +312,17 @@ export default function MassPayouts() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Amount</Label>
-                  <Input
-                    type="number"
-                    placeholder="0.00"
+                  <Label>Amount & Currency</Label>
+                  <CurrencyInput
                     value={manualEntry.amount}
-                    onChange={(e) => setManualEntry(prev => ({ ...prev, amount: e.target.value }))}
+                    onChange={(v) => setManualEntry(prev => ({ ...prev, amount: v }))}
+                    currency={manualEntry.currency}
+                    onCurrencyChange={(v) => setManualEntry(prev => ({ ...prev, currency: v }))}
+                    currencies={['USD', 'EUR', 'GBP', 'CAD']}
+                    placeholder="0.00"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>Currency</Label>
-                  <Select value={manualEntry.currency} onValueChange={(v) => setManualEntry(prev => ({ ...prev, currency: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                      <SelectItem value="CAD">CAD</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Method</Label>
