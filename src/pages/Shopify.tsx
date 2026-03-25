@@ -32,6 +32,18 @@ interface ShopifyStore {
   uninstalled: boolean | null;
 }
 
+function normalizeShopDomain(value: string): string {
+  return value
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/.*/, '')
+    .toLowerCase();
+}
+
+function isValidShopDomain(value: string): boolean {
+  return /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i.test(value);
+}
+
 export default function Shopify() {
   const { user } = useAuth();
   const [stores, setStores] = useState<ShopifyStore[]>([]);
@@ -102,21 +114,17 @@ export default function Shopify() {
   // Listen for OAuth callback via URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const shop = params.get('shop');
-    const hmac = params.get('hmac');
-    const state = params.get('state');
-    const timestamp = params.get('timestamp');
+    const callbackQuery = Object.fromEntries(params.entries());
 
-    if (code && shop) {
+    if (callbackQuery.code && callbackQuery.shop) {
       // We have an OAuth callback — exchange for token
-      handleOAuthCallback({ code, shop, hmac, state, timestamp });
+      handleOAuthCallback(callbackQuery);
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
 
-  const handleOAuthCallback = async (query: Record<string, string | null>) => {
+  const handleOAuthCallback = async (query: Record<string, string>) => {
     try {
       const { data: merchant } = await supabase
         .from('merchants')
@@ -141,8 +149,15 @@ export default function Shopify() {
   };
 
   const handleOAuthConnect = async () => {
-    if (!shopDomain.trim()) {
+    const normalizedShop = normalizeShopDomain(shopDomain);
+
+    if (!normalizedShop) {
       toast.error('Please enter a Shopify store domain');
+      return;
+    }
+
+    if (!isValidShopDomain(normalizedShop)) {
+      toast.error('Please enter a valid .myshopify.com store domain');
       return;
     }
 
@@ -153,7 +168,7 @@ export default function Shopify() {
       const { data, error } = await supabase.functions.invoke('shopify-oauth', {
         body: {
           action: 'install',
-          shop: shopDomain.trim(),
+          shop: normalizedShop,
           redirect_uri: redirectUri,
         },
       });
@@ -176,8 +191,15 @@ export default function Shopify() {
   };
 
   const handleManualConnect = async () => {
-    if (!shopDomain.trim()) {
+    const normalizedShop = normalizeShopDomain(shopDomain);
+
+    if (!normalizedShop) {
       toast.error('Please enter a Shopify store domain');
+      return;
+    }
+
+    if (!isValidShopDomain(normalizedShop)) {
+      toast.error('Please enter a valid .myshopify.com store domain');
       return;
     }
 
@@ -195,7 +217,7 @@ export default function Shopify() {
       }
 
       const insertData: any = {
-        shop_domain: shopDomain.trim(),
+        shop_domain: normalizedShop,
         merchant_id: merchant.id,
       };
 
@@ -220,12 +242,18 @@ export default function Shopify() {
 
   const handleFetchTokenViaOAuth = async (store: ShopifyStore) => {
     if (!store.shop_domain) return;
+    const normalizedShop = normalizeShopDomain(store.shop_domain);
+    if (!isValidShopDomain(normalizedShop)) {
+      toast.error('Stored shop domain is invalid. Please edit and save the store domain first.');
+      return;
+    }
+
     setFetchingTokenStoreId(store.id);
     try {
       const { data, error } = await supabase.functions.invoke('shopify-oauth', {
         body: {
           action: 'install',
-          shop: store.shop_domain,
+          shop: normalizedShop,
           redirect_uri: `${window.location.origin}/shopify`,
         },
       });
@@ -262,9 +290,15 @@ export default function Shopify() {
 
   const handleSaveEdit = async () => {
     if (!editStore) return;
+    const normalizedShop = normalizeShopDomain(editDomain);
+    if (!normalizedShop || !isValidShopDomain(normalizedShop)) {
+      toast.error('Please enter a valid .myshopify.com store domain');
+      return;
+    }
+
     setIsSavingEdit(true);
     try {
-      const updates: any = { shop_domain: editDomain.trim() };
+      const updates: any = { shop_domain: normalizedShop };
       if (editToken.trim()) updates.access_token = editToken.trim();
 
       const { error } = await supabase

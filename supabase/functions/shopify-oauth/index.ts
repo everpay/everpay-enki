@@ -55,10 +55,22 @@ function fromHex(hex: string): Uint8Array {
   return new Uint8Array(hex.match(/.{1,2}/g)!.map(b => parseInt(b, 16)));
 }
 
+function normalizeShopDomain(shop: string): string {
+  return shop
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/.*/, '')
+    .toLowerCase();
+}
+
+function isValidShopDomain(shop: string): boolean {
+  return /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i.test(shop);
+}
+
 // ── HMAC verification ──
 
 async function verifyHmac(query: Record<string, string>, secret: string): Promise<boolean> {
-  const { hmac, ...rest } = query;
+  const { hmac, signature, ...rest } = query;
   if (!hmac) return false;
   const message = Object.keys(rest).sort().map(k => `${k}=${rest[k]}`).join('&');
   const key = await crypto.subtle.importKey(
@@ -122,6 +134,14 @@ serve(async (req) => {
       const { shop, redirect_uri } = body;
       if (!shop) throw new Error('shop is required');
 
+      const normalizedShop = normalizeShopDomain(shop);
+      if (!isValidShopDomain(normalizedShop)) {
+        return new Response(JSON.stringify({ error: 'Invalid Shopify domain. Use format: your-store.myshopify.com' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       if (!shopifyApiKey || !shopifyApiSecret) {
         // Simulation mode — just store the shop
         return new Response(JSON.stringify({
@@ -132,7 +152,7 @@ serve(async (req) => {
       }
 
       const nonce = crypto.randomUUID();
-      const installUrl = `https://${shop}/admin/oauth/authorize?client_id=${shopifyApiKey}&scope=${appScopes}&redirect_uri=${encodeURIComponent(redirect_uri || `${supabaseUrl}/functions/v1/shopify-oauth`)}&state=${nonce}`;
+      const installUrl = `https://${normalizedShop}/admin/oauth/authorize?client_id=${shopifyApiKey}&scope=${appScopes}&redirect_uri=${encodeURIComponent(redirect_uri || `${supabaseUrl}/functions/v1/shopify-oauth`)}&state=${nonce}`;
 
       return new Response(JSON.stringify({ success: true, install_url: installUrl, nonce }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -146,6 +166,14 @@ serve(async (req) => {
 
       if (!query?.shop || !query?.code) {
         throw new Error('Missing shop or code in callback query');
+      }
+
+      const normalizedShop = normalizeShopDomain(query.shop);
+      if (!isValidShopDomain(normalizedShop)) {
+        return new Response(JSON.stringify({ error: 'Invalid Shopify domain in callback' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       // 1. HMAC verification
@@ -164,7 +192,7 @@ serve(async (req) => {
 
       if (shopifyApiKey && shopifyApiSecret) {
         // 2. Exchange code for access token
-        const tokenRes = await fetch(`https://${query.shop}/admin/oauth/access_token`, {
+        const tokenRes = await fetch(`https://${normalizedShop}/admin/oauth/access_token`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -193,7 +221,7 @@ serve(async (req) => {
 
       // 4. Upsert store record
       const storeData: Record<string, any> = {
-        shop_domain: query.shop,
+        shop_domain: normalizedShop,
         scope: grantedScopes,
         installed_at: new Date().toISOString(),
         encrypted_token: encrypted,
@@ -223,13 +251,13 @@ serve(async (req) => {
       // 5. Register webhooks
       let webhookResults: any[] = [];
       if (shopifyApiKey && shopifyApiSecret) {
-        webhookResults = await registerWebhooks(query.shop, accessToken, supabaseUrl);
+        webhookResults = await registerWebhooks(normalizedShop, accessToken, supabaseUrl);
       }
 
       return new Response(JSON.stringify({
         success: true,
         mode: shopifyApiKey ? 'live' : 'simulation',
-        shop: query.shop,
+        shop: normalizedShop,
         scopes: grantedScopes,
         webhooks_registered: webhookResults,
         token_encrypted: true,
