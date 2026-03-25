@@ -95,6 +95,10 @@ import AuthenticationApiPage from "./pages/developer/api/AuthenticationApiPage";
 import PaymentMethodsApiPage from "./pages/developer/api/PaymentMethodsApiPage";
 import PaymentLinksApiPage from "./pages/developer/api/PaymentLinksApiPage";
 import PlansApiPage from "./pages/developer/api/PlansApiPage";
+import ThreeDSecureApiPage from "./pages/developer/api/ThreeDSecureApiPage";
+import DisputesApiPage from "./pages/developer/api/DisputesApiPage";
+import BankDebitsApiPage from "./pages/developer/api/BankDebitsApiPage";
+import BankRedirectsApiPage from "./pages/developer/api/BankRedirectsApiPage";
 
 import FrontAbout from "./pages/front/About";
 import FrontPricing from "./pages/front/Pricing";
@@ -274,6 +278,10 @@ const AppRoutes = () => {
       <Route path="api/payment-methods" element={<PaymentMethodsApiPage />} />
       <Route path="api/payment-links" element={<PaymentLinksApiPage />} />
       <Route path="api/plans" element={<PlansApiPage />} />
+      <Route path="api/3d-secure" element={<ThreeDSecureApiPage />} />
+      <Route path="api/disputes" element={<DisputesApiPage />} />
+      <Route path="api/bank-debits" element={<BankDebitsApiPage />} />
+      <Route path="api/bank-redirects" element={<BankRedirectsApiPage />} />
     </Route>
 
     <Route path="*" element={<NotFound />} />
