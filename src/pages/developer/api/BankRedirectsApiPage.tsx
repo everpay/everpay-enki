@@ -10,7 +10,7 @@ const BankRedirectsApiPage = () => {
       <div>
         <Badge variant="secondary" className="mb-3">API Reference</Badge>
         <h1 className="text-3xl font-bold tracking-tight">Bank Redirects API</h1>
-        <p className="text-muted-foreground mt-2">Accept payments via bank redirect methods like iDEAL, Bancontact, and Open Banking. Customers are redirected to their bank to authorize the payment, then returned to your site. Powered by Mondo Open Banking and Plaid.</p>
+        <p className="text-muted-foreground mt-2">Accept payments via bank redirect methods like iDEAL, Bancontact, Open Banking, and LATAM Open Banking (Prometeo). Customers are redirected to their bank to authorize the payment, then returned to your site. Powered by Mondo Open Banking, Plaid, and Prometeo.</p>
       </div>
 
       <Card>
