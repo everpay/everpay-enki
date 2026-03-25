@@ -257,50 +257,17 @@ export default function NewPayment() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-5 rounded-xl border border-border bg-card p-6 shadow-card">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Amount</Label>
-              <Input
-                type="number" placeholder="0.00" value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="bg-background border-border font-mono text-lg"
-                required min="0.01" step="0.01"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Currency</Label>
-              <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-[280px]">
-                  <SelectItem value="USD">🇺🇸 USD</SelectItem>
-                  <SelectItem value="EUR">🇪🇺 EUR</SelectItem>
-                  <SelectItem value="GBP">🇬🇧 GBP</SelectItem>
-                  <SelectItem value="CAD">🇨🇦 CAD</SelectItem>
-                  <SelectItem value="BRL">🇧🇷 BRL</SelectItem>
-                  <SelectItem value="MXN">🇲🇽 MXN</SelectItem>
-                  <SelectItem value="COP">🇨🇴 COP</SelectItem>
-                  <SelectItem value="INR">🇮🇳 INR</SelectItem>
-                  <SelectItem value="NGN">🇳🇬 NGN</SelectItem>
-                  <SelectItem value="EGP">🇪🇬 EGP</SelectItem>
-                  <SelectItem value="ZAR">🇿🇦 ZAR</SelectItem>
-                  <SelectItem value="KES">🇰🇪 KES</SelectItem>
-                  <SelectItem value="ARS">🇦🇷 ARS</SelectItem>
-                  <SelectItem value="CNY">🇨🇳 CNY</SelectItem>
-                  <SelectItem value="VND">🇻🇳 VND</SelectItem>
-                  <SelectItem value="THB">🇹🇭 THB</SelectItem>
-                  <SelectItem value="IDR">🇮🇩 IDR</SelectItem>
-                  <SelectItem value="MYR">🇲🇾 MYR</SelectItem>
-                  <SelectItem value="PHP">🇵🇭 PHP</SelectItem>
-                  <SelectItem value="JPY">🇯🇵 JPY</SelectItem>
-                  <SelectItem value="KRW">🇰🇷 KRW</SelectItem>
-                  <SelectItem value="BDT">🇧🇩 BDT</SelectItem>
-                  <SelectItem value="HKD">🇭🇰 HKD</SelectItem>
-                  <SelectItem value="AUD">🇦🇺 AUD</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Amount & Currency</Label>
+            <CurrencyInput
+              value={amount}
+              onChange={setAmount}
+              currency={currency}
+              onCurrencyChange={(v) => setCurrency(v as Currency)}
+              required
+              min="0.01"
+              step="0.01"
+            />
           </div>
 
           <div className="space-y-2">
