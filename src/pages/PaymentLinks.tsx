@@ -13,6 +13,15 @@ import { Link2, Copy, ExternalLink, Mail, MessageSquare, QrCode, Check, Code, Gl
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
+import { ProductSelector } from '@/components/product/ProductSelector';
+
+interface SelectedProduct {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image_url?: string;
+}
 
 export default function PaymentLinks() {
   const [amount, setAmount] = useState('');
@@ -26,6 +35,7 @@ export default function PaymentLinks() {
   const [cancelUrl, setCancelUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [merchantId, setMerchantId] = useState('');
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
 
   useEffect(() => {
     const fetchMerchantId = async () => {
