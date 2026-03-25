@@ -24,6 +24,13 @@ const BankRedirectsApiPage = () => {
               { method: 'Bancontact', region: 'Belgium', currency: 'EUR', provider: 'Mondo', logo: '/logos/bancontact.svg' },
               { method: 'PIX', region: 'Brazil', currency: 'BRL', provider: 'FacilitaPay', logo: null },
               { method: 'Plaid Pay', region: 'United States', currency: 'USD', provider: 'Plaid', logo: null },
+              { method: 'SPEI (Mexico)', region: 'Mexico', currency: 'MXN', provider: 'Prometeo', logo: null },
+              { method: 'PSE (Colombia)', region: 'Colombia', currency: 'COP', provider: 'Prometeo', logo: null },
+              { method: 'Open Finance (Brazil)', region: 'Brazil', currency: 'BRL', provider: 'Prometeo', logo: null },
+              { method: 'Bank Redirect (Chile)', region: 'Chile', currency: 'CLP', provider: 'Prometeo', logo: null },
+              { method: 'Bank Redirect (Peru)', region: 'Peru', currency: 'PEN', provider: 'Prometeo', logo: null },
+              { method: 'Bank Redirect (Uruguay)', region: 'Uruguay', currency: 'UYU', provider: 'Prometeo', logo: null },
+              { method: 'Bank Redirect (Argentina)', region: 'Argentina', currency: 'ARS', provider: 'Prometeo', logo: null },
             ].map((m) => (
               <div key={m.method} className="border rounded-lg p-4 space-y-2">
                 <div className="flex items-center gap-2">
