@@ -218,6 +218,7 @@ serve(async (req) => {
       case 'mondo': providerResponse = await processMondo(paymentData); break;
       case 'shieldhub': providerResponse = await processShieldHub(paymentData, req); break;
       case 'makapay': providerResponse = await processMakapay(paymentData); break;
+      case 'facilitapay': providerResponse = await processFacilitaPay(paymentData); break;
       default: providerResponse = simulatePayment(provider, paymentData); break;
     }
     const latencyMs = Date.now() - t0;
@@ -386,5 +387,209 @@ async function processMakapay(data: PaymentRequest) {
   } catch (err) {
     console.error('MakaPay error:', err);
     return simulatePayment('makapay', data);
+}
+
+// ─── FacilitaPay (Attrus) ───
+async function processFacilitaPay(data: PaymentRequest) {
+  const email = Deno.env.get('FACILITAPAY_EMAIL');
+  const password = Deno.env.get('FACILITAPAY_PASSWORD');
+  const useSandbox = !email || !password;
+  const baseUrl = useSandbox
+    ? 'https://sandbox-api.facilitapay.com/api/v1'
+    : 'https://api.facilitapay.com/api/v1';
+
+  if (useSandbox) {
+    // Simulation mode — follows Attrus API response structure
+    const ref = `fp_${crypto.randomUUID().slice(0, 12)}`;
+    const country = data.billingDetails?.country || 'BR';
+    const method = data.paymentMethod?.toUpperCase() || 'PIX';
+    const rand = Math.random();
+    const status = rand < 0.85 ? 'approved' : rand < 0.95 ? 'declined' : 'pending';
+
+    const simResponse: Record<string, any> = {
+      id: Math.floor(100000 + Math.random() * 900000),
+      transaction_reference: ref,
+      status,
+      amount: data.amount.toFixed(2),
+      currency: data.currency,
+      country,
+      payment_method: method,
+      message: status === 'approved' ? 'Transaction approved' : status === 'declined' ? 'Transaction declined by issuer' : 'Transaction processing',
+      test_mode: true,
+      provider: 'facilitapay',
+      timestamp: new Date().toISOString(),
+    };
+
+    // Simulate PIX QR code response for BR PIX payments
+    if (country === 'BR' && method === 'PIX' && status !== 'declined') {
+      simResponse.pix_qr_code = `00020126580014BR.GOV.BCB.PIX0136${crypto.randomUUID()}5204000053039865406${data.amount.toFixed(2)}5802BR`;
+      simResponse.pix_qr_code_url = `https://sandbox-api.facilitapay.com/qr/${ref}`;
+      simResponse.expiration = new Date(Date.now() + 30 * 60000).toISOString();
+    }
+
+    // Simulate Boleto response
+    if (country === 'BR' && method === 'BOLETO' && status !== 'declined') {
+      simResponse.boleto_url = `https://sandbox-api.facilitapay.com/boleto/${ref}`;
+      simResponse.boleto_barcode = `23793.38128 60000.000003 00000.000409 ${Math.floor(1 + Math.random() * 9)} ${Math.floor(10000000 + Math.random() * 90000000)}0000${Math.floor(data.amount * 100).toString().padStart(10, '0')}`;
+      simResponse.due_date = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+    }
+
+    // Simulate SPEI response for MX
+    if (country === 'MX' && method === 'SPEI' && status !== 'declined') {
+      simResponse.spei_clabe = `6461801${Math.floor(1000000000 + Math.random() * 9000000000).toString()}`;
+      simResponse.spei_reference = ref;
+      simResponse.beneficiary = 'FACILITA INC';
+    }
+
+    // Simulate PSE response for CO
+    if (country === 'CO' && method === 'PSE' && status !== 'declined') {
+      simResponse.pse_redirect_url = `https://sandbox-api.facilitapay.com/pse/${ref}`;
+      simResponse.bank_code = 'BANCOLOMBIA';
+    }
+
+    return simResponse;
   }
+
+  // ─── LIVE API FLOW ───
+  try {
+    // Step 1: Authenticate
+    const authRes = await fetch(`${baseUrl}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!authRes.ok) throw new Error(`Auth failed: ${authRes.status}`);
+    const authData = await authRes.json();
+    const token = authData.data?.token || authData.token;
+    if (!token) throw new Error('No auth token received');
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+
+    // Step 2: Determine country & payment method
+    const country = data.billingDetails?.country || 'BR';
+    const method = data.paymentMethod?.toUpperCase() || 'PIX';
+
+    // Step 3: Create transaction based on country
+    let txEndpoint = '';
+    let txBody: Record<string, any> = {};
+
+    if (country === 'BR') {
+      txEndpoint = `${baseUrl}/transactions/brazil`;
+      txBody = {
+        amount: data.amount,
+        currency: 'BRL',
+        payment_method: method.toLowerCase(),
+        customer: {
+          email: data.customerEmail || 'customer@example.com',
+          first_name: data.customerDetails?.firstName || 'Customer',
+          last_name: data.customerDetails?.lastName || 'User',
+          document_type: 'cpf',
+          document_number: '00000000000', // Must be provided by customer in production
+        },
+        description: data.description || `Payment ${Date.now()}`,
+        notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/everpay-webhook`,
+      };
+    } else if (country === 'MX') {
+      txEndpoint = `${baseUrl}/transactions/mexico`;
+      txBody = {
+        amount: data.amount,
+        currency: 'MXN',
+        payment_method: method.toLowerCase(),
+        customer: {
+          email: data.customerEmail || 'customer@example.com',
+          first_name: data.customerDetails?.firstName || 'Customer',
+          last_name: data.customerDetails?.lastName || 'User',
+        },
+        description: data.description || `Payment ${Date.now()}`,
+        notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/everpay-webhook`,
+      };
+    } else if (country === 'CO') {
+      txEndpoint = `${baseUrl}/transactions/colombia`;
+      txBody = {
+        amount: data.amount,
+        currency: 'COP',
+        payment_method: method.toLowerCase(),
+        customer: {
+          email: data.customerEmail || 'customer@example.com',
+          first_name: data.customerDetails?.firstName || 'Customer',
+          last_name: data.customerDetails?.lastName || 'User',
+        },
+        description: data.description || `Payment ${Date.now()}`,
+        notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/everpay-webhook`,
+      };
+    } else {
+      // Generic transaction
+      txEndpoint = `${baseUrl}/transactions`;
+      txBody = {
+        amount: data.amount,
+        currency: data.currency,
+        payment_method: method.toLowerCase(),
+        customer: { email: data.customerEmail || 'customer@example.com' },
+        description: data.description || `Payment ${Date.now()}`,
+        notification_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/everpay-webhook`,
+      };
+    }
+
+    // Card details if applicable
+    if (['CREDIT', 'DEBIT', 'CARD'].includes(method) && data.cardDetails) {
+      txBody.card = {
+        number: data.cardDetails.number?.replace(/\s/g, ''),
+        exp_month: data.cardDetails.expMonth,
+        exp_year: data.cardDetails.expYear,
+        cvv: data.cardDetails.cvc,
+        holder_name: data.cardDetails.holderName || `${data.customerDetails?.firstName || ''} ${data.customerDetails?.lastName || ''}`.trim(),
+      };
+    }
+
+    const txRes = await fetch(txEndpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(txBody),
+    });
+    const txData = await txRes.json();
+
+    if (!txRes.ok) {
+      return {
+        id: txData.data?.id || Math.floor(10000 + Math.random() * 90000),
+        transaction_reference: `fp_${crypto.randomUUID().slice(0, 12)}`,
+        status: 'Failed',
+        message: txData.message || txData.error || 'Transaction failed',
+        provider: 'facilitapay',
+        error: txData.errors || txData.error,
+      };
+    }
+
+    const tx = txData.data || txData;
+    return {
+      id: tx.id || tx.transaction_id,
+      transaction_reference: tx.reference || tx.id?.toString(),
+      status: tx.status === 'approved' || tx.status === 'completed' ? 'Approved'
+        : tx.status === 'pending' || tx.status === 'processing' ? 'pending'
+        : 'Declined',
+      amount: tx.amount?.toString() || data.amount.toString(),
+      currency: tx.currency || data.currency,
+      payment_method: method,
+      country,
+      provider: 'facilitapay',
+      // PIX-specific
+      ...(tx.pix_qr_code && { pix_qr_code: tx.pix_qr_code }),
+      ...(tx.pix_qr_code_url && { pix_qr_code_url: tx.pix_qr_code_url }),
+      // Boleto-specific
+      ...(tx.boleto_url && { boleto_url: tx.boleto_url }),
+      ...(tx.boleto_barcode && { boleto_barcode: tx.boleto_barcode }),
+      // SPEI-specific
+      ...(tx.clabe && { spei_clabe: tx.clabe }),
+      // PSE-specific
+      ...(tx.redirect_url && { pse_redirect_url: tx.redirect_url }),
+      // Raw response
+      provider_raw: tx,
+    };
+  } catch (err) {
+    console.error('FacilitaPay error:', err);
+    return simulatePayment('facilitapay', data);
+  }
+}
 }
