@@ -269,6 +269,9 @@ const AppRoutes = () => {
       <Route path="api/merchants" element={<MerchantsApiPage />} />
       <Route path="api/bank-accounts" element={<BankAccountsApiPage />} />
       <Route path="api/authentication" element={<AuthenticationApiPage />} />
+      <Route path="api/payment-methods" element={<PaymentMethodsApiPage />} />
+      <Route path="api/payment-links" element={<PaymentLinksApiPage />} />
+      <Route path="api/plans" element={<PlansApiPage />} />
     </Route>
 
     <Route path="*" element={<NotFound />} />
