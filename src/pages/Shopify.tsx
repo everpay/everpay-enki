@@ -579,6 +579,20 @@ export default function Shopify() {
                       </Button>
                     </div>
 
+                    {/* Import Products */}
+                    {store.access_token && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        disabled={importingStoreId === store.id}
+                        onClick={() => handleImportProducts(store)}
+                      >
+                        <Download className={`h-4 w-4 ${importingStoreId === store.id ? 'animate-bounce' : ''}`} />
+                        {importingStoreId === store.id ? 'Importing Products…' : 'Import Products to Everpay'}
+                      </Button>
+                    )}
+
                     {store.scope && (
                       <p className="text-[11px] text-muted-foreground">Scopes: {store.scope}</p>
                     )}
