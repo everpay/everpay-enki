@@ -1,94 +1,69 @@
 
 
-## Plan: Fix Error-Level Security Issues and Route Signup/Login Links
+## Plan: Reorder Transaction Table Columns & Add Flowbite-style Input Components
 
-### Error-Level Findings
+### What changes
 
-There are **4 error-level** findings across all scanners:
+**1. Transaction Table -- Move "Method" column next to "Amount"**
 
-1. **SUPA_rls_disabled_in_public** — 25 tables in the `public` schema have RLS disabled (both test and production). The previous migration file exists but was never applied.
-2. **SUPA_sensitive_columns_exposed** — Tables with sensitive columns (PII, credentials, financial data) are exposed without RLS. Resolved by fixing #1.
-3. **rls_disabled_live_db** (agent) — Same root cause as #1; pending publish.
-4. **shopify_oauth_tokens** (agent) — Shopify tokens exposed; resolved by #1 plus the already-applied frontend fix.
+Reorder the table columns in `src/components/TransactionTable.tsx`:
+- Current order: ID | Customer | Amount | Currency | Status | Provider | Method | ...
+- New order: ID | Customer | Amount | Method | Currency | Status | Provider | ...
 
-**Root cause**: The migration `20260320220751` was created but never executed against the database. A new migration must be created to actually enable RLS on all 25 tables.
+Update the payment method display to use real card brand SVG logos from `public/logos/` (visa.svg, mastercard.svg, american-express.svg, discover.svg, apple-pay.svg, google-pay.svg, paypal.svg) instead of Lucide icons. Show a small 20px logo image beside the label text.
 
-### Signup/Login Link Fix
+**2. Create Flowbite-style reusable input components**
 
-Currently, 7 front pages link to `https://app.everpayinc.com/sign-up` instead of the project's own `/auth` route. The Auth page accepts a query param or defaults to login mode. We'll add `/login` and `/signup` route aliases and update all external links.
+Create `src/components/ui/currency-input.tsx` -- a compound input with:
+- Currency dropdown (with flag emojis) on the left/right side
+- Number input field with currency symbol prefix
+- Supports all project currencies (USD, EUR, GBP, BRL, MXN, COP, CAD, BDT, PKR)
+- Follows the Flowbite screenshot pattern (flag + code dropdown + amount field)
 
----
+Create `src/components/ui/number-slider-input.tsx` -- a combined number input + range slider:
+- Number input synced with a slider below it
+- Configurable min/max/step
+- Currency prefix option
+- Uses existing `Slider` and `Input` primitives
 
-### Implementation Steps
+Create `src/components/ui/card-number-input.tsx` -- a card entry form component:
+- Card number field with auto-formatting (4-digit groups) and brand logo detection
+- Expiry (MM/YY) and CVV side-by-side
+- Auto-detects Visa/MC/Amex/Discover and shows the corresponding SVG from `public/logos/`
 
-#### Step 1: New Database Migration — Enable RLS on All 25 Tables
+Create `src/components/ui/currency-converter.tsx` -- dual currency converter widget:
+- Two currency+amount inputs with a swap button between them
+- Fiat currencies + BTC/ETH crypto options
+- "Last updated" timestamp and refresh button
 
-Create a fresh migration that enables RLS and applies appropriate policies on all 25 tables that currently show `rowsecurity = false`:
+**3. Adopt new components in existing pages**
 
-- **Merchant-scoped tables** (have `merchant_id`): `payments`, `merchant_accounts`, `api_request_logs`, `behavioral_profiles`, `ledger_accounts`, `settlement_instructions`, `webhook_events`
-- **Shopify tables** (scoped via `store_id` → `shopify_stores` → `merchants`): `shopify_stores`, `shopify_orders`, `shopify_products`
-- **Transaction-scoped**: `margin_records`
-- **Internal/deny-all tables** (no user access needed): `bins`, `device_reputation`, `event_logs`, `fraud_edges`, `fraud_graph_edges`, `fraud_graph_nodes`, `fraud_nodes`, `liquidity_pools`, `plans`, `processor_metrics`, `routing_stats`, `settlement_runs`, `treasury_accounts`, `treasury_transfers`
+Replace raw `<Input type="number">` + `<Select>` currency pairs in:
+- `src/pages/NewPayment.tsx` -- use `CurrencyInput`
+- `src/pages/Payouts.tsx` -- use `CurrencyInput` for payout amount fields
+- `src/pages/Invoices.tsx` -- use `CurrencyInput` for invoice amount
+- `src/pages/MassPayouts.tsx` -- use `CurrencyInput` for manual payout entry
+- `src/pages/PaymentWidget.tsx` -- use `CardNumberInput` in the widget preview
 
-Each table gets `ENABLE ROW LEVEL SECURITY` plus a `DROP POLICY IF EXISTS` → `CREATE POLICY` pattern to be idempotent.
+### Technical details
 
-#### Step 2: Update Auth Page to Support `/login` and `/signup` Routes
+- Payment method logos: `<img src="/logos/visa.svg" className="h-5 w-auto" />` mapped from brand detection
+- `getPaymentMethodInfo` updated to return a `logoSrc` string alongside the label
+- `CurrencyInput` props: `value`, `onChange`, `currency`, `onCurrencyChange`, `currencies[]`, `disabled`, `min`, `max`, `placeholder`
+- `NumberSliderInput` props: `value`, `onChange`, `min`, `max`, `step`, `prefix`, `minLabel`, `maxLabel`
+- `CardNumberInput` props: `onCardChange(cardNumber, expiry, cvv, brand)`, card brand auto-detect using first-6 BIN logic already in codebase
+- All components use existing UI primitives (`Input`, `Select`, `Slider`) and Tailwind styling consistent with the project
 
-- Modify `Auth.tsx` to read the current path and default to signup mode when the path is `/signup`.
-- Add `/login` and `/signup` routes in `App.tsx` pointing to the Auth component wrapped in `AuthRoute`.
+### Files to create
+- `src/components/ui/currency-input.tsx`
+- `src/components/ui/number-slider-input.tsx`
+- `src/components/ui/card-number-input.tsx`
+- `src/components/ui/currency-converter.tsx`
 
-#### Step 3: Replace All External `app.everpayinc.com` Links
-
-Update these 7 files to use internal `<Link to="/signup">` instead of external `<a href="https://app.everpayinc.com/sign-up">`:
-
-- `src/pages/front/About.tsx`
-- `src/pages/front/OnlinePayments.tsx`
-- `src/pages/front/Payments.tsx`
-- `src/pages/front/Commerce.tsx`
-- `src/pages/front/Partners.tsx`
-- `src/pages/front/FraudPrevention.tsx`
-- `src/pages/front/Pricing.tsx`
-
-#### Step 4: Update SiteHeader Links
-
-- Change the mobile "Sign up" button link from `/auth` to `/signup`
-- Change the mobile "Log in" button link from `/auth` to `/login`
-- Change the desktop "Login" link from `/auth` to `/login`
-
-#### Step 5: Update Security Registry
-
-Mark `rls_disabled_live_db`, `shopify_oauth_tokens`, `SUPA_rls_disabled_in_public`, and `SUPA_sensitive_columns_exposed` as remediated with notes.
-
----
-
-### Technical Details
-
-**Migration SQL pattern for merchant-scoped tables:**
-```sql
-ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS payments_select ON public.payments;
-CREATE POLICY payments_select ON public.payments
-  FOR SELECT TO authenticated
-  USING (EXISTS (
-    SELECT 1 FROM merchants
-    WHERE merchants.id = payments.merchant_id
-      AND merchants.user_id = auth.uid()
-  ));
-```
-
-**Migration SQL pattern for internal tables:**
-```sql
-ALTER TABLE public.bins ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS deny_all ON public.bins;
-CREATE POLICY deny_all ON public.bins
-  FOR ALL TO public USING (false) WITH CHECK (false);
-```
-
-**Auth route detection:**
-```typescript
-const location = useLocation();
-const [isLogin, setIsLogin] = useState(location.pathname !== '/signup');
-```
-
-**Files changed:** ~10 frontend files + 1 database migration
+### Files to modify
+- `src/components/TransactionTable.tsx` -- column reorder + logo images
+- `src/pages/NewPayment.tsx` -- adopt CurrencyInput
+- `src/pages/Payouts.tsx` -- adopt CurrencyInput
+- `src/pages/Invoices.tsx` -- adopt CurrencyInput
+- `src/pages/MassPayouts.tsx` -- adopt CurrencyInput
 
