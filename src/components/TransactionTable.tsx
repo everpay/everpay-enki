@@ -106,10 +106,12 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
           </thead>
           <tbody className="divide-y divide-border">
             {paged.map((tx) => {
-              // Card BIN detection from description or provider_ref
               const cardFirst6 = (tx as any).metadata?.cardFirst6 || (tx as any).metadata?.card_first6 || '';
               const cardLast4 = (tx as any).metadata?.cardLast4 || (tx as any).metadata?.card_last4 || '';
               const brand = getCardBrand(cardFirst6);
+              const pmInfo = getPaymentMethodInfo(tx);
+              const avatarUrl = getUIAvatarUrl(tx.customer_email);
+              const initials = tx.customer_email ? tx.customer_email.slice(0, 2).toUpperCase() : '?';
 
               return (
                 <tr
@@ -120,17 +122,34 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs text-muted-foreground">{tx.id.slice(0, 8)}…</span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {tx.customer_email || <span className="text-muted-foreground">—</span>}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={avatarUrl} alt={tx.customer_email || 'Customer'} />
+                        <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm text-foreground truncate max-w-[140px]">
+                        {tx.customer_email || <span className="text-muted-foreground">—</span>}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 font-medium text-foreground">
                     {formatCurrency(tx.amount, tx.currency)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline" className="font-mono text-[10px]">{tx.currency}</Badge>
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={getStatusVariant(tx.status)}>{tx.status}</Badge>
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
                     <Badge variant="provider">{tx.provider}</Badge>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      {pmInfo.icon}
+                      <span className="capitalize">{pmInfo.label}</span>
+                    </div>
                   </td>
                   {!compact && (
                     <>
