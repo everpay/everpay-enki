@@ -121,6 +121,14 @@ export default function Invoices() {
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>New Invoice</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label className="text-xs">Customer Name</Label><Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" /></div><div className="space-y-2"><Label className="text-xs">Customer Email *</Label><Input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="john@example.com" required /></div></div>
+              <div className="space-y-2">
+                <Label className="text-xs">Add Products</Label>
+                <ProductSelector
+                  selectedProducts={selectedProducts}
+                  onProductsChange={handleProductsChange}
+                  currency={currency}
+                />
+              </div>
               <InvoiceLineItems items={lineItems} onChange={handleLineItemsChange} currency={currency} />
               <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label className="text-xs">Total Amount *</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" min="0.01" step="0.01" readOnly={lineItems.length > 0} className={lineItems.length > 0 ? 'bg-muted' : ''} /></div><div className="space-y-2"><Label className="text-xs">Currency</Label><Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="USD">USD</SelectItem><SelectItem value="EUR">EUR</SelectItem><SelectItem value="GBP">GBP</SelectItem><SelectItem value="BRL">BRL</SelectItem><SelectItem value="CAD">CAD</SelectItem></SelectContent></Select></div></div>
               <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
