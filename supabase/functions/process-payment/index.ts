@@ -218,6 +218,7 @@ serve(async (req) => {
       case 'mondo': providerResponse = await processMondo(paymentData); break;
       case 'shieldhub': providerResponse = await processShieldHub(paymentData, req); break;
       case 'makapay': providerResponse = await processMakapay(paymentData); break;
+      case 'facilitapay': providerResponse = await processFacilitaPay(paymentData); break;
       default: providerResponse = simulatePayment(provider, paymentData); break;
     }
     const latencyMs = Date.now() - t0;
