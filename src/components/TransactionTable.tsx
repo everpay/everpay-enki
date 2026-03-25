@@ -5,7 +5,49 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
 import { TransactionDetailDrawer } from './TransactionDetailDrawer';
 import { enrichWithTapix } from '@/lib/tapix';
-import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { ChevronLeft, ChevronRight, Eye, CreditCard, Smartphone, Building2, Wallet } from 'lucide-react';
+
+function getGravatarUrl(email: string | undefined | null, size = 32): string {
+  if (!email) return '';
+  const trimmed = email.trim().toLowerCase();
+  // Use a simple hash for gravatar - we'll use the email directly with UI Avatars as fallback
+  return `https://www.gravatar.com/avatar/${hashCode(trimmed)}?s=${size}&d=404`;
+}
+
+function hashCode(str: string): string {
+  // Simple MD5-like hash for gravatar (using built-in crypto would be better but this works client-side)
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16);
+}
+
+function getUIAvatarUrl(email: string | undefined | null, size = 32): string {
+  if (!email) return `https://ui-avatars.com/api/?name=?&size=${size}&background=6366f1&color=fff&font-size=0.4`;
+  const name = email.split('@')[0].replace(/[._-]/g, '+');
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=6366f1&color=fff&font-size=0.4&rounded=true`;
+}
+
+function getPaymentMethodInfo(tx: Transaction): { icon: React.ReactNode; label: string } {
+  const meta = (tx as any).metadata || {};
+  const method = meta.payment_method || meta.paymentMethod || '';
+  const brand = meta.card_brand || meta.cardBrand || '';
+
+  if (method === 'mobile_money' || method === 'mpesa') return { icon: <Smartphone className="h-3.5 w-3.5" />, label: 'Mobile Money' };
+  if (method === 'bank_transfer' || method === 'sepa' || method === 'pix' || method === 'spei') return { icon: <Building2 className="h-3.5 w-3.5" />, label: method.toUpperCase() };
+  if (method === 'wallet' || method === 'apple_pay' || method === 'google_pay') return { icon: <Wallet className="h-3.5 w-3.5" />, label: method.replace('_', ' ') };
+  if (brand || meta.cardFirst6 || meta.card_first6) return { icon: <CreditCard className="h-3.5 w-3.5" />, label: brand || 'Card' };
+
+  // Infer from provider
+  const provider = tx.provider;
+  if (provider === 'lipad') return { icon: <Smartphone className="h-3.5 w-3.5" />, label: 'Mobile Money' };
+  if (provider === 'facilitapay') return { icon: <Building2 className="h-3.5 w-3.5" />, label: 'Local Payment' };
+  return { icon: <CreditCard className="h-3.5 w-3.5" />, label: 'Card' };
+}
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -47,8 +89,10 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Amount</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Currency</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Provider</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Method</th>
               {!compact && (
                 <>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Card</th>
@@ -62,10 +106,12 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
           </thead>
           <tbody className="divide-y divide-border">
             {paged.map((tx) => {
-              // Card BIN detection from description or provider_ref
               const cardFirst6 = (tx as any).metadata?.cardFirst6 || (tx as any).metadata?.card_first6 || '';
               const cardLast4 = (tx as any).metadata?.cardLast4 || (tx as any).metadata?.card_last4 || '';
               const brand = getCardBrand(cardFirst6);
+              const pmInfo = getPaymentMethodInfo(tx);
+              const avatarUrl = getUIAvatarUrl(tx.customer_email);
+              const initials = tx.customer_email ? tx.customer_email.slice(0, 2).toUpperCase() : '?';
 
               return (
                 <tr
@@ -76,17 +122,34 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs text-muted-foreground">{tx.id.slice(0, 8)}…</span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-foreground">
-                    {tx.customer_email || <span className="text-muted-foreground">—</span>}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={avatarUrl} alt={tx.customer_email || 'Customer'} />
+                        <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm text-foreground truncate max-w-[140px]">
+                        {tx.customer_email || <span className="text-muted-foreground">—</span>}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 font-medium text-foreground">
                     {formatCurrency(tx.amount, tx.currency)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline" className="font-mono text-[10px]">{tx.currency}</Badge>
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={getStatusVariant(tx.status)}>{tx.status}</Badge>
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
                     <Badge variant="provider">{tx.provider}</Badge>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      {pmInfo.icon}
+                      <span className="capitalize">{pmInfo.label}</span>
+                    </div>
                   </td>
                   {!compact && (
                     <>
