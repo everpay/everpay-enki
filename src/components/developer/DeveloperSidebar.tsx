@@ -4,7 +4,7 @@ import {
   BookOpen, Code2, Key, Webhook, Download, Compass,
   CreditCard, Users, ArrowLeftRight, ChevronLeft, Zap,
   UserCircle, FileText, Package, RefreshCw, Banknote,
-  Wallet, Landmark
+  Wallet, Landmark, Link2, ListOrdered, CreditCard as CardIcon
 } from "lucide-react";
 
 const navSections = [
