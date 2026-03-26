@@ -1,7 +1,6 @@
 import { Menu, Search, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link } from "react-router-dom";
 
 interface Props {
@@ -24,7 +23,6 @@ export const DeveloperHeader = ({ onMenuToggle }: Props) => {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <ThemeToggle />
         <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 rounded-full" asChild>
           <Link to="/dashboard">
             <ExternalLink className="w-3.5 h-3.5" />
