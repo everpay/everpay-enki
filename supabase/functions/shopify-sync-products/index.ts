@@ -69,7 +69,13 @@ serve(async (req) => {
     if (!productsRes.ok) {
       const errText = await productsRes.text();
       console.error('Shopify API error:', errText);
-      return new Response(JSON.stringify({ error: 'Failed to fetch products from Shopify' }), {
+      // Parse the actual Shopify error message
+      let shopifyError = 'Failed to fetch products from Shopify';
+      try {
+        const errJson = JSON.parse(errText);
+        shopifyError = typeof errJson.errors === 'string' ? errJson.errors : JSON.stringify(errJson.errors);
+      } catch { shopifyError = errText || shopifyError; }
+      return new Response(JSON.stringify({ error: shopifyError }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

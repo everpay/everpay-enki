@@ -138,7 +138,11 @@ export default function Shopify() {
       const { data, error } = await supabase.functions.invoke('shopify-sync-products', {
         body: { store_id: store.id, merchant_id: merchant.id },
       });
-      if (error) throw error;
+      // Extract the real error message from the response body, not the generic Supabase wrapper
+      if (error) {
+        const specificError = data?.error || error.message || 'Import failed';
+        throw new Error(specificError);
+      }
       if (data?.success) {
         toast.success(`Imported ${data.imported} new products, updated ${data.updated} existing (${data.errors} errors)`);
       } else {
@@ -274,7 +278,7 @@ export default function Shopify() {
         body: { action: 'callback', query, merchant_id: merchant.id },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(data?.error || error.message || 'OAuth callback failed');
       if (data?.success) {
         toast.success(`Store ${data.shop} connected via OAuth (${data.mode} mode)`);
         setPendingOAuthQuery(null);
@@ -316,7 +320,7 @@ export default function Shopify() {
         },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(data?.error || error.message || 'Failed to start OAuth');
 
       if (data?.install_url) {
         launchOAuthInBestContext(data.install_url);
@@ -402,7 +406,7 @@ export default function Shopify() {
           redirect_uri: callbackUrl,
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(data?.error || error.message || 'Failed to initiate OAuth');
       if (data?.install_url) {
         launchOAuthInBestContext(data.install_url);
       } else {
