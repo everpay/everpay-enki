@@ -94,6 +94,13 @@ export default function Shopify() {
   const [showWebhookSecret, setShowWebhookSecret] = useState(false);
   const [isSavingKeys, setIsSavingKeys] = useState(false);
   const [sandboxMode, setSandboxMode] = useState(true);
+
+  // Shopify App Credentials
+  const [appClientId, setAppClientId] = useState('');
+  const [appClientSecret, setAppClientSecret] = useState('');
+  const [showAppSecret, setShowAppSecret] = useState(false);
+  const [isSavingAppCreds, setIsSavingAppCreds] = useState(false);
+  const [appCredsLoaded, setAppCredsLoaded] = useState(false);
   const [visibleTokenStoreId, setVisibleTokenStoreId] = useState<string | null>(null);
   const [copiedTokenStoreId, setCopiedTokenStoreId] = useState<string | null>(null);
 
@@ -504,6 +511,109 @@ export default function Shopify() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Shopify App Credentials */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              Shopify App Credentials
+            </CardTitle>
+            <CardDescription>
+              Enter your Shopify app's Client ID and Secret from the Partner Dashboard → App setup.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs">App Client ID</Label>
+              <div className="relative">
+                <Input
+                  placeholder="e.g. 6c8d322d6ea3f110e8a3e89b60580e31"
+                  value={appClientId}
+                  onChange={(e) => setAppClientId(e.target.value)}
+                  className="font-mono text-sm"
+                />
+                {appClientId && (
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      navigator.clipboard.writeText(appClientId);
+                      toast.success('Client ID copied');
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs">App Secret</Label>
+              <div className="relative">
+                <Input
+                  type={showAppSecret ? 'text' : 'password'}
+                  placeholder="shpss_..."
+                  value={appClientSecret}
+                  onChange={(e) => setAppClientSecret(e.target.value)}
+                  className="font-mono text-sm pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowAppSecret(!showAppSecret)}
+                >
+                  {showAppSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground">
+                <strong>Redirect URL</strong> — Set this in your Shopify Partner Dashboard → App setup:
+              </p>
+              <code className="mt-1 block bg-muted px-2 py-1 rounded text-[11px] font-mono text-foreground break-all">
+                {import.meta.env.VITE_SUPABASE_URL}/functions/v1/shopify-auth-callback
+              </code>
+            </div>
+
+            <Button
+              onClick={async () => {
+                if (!appClientId.trim() || !appClientSecret.trim()) {
+                  toast.error('Both Client ID and Secret are required');
+                  return;
+                }
+                setIsSavingAppCreds(true);
+                try {
+                  const { error } = await supabase.functions.invoke('shopify-oauth', {
+                    body: {
+                      action: 'save_app_credentials',
+                      client_id: appClientId.trim(),
+                      client_secret: appClientSecret.trim(),
+                    },
+                  });
+                  if (error) throw error;
+                  toast.success('Shopify app credentials saved');
+                  setAppCredsLoaded(true);
+                } catch (err: any) {
+                  toast.error(err.message || 'Failed to save credentials');
+                } finally {
+                  setIsSavingAppCreds(false);
+                }
+              }}
+              disabled={isSavingAppCreds || !appClientId.trim() || !appClientSecret.trim()}
+            >
+              {isSavingAppCreds ? 'Saving…' : 'Save App Credentials'}
+            </Button>
+
+            {appCredsLoaded && (
+              <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                <CheckCircle2 className="h-4 w-4" />
+                Credentials configured
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Everpay API Configuration */}
         <Card>
