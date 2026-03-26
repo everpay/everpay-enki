@@ -66,7 +66,7 @@ export default function PayInvoice() {
 
         <form onSubmit={handleSubmit} className="rounded-xl border border-border bg-card p-6 shadow-card space-y-5">
           <Tabs value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="w-full">
-            <TabsList className="grid w-full grid-cols-3"><TabsTrigger value="card" className="gap-1 text-xs"><CreditCard className="h-3.5 w-3.5" /> Card</TabsTrigger><TabsTrigger value="openbanking" className="gap-1 text-xs"><Building2 className="h-3.5 w-3.5" /> Bank</TabsTrigger><TabsTrigger value="apple_pay" className="gap-1 text-xs">🍎 Apple Pay</TabsTrigger></TabsList>
+            <TabsList className="grid w-full grid-cols-3"><TabsTrigger value="card" className="gap-1 text-xs"><CreditCard className="h-3.5 w-3.5" /> Card</TabsTrigger><TabsTrigger value="openbanking" className="gap-1 text-xs"><img src="/logos/bank-transfer-icon.png" alt="" className="h-3.5 w-auto" /> Bank</TabsTrigger><TabsTrigger value="apple_pay" className="gap-1 text-xs"><img src="/logos/apple-pay-icon.png" alt="" className="h-3.5 w-auto" /> Apple Pay</TabsTrigger></TabsList>
             <TabsContent value="card" className="mt-4 space-y-3">
               <div className="space-y-2"><Label className="text-xs">Cardholder Name</Label><Input value={holderName} onChange={(e) => setHolderName(e.target.value)} placeholder="John Doe" required /></div>
               <div className="space-y-2"><Label className="text-xs">Card Number</Label><Input value={formatCardNum(cardNumber)} onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ''))} placeholder="4242 4242 4242 4242" className="font-mono" maxLength={19} required /></div>
