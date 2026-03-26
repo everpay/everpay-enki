@@ -71,6 +71,9 @@ import Settlements from "./pages/Settlements";
 import FraudGraph from "./pages/FraudGraph";
 import PaymentWidget from "./pages/PaymentWidget";
 import MassPayouts from "./pages/MassPayouts";
+import SavedCards from "./pages/SavedCards";
+import ThreeDSecureSettings from "./pages/ThreeDSecureSettings";
+import AdminCascading from "./pages/admin/AdminCascading";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
@@ -241,6 +244,8 @@ const AppRoutes = () => {
     <Route path="/fraud-graph" element={<ProtectedRoute><FraudGraph /></ProtectedRoute>} />
     <Route path="/payment-widget" element={<ProtectedRoute><PaymentWidget /></ProtectedRoute>} />
     <Route path="/mass-payouts" element={<ProtectedRoute><MassPayouts /></ProtectedRoute>} />
+    <Route path="/saved-cards" element={<ProtectedRoute><SavedCards /></ProtectedRoute>} />
+    <Route path="/3ds-settings" element={<ProtectedRoute><ThreeDSecureSettings /></ProtectedRoute>} />
 
     {/* Admin pages — hidden under /enki, role-gated */}
     <Route path="/enki" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute></ProtectedRoute>} />
@@ -255,6 +260,7 @@ const AppRoutes = () => {
     <Route path="/enki/notifications" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminNotifications /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/board" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'investor']}><BoardOverview /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/processors" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminProcessorInfo /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/cascading" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminCascading /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
 
     {/* Developer portal — public (no login required) */}
