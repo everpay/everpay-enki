@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Users, DollarSign, Store, CheckCircle2, ArrowUpRight, ArrowDownRight, CreditCard, ArrowRightLeft, Wallet } from 'lucide-react';
+import { Users, DollarSign, Store, CheckCircle2, ArrowUpRight, ArrowDownRight, CreditCard, ArrowRightLeft, Wallet, CreditCard as CreditCardIcon } from 'lucide-react';
 import { useAdminDashboardData } from '@/hooks/useAdminDashboardData';
 import AdminVolumeChart from '@/components/admin/charts/AdminVolumeChart';
 import AdminRevenueChart from '@/components/admin/charts/AdminRevenueChart';
