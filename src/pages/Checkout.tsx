@@ -150,8 +150,21 @@ export default function Checkout() {
       }
 
       if (!data?.success || data?.transaction?.status === 'failed') {
-        toast.error('Payment declined');
-        redirectToOutcome('failed', data?.transaction?.id);
+        setRetryCount(prev => prev + 1);
+        setLastFailedProvider(data?.transaction?.provider || '');
+        if (retryCount < 2) {
+          toast.error('Payment declined', {
+            description: 'Try again or use a different payment method.',
+            action: {
+              label: 'Retry',
+              onClick: () => handleSubmit(new Event('submit') as any),
+            },
+          });
+          setShowRetryPanel(true);
+        } else {
+          toast.error('Payment declined after multiple attempts');
+          redirectToOutcome('failed', data?.transaction?.id);
+        }
         return;
       }
 
