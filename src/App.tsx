@@ -96,6 +96,8 @@ import PaymentMethodsApiPage from "./pages/developer/api/PaymentMethodsApiPage";
 import PaymentLinksApiPage from "./pages/developer/api/PaymentLinksApiPage";
 import PlansApiPage from "./pages/developer/api/PlansApiPage";
 import ThreeDSecureApiPage from "./pages/developer/api/ThreeDSecureApiPage";
+import SavedCardsApiPage from "./pages/developer/api/SavedCardsApiPage";
+import CascadingPaymentsApiPage from "./pages/developer/api/CascadingPaymentsApiPage";
 import DisputesApiPage from "./pages/developer/api/DisputesApiPage";
 import BankDebitsApiPage from "./pages/developer/api/BankDebitsApiPage";
 import BankRedirectsApiPage from "./pages/developer/api/BankRedirectsApiPage";
