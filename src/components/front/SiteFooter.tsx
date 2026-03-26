@@ -55,54 +55,6 @@ const securityBadges = [
 export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-white">
-      {/* Ready to get started? CTA */}
-      <div className="container mx-auto px-6 py-16 border-b border-border">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground mb-3 font-heading">Ready to get started?</h2>
-            <p className="text-sm text-muted-foreground mb-5 font-body leading-relaxed">
-              Create an account instantly, or contact us to design a custom package for your business.
-            </p>
-            <div className="flex items-center gap-3">
-              <Link to="/demo">
-                <Button size="sm" className="bg-primary hover:bg-primary/85 text-primary-foreground rounded-full px-5 h-9 text-sm font-semibold active:scale-[0.97] transition-all">
-                  Start now <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button size="sm" variant="outline" className="rounded-full px-5 h-9 text-sm font-semibold border-border hover:bg-secondary/50 active:scale-[0.97] transition-all">
-                  Contact sales
-                </Button>
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shrink-0 mt-0.5">
-              <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-1 font-heading">See what you'll pay</h3>
-              <p className="text-sm text-muted-foreground font-body leading-relaxed">Integrated per-transaction pricing with no hidden fees.</p>
-              <Link to="/pricing" className="text-sm text-primary hover:text-primary/80 font-semibold mt-1 inline-block font-body">
-                Pricing details →
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-md bg-secondary flex items-center justify-center shrink-0 mt-0.5">
-              <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-foreground mb-1 font-heading">Start building</h3>
-              <p className="text-sm text-muted-foreground font-body leading-relaxed">Get up and running with Everpay in as little as 10 minutes.</p>
-              <Link to="/developers" className="text-sm text-primary hover:text-primary/80 font-semibold mt-1 inline-block font-body">
-                Integration options →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Footer links grid */}
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-10">
