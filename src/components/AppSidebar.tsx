@@ -86,8 +86,6 @@ const navItems: NavItem[] = [
       { to: "/analytics", icon: Eye, label: "Overview" },
       { to: "/processor-analytics", icon: BarChart3, label: "Processor Analytics" },
       { to: "/payment-methods", icon: CreditCardIcon, label: "Payment Methods" },
-      { to: "/saved-cards", icon: CreditCard, label: "Saved Cards" },
-      { to: "/3ds-settings", icon: Shield, label: "3D Secure" },
       { to: "/live", icon: BarChart3, label: "Live Analytics" },
       { to: "/reconciliation", icon: FileBarChart, label: "Reconciliation", visibleTo: ["admin", "super_admin"] },
       { to: "/ledger", icon: BookOpen, label: "Ledger", visibleTo: ["admin", "super_admin"] },
