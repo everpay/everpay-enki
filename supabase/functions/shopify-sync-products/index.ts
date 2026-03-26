@@ -45,6 +45,15 @@ serve(async (req) => {
       });
     }
 
+    // Validate token format - shpat_ = valid OAuth token, shpss_ = API secret (wrong)
+    if (store.access_token.startsWith('shpss_')) {
+      return new Response(JSON.stringify({ 
+        error: 'Invalid token: the stored value is your App Secret, not an OAuth access token. Please re-connect your store via the OAuth flow to obtain a valid access token (shpat_...).' 
+      }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Fetch products from Shopify
     const shopDomain = store.shop_domain;
     const productsRes = await fetch(
