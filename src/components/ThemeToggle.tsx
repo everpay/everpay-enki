@@ -3,32 +3,12 @@ import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('everpay-theme') as 'dark' | 'light') || 'light';
-    }
-    return 'light';
-  });
-
+  // Always enforce light theme
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem('everpay-theme', theme);
-  }, [theme]);
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('everpay-theme', 'light');
+  }, []);
 
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
-      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-    >
-      {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-    </Button>
-  );
+  // Render nothing — light mode is enforced
+  return null;
 }
