@@ -379,6 +379,27 @@ Deno.serve(async (req) => {
     }
   };
 
+  // Helper to log + return response (non-blocking)
+  const logAndReturn = (response: Response) => {
+    const latency = Date.now() - startTime;
+    const statusCode = response.status;
+    if (shouldLogRequest(statusCode)) {
+      enqueueLog({
+        endpoint: `/${pathParts.join('/')}`,
+        method,
+        status_code: statusCode,
+        latency_ms: latency,
+        merchant_id: merchantId,
+        request_id: reqId,
+        user_agent: req.headers.get('user-agent'),
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip'),
+        resource,
+        created_at: new Date().toISOString(),
+      });
+    }
+    return response;
+  };
+
   try {
     // ═══════════════════════════════════════
     // PAYMENTS
