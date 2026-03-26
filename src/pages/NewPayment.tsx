@@ -295,9 +295,9 @@ export default function NewPayment() {
           {/* Payment Method Tabs */}
           <Tabs value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="card">💳 Card</TabsTrigger>
-              <TabsTrigger value="open_banking">🏦 Open Banking</TabsTrigger>
-              <TabsTrigger value="apple_pay">🍎 Apple Pay</TabsTrigger>
+              <TabsTrigger value="card" className="gap-1.5">💳 Card</TabsTrigger>
+              <TabsTrigger value="open_banking" className="gap-1.5"><img src="/logos/bank-transfer-icon.png" alt="" className="h-4 w-auto" /> Open Banking</TabsTrigger>
+              <TabsTrigger value="apple_pay" className="gap-1.5"><img src="/logos/apple-pay-icon.png" alt="" className="h-4 w-auto" /> Apple Pay</TabsTrigger>
               <TabsTrigger value="pix">🇧🇷 PIX</TabsTrigger>
             </TabsList>
 
