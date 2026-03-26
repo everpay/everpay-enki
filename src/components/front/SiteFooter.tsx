@@ -94,10 +94,16 @@ export function SiteFooter() {
         {/* Legal disclaimers */}
         <div className="mt-6 space-y-2">
           <p className="text-[11px] text-muted-foreground/50 leading-relaxed font-body">
-            Everpay Corporation is a financial technology company and not a bank. Banking services are provided by Everpay's bank partners, Members FDIC. The Everpay Visa® Card is issued by Everpay's banking partners pursuant to a license from Visa U.S.A. Inc. and may be used everywhere Visa debit cards are accepted.
+            Everpay Corporation is a financial technology company and is not a bank. Banking services are provided by i3 Bank, Member FDIC. The Everpay Corporation Visa Debit Card is issued by i3 Bank pursuant to a license from Visa U.S.A. Inc. and may be used anywhere Visa cards are accepted.
           </p>
           <p className="text-[11px] text-muted-foreground/50 leading-relaxed font-body">
-            Everpay is PCI DSS Level 1 certified. All sensitive payment data is encrypted end-to-end and tokenized. Our platform is SOC 2 Type II audited and GDPR compliant.
+            Deposits may qualify for up to $3,000,000 in FDIC insurance coverage when placed at program banks in the i3 Bank sweep program. Accounts are eligible for pass-through deposit insurance only to the extent pass-through insurance is permitted by the rules and regulations of the FDIC, and if the requirements for pass-through insurance are satisfied. There may be a risk that pass-through deposit insurance is not available because conditions have not been satisfied. In such cases, funds may not be fully insured in the event the insured depository institution where the funds have been deposited were to fail.
+          </p>
+          <p className="text-[11px] text-muted-foreground/50 leading-relaxed font-body">
+            ² Annual Percentage Yield (APY) is variable and is subject to change after account opening. Rate is compounded monthly and credited monthly.
+          </p>
+          <p className="text-[11px] text-muted-foreground/50 leading-relaxed font-body">
+            ³ No account or domestic transaction fees. Some foreign transaction fees may apply in limited circumstances.
           </p>
         </div>
       </div>
