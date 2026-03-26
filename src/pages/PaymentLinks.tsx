@@ -398,9 +398,9 @@ export default function PaymentLinks() {
                 <div className="flex flex-wrap gap-2">
                   {(paymentMethod === 'all' || paymentMethod === 'card') && (
                     <>
-                      <Badge variant="secondary">💳 Card</Badge>
-                      <Badge variant="secondary">🍎 Apple Pay</Badge>
-                      <Badge variant="secondary">G Google Pay</Badge>
+                      <Badge variant="secondary" className="gap-1">💳 Card</Badge>
+                      <Badge variant="secondary" className="gap-1"><img src="/logos/apple-pay-icon.png" alt="" className="h-3.5 w-auto" /> Apple Pay</Badge>
+                      <Badge variant="secondary" className="gap-1"><img src="/logos/google-pay-icon.png" alt="" className="h-3.5 w-auto" /> Google Pay</Badge>
                     </>
                   )}
                   {(paymentMethod === 'all' || paymentMethod === 'openbanking') && (
