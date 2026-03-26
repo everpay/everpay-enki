@@ -382,13 +382,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // ─── Parse route ───
-  const url = new URL(req.url);
-  const pathParts = url.pathname.replace(/^\/api-v2/, '').replace(/^\/v2/, '').split('/').filter(Boolean);
-  const method = req.method;
-  const resource = pathParts[0] || '';
-  const resourceId = pathParts[1] || '';
-  const subResource = pathParts[2] || '';
+  // Route already parsed above (before auth check)
 
   // Helper to store idempotency response
   const storeIdempotency = async (response: unknown) => {
