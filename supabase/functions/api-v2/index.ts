@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
 };
 
-const requestId = () => `req_${crypto.randomUUID().replace(/-/g, '')}`;
+const genRequestId = () => `req_${crypto.randomUUID().replace(/-/g, '')}`;
 
 const json = (status: number, body: unknown, reqId?: string) =>
   new Response(JSON.stringify(body), {
@@ -14,10 +14,110 @@ const json = (status: number, body: unknown, reqId?: string) =>
     headers: {
       ...corsHeaders,
       'Content-Type': 'application/json',
-      'X-Request-Id': reqId || requestId(),
+      'X-Request-Id': reqId || genRequestId(),
       'X-Everpay-Version': '2026-03-25',
     },
   });
+
+// ─── Async Buffered API Logger (Article Best Practices) ───
+// 1. Non-blocking: logs are buffered in memory, never awaited in request path
+// 2. Batched writes: flushed every 5s or when buffer hits 50 entries
+// 3. Sensitive data masking: passwords, card numbers, tokens stripped
+// 4. Log sampling: 100% of errors, 20% of successful 2xx requests
+// 5. Structured entries: timestamp, method, url, status, latency, merchantId, requestId
+
+interface ApiLogEntry {
+  endpoint: string;
+  method: string;
+  status_code: number;
+  latency_ms: number;
+  merchant_id: string | null;
+  request_id: string;
+  user_agent: string | null;
+  ip_address: string | null;
+  resource: string;
+  error_message?: string;
+  created_at: string;
+}
+
+const LOG_BUFFER: ApiLogEntry[] = [];
+const LOG_BUFFER_SIZE = 50;
+const LOG_FLUSH_INTERVAL_MS = 5_000;
+const LOG_SAMPLE_RATE_SUCCESS = 0.2; // log 20% of 2xx responses
+let flushTimer: number | null = null;
+
+function shouldLogRequest(statusCode: number): boolean {
+  // Always log errors (4xx, 5xx)
+  if (statusCode >= 400) return true;
+  // Sample successful requests at 20%
+  return Math.random() < LOG_SAMPLE_RATE_SUCCESS;
+}
+
+function maskSensitiveFields(obj: unknown): unknown {
+  if (typeof obj !== 'object' || obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(maskSensitiveFields);
+
+  const clone: Record<string, unknown> = {};
+  const sensitiveKeys = new Set([
+    'password', 'secret', 'token', 'access_token', 'refresh_token',
+    'api_key', 'apikey', 'authorization', 'card_number', 'cardNumber',
+    'cvv', 'cvc', 'ssn', 'social_security', 'pin',
+  ]);
+  const cardPattern = /^\d{13,19}$/;
+
+  for (const [key, val] of Object.entries(obj as Record<string, unknown>)) {
+    const lowerKey = key.toLowerCase();
+    if (sensitiveKeys.has(lowerKey)) {
+      clone[key] = '***REDACTED***';
+    } else if (typeof val === 'string' && cardPattern.test(val.replace(/\s/g, ''))) {
+      clone[key] = `****${val.slice(-4)}`;
+    } else if (typeof val === 'object' && val !== null) {
+      clone[key] = maskSensitiveFields(val);
+    } else {
+      clone[key] = val;
+    }
+  }
+  return clone;
+}
+
+async function flushLogBuffer() {
+  if (LOG_BUFFER.length === 0) return;
+
+  const batch = LOG_BUFFER.splice(0, LOG_BUFFER.length);
+  try {
+    const supabaseForLogs = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    await supabaseForLogs.from('api_request_logs').insert(
+      batch.map((entry) => ({
+        endpoint: entry.endpoint,
+        method: entry.method,
+        status_code: entry.status_code,
+        latency_ms: entry.latency_ms,
+        merchant_id: entry.merchant_id,
+        created_at: entry.created_at,
+      }))
+    );
+  } catch (err) {
+    // Never let logging errors crash the API — silently drop
+    console.error('[api-logger] flush error:', err);
+  }
+}
+
+function enqueueLog(entry: ApiLogEntry) {
+  LOG_BUFFER.push(entry);
+  if (LOG_BUFFER.length >= LOG_BUFFER_SIZE) {
+    // Flush immediately when buffer is full — fire-and-forget
+    flushLogBuffer();
+  } else if (!flushTimer) {
+    // Schedule a periodic flush
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      flushLogBuffer();
+    }, LOG_FLUSH_INTERVAL_MS) as unknown as number;
+  }
+}
 
 /**
  * Everpay API v2 — RESTful merchant gateway
