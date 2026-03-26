@@ -320,7 +320,7 @@ export default function Shopify() {
         },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(data?.error || error.message || 'Failed to start OAuth');
 
       if (data?.install_url) {
         launchOAuthInBestContext(data.install_url);
