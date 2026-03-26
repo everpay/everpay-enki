@@ -406,7 +406,7 @@ export default function Shopify() {
           redirect_uri: callbackUrl,
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(data?.error || error.message || 'Failed to initiate OAuth');
       if (data?.install_url) {
         launchOAuthInBestContext(data.install_url);
       } else {
