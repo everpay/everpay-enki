@@ -41,12 +41,11 @@ export function HeroSection() {
           </div>
 
           <h1 className="text-5xl md:text-[72px] lg:text-[88px] font-extrabold text-white leading-[1.05] tracking-tight mb-6 font-heading">
-            Payment infrastructure to{' '}
-            <span className="text-primary">grow your revenue.</span>
+            The Perfect Payment Platform to <span className="text-primary">grow your business.</span>
           </h1>
 
-          <p className="text-lg md:text-[22px] lg:text-[26px] text-white/65 font-medium max-w-[720px] mx-auto mb-12 leading-relaxed font-body">
-            Accept payments, offer financial services, and implement custom revenue models — from your first transaction to your billionth.
+          <p className="text-lg md:text-[26px] lg:text-[32px] text-white/65 font-bold max-w-[720px] mx-auto mb-12 leading-relaxed font-body">
+            Approve more transactions, reduce fraud, and unlock global revenue
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
