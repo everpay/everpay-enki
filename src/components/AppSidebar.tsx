@@ -61,6 +61,7 @@ const navItems: NavItem[] = [
       { to: "/payment-links", icon: Link2, label: "Payment Links" },
       { to: "/payment-widget", icon: Globe, label: "Payment Widget" },
       { to: "/refunds", icon: RotateCcw, label: "Refunds" },
+      { to: "/saved-cards", icon: CreditCard, label: "Saved Cards" },
     ],
   },
   { to: "/products", icon: Package, label: "Products" },
