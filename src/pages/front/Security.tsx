@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Shield, Lock, CheckCircle, FileCheck, Server, Eye, Globe, ClipboardCheck } from "lucide-react"
 import { Link } from "react-router-dom"
@@ -232,6 +233,7 @@ export default function SecurityPage() {
           </div>
         </section>
       </main>
+      <CTASection />
       <SiteFooter />
     </div>
   )

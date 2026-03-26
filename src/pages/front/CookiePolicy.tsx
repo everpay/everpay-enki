@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Link } from "react-router-dom"
 
 export default function CookiePolicyPage() {
@@ -119,6 +120,7 @@ export default function CookiePolicyPage() {
           </div>
         </div>
       </main>
+      <CTASection />
       <SiteFooter />
     </div>
   )

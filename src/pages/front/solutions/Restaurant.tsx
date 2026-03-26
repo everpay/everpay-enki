@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Utensils, CreditCard, Smartphone, Users, BarChart, Clock } from "lucide-react"
@@ -328,6 +329,7 @@ export default function RestaurantPage() {
         </div>
       </section>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )

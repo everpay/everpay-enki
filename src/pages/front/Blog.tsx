@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 
 import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
@@ -137,6 +138,7 @@ export default function BlogPage() {
         </section>
       </main>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )

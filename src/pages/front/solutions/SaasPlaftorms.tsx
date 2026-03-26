@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Code, CreditCard, Repeat, Shield, TrendingUp, Zap } from "lucide-react"
@@ -344,6 +345,7 @@ export default function SaasPlaftormsPage() {
         </div>
       </section>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )

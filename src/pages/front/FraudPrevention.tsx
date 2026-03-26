@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Shield, LineChart, Brain, CheckCircle } from 'lucide-react'
 
@@ -223,6 +224,7 @@ export default function FraudPreventionPage() {
           </div>
         </section>
       </main>
+      <CTASection />
       <SiteFooter />
     </div>
   )

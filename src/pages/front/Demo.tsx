@@ -3,6 +3,7 @@ import type React from "react"
 import { useState } from "react"
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CheckCircle } from "lucide-react"
@@ -472,6 +473,7 @@ export default function DemoPage() {
         </section>
       </main>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )
