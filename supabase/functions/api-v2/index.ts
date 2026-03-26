@@ -274,7 +274,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const reqId = requestId();
+  const reqId = genRequestId();
+  const startTime = Date.now();
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
