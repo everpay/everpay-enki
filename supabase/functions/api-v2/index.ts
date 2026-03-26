@@ -1421,10 +1421,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json(404, { error: { type: 'invalid_request_error', code: 'route_not_found', message: `No such route: ${method} /${pathParts.join('/')}`, doc_url: 'https://developers.everpayinc.com/api' } }, reqId);
+    const notFoundResp = json(404, { error: { type: 'invalid_request_error', code: 'route_not_found', message: `No such route: ${method} /${pathParts.join('/')}`, doc_url: 'https://developers.everpayinc.com/api' } }, reqId);
+    return logAndReturn(notFoundResp);
 
   } catch (err) {
     console.error('API v2 error:', err);
-    return json(500, { error: { type: 'api_error', code: 'internal_error', message: 'An unexpected error occurred. Please retry the request.' } }, reqId);
+    const errResp = json(500, { error: { type: 'api_error', code: 'internal_error', message: 'An unexpected error occurred. Please retry the request.' } }, reqId);
+    return logAndReturn(errResp);
   }
 });
