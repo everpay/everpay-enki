@@ -613,14 +613,40 @@ export default function Shopify() {
                 }
                 setIsSavingAppCreds(true);
                 try {
-                  const { error } = await supabase.functions.invoke('shopify-oauth', {
-                    body: {
-                      action: 'save_app_credentials',
-                      client_id: appClientId.trim(),
-                      client_secret: appClientSecret.trim(),
-                    },
-                  });
-                  if (error) throw error;
+                  const { data: merchant } = await supabase
+                    .from('merchants')
+                    .select('id')
+                    .eq('user_id', user?.id ?? '')
+                    .single();
+                  if (!merchant) throw new Error('Merchant not found');
+
+                  const { data: existing } = await supabase
+                    .from('shopify_app_credentials' as any)
+                    .select('id')
+                    .eq('merchant_id', merchant.id)
+                    .maybeSingle();
+
+                  if (existing) {
+                    const { error } = await supabase
+                      .from('shopify_app_credentials' as any)
+                      .update({
+                        client_id: appClientId.trim(),
+                        client_secret_encrypted: appClientSecret.trim(),
+                        updated_at: new Date().toISOString(),
+                      } as any)
+                      .eq('merchant_id', merchant.id);
+                    if (error) throw error;
+                  } else {
+                    const { error } = await supabase
+                      .from('shopify_app_credentials' as any)
+                      .insert({
+                        merchant_id: merchant.id,
+                        client_id: appClientId.trim(),
+                        client_secret_encrypted: appClientSecret.trim(),
+                      } as any);
+                    if (error) throw error;
+                  }
+
                   toast.success('Shopify app credentials saved');
                   setAppCredsLoaded(true);
                 } catch (err: any) {
