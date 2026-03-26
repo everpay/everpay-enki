@@ -182,11 +182,34 @@ export default function Shopify() {
     if (user) fetchStores();
   }, [user]);
 
-  // Listen for OAuth callback via URL params
+  // Listen for OAuth callback via URL params (both legacy client-side and new server redirect)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const callbackQuery = Object.fromEntries(params.entries());
 
+    // Handle successful redirect from shopify-auth-callback edge function
+    if (callbackQuery.connected === 'true' && callbackQuery.shop) {
+      toast.success(`Store ${callbackQuery.shop} connected successfully!`);
+      window.history.replaceState({}, '', window.location.pathname);
+      fetchStores();
+      return;
+    }
+
+    // Handle error redirects from callback
+    if (callbackQuery.error) {
+      const errorMessages: Record<string, string> = {
+        missing_params: 'OAuth callback missing required parameters',
+        invalid_shop: 'Invalid Shopify store domain',
+        hmac_failed: 'HMAC verification failed — possible tampering',
+        token_exchange_failed: 'Failed to exchange authorization code for access token',
+        server_error: 'An unexpected error occurred during OAuth',
+      };
+      toast.error(errorMessages[callbackQuery.error] || `OAuth error: ${callbackQuery.error}`);
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    // Legacy: handle direct code+shop params (client-side callback)
     if (callbackQuery.code && callbackQuery.shop) {
       setPendingOAuthQuery(callbackQuery);
       window.history.replaceState({}, '', window.location.pathname);
@@ -246,13 +269,15 @@ export default function Shopify() {
 
     setIsOAuthConnecting(true);
     try {
-      const redirectUri = `${window.location.origin}/shopify`;
+      // Use the dedicated callback edge function URL — Shopify redirects via GET
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const callbackUrl = `${supabaseUrl}/functions/v1/shopify-auth-callback`;
 
       const { data, error } = await supabase.functions.invoke('shopify-oauth', {
         body: {
           action: 'install',
           shop: normalizedShop,
-          redirect_uri: redirectUri,
+          redirect_uri: callbackUrl,
         },
       });
 
@@ -332,11 +357,14 @@ export default function Shopify() {
 
     setFetchingTokenStoreId(store.id);
     try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const callbackUrl = `${supabaseUrl}/functions/v1/shopify-auth-callback`;
+
       const { data, error } = await supabase.functions.invoke('shopify-oauth', {
         body: {
           action: 'install',
           shop: normalizedShop,
-          redirect_uri: `${window.location.origin}/shopify`,
+          redirect_uri: callbackUrl,
         },
       });
       if (error) throw error;
