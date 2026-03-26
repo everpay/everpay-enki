@@ -4,7 +4,7 @@ import {
   BookOpen, Code2, Key, Webhook, Download, Compass,
   CreditCard, Users, ArrowLeftRight, ChevronLeft, Zap,
   UserCircle, FileText, Package, RefreshCw, Banknote,
-  Wallet, Landmark, Link2, ListOrdered, CreditCard as CardIcon
+  Wallet, Landmark, Link2, ListOrdered, CreditCard as CardIcon,
 } from "lucide-react";
 
 const navSections = [
@@ -34,6 +34,8 @@ const navSections = [
       { label: "Wallets", icon: Wallet, to: "/developers/api/wallets" },
       { label: "Bank Accounts", icon: Landmark, to: "/developers/api/bank-accounts" },
       { label: "3D Secure", icon: Key, to: "/developers/api/3d-secure" },
+      { label: "Saved Cards", icon: CreditCard, to: "/developers/api/saved-cards" },
+      { label: "Cascading Payments", icon: RefreshCw, to: "/developers/api/cascading" },
       { label: "Disputes", icon: Users, to: "/developers/api/disputes" },
       { label: "Bank Debits", icon: Landmark, to: "/developers/api/bank-debits" },
       { label: "Bank Redirects", icon: ArrowLeftRight, to: "/developers/api/bank-redirects" },

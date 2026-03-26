@@ -96,6 +96,8 @@ import PaymentMethodsApiPage from "./pages/developer/api/PaymentMethodsApiPage";
 import PaymentLinksApiPage from "./pages/developer/api/PaymentLinksApiPage";
 import PlansApiPage from "./pages/developer/api/PlansApiPage";
 import ThreeDSecureApiPage from "./pages/developer/api/ThreeDSecureApiPage";
+import SavedCardsApiPage from "./pages/developer/api/SavedCardsApiPage";
+import CascadingPaymentsApiPage from "./pages/developer/api/CascadingPaymentsApiPage";
 import DisputesApiPage from "./pages/developer/api/DisputesApiPage";
 import BankDebitsApiPage from "./pages/developer/api/BankDebitsApiPage";
 import BankRedirectsApiPage from "./pages/developer/api/BankRedirectsApiPage";
@@ -279,6 +281,8 @@ const AppRoutes = () => {
       <Route path="api/payment-links" element={<PaymentLinksApiPage />} />
       <Route path="api/plans" element={<PlansApiPage />} />
       <Route path="api/3d-secure" element={<ThreeDSecureApiPage />} />
+      <Route path="api/saved-cards" element={<SavedCardsApiPage />} />
+      <Route path="api/cascading" element={<CascadingPaymentsApiPage />} />
       <Route path="api/disputes" element={<DisputesApiPage />} />
       <Route path="api/bank-debits" element={<BankDebitsApiPage />} />
       <Route path="api/bank-redirects" element={<BankRedirectsApiPage />} />
