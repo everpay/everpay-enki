@@ -281,6 +281,8 @@ const AppRoutes = () => {
       <Route path="api/payment-links" element={<PaymentLinksApiPage />} />
       <Route path="api/plans" element={<PlansApiPage />} />
       <Route path="api/3d-secure" element={<ThreeDSecureApiPage />} />
+      <Route path="api/saved-cards" element={<SavedCardsApiPage />} />
+      <Route path="api/cascading" element={<CascadingPaymentsApiPage />} />
       <Route path="api/disputes" element={<DisputesApiPage />} />
       <Route path="api/bank-debits" element={<BankDebitsApiPage />} />
       <Route path="api/bank-redirects" element={<BankRedirectsApiPage />} />
