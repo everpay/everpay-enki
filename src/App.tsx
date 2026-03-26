@@ -71,6 +71,9 @@ import Settlements from "./pages/Settlements";
 import FraudGraph from "./pages/FraudGraph";
 import PaymentWidget from "./pages/PaymentWidget";
 import MassPayouts from "./pages/MassPayouts";
+import SavedCards from "./pages/SavedCards";
+import ThreeDSecureSettings from "./pages/ThreeDSecureSettings";
+import AdminCascading from "./pages/admin/AdminCascading";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
