@@ -267,7 +267,19 @@ serve(async (req) => {
     supabase.functions.invoke('api-v2-webhooks', { body: { merchant_id: merchantId, event_type: eventType, payload: { payment_id: transaction.id, payment_intent_id: intent.id, amount: totalAmount, currency, status: internalStatus, provider, customer_email: customerEmail, provider_ref: transaction.provider_ref, source: paymentData.source || null, order_id: paymentData.orderId || null, created_at: transaction.created_at } } }).catch(e => console.error('Webhook error:', e));
 
     if (internalStatus === 'completed' && paymentData.source === 'shopify' && paymentData.orderId) {
-      await completeShopifyDraft(supabase, merchantId, String(paymentData.orderId));
+      // Mark the Shopify order as PAID via the dedicated mark-paid function
+      supabase.functions.invoke('shopify-mark-paid', {
+        body: {
+          order_id: paymentData.orderId,
+          transaction_id: transaction.id,
+          merchant_id: merchantId,
+          amount: totalAmount,
+          currency,
+        },
+      }).catch(err => {
+        console.error('shopify-mark-paid failed, trying direct completion:', err);
+        completeShopifyDraft(supabase, merchantId, String(paymentData.orderId));
+      });
     }
 
     return new Response(JSON.stringify(responsePayload), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
