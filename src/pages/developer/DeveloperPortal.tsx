@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { DeveloperSidebar } from "@/components/developer/DeveloperSidebar";
 import { DeveloperHeader } from "@/components/developer/DeveloperHeader";
-import { CTASection } from "@/components/front/CtaSection";
-import { SiteFooter } from "@/components/front/SiteFooter";
 
 const DeveloperPortal = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -16,8 +14,6 @@ const DeveloperPortal = () => {
         <main className="flex-1 p-6 lg:p-8 overflow-auto animate-fade-in">
           <Outlet />
         </main>
-        <CTASection />
-        <SiteFooter />
       </div>
     </div>
   );
