@@ -284,7 +284,7 @@ export default function NewPayment() {
                 <SelectItem value="apple_pay"><span className="inline-flex items-center gap-1.5"><img src="/logos/apple-pay-icon.png" alt="" className="h-4 w-auto" /> Apple Pay</span></SelectItem>
                 <SelectItem value="open_banking">🏦 Open Banking</SelectItem>
                 <SelectItem value="upi">🇮🇳 UPI</SelectItem>
-                <SelectItem value="bank_transfer">🏦 Bank Transfer</SelectItem>
+                <SelectItem value="bank_transfer"><span className="inline-flex items-center gap-1.5"><img src="/logos/bank-transfer-icon.png" alt="" className="h-4 w-auto" /> Bank Transfer</span></SelectItem>
                 <SelectItem value="spei">🇲🇽 SPEI</SelectItem>
                 <SelectItem value="wallet">👛 Wallet</SelectItem>
                 <SelectItem value="p2p">🔄 P2P</SelectItem>
