@@ -2419,6 +2419,41 @@ export type Database = {
         }
         Relationships: []
       }
+      shopify_app_credentials: {
+        Row: {
+          client_id: string
+          client_secret_encrypted: string
+          created_at: string
+          id: string
+          merchant_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string
+          client_secret_encrypted?: string
+          created_at?: string
+          id?: string
+          merchant_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          client_secret_encrypted?: string
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_app_credentials_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopify_orders: {
         Row: {
           amount: number | null
