@@ -41,10 +41,10 @@ export function HeroSection() {
           </div>
 
           <h1 className="text-5xl md:text-[72px] lg:text-[88px] font-extrabold text-white leading-[1.05] tracking-tight mb-6 font-heading">
-            Scale your business beyond borders <span className="text-primary">Infrastructure for growth.</span>
+            Scale your business beyond <span className="text-primary">Borders.</span>
           </h1>
 
-          <p className="text-lg md:text-[28px] lg:text-[36px] text-white/65 font-bold max-w-[720px] mx-auto mb-12 leading-relaxed font-body">
+          <p className="text-lg md:text-[26px] lg:text-[32px] text-white/65 font-bold max-w-[720px] mx-auto mb-12 leading-relaxed font-body">
             Approve more transactions, scale faster, and process globally-all with zero friction.
           </p>
 
