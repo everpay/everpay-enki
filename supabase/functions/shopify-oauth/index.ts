@@ -152,7 +152,9 @@ serve(async (req) => {
       }
 
       const nonce = crypto.randomUUID();
-      const installUrl = `https://${normalizedShop}/admin/oauth/authorize?client_id=${shopifyApiKey}&scope=${appScopes}&redirect_uri=${encodeURIComponent(redirect_uri || `${supabaseUrl}/functions/v1/shopify-oauth`)}&state=${nonce}`;
+      // Always use the dedicated callback edge function as redirect URI
+      const callbackUrl = `${supabaseUrl}/functions/v1/shopify-auth-callback`;
+      const installUrl = `https://${normalizedShop}/admin/oauth/authorize?client_id=${shopifyApiKey}&scope=${appScopes}&redirect_uri=${encodeURIComponent(redirect_uri || callbackUrl)}&state=${nonce}`;
 
       return new Response(JSON.stringify({ success: true, install_url: installUrl, nonce }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -334,11 +334,14 @@ export default function Shopify() {
 
     setFetchingTokenStoreId(store.id);
     try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const callbackUrl = `${supabaseUrl}/functions/v1/shopify-auth-callback`;
+
       const { data, error } = await supabase.functions.invoke('shopify-oauth', {
         body: {
           action: 'install',
           shop: normalizedShop,
-          redirect_uri: `${window.location.origin}/shopify`,
+          redirect_uri: callbackUrl,
         },
       });
       if (error) throw error;
