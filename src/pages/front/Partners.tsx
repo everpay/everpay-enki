@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle, Users, Building, Globe } from 'lucide-react'
 
@@ -201,6 +202,7 @@ export default function PartnersPage() {
           </div>
         </section>
       </main>
+      <CTASection />
       <SiteFooter />
     </div>
   )

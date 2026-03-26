@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, CreditCard, ShoppingCart, Lock, Users, Zap, Globe, BarChart } from "lucide-react"
@@ -387,6 +388,7 @@ export default function PosPage() {
         </div>
       </section>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )

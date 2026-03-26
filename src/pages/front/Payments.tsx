@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { SiteHeader } from "@/components/front/SiteHeader";
-import { SiteFooter } from "@/components/front/SiteFooter";
+import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 ;
@@ -359,6 +360,7 @@ export default function PaymentsPage() {
           </div>
         </section>
       </main>
+      <CTASection />
       <SiteFooter />
     </div>
   );

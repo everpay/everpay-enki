@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Building2, Globe, Shield, Users, Lock, TrendingUp } from "lucide-react"
@@ -341,6 +342,7 @@ export default function EnterprisePage() {
         </div>
       </section>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )

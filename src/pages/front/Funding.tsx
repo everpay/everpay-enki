@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import {
   DollarSign,
@@ -573,6 +574,7 @@ export default function FundingPage() {
           </div>
         </section>
       </main>
+      <CTASection />
       <SiteFooter />
     </div>
   )

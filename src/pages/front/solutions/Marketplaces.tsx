@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Users, DollarSign, Shield, TrendingUp, Zap, Globe } from "lucide-react"
@@ -345,6 +346,7 @@ export default function MarketplacesPage() {
         </div>
       </section>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )

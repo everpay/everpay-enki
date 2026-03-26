@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 
 import { Link } from "react-router-dom"
@@ -211,6 +212,7 @@ export default function CareersPage() {
         </section>
       </main>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )
