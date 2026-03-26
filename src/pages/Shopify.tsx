@@ -138,7 +138,11 @@ export default function Shopify() {
       const { data, error } = await supabase.functions.invoke('shopify-sync-products', {
         body: { store_id: store.id, merchant_id: merchant.id },
       });
-      if (error) throw error;
+      // Extract the real error message from the response body, not the generic Supabase wrapper
+      if (error) {
+        const specificError = data?.error || error.message || 'Import failed';
+        throw new Error(specificError);
+      }
       if (data?.success) {
         toast.success(`Imported ${data.imported} new products, updated ${data.updated} existing (${data.errors} errors)`);
       } else {
