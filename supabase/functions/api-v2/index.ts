@@ -311,8 +311,16 @@ Deno.serve(async (req) => {
     if (merchant) merchantId = merchant.id;
   }
 
+  // ─── Parse route early (needed for logging) ───
+  const url = new URL(req.url);
+  const pathParts = url.pathname.replace(/^\/api-v2/, '').replace(/^\/v2/, '').split('/').filter(Boolean);
+  const method = req.method;
+  const resource = pathParts[0] || '';
+  const resourceId = pathParts[1] || '';
+  const subResource = pathParts[2] || '';
+
   if (!merchantId) {
-    return json(401, {
+    const authFailResp = json(401, {
       error: {
         type: 'authentication_error',
         code: 'unauthorized',
@@ -320,6 +328,21 @@ Deno.serve(async (req) => {
         doc_url: 'https://developers.everpayinc.com/api/authentication',
       }
     }, reqId);
+    // Always log auth failures
+    enqueueLog({
+      endpoint: `/${pathParts.join('/')}`,
+      method,
+      status_code: 401,
+      latency_ms: Date.now() - startTime,
+      merchant_id: null,
+      request_id: reqId,
+      user_agent: req.headers.get('user-agent'),
+      ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip'),
+      resource,
+      error_message: 'unauthorized',
+      created_at: new Date().toISOString(),
+    });
+    return authFailResp;
   }
 
   // ─── Rate Limit (per merchant) ───
