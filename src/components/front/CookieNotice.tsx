@@ -32,9 +32,9 @@ export function CookieNotice() {
       <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm" />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[61] flex items-end sm:items-center justify-center p-0 sm:p-6">
+      <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 sm:p-6">
         <div
-          className="w-full sm:max-w-[640px] bg-white sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 max-h-[90vh] flex flex-col"
+          className="w-full max-w-[calc(100vw-2rem)] sm:max-w-[640px] bg-white rounded-2xl shadow-2xl animate-in slide-in-from-bottom-8 duration-500 max-h-[85vh] flex flex-col"
         >
           {/* Header */}
           <div className="flex items-start justify-between p-6 pb-2">
