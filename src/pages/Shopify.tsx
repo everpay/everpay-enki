@@ -246,13 +246,15 @@ export default function Shopify() {
 
     setIsOAuthConnecting(true);
     try {
-      const redirectUri = `${window.location.origin}/shopify`;
+      // Use the dedicated callback edge function URL — Shopify redirects via GET
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const callbackUrl = `${supabaseUrl}/functions/v1/shopify-auth-callback`;
 
       const { data, error } = await supabase.functions.invoke('shopify-oauth', {
         body: {
           action: 'install',
           shop: normalizedShop,
-          redirect_uri: redirectUri,
+          redirect_uri: callbackUrl,
         },
       });
 
