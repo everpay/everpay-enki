@@ -4,6 +4,7 @@ import { useState } from "react"
 import { trackFormSubmission } from "@/lib/posthog-events"
 import { SiteHeader } from "@/components/front/SiteHeader"
 import { SiteFooter } from "@/components/front/SiteFooter"
+import { CTASection } from "@/components/front/CtaSection"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -204,6 +205,7 @@ export default function ContactPage() {
         </section>
       </main>
 
+      <CTASection />
       <SiteFooter />
     </div>
   )
