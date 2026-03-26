@@ -278,7 +278,7 @@ export default function Shopify() {
         body: { action: 'callback', query, merchant_id: merchant.id },
       });
 
-      if (error) throw error;
+      if (error) throw new Error(data?.error || error.message || 'OAuth callback failed');
       if (data?.success) {
         toast.success(`Store ${data.shop} connected via OAuth (${data.mode} mode)`);
         setPendingOAuthQuery(null);
