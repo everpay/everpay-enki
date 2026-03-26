@@ -281,10 +281,10 @@ export default function NewPayment() {
                 <SelectItem value="card">💳 Card</SelectItem>
                 <SelectItem value="pix">🇧🇷 PIX</SelectItem>
                 <SelectItem value="boleto">📄 Boleto</SelectItem>
-                <SelectItem value="apple_pay">🍎 Apple Pay</SelectItem>
+                <SelectItem value="apple_pay"><span className="inline-flex items-center gap-1.5"><img src="/logos/apple-pay-icon.png" alt="" className="h-4 w-auto" /> Apple Pay</span></SelectItem>
                 <SelectItem value="open_banking">🏦 Open Banking</SelectItem>
                 <SelectItem value="upi">🇮🇳 UPI</SelectItem>
-                <SelectItem value="bank_transfer">🏦 Bank Transfer</SelectItem>
+                <SelectItem value="bank_transfer"><span className="inline-flex items-center gap-1.5"><img src="/logos/bank-transfer-icon.png" alt="" className="h-4 w-auto" /> Bank Transfer</span></SelectItem>
                 <SelectItem value="spei">🇲🇽 SPEI</SelectItem>
                 <SelectItem value="wallet">👛 Wallet</SelectItem>
                 <SelectItem value="p2p">🔄 P2P</SelectItem>
@@ -295,9 +295,9 @@ export default function NewPayment() {
           {/* Payment Method Tabs */}
           <Tabs value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="card">💳 Card</TabsTrigger>
-              <TabsTrigger value="open_banking">🏦 Open Banking</TabsTrigger>
-              <TabsTrigger value="apple_pay">🍎 Apple Pay</TabsTrigger>
+              <TabsTrigger value="card" className="gap-1.5">💳 Card</TabsTrigger>
+              <TabsTrigger value="open_banking" className="gap-1.5"><img src="/logos/bank-transfer-icon.png" alt="" className="h-4 w-auto" /> Open Banking</TabsTrigger>
+              <TabsTrigger value="apple_pay" className="gap-1.5"><img src="/logos/apple-pay-icon.png" alt="" className="h-4 w-auto" /> Apple Pay</TabsTrigger>
               <TabsTrigger value="pix">🇧🇷 PIX</TabsTrigger>
             </TabsList>
 
@@ -373,8 +373,8 @@ export default function NewPayment() {
 
             <TabsContent value="apple_pay" className="mt-4 space-y-4 p-4 rounded-lg border border-border bg-muted/30">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center">
-                  <span className="text-background text-lg">🍎</span>
+                <div className="h-10 w-10 rounded-lg bg-foreground flex items-center justify-center p-1.5">
+                  <img src="/logos/apple-pay-icon.png" alt="Apple Pay" className="h-full w-auto brightness-0 invert" />
                 </div>
                 <div>
                   <h4 className="font-medium text-foreground">Apple Pay</h4>
