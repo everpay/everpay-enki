@@ -186,8 +186,36 @@ export default function Shopify() {
   };
 
   useEffect(() => {
-    if (user) fetchStores();
+    if (user) {
+      fetchStores();
+      loadAppCredentials();
+    }
   }, [user]);
+
+  const loadAppCredentials = async () => {
+    try {
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', user?.id ?? '')
+        .single();
+      if (!merchant) return;
+
+      const { data: creds } = await supabase
+        .from('shopify_app_credentials' as any)
+        .select('client_id, client_secret_encrypted')
+        .eq('merchant_id', merchant.id)
+        .maybeSingle();
+
+      if (creds) {
+        setAppClientId((creds as any).client_id || '');
+        setAppClientSecret((creds as any).client_secret_encrypted || '');
+        setAppCredsLoaded(true);
+      }
+    } catch (err) {
+      console.error('Failed to load app credentials:', err);
+    }
+  };
 
   // Listen for OAuth callback via URL params (both legacy client-side and new server redirect)
   useEffect(() => {
