@@ -605,7 +605,7 @@ export default function Shopify() {
                 <strong>Redirect URL</strong> — Set this in your Shopify Partner Dashboard → App setup:
               </p>
               <code className="mt-1 block bg-muted px-2 py-1 rounded text-[11px] font-mono text-foreground break-all">
-                {import.meta.env.VITE_SUPABASE_URL}/functions/v1/shopify-auth-callback
+                https://api.everpayinc.com/functions/v1/shopify-auth-callback
               </code>
             </div>
 
