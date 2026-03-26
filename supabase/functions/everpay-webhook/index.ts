@@ -226,17 +226,34 @@ serve(async (req) => {
       }
     }
 
-    // Handle successful payment → complete Shopify draft orders
+    // Handle successful payment → mark Shopify orders as paid
     const isSuccess = status === 'succeeded' || status === 'completed' || status === 'Approved';
     if (isSuccess && order_id && source === 'shopify') {
       const { data: tx } = await supabase
         .from('transactions')
-        .select('merchant_id')
+        .select('id, merchant_id, amount, currency')
         .eq('provider_ref', transaction_id)
         .single();
 
       if (tx?.merchant_id) {
-        await completeShopifyDraftOrder(supabase, order_id, transaction_id, tx.merchant_id);
+        // Use the new shopify-mark-paid function to mark the order as paid
+        // This handles both draft order completion AND existing order payment marking
+        try {
+          await supabase.functions.invoke('shopify-mark-paid', {
+            body: {
+              order_id,
+              transaction_id: tx.id,
+              merchant_id: tx.merchant_id,
+              amount: rest.amount || tx.amount,
+              currency: rest.currency || tx.currency || 'USD',
+            },
+          });
+          console.log(`Shopify order ${order_id} marked as paid via shopify-mark-paid`);
+        } catch (markPaidErr) {
+          console.error('shopify-mark-paid invocation failed, falling back:', markPaidErr);
+          // Fallback: complete draft order directly
+          await completeShopifyDraftOrder(supabase, order_id, transaction_id, tx.merchant_id);
+        }
       }
     }
 

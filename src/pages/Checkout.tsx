@@ -50,6 +50,9 @@ export default function Checkout() {
   const [threeDSUrl, setThreeDSUrl] = useState('');
   const [threeDSTransactionId, setThreeDSTransactionId] = useState('');
   const [showThreeDS, setShowThreeDS] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastFailedProvider, setLastFailedProvider] = useState('');
+  const [showRetryPanel, setShowRetryPanel] = useState(false);
 
   const redirectToOutcome = (outcome: 'success' | 'failed', transactionId?: string) => {
     const target = outcome === 'success'
