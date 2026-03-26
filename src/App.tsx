@@ -260,6 +260,7 @@ const AppRoutes = () => {
     <Route path="/enki/notifications" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminNotifications /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/board" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'investor']}><BoardOverview /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/processors" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminProcessorInfo /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/cascading" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminCascading /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
 
     {/* Developer portal — public (no login required) */}

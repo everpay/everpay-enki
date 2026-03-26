@@ -133,6 +133,7 @@ const adminNavItems: NavItem[] = [
   { to: "/enki/regulatory", icon: FileBarChart, label: "Regulatory Export" },
   { to: "/enki/board", icon: BarChart3, label: "Board Overview" },
   { to: "/enki/processors", icon: Globe, label: "Processor Info" },
+  { to: "/enki/cascading", icon: ArrowLeftRight, label: "Cascading" },
 ];
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
