@@ -9,14 +9,22 @@ const corsHeaders = {
 /**
  * Shopify Storefront Checkout Trigger
  * 
- * Called from the Shopify storefront (injected script or app proxy).
- * Creates a draft order in Shopify and returns an Everpay checkout URL.
+ * Updated flow for manual payment gateway:
+ *   Customer → Shopify Checkout (manual payment) → Order created (unpaid)
+ *   → Redirect to Everpay checkout → Customer pays → Mark order PAID
  * 
- * POST body:
+ * Handles TWO modes:
+ *   1. draft_order: Creates a Shopify draft order, returns Everpay checkout URL
+ *   2. existing_order: Takes an existing unpaid Shopify order ID, returns Everpay checkout URL
+ * 
+ * POST body (mode 1 - draft):
  *   { store_id, line_items: [{ variant_id, quantity }], customer_email?, return_url? }
  * 
+ * POST body (mode 2 - existing order):
+ *   { store_id, order_id, amount?, currency?, customer_email?, return_url? }
+ * 
  * Returns:
- *   { checkout_url, draft_order_id }
+ *   { checkout_url, order_id | draft_order_id }
  */
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -29,10 +37,10 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body = await req.json();
-    const { store_id, line_items, customer_email, return_url, cart_token } = body;
+    const { store_id, line_items, customer_email, return_url, order_id } = body;
 
-    if (!store_id || !line_items?.length) {
-      return new Response(JSON.stringify({ error: 'store_id and line_items required' }), {
+    if (!store_id) {
+      return new Response(JSON.stringify({ error: 'store_id required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -50,7 +58,73 @@ serve(async (req) => {
       });
     }
 
-    // Create Shopify draft order
+    const checkoutBaseUrl = 'https://checkout.everpayinc.com';
+
+    // ─── MODE 2: Existing unpaid order (manual payment redirect) ───
+    if (order_id) {
+      // Fetch order details from Shopify
+      const orderRes = await fetch(
+        `https://${store.shop_domain}/admin/api/2025-01/orders/${order_id}.json`,
+        {
+          headers: {
+            'X-Shopify-Access-Token': store.access_token,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      let orderAmount = body.amount;
+      let orderCurrency = body.currency || 'USD';
+      let orderEmail = customer_email;
+
+      if (orderRes.ok) {
+        const { order } = await orderRes.json();
+        orderAmount = orderAmount || order.total_price;
+        orderCurrency = order.currency || orderCurrency;
+        orderEmail = orderEmail || order.email;
+      }
+
+      if (!orderAmount) {
+        return new Response(JSON.stringify({ error: 'Could not determine order amount' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const params = new URLSearchParams({
+        amount: String(orderAmount),
+        currency: orderCurrency,
+        description: `Order from ${store.shop_domain}`,
+        ref: `shopify_order_${order_id}`,
+        merchant_id: store.merchant_id || '',
+        source: 'shopify',
+        order_id: String(order_id),
+        success_url: return_url || `https://${store.shop_domain}/pages/thank-you`,
+        cancel_url: return_url || `https://${store.shop_domain}/cart`,
+      });
+
+      if (orderEmail) params.set('email', orderEmail);
+
+      const checkoutUrl = `${checkoutBaseUrl}/pay?${params.toString()}`;
+
+      return new Response(JSON.stringify({
+        success: true,
+        checkout_url: checkoutUrl,
+        order_id,
+        total: orderAmount,
+        currency: orderCurrency,
+        mode: 'existing_order',
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // ─── MODE 1: Draft order flow ───
+    if (!line_items?.length) {
+      return new Response(JSON.stringify({ error: 'line_items required for draft order mode' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const draftOrderPayload: any = {
       draft_order: {
         line_items: line_items.map((li: any) => ({
@@ -89,8 +163,6 @@ serve(async (req) => {
 
     const { draft_order } = await draftRes.json();
 
-    // Build Everpay checkout URL
-    const checkoutBaseUrl = 'https://checkout.everpayinc.com';
     const params = new URLSearchParams({
       amount: draft_order.total_price,
       currency: draft_order.currency || 'USD',
@@ -116,6 +188,7 @@ serve(async (req) => {
       draft_order_name: draft_order.name,
       total: draft_order.total_price,
       currency: draft_order.currency,
+      mode: 'draft_order',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
