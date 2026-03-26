@@ -94,6 +94,13 @@ export default function Shopify() {
   const [showWebhookSecret, setShowWebhookSecret] = useState(false);
   const [isSavingKeys, setIsSavingKeys] = useState(false);
   const [sandboxMode, setSandboxMode] = useState(true);
+
+  // Shopify App Credentials
+  const [appClientId, setAppClientId] = useState('');
+  const [appClientSecret, setAppClientSecret] = useState('');
+  const [showAppSecret, setShowAppSecret] = useState(false);
+  const [isSavingAppCreds, setIsSavingAppCreds] = useState(false);
+  const [appCredsLoaded, setAppCredsLoaded] = useState(false);
   const [visibleTokenStoreId, setVisibleTokenStoreId] = useState<string | null>(null);
   const [copiedTokenStoreId, setCopiedTokenStoreId] = useState<string | null>(null);
 
