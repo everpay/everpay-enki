@@ -222,7 +222,7 @@ export default function PrivacyPolicyPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-12 mb-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-              10. Questions, Concerns or Complaints
+              11. Questions, Concerns or Complaints
             </h2>
             <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
               If you have a question, concern or complaint related to this Privacy Statement, Everpay's Personal Information processing practices, or wish to exercise applicable rights relating to Everpay's collection, use or disclosure of your Personal Information, please contact Everpay's Privacy Office at:
