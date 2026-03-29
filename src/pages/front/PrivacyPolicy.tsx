@@ -215,7 +215,7 @@ export default function PrivacyPolicyPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-12 mb-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-              9. Updates to This Privacy Statement
+              10. Updates to This Privacy Statement
             </h2>
             <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
               Everpay will update this Privacy Statement from time to time to reflect changes in our Personal Information practices. Any changes to our Privacy Statement are effective as of the modification date noted above, unless otherwise stated.
