@@ -190,7 +190,7 @@ export default function PrivacyPolicyPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-12 mb-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-              8. Privacy Choices and Rights
+              9. Privacy Choices and Rights
             </h2>
 
             <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4" style={{ fontFamily: "Manrope, sans-serif" }}>
