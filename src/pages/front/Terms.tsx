@@ -162,6 +162,24 @@ export default function TermsPage() {
               If Everpay provides you with information about another user of the Platform and Services, you acknowledge and agree that you will not use the information for any purpose other than the purpose for which the information is provided to you. You may not disclose, sell, rent, or distribute another user's information for any purpose unrelated to your use of the Platform and Services. You may not use the information for marketing purposes unless you separately obtain the appropriate consent of the specific user to do so.
             </p>
 
+            <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4" style={{ fontFamily: "Manrope, sans-serif" }}>
+              7.5 Security Monitoring and Fraud Prevention
+            </h3>
+            <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
+              You acknowledge and agree that Everpay may monitor interactions with its platform for the purposes of detecting fraud, preventing unauthorized access, and complying with legal obligations.
+            </p>
+            <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
+              This may include the collection and analysis of:
+            </p>
+            <ul className="list-disc pl-6 text-gray-600 space-y-2" style={{ fontFamily: "Inter, sans-serif" }}>
+              <li>Device and browser characteristics</li>
+              <li>Network identifiers</li>
+              <li>Behavioral interaction data such as typing patterns and mouse movements</li>
+            </ul>
+            <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
+              By using Everpay's services, you consent to such monitoring as necessary to maintain the security and integrity of the platform.
+            </p>
+
             <h2 className="text-2xl font-bold text-gray-900 mt-12 mb-6" style={{ fontFamily: "Manrope, sans-serif" }}>
               8. User Information Accuracy and Updates
             </h2>
