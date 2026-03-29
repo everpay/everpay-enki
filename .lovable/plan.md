@@ -1,15 +1,21 @@
 
 
-## Remove "Ready to get started?" CTA from Footer
+## Three Changes
 
-The screenshot shows a redundant "Ready to get started?" section in the footer (with "Start now", "See what you'll pay", "Start building" columns). This sits right below the main "Ready to grow your business?" CTA, creating visual clutter.
+### 1. Update PlatformSection headline and tagline
+**File:** `src/components/front/PlatformSection.tsx`
+- Change headline from "From your first dollar to your billionth." to **"The backbone of modern payments"**
+- Change tagline from "Whether you're launching a startup or scaling an enterprise, Everpay grows with you." to **"From checkout to settlement—everything you need to run and scale your business."**
 
-### What will change
+### 2. Add "Device Fingerprinting & Behavioral Biometrics" section to Privacy Policy
+**File:** `src/pages/front/PrivacyPolicy.tsx`
+- Insert a new section after section 6 ("How We Safeguard Personal Information") as **section 7: Device Fingerprinting & Behavioral Biometrics**
+- Content covers: device identifiers, network info, interaction data, and the four permitted uses (fraud detection, security monitoring, risk assessment, compliance)
+- Includes GDPR applicability note
+- Renumber existing sections 7–10 to 8–11
 
-**File: `src/components/front/SiteFooter.tsx`**
-- Remove the entire "Ready to get started?" CTA block (lines 60-104) — the three-column grid with "Start now" button, "See what you'll pay", and "Start building"
-- Keep the rest of the footer intact (link columns, security badges, copyright)
-- Remove the now-unused `ArrowRight` icon import and `Button` import if no longer needed
-
-This is a single-file change. The `CTASection` component ("Ready to grow your business?") remains on all front pages as-is.
+### 3. Add "Security Monitoring and Fraud Prevention" clause to Terms of Service
+**File:** `src/pages/front/Terms.tsx`
+- Insert a new subsection **7.5 Security Monitoring and Fraud Prevention** after the existing section 7.4 ("No Marketing"), within the "Acceptable Use" section
+- Content covers: acknowledgment of monitoring, data types collected (device/browser characteristics, network identifiers, behavioral interaction data), and consent clause
 
