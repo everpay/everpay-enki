@@ -15,10 +15,10 @@ export function PlatformSection() {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-[40px] font-extrabold text-foreground leading-tight mb-5 font-heading">
-            From your first dollar to your billionth.
+            The backbone of modern payments
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-body">
-            Whether you're launching a startup or scaling an enterprise, Everpay grows with you.
+            From checkout to settlement—everything you need to run and scale your business.
           </p>
         </motion.div>
 

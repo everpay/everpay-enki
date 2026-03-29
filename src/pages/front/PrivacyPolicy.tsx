@@ -154,7 +154,36 @@ export default function PrivacyPolicyPage() {
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-12 mb-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-              7. Cookies, Interest-Based Advertising, and Website Data
+              7. Device Fingerprinting &amp; Behavioral Biometrics
+            </h2>
+            <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
+              To protect against fraud, unauthorized access, and financial crime, Everpay may collect and process technical and behavioral information from your device.
+            </p>
+            <p className="text-gray-600 leading-relaxed font-semibold" style={{ fontFamily: "Inter, sans-serif" }}>
+              This includes:
+            </p>
+            <ul className="list-disc pl-6 text-gray-600 space-y-2" style={{ fontFamily: "Inter, sans-serif" }}>
+              <li>Device identifiers and browser characteristics (such as user agent, screen resolution, and system configuration)</li>
+              <li>Network information (such as IP address and approximate location)</li>
+              <li>Interaction data (such as mouse movements, click patterns, and typing cadence)</li>
+            </ul>
+            <p className="text-gray-600 leading-relaxed font-semibold" style={{ fontFamily: "Inter, sans-serif" }}>
+              This information is used solely for:
+            </p>
+            <ul className="list-disc pl-6 text-gray-600 space-y-2" style={{ fontFamily: "Inter, sans-serif" }}>
+              <li>Fraud detection and prevention</li>
+              <li>Security monitoring</li>
+              <li>Risk assessment and compliance obligations</li>
+            </ul>
+            <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
+              Everpay does not use this data for advertising or profiling unrelated to security purposes.
+            </p>
+            <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
+              All such data is processed in accordance with applicable data protection laws, including GDPR where applicable.
+            </p>
+
+            <h2 className="text-2xl font-bold text-gray-900 mt-12 mb-6" style={{ fontFamily: "Manrope, sans-serif" }}>
+              8. Cookies, Interest-Based Advertising, and Website Data
             </h2>
             <p className="text-gray-600 leading-relaxed" style={{ fontFamily: "Inter, sans-serif" }}>
               For detailed information about our use of cookies, web beacons, and similar technologies, please refer to our <Link to="/cookie-policy" className="text-[#1aa478] hover:underline">Cookie Policy</Link>.
