@@ -56,7 +56,7 @@ export function FeaturesSection() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-foreground leading-tight mb-4 font-heading">
+          <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-foreground leading-[1.1] tracking-[-0.02em] mb-5 font-heading">
             With Everpay, you get more sales,{" "}
             <br className="hidden md:block" />
             more reach, more repeat customers
