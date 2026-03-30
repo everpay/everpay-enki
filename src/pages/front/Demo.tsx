@@ -24,7 +24,8 @@ export default function DemoPage() {
     setIsSubmitting(true)
     setSubmitMessage(null)
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const data = {
       first_name: formData.get("firstName") as string,
       last_name: formData.get("lastName") as string,
