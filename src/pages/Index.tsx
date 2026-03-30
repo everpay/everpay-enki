@@ -175,10 +175,9 @@ const Index = () => {
           </TabsList>
           <TabsContent value="volume" className="mt-4">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-3">
                 <VolumeChart />
               </div>
-              <ActivityFeed />
             </div>
           </TabsContent>
           <TabsContent value="providers" className="mt-4">
