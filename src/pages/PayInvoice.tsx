@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
 import { formatCurrency } from '@/lib/format';
 import { generateInvoicePDF } from '@/lib/invoice-pdf';
+import { CountrySelect } from '@/components/CountrySelect';
 
 export default function PayInvoice() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
