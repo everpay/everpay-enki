@@ -292,24 +292,11 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
 
           {/* Tapix Enrichment Section */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" />
-                Payment Enrichment
-              </h4>
-              {!enrichment && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs gap-1.5"
-                  onClick={handleEnrich}
-                  disabled={tapixEnrich.isPending}
-                >
-                  <Zap className="h-3 w-3" />
-                  {tapixEnrich.isPending ? 'Enriching…' : 'Enrich'}
-                </Button>
-              )}
-            </div>
+            <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              Payment Enrichment
+              {tapixEnrich.isPending && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </h4>
 
             {enrichment ? (
               <div className="rounded-lg border border-border bg-background p-4 space-y-3">
