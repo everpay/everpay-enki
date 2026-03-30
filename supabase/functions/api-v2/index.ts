@@ -1438,6 +1438,229 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ═══════════════════════════════════════
+    // COMPOSITE / BFF ENDPOINTS
+    // One call per screen — eliminates frontend assembly
+    // ═══════════════════════════════════════
+
+    // GET /composite/dashboard — Everything the dashboard screen needs
+    if (resource === 'composite' && resourceId === 'dashboard' && method === 'GET') {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Fire all queries in parallel — no waterfalls
+      const [
+        balanceRes,
+        recentTxRes,
+        txStatsRes,
+        disputeRes,
+        subscriptionRes,
+        profileRes,
+      ] = await Promise.all([
+        // Account balances
+        supabase.from('merchant_accounts').select('*').eq('merchant_id', merchantId),
+        // Recent transactions (last 10)
+        supabase.from('transactions').select('id,amount,currency,status,payment_method,customer_email,created_at,provider').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(10),
+        // Transaction volume stats (last 30 days)
+        supabase.from('transactions').select('amount,status,currency,created_at').eq('merchant_id', merchantId).gte('created_at', thirtyDaysAgo),
+        // Open disputes count
+        supabase.from('disputes').select('id,amount,status', { count: 'exact' }).eq('merchant_id', merchantId).in('status', ['open', 'needs_response', 'under_review']),
+        // Active subscriptions count
+        supabase.from('subscriptions').select('id', { count: 'exact' }).eq('merchant_id', merchantId).eq('status', 'active'),
+        // Merchant profile
+        supabase.from('merchant_profiles').select('business_name,onboarding_status,country,industry').eq('merchant_id', merchantId).maybeSingle(),
+      ]);
+
+      const txs = txStatsRes.data || [];
+      const successTxs = txs.filter((t: any) => t.status === 'completed' || t.status === 'settled');
+      const totalVolume = successTxs.reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
+      const successRate = txs.length > 0 ? (successTxs.length / txs.length) * 100 : 0;
+
+      // 7-day volume for sparkline
+      const last7 = txs.filter((t: any) => t.created_at >= sevenDaysAgo && (t.status === 'completed' || t.status === 'settled'));
+      const dailyVolume: Record<string, number> = {};
+      for (const t of last7) {
+        const day = (t as any).created_at.slice(0, 10);
+        dailyVolume[day] = (dailyVolume[day] || 0) + ((t as any).amount || 0);
+      }
+
+      return logAndReturn(json(200, {
+        object: 'composite.dashboard',
+        balance: {
+          accounts: (balanceRes.data || []).map((a: any) => ({
+            currency: a.currency,
+            available: a.available_balance,
+            pending: a.pending_balance,
+            reserve: a.reserve_balance,
+          })),
+        },
+        stats: {
+          period: '30d',
+          total_volume: totalVolume,
+          transaction_count: txs.length,
+          success_rate: Math.round(successRate * 100) / 100,
+          open_disputes: disputeRes.count || 0,
+          dispute_amount: (disputeRes.data || []).reduce((s: number, d: any) => s + (d.amount || 0), 0),
+          active_subscriptions: subscriptionRes.count || 0,
+        },
+        volume_sparkline: Object.entries(dailyVolume).sort().map(([date, amount]) => ({ date, amount })),
+        recent_transactions: (recentTxRes.data || []).map((t: any) => ({ object: 'transaction', ...t })),
+        profile: profileRes.data || null,
+      }, reqId));
+    }
+
+    // GET /composite/transactions — Transaction list with enrichment
+    if (resource === 'composite' && resourceId === 'transactions' && method === 'GET') {
+      const { limit, offset } = parsePagination(url);
+      const status = url.searchParams.get('status');
+      const from = url.searchParams.get('created[gte]') || url.searchParams.get('from');
+      const to = url.searchParams.get('created[lte]') || url.searchParams.get('to');
+      const include = url.searchParams.get('include') || ''; // e.g. "enrichment,fraud_scores"
+
+      let txQuery = supabase
+        .from('transactions')
+        .select('*', { count: 'exact' })
+        .eq('merchant_id', merchantId)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (status) txQuery = txQuery.eq('status', status);
+      if (from) txQuery = txQuery.gte('created_at', from);
+      if (to) txQuery = txQuery.lte('created_at', to);
+
+      const { data: txs, count, error } = await txQuery;
+      if (error) return logAndReturn(json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId));
+
+      const txIds = (txs || []).map((t: any) => t.id);
+      const includes = include.split(',').map(s => s.trim()).filter(Boolean);
+
+      // Parallel side-loads based on `include` param
+      const sideLoads: Record<string, Promise<any>> = {};
+      if (includes.includes('enrichment') && txIds.length) {
+        sideLoads.enrichment = supabase.from('tapix_enrichment_cache').select('transaction_id,merchant_uid,shop_uid,shop_data,merchant_data').in('transaction_id', txIds);
+      }
+      if (includes.includes('fraud_scores') && txIds.length) {
+        sideLoads.fraud_scores = supabase.from('fraud_scores').select('transaction_id,total_score,risk_level,risk_factors').in('transaction_id', txIds);
+      }
+      if (includes.includes('attempts') && txIds.length) {
+        sideLoads.attempts = supabase.from('payment_attempts').select('transaction_id,provider,status,latency_ms,attempt_number').in('transaction_id', txIds).order('attempt_number', { ascending: true });
+      }
+
+      const resolved: Record<string, any> = {};
+      const sideLoadEntries = Object.entries(sideLoads);
+      if (sideLoadEntries.length) {
+        const results = await Promise.all(sideLoadEntries.map(([, p]) => p));
+        sideLoadEntries.forEach(([key], i) => {
+          resolved[key] = results[i]?.data || [];
+        });
+      }
+
+      // Index side-loaded data by transaction_id
+      const enrichMap: Record<string, any> = {};
+      const fraudMap: Record<string, any> = {};
+      const attemptsMap: Record<string, any[]> = {};
+      for (const e of (resolved.enrichment || [])) enrichMap[e.transaction_id] = e;
+      for (const f of (resolved.fraud_scores || [])) fraudMap[f.transaction_id] = f;
+      for (const a of (resolved.attempts || [])) {
+        if (!attemptsMap[a.transaction_id]) attemptsMap[a.transaction_id] = [];
+        attemptsMap[a.transaction_id].push(a);
+      }
+
+      const enrichedTxs = (txs || []).map((t: any) => ({
+        object: 'transaction',
+        ...t,
+        ...(enrichMap[t.id] ? { enrichment: { merchant: enrichMap[t.id].merchant_data, shop: enrichMap[t.id].shop_data } } : {}),
+        ...(fraudMap[t.id] ? { fraud: { score: fraudMap[t.id].total_score, level: fraudMap[t.id].risk_level, factors: fraudMap[t.id].risk_factors } } : {}),
+        ...(attemptsMap[t.id] ? { attempts: attemptsMap[t.id] } : {}),
+      }));
+
+      return logAndReturn(json(200, {
+        object: 'list',
+        data: enrichedTxs,
+        has_more: (offset + limit) < (count || 0),
+        total_count: count,
+        url: '/v2/composite/transactions',
+      }, reqId));
+    }
+
+    // GET /composite/treasury — Wallets + settlements + payouts in one call
+    if (resource === 'composite' && resourceId === 'treasury' && method === 'GET') {
+      const [walletsRes, settlementsRes, payoutsRes, fxRes] = await Promise.all([
+        supabase.from('merchant_accounts').select('*').eq('merchant_id', merchantId),
+        supabase.from('settlements').select('*').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(20),
+        supabase.from('payouts').select('*').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(20),
+        supabase.from('fx_rates').select('*').order('created_at', { ascending: false }).limit(50),
+      ]);
+
+      return logAndReturn(json(200, {
+        object: 'composite.treasury',
+        accounts: walletsRes.data || [],
+        recent_settlements: settlementsRes.data || [],
+        recent_payouts: payoutsRes.data || [],
+        fx_rates: (fxRes.data || []).reduce((acc: Record<string, number>, r: any) => {
+          acc[`${r.base_currency}_${r.quote_currency}`] = r.rate;
+          return acc;
+        }, {}),
+      }, reqId));
+    }
+
+    // POST /composite/screen — Generic BFF: client declares what it needs
+    if (resource === 'composite' && resourceId === 'screen' && method === 'POST') {
+      const body = await req.json();
+      // body.queries: array of { key: string, table: string, select?: string, filters?: Record<string, any>, limit?: number, order?: string }
+      if (!body.queries || !Array.isArray(body.queries)) {
+        return logAndReturn(json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'queries array is required' } }, reqId));
+      }
+
+      // Allowlisted tables merchants can query
+      const allowedTables = new Set([
+        'transactions', 'payment_intents', 'customers', 'invoices', 'subscriptions',
+        'disputes', 'products', 'subscription_plans', 'payment_methods', 'payment_links',
+        'merchant_accounts', 'tapix_enrichment_cache', 'fraud_scores', 'payment_attempts',
+      ]);
+
+      const results: Record<string, any> = {};
+      const queryPromises = body.queries.map(async (q: any) => {
+        if (!allowedTables.has(q.table)) {
+          results[q.key] = { error: `Table '${q.table}' is not queryable` };
+          return;
+        }
+
+        let query = supabase
+          .from(q.table)
+          .select(q.select || '*', { count: q.count ? 'exact' : undefined })
+          .eq('merchant_id', merchantId);
+
+        if (q.filters) {
+          for (const [col, val] of Object.entries(q.filters)) {
+            if (typeof val === 'object' && val !== null) {
+              const ops = val as Record<string, any>;
+              if (ops.gte) query = query.gte(col, ops.gte);
+              if (ops.lte) query = query.lte(col, ops.lte);
+              if (ops.eq) query = query.eq(col, ops.eq);
+              if (ops.in) query = query.in(col, ops.in);
+            } else {
+              query = query.eq(col, val);
+            }
+          }
+        }
+
+        if (q.order) query = query.order(q.order, { ascending: q.ascending ?? false });
+        if (q.limit) query = query.limit(q.limit);
+
+        const { data, count: cnt, error: qErr } = await query;
+        results[q.key] = qErr ? { error: qErr.message } : { data, ...(q.count ? { count: cnt } : {}) };
+      });
+
+      await Promise.all(queryPromises);
+
+      return logAndReturn(json(200, {
+        object: 'composite.screen',
+        results,
+      }, reqId));
+    }
+
     const notFoundResp = json(404, { error: { type: 'invalid_request_error', code: 'route_not_found', message: `No such route: ${method} /${pathParts.join('/')}`, doc_url: 'https://developers.everpayinc.com/api' } }, reqId);
     return logAndReturn(notFoundResp);
 

@@ -11,14 +11,12 @@ import {
   Link2,
   Shield,
   FileText,
-  ChevronDown,
   ArrowUpRight,
   Eye,
   UserCircle,
   BarChart3,
   AlertTriangle,
   Archive,
-  User,
   RotateCcw,
   Package,
   CreditCard as CreditCardIcon,
@@ -38,25 +36,32 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import everpayIcon from "@/assets/everpay-icon.png";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
+// ─── Nav Section Types ──────────────────────────────────
 interface NavItem {
   to: string;
   icon: React.ElementType;
   label: string;
-  children?: { to: string; icon: React.ElementType; label: string; visibleTo?: string[] }[];
   visibleTo?: string[];
 }
 
-const navItems: NavItem[] = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/customers", icon: UserCircle, label: "Customers" },
+interface NavSection {
+  title?: string;
+  items: NavItem[];
+}
+
+// ─── Main Nav Sections (grouped) ────────────────────────
+const navSections: NavSection[] = [
   {
-    to: "/transactions",
-    icon: ArrowLeftRight,
-    label: "Transactions",
-    children: [
-      { to: "/transactions", icon: Eye, label: "Overview" },
+    items: [
+      { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+      { to: "/customers", icon: UserCircle, label: "Customers" },
+    ],
+  },
+  {
+    title: "Payments",
+    items: [
+      { to: "/transactions", icon: ArrowLeftRight, label: "Transactions" },
       { to: "/payments/new", icon: CreditCard, label: "New Payment" },
       { to: "/payment-links", icon: Link2, label: "Payment Links" },
       { to: "/payment-widget", icon: Globe, label: "Payment Widget" },
@@ -64,26 +69,27 @@ const navItems: NavItem[] = [
       { to: "/saved-cards", icon: CreditCard, label: "Saved Cards" },
     ],
   },
-  { to: "/products", icon: Package, label: "Products" },
-  { to: "/subscriptions", icon: RefreshCw, label: "Subscriptions" },
-  { to: "/invoices", icon: FileText, label: "Invoices" },
   {
-    to: "/chargebacks",
-    icon: Shield,
-    label: "Chargebacks",
-    children: [
-      { to: "/chargebacks", icon: Eye, label: "Overview" },
-      { to: "/chargebacks/disputes", icon: AlertTriangle, label: "Disputes" },
-      { to: "/chargebacks/evidence", icon: Archive, label: "Evidence" },
-      { to: "/chargebacks/analytics", icon: BarChart3, label: "Analytics" },
+    title: "Commerce",
+    items: [
+      { to: "/products", icon: Package, label: "Products" },
+      { to: "/subscriptions", icon: RefreshCw, label: "Subscriptions" },
+      { to: "/invoices", icon: FileText, label: "Invoices" },
     ],
   },
   {
-    to: "/analytics",
-    icon: BarChart3,
-    label: "Analytics",
-    children: [
-      { to: "/analytics", icon: Eye, label: "Overview" },
+    title: "Risk & Disputes",
+    items: [
+      { to: "/chargebacks", icon: Shield, label: "Chargebacks" },
+      { to: "/chargebacks/disputes", icon: AlertTriangle, label: "Disputes" },
+      { to: "/chargebacks/evidence", icon: Archive, label: "Evidence" },
+      { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
+    ],
+  },
+  {
+    title: "Analytics",
+    items: [
+      { to: "/analytics", icon: BarChart3, label: "Overview" },
       { to: "/processor-analytics", icon: BarChart3, label: "Processor Analytics" },
       { to: "/payment-methods", icon: CreditCardIcon, label: "Payment Methods" },
       { to: "/live", icon: BarChart3, label: "Live Analytics" },
@@ -93,48 +99,99 @@ const navItems: NavItem[] = [
       { to: "/fraud-graph", icon: Shield, label: "Fraud Intelligence", visibleTo: ["admin", "super_admin"] },
     ],
   },
-  { to: "/kyc-aml", icon: Shield, label: "KYC / AML", visibleTo: ["admin", "super_admin"] },
   {
-    to: "/bigcommerce",
-    icon: Store,
-    label: "Integrations",
-    children: [
-      { to: "/bigcommerce", icon: Store, label: "BigCommerce" },
-      { to: "/shopify", icon: Package, label: "Shopify" },
-    ],
-  },
-  {
-    to: "/wallets",
-    icon: Wallet,
-    label: "Treasury",
-    children: [
-      { to: "/wallets", icon: Eye, label: "Wallets" },
+    title: "Treasury",
+    items: [
+      { to: "/wallets", icon: Wallet, label: "Wallets" },
       { to: "/treasury", icon: Landmark, label: "Liquidity & FX", visibleTo: ["admin", "super_admin"] },
       { to: "/settlements", icon: Landmark, label: "Settlements" },
       { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
       { to: "/mass-payouts", icon: Users, label: "Mass Payouts" },
     ],
   },
-  { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "admin", "super_admin"] },
-  { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
+  {
+    title: "Integrations",
+    items: [
+      { to: "/bigcommerce", icon: Store, label: "BigCommerce" },
+      { to: "/shopify", icon: Package, label: "Shopify" },
+    ],
+  },
+  {
+    items: [
+      { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "admin", "super_admin"] },
+      { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
+    ],
+  },
 ];
 
-const adminNavItems: NavItem[] = [
-  { to: "/enki", icon: LayoutDashboard, label: "Overview" },
-  { to: "/enki/merchants", icon: Store, label: "Merchants" },
-  { to: "/enki/users", icon: Users, label: "Users" },
-  { to: "/enki/analytics", icon: BarChart3, label: "Analytics" },
-  { to: "/enki/fees", icon: CreditCardIcon, label: "Transaction Fees" },
-  { to: "/enki/routing", icon: Globe, label: "PSP Routing" },
-  { to: "/enki/3ds", icon: Shield, label: "3DS Controls" },
-  { to: "/enki/notifications", icon: Bell, label: "Notifications" },
-  { to: "/enki/reserves", icon: Landmark, label: "Reserves" },
-  { to: "/enki/regulatory", icon: FileBarChart, label: "Regulatory Export" },
-  { to: "/enki/board", icon: BarChart3, label: "Board Overview" },
-  { to: "/enki/processors", icon: Globe, label: "Processor Info" },
-  { to: "/enki/cascading", icon: ArrowLeftRight, label: "Cascading" },
+// ─── Admin Nav Sections ─────────────────────────────────
+const adminSections: NavSection[] = [
+  {
+    items: [
+      { to: "/enki", icon: LayoutDashboard, label: "Overview" },
+      { to: "/enki/merchants", icon: Store, label: "Merchants" },
+      { to: "/enki/users", icon: Users, label: "Users" },
+    ],
+  },
+  {
+    title: "Analytics & Fees",
+    items: [
+      { to: "/enki/analytics", icon: BarChart3, label: "Analytics" },
+      { to: "/enki/fees", icon: CreditCardIcon, label: "Transaction Fees" },
+      { to: "/enki/board", icon: BarChart3, label: "Board Overview" },
+    ],
+  },
+  {
+    title: "Routing & Controls",
+    items: [
+      { to: "/enki/routing", icon: Globe, label: "PSP Routing" },
+      { to: "/enki/3ds", icon: Shield, label: "3DS Controls" },
+      { to: "/enki/cascading", icon: ArrowLeftRight, label: "Cascading" },
+      { to: "/enki/processors", icon: Globe, label: "Processor Info" },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { to: "/enki/notifications", icon: Bell, label: "Notifications" },
+      { to: "/enki/reserves", icon: Landmark, label: "Reserves" },
+      { to: "/enki/regulatory", icon: FileBarChart, label: "Regulatory Export" },
+    ],
+  },
 ];
 
+// ─── Nav Item Component ─────────────────────────────────
+function SidebarNavItem({
+  item,
+  onNavigate,
+}: {
+  item: NavItem;
+  onNavigate?: () => void;
+}) {
+  const location = useLocation();
+  const isActive = location.pathname === item.to;
+
+  return (
+    <NavLink
+      to={item.to}
+      onClick={onNavigate}
+      className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
+        isActive
+          ? "bg-primary/10 text-primary border-l-[3px] border-primary -ml-px"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
+      }`}
+    >
+      <item.icon
+        className={`h-[18px] w-[18px] shrink-0 transition-colors ${
+          isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+        }`}
+      />
+      <span className="truncate">{item.label}</span>
+    </NavLink>
+  );
+}
+
+// ─── Sidebar Content ────────────────────────────────────
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const { signOut, user } = useAuth();
@@ -143,132 +200,81 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const isAdmin = userRole?.isAdmin || false;
   const isOnAdminRoute = location.pathname.startsWith("/enki");
 
-  const isChildActive = (item: NavItem) =>
-    item.children?.some((c) => location.pathname === c.to) || location.pathname === item.to;
+  const currentSections = isOnAdminRoute ? adminSections : navSections;
 
-  const visibleItems = navItems.filter((item) => {
+  const isItemVisible = (item: NavItem) => {
     if (!item.visibleTo) return true;
     if (!userRole) return false;
     const roles = userRole.roles || [];
-    if (
-      item.visibleTo.includes("user") &&
-      !item.visibleTo.includes("admin") &&
-      !item.visibleTo.includes("super_admin")
-    ) {
-      const nonUserRoles = roles.filter((r: string) => r !== "user");
-      if (nonUserRoles.length > 0) return false;
-      return roles.includes("user") || roles.length === 0;
-    }
+    if (userRole.isSuperAdmin) return true;
     return item.visibleTo.some((r) => roles.includes(r));
-  });
-
-  const currentItems = isOnAdminRoute ? adminNavItems : visibleItems;
+  };
 
   return (
     <>
-      <div className="flex h-16 items-center border-b border-border px-6">
+      {/* Logo Header */}
+      <div className="flex h-14 items-center border-b border-sidebar-border px-5">
         <div className="flex items-center gap-2.5">
-          <img src={everpayIcon} alt="Everpay" className="h-8 w-8 rounded-lg" />
-          <span className="font-heading text-lg font-bold text-foreground tracking-tight">
+          <img src={everpayIcon} alt="Everpay" className="h-7 w-7 rounded-lg" />
+          <span className="font-heading text-base font-bold text-foreground tracking-tight">
             {isOnAdminRoute ? "Enki Admin" : "Everpay"}
           </span>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-        {currentItems.map((item) => {
-          if (item.children) {
-            const active = isChildActive(item);
-            return (
-              <Collapsible key={item.to + item.label} defaultOpen={active}>
-                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground">
-                  <span className="flex items-center gap-3">
-                    <item.icon className={`h-4 w-4 ${active ? "text-primary" : ""}`} />
-                    {item.label}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-3">
-                    {item.children.filter((child) => {
-                      if (!child.visibleTo) return true;
-                      if (!userRole) return false;
-                      const roles = userRole.roles || [];
-                      return child.visibleTo.some((r) => roles.includes(r)) || userRole.isSuperAdmin;
-                    }).map((child) => {
-                      const childActive = location.pathname === child.to;
-                      return (
-                        <NavLink
-                          key={child.to + child.label}
-                          to={child.to}
-                          onClick={onNavigate}
-                          className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                            childActive
-                              ? "bg-sidebar-accent text-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
-                          }`}
-                        >
-                          <child.icon className={`h-3.5 w-3.5 ${childActive ? "text-primary" : ""}`} />
-                          {child.label}
-                        </NavLink>
-                      );
-                    })}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            );
-          }
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-3">
+        {currentSections.map((section, idx) => {
+          const visibleItems = section.items.filter(isItemVisible);
+          if (visibleItems.length === 0) return null;
 
-          const isActive = location.pathname === item.to;
           return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-sidebar-accent text-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
-              }`}
-            >
-              <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
-              {item.label}
-            </NavLink>
+            <div key={section.title || `section-${idx}`} className={idx > 0 ? "mt-5" : ""}>
+              {section.title && (
+                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  {section.title}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {visibleItems.map((item) => (
+                  <SidebarNavItem
+                    key={item.to}
+                    item={item}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </div>
+            </div>
           );
         })}
 
+        {/* Settings (non-admin only) */}
         {!isOnAdminRoute && (
-          <NavLink
-            to="/settings"
-            onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
-              location.pathname === "/settings"
-                ? "bg-sidebar-accent text-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
-            }`}
-          >
-            <Settings className={`h-4 w-4 ${location.pathname === "/settings" ? "text-primary" : ""}`} />
-            Settings
-          </NavLink>
+          <div className="mt-5">
+            <SidebarNavItem
+              item={{ to: "/settings", icon: Settings, label: "Settings" }}
+              onNavigate={onNavigate}
+            />
+          </div>
         )}
       </nav>
 
-      <div className="border-t border-border px-3 py-4 space-y-1">
-        {/* Admin toggle link */}
+      {/* Footer */}
+      <div className="border-t border-sidebar-border px-3 py-3 space-y-1">
         {isAdmin && (
           <NavLink
             to={isOnAdminRoute ? "/dashboard" : "/enki"}
             onClick={onNavigate}
-            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground transition-colors"
           >
-            <ArrowLeftRight className="h-4 w-4" />
+            <ArrowLeftRight className="h-[18px] w-[18px] text-muted-foreground" />
             {isOnAdminRoute ? "Back to App" : "Admin Panel"}
           </NavLink>
         )}
 
         {user && (
-          <div className="px-3 py-2 mb-1">
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          <div className="px-3 py-1.5">
+            <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
           </div>
         )}
 
@@ -277,9 +283,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             signOut();
             onNavigate?.();
           }}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-destructive font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-destructive hover:bg-destructive/10 transition-colors"
         >
-          <LogOut className="h-4 w-4 text-destructive" />
+          <LogOut className="h-[18px] w-[18px]" />
           Sign Out
         </button>
       </div>
@@ -287,6 +293,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+// ─── AppSidebar (responsive shell) ──────────────────────
 export function AppSidebar() {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
@@ -303,12 +310,12 @@ export function AppSidebar() {
           variant="ghost"
           size="icon"
           onClick={() => setOpen(true)}
-          className="md:hidden fixed top-3 left-3 z-50 h-10 w-10 bg-card border border-border shadow-card"
+          className="md:hidden fixed top-3 left-3 z-50 h-10 w-10 bg-card border border-border shadow-card rounded-full"
         >
           <Menu className="h-5 w-5" />
         </Button>
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="left" className="w-[240px] p-0 bg-sidebar border-border">
+          <SheetContent side="left" className="w-[240px] p-0 bg-sidebar border-sidebar-border">
             <VisuallyHidden>
               <SheetTitle>Navigation</SheetTitle>
             </VisuallyHidden>
@@ -322,7 +329,7 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r border-border bg-sidebar">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[240px] flex-col border-r border-sidebar-border bg-sidebar">
       <SidebarContent />
     </aside>
   );
