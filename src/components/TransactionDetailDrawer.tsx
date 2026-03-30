@@ -141,11 +141,21 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const customerId = txMetadata?.customer_id || txMetadata?.customerId || null;
   const { data: paymentMethod } = usePaymentMethod(transaction?.id || null, customerId);
 
-  // Tapix enrichment
+  // Tapix enrichment - auto-enrich on open
   const txIds = transaction ? [transaction.id] : [];
   const { data: tapixCache = {} } = useTapixCache(txIds);
   const tapixEnrich = useTapixEnrich();
   const enrichment = transaction ? getEnrichmentSummary(tapixCache[transaction.id]) : null;
+
+  // Auto-enrich when drawer opens and no cached enrichment exists
+  useEffect(() => {
+    if (open && transaction && !enrichment && !tapixEnrich.isPending) {
+      tapixEnrich.mutate({
+        transactionId: transaction.id,
+        merchantId: transaction.merchant_id,
+      });
+    }
+  }, [open, transaction?.id, enrichment]);
 
   if (!transaction) return null;
 
