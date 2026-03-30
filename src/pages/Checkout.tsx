@@ -326,21 +326,20 @@ export default function Checkout() {
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                placeholder="Zip / Postal code"
-                value={billingZip}
-                onChange={(e) => setBillingZip(e.target.value)}
-                className="bg-background border-border"
-                required
-              />
-              <Input
-                placeholder="Country (e.g. US)"
-                value={billingCountry}
-                onChange={(e) => setBillingCountry(e.target.value.toUpperCase())}
-                className="bg-background border-border"
-                maxLength={2}
-                required
-              />
+              <div className="space-y-1.5">
+                <Label className="text-xs">Zip / Postal code</Label>
+                <Input
+                  placeholder="Zip / Postal code"
+                  value={billingZip}
+                  onChange={(e) => setBillingZip(e.target.value)}
+                  className="bg-background border-border"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Country</Label>
+                <CountrySelect value={billingCountry} onValueChange={setBillingCountry} />
+              </div>
             </div>
           </div>
 
