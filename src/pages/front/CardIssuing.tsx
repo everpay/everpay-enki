@@ -436,30 +436,6 @@ const card = await everpay.cards.create({
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-24 bg-[#1aa478]">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-              Ready to Launch Your Card Program?
-            </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto" style={{ fontFamily: "Inter, sans-serif" }}>
-              Join thousands of merchants already using Everpay to issue cards, 
-              manage spending, and unlock new revenue streams.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/demo">
-                <Button size="lg" className="bg-white text-[#1aa478] hover:bg-gray-100 rounded-full px-8 h-12 text-base font-semibold">
-                  Get Started Free
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button variant="outline" size="lg" className="border-white bg-transparent text-white hover:bg-white/10 rounded-full px-8 h-12 text-base font-semibold">
-                  Schedule a Demo
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
       <CTASection />
       <SiteFooter />

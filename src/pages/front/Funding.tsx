@@ -537,42 +537,6 @@ export default function FundingPage() {
           </div>
         </section>
 
-        {/* Final CTA */}
-        <section className="py-24 bg-[#0A2F2F]">
-          <div className="container mx-auto px-6 text-center">
-            <h2
-              className="text-3xl md:text-[42px] font-bold text-white leading-tight mb-4"
-              style={{ fontFamily: "Manrope, sans-serif" }}
-            >
-              Ready to get funded?
-            </h2>
-            <p
-              className="text-gray-400 text-lg mb-10 max-w-[500px] mx-auto"
-              style={{ fontFamily: "Inter, sans-serif" }}
-            >
-              Join thousands of merchants who have used Everpay Capital to grow their business.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link to="/demo">
-                <Button
-                  size="lg"
-                  className="bg-[#1aa478] hover:bg-[#158f68] text-white rounded-full px-8 h-12 text-base font-semibold shadow-none min-w-[200px]"
-                >
-                  Get funded
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-white/20 bg-transparent text-white hover:bg-white/10 rounded-full px-8 h-12 text-base font-semibold shadow-none min-w-[200px]"
-                >
-                  Talk to our team
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
       <CTASection />
       <SiteFooter />

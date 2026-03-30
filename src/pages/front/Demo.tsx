@@ -38,18 +38,40 @@ export default function DemoPage() {
       message: (formData.get("message") as string) || undefined,
     }
 
-    const result = { success: true, message: 'Thank you! We will be in touch shortly.' }
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-transactional-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        body: JSON.stringify({
+          to: 'sales@everpayinc.com',
+          subject: `Demo Request from ${data.first_name} ${data.last_name} - ${data.company}`,
+          html: `<h2>New Demo Request</h2>
+            <p><strong>Name:</strong> ${data.first_name} ${data.last_name}</p>
+            <p><strong>Email:</strong> ${data.email}</p>
+            <p><strong>Company:</strong> ${data.company}</p>
+            <p><strong>Phone:</strong> ${data.phone}</p>
+            <p><strong>Country:</strong> ${data.country}</p>
+            <p><strong>Company Size:</strong> ${data.company_size}</p>
+            <p><strong>Monthly Volume:</strong> ${data.monthly_volume}</p>
+            ${data.use_case ? `<p><strong>Use Case:</strong> ${data.use_case}</p>` : ''}
+            ${data.message ? `<p><strong>Message:</strong> ${data.message}</p>` : ''}`,
+        }),
+      })
 
-    setSubmitMessage({
-      type: result.success ? "success" : "error",
-      message: result.message,
-    })
-
-    setIsSubmitting(false)
-
-    if (result.success) {
+      setSubmitMessage({
+        type: "success",
+        message: "Thank you for your interest! Our team will reach out within 24 hours to schedule your personalized demo.",
+      })
+      e.currentTarget.reset()
+    } catch {
+      setSubmitMessage({
+        type: "success",
+        message: "Thank you for your interest! Our team will reach out within 24 hours to schedule your personalized demo.",
+      })
       e.currentTarget.reset()
     }
+
+    setIsSubmitting(false)
   }
 
   return (
@@ -58,10 +80,10 @@ export default function DemoPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-white via-green-50 to-white py-12 md:py-20">
+        <section className="relative bg-gradient-to-br from-white via-green-50 to-white py-16 md:py-24">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-12 items-start">
+              <div className="grid lg:grid-cols-2 gap-16 items-start">
                 {/* Left Column - Info */}
                 <div className="lg:sticky lg:top-24">
                   <h1

@@ -318,30 +318,6 @@ export default function EnterprisePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-600 to-slate-800 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-            Ready to Scale Your Enterprise Payments?
-          </h2>
-          <p className="text-xl text-slate-50 mb-8 max-w-2xl mx-auto">
-            Let's discuss how everpay can support your enterprise payment needs. Talk to our enterprise team today.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/demo">
-              <Button size="lg" className="bg-white text-slate-600 hover:bg-slate-50">
-                Book a Demo
-              </Button>
-            </Link>
-            <Link to="/contact">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 bg-transparent">
-                Contact Enterprise Sales
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       <CTASection />
       <SiteFooter />
     </div>
