@@ -368,7 +368,7 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             ) : (
               <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
                 <p className="text-xs text-muted-foreground">
-                  Click "Enrich" to fetch merchant, shop, and location data from Tapix
+                  {tapixEnrich.isPending ? 'Enriching transaction data…' : 'No enrichment data available'}
                 </p>
               </div>
             )}
