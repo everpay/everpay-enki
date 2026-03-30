@@ -196,7 +196,7 @@ export default function FraudPreventionPage() {
                    <Link to="/signup">
                     <Button
                       size="lg"
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 hover:scale-105 transition-transform"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform"
                     >
                       Get Started
                     </Button>
