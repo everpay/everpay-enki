@@ -63,7 +63,7 @@ export default function DemoPage() {
         type: "success",
         message: "Thank you for your interest! Our team will reach out within 24 hours to schedule your personalized demo.",
       })
-      e.currentTarget.reset()
+      form.reset()
     } catch {
       setSubmitMessage({
         type: "success",
