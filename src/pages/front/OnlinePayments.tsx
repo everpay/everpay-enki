@@ -39,7 +39,7 @@ export default function OnlinePaymentsPage() {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <h1 className="text-4xl font-bold mb-6">Accept Payments Online</h1>
-                <p className="text-xl text-gray-300 mb-8">
+                <p className="text-xl text-gray-600 mb-8">
                   Everything you need to accept payments online. Simple integration, optimized checkout, and powerful
                   features to grow your business.
                 </p>
