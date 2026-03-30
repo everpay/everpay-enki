@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
 import { TransactionDetailDrawer } from './TransactionDetailDrawer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ChevronLeft, ChevronRight, Eye, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, Zap, CreditCard } from 'lucide-react';
 import { useTapixCache, getEnrichmentSummary } from '@/hooks/useTapixEnrichment';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
