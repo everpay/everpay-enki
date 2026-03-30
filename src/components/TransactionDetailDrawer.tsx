@@ -401,9 +401,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
               {transaction.provider_ref && (
                 <DetailRow icon={Wifi} label="Provider Ref" value={<span className="font-mono text-xs">{transaction.provider_ref}</span>} />
               )}
-              {transaction.idempotency_key && (
-                <DetailRow icon={RefreshCw} label="Idempotency Key" value={<span className="font-mono text-xs break-all">{transaction.idempotency_key}</span>} />
-              )}
             </div>
           </div>
 
