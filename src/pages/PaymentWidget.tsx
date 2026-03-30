@@ -277,6 +277,13 @@ function PaymentForm({ amount, currency }) {
                       <Label className="text-xs">CVC</Label>
                       <div className="h-10 rounded-md border border-input bg-muted/30 px-3 py-2 text-sm text-muted-foreground">123</div>
                     </div>
+                   </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Country</Label>
+                    <div className="h-10 rounded-md border border-input bg-muted/30 px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      Select country
+                    </div>
                   </div>
                 </div>
 
