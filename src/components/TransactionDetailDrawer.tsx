@@ -185,12 +185,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const PaymentMethodIcon = methodType === 'bank' ? Building2 : methodType === 'wallet' ? Wallet : CreditCard;
   const methodLabel = methodType === 'bank' ? 'Bank Payment' : methodType === 'wallet' ? 'Digital Wallet' : 'Card Payment';
 
-  const handleEnrich = () => {
-    tapixEnrich.mutate({
-      transactionId: transaction.id,
-      merchantId: transaction.merchant_id,
-    });
-  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
