@@ -328,28 +328,6 @@ export default function MobilePaymentsPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-cyan-600 to-cyan-800 text-white animate-fade-in">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">Ready to Go Mobile with Your Payments?</h2>
-          <p className="text-xl text-cyan-50 mb-8 max-w-2xl mx-auto">
-            Join thousands of mobile businesses already using everpay. Get started today.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/demo">
-              <Button size="lg" className="bg-white text-cyan-600 hover:bg-cyan-50">
-                Book a Demo
-              </Button>
-            </Link>
-            <Link to="/contact">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 bg-transparent">
-                Contact Sales
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       <CTASection />
       <SiteFooter />
     </div>

@@ -208,30 +208,6 @@ export default function SecurityPage() {
           </div>
         </section>
 
-        {/* Trust Partner CTA */}
-        <section className="bg-[#0A2F2F] text-white py-20">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-6" style={{ fontFamily: "Manrope, sans-serif" }}>
-              A Trusted Payments Partner
-            </h2>
-            <p className="text-gray-300 mb-8 max-w-2xl mx-auto" style={{ fontFamily: "Inter, sans-serif" }}>
-              Everpay isn't just a payments platform — we are a trusted partner, enabling secure, compliant, 
-              and reliable payment operations worldwide.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link to="/demo">
-                <Button size="lg" className="bg-[#1aa478] hover:bg-[#158f68] text-white">
-                  Request a Demo
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button variant="outline" size="lg" className="border-white bg-transparent text-white hover:bg-white/10">
-                  Contact Us
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
       <CTASection />
       <SiteFooter />

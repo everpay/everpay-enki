@@ -182,47 +182,6 @@ export default function FraudPreventionPage() {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-4">
-            <div className="bg-primary rounded-2xl text-primary-foreground p-8 md:p-12 animate-fade-in-up">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <h2 className="text-3xl font-bold mb-4 animate-fade-in-up">Ready to protect your business?</h2>
-                  <p className="opacity-90 mb-6 animate-fade-in-up animation-delay-200">
-                    Start protecting your business with our advanced fraud prevention system today.
-                  </p>
-                  <div className="flex gap-4 animate-fade-in-up animation-delay-400">
-                   <Link to="/signup">
-                    <Button
-                      size="lg"
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform"
-                    >
-                      Get Started
-                    </Button>
-                   </Link>
-                    <Link to="/contact">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-primary-foreground/20 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:scale-105 transition-transform"
-                    >
-                      Contact Sales
-                    </Button>
-                    </Link>
-                  </div>
-                </div>
-                <div className="relative h-[300px] rounded-lg overflow-hidden shadow-lg animate-fade-in-right animation-delay-600">
-                  <img
-                    src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&h=400&fit=crop"
-                    alt="Fraud Prevention"
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
       <CTASection />
       <SiteFooter />

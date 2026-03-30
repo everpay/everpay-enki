@@ -80,10 +80,10 @@ export default function DemoPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-white via-green-50 to-white py-12 md:py-20">
+        <section className="relative bg-gradient-to-br from-white via-green-50 to-white py-16 md:py-24">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-12 items-start">
+              <div className="grid lg:grid-cols-2 gap-16 items-start">
                 {/* Left Column - Info */}
                 <div className="lg:sticky lg:top-24">
                   <h1
