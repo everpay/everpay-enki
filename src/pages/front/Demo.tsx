@@ -24,7 +24,8 @@ export default function DemoPage() {
     setIsSubmitting(true)
     setSubmitMessage(null)
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
     const data = {
       first_name: formData.get("firstName") as string,
       last_name: formData.get("lastName") as string,
@@ -62,13 +63,13 @@ export default function DemoPage() {
         type: "success",
         message: "Thank you for your interest! Our team will reach out within 24 hours to schedule your personalized demo.",
       })
-      e.currentTarget.reset()
+      form.reset()
     } catch {
       setSubmitMessage({
         type: "success",
         message: "Thank you for your interest! Our team will reach out within 24 hours to schedule your personalized demo.",
       })
-      e.currentTarget.reset()
+      form.reset()
     }
 
     setIsSubmitting(false)

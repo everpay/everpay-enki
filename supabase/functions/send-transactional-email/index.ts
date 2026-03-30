@@ -141,14 +141,28 @@ serve(async (req) => {
       throw new Error('RESEND_API_KEY is not configured');
     }
 
-    const payload: EmailPayload = await req.json();
-    const { type, to, data } = payload;
+    const payload = await req.json();
+    const { type, to, data, subject: rawSubject, html: rawHtml } = payload;
 
-    if (!type || !to) {
-      throw new Error('Missing required fields: type, to');
+    if (!to) {
+      throw new Error('Missing required field: to');
     }
 
-    const { subject, html } = buildEmailHtml(type, data);
+    let subject: string;
+    let html: string;
+
+    if (rawSubject && rawHtml) {
+      // Raw email mode: subject and html provided directly
+      subject = rawSubject;
+      html = rawHtml;
+    } else if (type) {
+      // Template mode: build from type + data
+      const built = buildEmailHtml(type, data);
+      subject = built.subject;
+      html = built.html;
+    } else {
+      throw new Error('Missing required fields: provide either (type, data) or (subject, html)');
+    }
 
     console.log(`Sending ${type} email to ${to}: ${subject}`);
 
