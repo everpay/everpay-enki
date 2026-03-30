@@ -36,7 +36,7 @@ export function PosProductSuiteSection() {
           <p className="text-sm font-semibold tracking-widest uppercase text-primary mb-3 font-body">
             Hardware &amp; Devices
           </p>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl mb-5 font-heading" style={{ lineHeight: 1.1 }}>
+          <h2 className="text-[32px] sm:text-[44px] lg:text-[52px] font-extrabold tracking-[-0.02em] mb-6 font-heading" style={{ lineHeight: 1.1 }}>
             Point-of-Sale That Moves<br className="hidden sm:block" /> As Fast As You Do
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-body" style={{ textWrap: "pretty" as any }}>
