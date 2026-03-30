@@ -201,6 +201,7 @@ const AppRoutes = () => {
     <Route path="/docs" element={<Docs />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/checkout" element={<Checkout />} />
+    <Route path="/pay" element={<Checkout />} />
     <Route path="/checkout/thank-you" element={<CheckoutThankYou />} />
     <Route path="/checkout/declined" element={<CheckoutDeclined />} />
     <Route path="/pay/:id" element={<PayInvoice />} />
