@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
 import { TransactionDetailDrawer } from './TransactionDetailDrawer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { ChevronLeft, ChevronRight, Eye, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, Zap, CreditCard } from 'lucide-react';
 import { useTapixCache, getEnrichmentSummary } from '@/hooks/useTapixEnrichment';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -146,12 +146,18 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                       {formatCurrency(tx.amount, tx.currency)}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        {pmInfo.logoSrc ? (
-                          <img src={pmInfo.logoSrc} alt={pmInfo.label} className="h-5 w-auto rounded-sm" />
-                        ) : null}
-                        <span className="text-xs text-muted-foreground capitalize">{pmInfo.label}</span>
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center justify-center w-8 h-8">
+                            {pmInfo.logoSrc ? (
+                              <img src={pmInfo.logoSrc} alt={pmInfo.label} className="h-5 w-auto rounded-sm" />
+                            ) : (
+                              <CreditCard className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>{pmInfo.label}</TooltipContent>
+                      </Tooltip>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant="outline" className="font-mono text-[10px]">{tx.currency}</Badge>
