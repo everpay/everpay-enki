@@ -105,10 +105,10 @@ export function FeaturesSection() {
               className="grid md:grid-cols-2 gap-12 items-center"
             >
               <div>
-                <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-5 leading-snug font-heading">
+                <h3 className="text-[26px] md:text-[32px] font-bold text-foreground mb-5 leading-[1.15] tracking-tight font-heading">
                   {active.title}
                 </h3>
-                <p className="text-muted-foreground text-base leading-relaxed mb-8 font-body">
+                <p className="text-muted-foreground text-lg leading-relaxed mb-8 font-body">
                   {active.description}
                 </p>
                 <ul className="space-y-3">

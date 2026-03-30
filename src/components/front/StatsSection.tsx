@@ -21,10 +21,10 @@ export function StatsSection() {
               transition={{ duration: 0.6, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
               className="text-center"
             >
-              <div className="text-3xl lg:text-4xl font-extrabold text-foreground mb-1 font-heading tabular-nums">
+              <div className="text-4xl lg:text-5xl font-extrabold text-foreground mb-2 font-heading tabular-nums tracking-tight">
                 {stat.value}
               </div>
-              <div className="text-sm text-muted-foreground font-body">
+              <div className="text-base text-muted-foreground font-body">
                 {stat.label}
               </div>
             </motion.div>

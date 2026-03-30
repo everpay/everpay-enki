@@ -39,7 +39,7 @@ export function PosProductSuiteSection() {
           <h2 className="text-[32px] sm:text-[44px] lg:text-[52px] font-extrabold tracking-[-0.02em] mb-6 font-heading" style={{ lineHeight: 1.1 }}>
             Point-of-Sale That Moves<br className="hidden sm:block" /> As Fast As You Do
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-body" style={{ textWrap: "pretty" as any }}>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-body" style={{ textWrap: "pretty" as any }}>
             From countertop terminals to self-order kiosks, every Everpay device is built for speed, security, and seamless integration with your stack.
           </p>
         </motion.div>

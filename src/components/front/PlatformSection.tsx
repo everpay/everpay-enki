@@ -14,10 +14,10 @@ export function PlatformSection() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-foreground leading-tight mb-5 font-heading">
+          <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-foreground leading-[1.1] tracking-[-0.02em] mb-6 font-heading">
             The backbone of modern payments
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-body">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-body">
             From checkout to settlement—everything you need to run and scale your business.
           </p>
         </motion.div>

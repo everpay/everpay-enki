@@ -22,7 +22,7 @@ export function EnterpriseProofSection() {
         >
           <div>
             <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-4 font-body">Customer Stories</p>
-            <h2 className="text-3xl md:text-[40px] font-extrabold text-foreground leading-tight font-heading">
+            <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-foreground leading-[1.1] tracking-[-0.02em] font-heading">
               Powering businesses of all sizes.
             </h2>
           </div>
