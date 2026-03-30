@@ -61,7 +61,7 @@ export default function FraudPreventionPage() {
               <div className="flex gap-4 animate-fade-in-up animation-delay-400">
                 <Button
                   size="lg"
-                  className="bg-accent text-accent-foreground hover:bg-accent/90 hover:scale-105 transition-transform"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform"
                 >
                   Start Protection
                 </Button>
