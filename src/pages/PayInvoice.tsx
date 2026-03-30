@@ -28,6 +28,7 @@ export default function PayInvoice() {
   const [show3DS, setShow3DS] = useState(false);
   const [threeDSUrl, setThreeDSUrl] = useState('');
   const [threeDSTxId, setThreeDSTxId] = useState('');
+  const [billingCountry, setBillingCountry] = useState('');
 
   useEffect(() => { if (invoiceId) loadInvoice(); }, [invoiceId]);
 
