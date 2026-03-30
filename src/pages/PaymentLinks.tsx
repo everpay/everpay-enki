@@ -515,7 +515,7 @@ export default function PaymentLinks() {
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>
-                          {link.amount ? formatCurrency(link.amount, link.currency) : 'Custom amount'} · {link.currency}
+                          {link.amount ? formatCurrency(link.amount, link.currency as Currency) : 'Custom amount'} · {link.currency}
                         </span>
                         <span>{new Date(link.created_at).toLocaleDateString()}</span>
                       </div>
