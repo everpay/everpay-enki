@@ -9,11 +9,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe, Building2, Wallet, RotateCcw } from 'lucide-react';
+import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe, Building2, Wallet, RotateCcw, MapPin, Tag, ExternalLink, Store } from 'lucide-react';
 import { CardBrandBadge } from '@/components/CardBrandBadge';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTapixCache, useTapixEnrich, getEnrichmentSummary } from '@/hooks/useTapixEnrichment';
 
 interface TransactionDetailDrawerProps {
   transaction: Transaction | null;
@@ -39,7 +40,7 @@ function detectPaymentMethodType(tx: Transaction, metadata: Record<string, any>)
   if (['apple_pay', 'google_pay', 'paypal', 'apple pay', 'google pay'].some(w => paymentMethod.toLowerCase().includes(w) || provider.includes(w))) return 'wallet';
   if (['ach', 'sepa', 'pix', 'boleto', 'open_banking', 'bank_transfer', 'wire'].some(w => paymentMethod.toLowerCase().includes(w) || provider.includes(w))) return 'bank';
   if (metadata?.card_first6 || metadata?.cardFirst6 || metadata?.card_brand || metadata?.card_last4 || metadata?.cardLast4) return 'card';
-  return 'card'; // default to card for most providers
+  return 'card';
 }
 
 function usePaymentMethod(transactionId: string | null, customerId?: string) {
@@ -47,7 +48,6 @@ function usePaymentMethod(transactionId: string | null, customerId?: string) {
     queryKey: ['payment-method-detail', transactionId],
     enabled: !!transactionId,
     queryFn: async () => {
-      // Try to find payment method linked to this transaction's customer
       if (!customerId) return null;
       const { data } = await supabase
         .from('payment_methods')
@@ -68,18 +68,9 @@ function RefundModal({ transaction, open, onOpenChange }: { transaction: Transac
 
   const handleSubmit = async () => {
     const refundAmount = parseFloat(amount);
-    if (isNaN(refundAmount) || refundAmount <= 0) {
-      toast.error('Enter a valid amount');
-      return;
-    }
-    if (refundAmount > transaction.amount) {
-      toast.error('Refund amount cannot exceed transaction amount');
-      return;
-    }
-    if (!reason.trim()) {
-      toast.error('Please provide a reason');
-      return;
-    }
+    if (isNaN(refundAmount) || refundAmount <= 0) { toast.error('Enter a valid amount'); return; }
+    if (refundAmount > transaction.amount) { toast.error('Refund amount cannot exceed transaction amount'); return; }
+    if (!reason.trim()) { toast.error('Please provide a reason'); return; }
 
     setLoading(true);
     try {
@@ -99,7 +90,6 @@ function RefundModal({ transaction, open, onOpenChange }: { transaction: Transac
       });
 
       if (error) throw error;
-
       toast.success('Refund initiated successfully');
       queryClient.invalidateQueries({ queryKey: ['refunds'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -127,25 +117,12 @@ function RefundModal({ transaction, open, onOpenChange }: { transaction: Transac
           </div>
           <div>
             <Label>Refund Amount ({transaction.currency})</Label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0.01"
-              max={transaction.amount}
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Max: {formatCurrency(transaction.amount, transaction.currency)}
-            </p>
+            <Input type="number" step="0.01" min="0.01" max={transaction.amount} value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <p className="text-xs text-muted-foreground mt-1">Max: {formatCurrency(transaction.amount, transaction.currency)}</p>
           </div>
           <div>
             <Label>Reason</Label>
-            <Textarea
-              placeholder="Customer requested refund, duplicate charge, etc."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
+            <Textarea placeholder="Customer requested refund, duplicate charge, etc." value={reason} onChange={(e) => setReason(e.target.value)} />
           </div>
           <Button className="w-full" onClick={handleSubmit} disabled={loading}>
             {loading ? 'Processing...' : `Refund ${amount ? formatCurrency(parseFloat(amount) || 0, transaction.currency) : ''}`}
@@ -160,16 +137,20 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const [refundOpen, setRefundOpen] = useState(false);
   const { data: allEvents = [] } = useProviderEvents();
 
-  // Extract customer_id from metadata for payment method lookup
   const txMetadata = (transaction as any)?.metadata || {};
   const customerId = txMetadata?.customer_id || txMetadata?.customerId || null;
   const { data: paymentMethod } = usePaymentMethod(transaction?.id || null, customerId);
+
+  // Tapix enrichment
+  const txIds = transaction ? [transaction.id] : [];
+  const { data: tapixCache = {} } = useTapixCache(txIds);
+  const tapixEnrich = useTapixEnrich();
+  const enrichment = transaction ? getEnrichmentSummary(tapixCache[transaction.id]) : null;
 
   if (!transaction) return null;
 
   const relatedEvents = allEvents.filter((e) => e.transaction_id === transaction.id);
 
-  // Extract VGS alias and card brand from enrichment events
   const tapixEvent = relatedEvents.find((e) => e.event_type === 'enrichment.completed');
   const vaultEvent = relatedEvents.find((e) => e.event_type === 'vault.completed');
 
@@ -177,7 +158,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const eventCardBrand = (tapixEvent?.payload as any)?.card_brand || (vaultEvent?.payload as any)?.card_brand || null;
   const eventCardLast4 = (tapixEvent?.payload as any)?.card_last4 || (vaultEvent?.payload as any)?.card_last4 || null;
 
-  // Merge from all sources: metadata > events > payment_methods table
   const cardFirst6 = txMetadata.cardFirst6 || txMetadata.card_first6 || '';
   const cardLast4 = txMetadata.cardLast4 || txMetadata.card_last4 || eventCardLast4 || paymentMethod?.card_last4 || '';
   const cardBrand = txMetadata.card_brand || eventCardBrand || paymentMethod?.card_brand || getCardBrandFromBin(cardFirst6);
@@ -185,25 +165,22 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const expYear = paymentMethod?.exp_year || txMetadata.exp_year || null;
   const deviceInfo = txMetadata.device_info || null;
 
-  // Detect payment method type
   const methodType = detectPaymentMethodType(transaction, txMetadata);
 
-  // Tapix enrichment data
-  const tapixData = (tapixEvent?.payload as any) || {};
-  const enrichedMerchant = tapixData.merchant_name || tapixData.store || null;
-  const enrichedCategory = tapixData.category || null;
-  const enrichedLocation = tapixData.location || null;
-
-  // Bank details from metadata
   const bankName = txMetadata.bank_name || txMetadata.institution_name || null;
   const bankAccountLast4 = txMetadata.account_last4 || txMetadata.bank_last4 || null;
   const bankType = txMetadata.bank_method || txMetadata.payment_rail || null;
-
-  // Wallet details
   const walletType = txMetadata.wallet_type || txMetadata.payment_method_type || null;
 
   const PaymentMethodIcon = methodType === 'bank' ? Building2 : methodType === 'wallet' ? Wallet : CreditCard;
   const methodLabel = methodType === 'bank' ? 'Bank Payment' : methodType === 'wallet' ? 'Digital Wallet' : 'Card Payment';
+
+  const handleEnrich = () => {
+    tapixEnrich.mutate({
+      transactionId: transaction.id,
+      merchantId: transaction.merchant_id,
+    });
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -247,7 +224,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             </Button>
           )}
 
-          {/* Refund Modal */}
           {refundOpen && transaction && (
             <RefundModal transaction={transaction} open={refundOpen} onOpenChange={setRefundOpen} />
           )}
@@ -259,20 +235,12 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
               {methodLabel}
             </h4>
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
-              {/* Card display */}
               {methodType === 'card' && (cardBrand || cardLast4 || cardFirst6) && (
                 <div className="flex justify-center">
-                  <CardBrandBadge
-                    brand={cardBrand}
-                    last4={cardLast4}
-                    first4={cardFirst6?.slice(0, 4)}
-                    expMonth={expMonth}
-                    expYear={expYear}
-                  />
+                  <CardBrandBadge brand={cardBrand} last4={cardLast4} first4={cardFirst6?.slice(0, 4)} expMonth={expMonth} expYear={expYear} />
                 </div>
               )}
 
-              {/* Bank payment display */}
               {methodType === 'bank' && (
                 <div className="flex items-center justify-center gap-3 rounded-lg border border-border bg-background px-4 py-3">
                   <Building2 className="h-6 w-6 text-primary" />
@@ -286,7 +254,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
                 </div>
               )}
 
-              {/* Wallet display */}
               {methodType === 'wallet' && (
                 <div className="flex items-center justify-center gap-3 rounded-lg border border-border bg-background px-4 py-3">
                   {walletType?.toLowerCase().includes('apple') ? (
@@ -304,7 +271,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
                 </div>
               )}
 
-              {/* Fallback card display when no specific data */}
               {methodType === 'card' && !cardBrand && !cardLast4 && !cardFirst6 && (
                 <div className="flex items-center justify-center gap-3 text-muted-foreground py-2">
                   <CreditCard className="h-5 w-5" />
@@ -312,7 +278,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
                 </div>
               )}
 
-              {/* VGS Alias */}
               {vgsAlias && (
                 <DetailRow icon={Shield} label="VGS Alias" value={
                   <span className="font-mono text-[10px] text-primary break-all">{vgsAlias}</span>
@@ -321,24 +286,102 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             </div>
           </div>
 
-          {/* Tapix Enrichment */}
-          {(enrichedMerchant || enrichedCategory || enrichedLocation) && (
-            <div className="space-y-3">
+          {/* Tapix Enrichment Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
-                Enrichment Data
+                Payment Enrichment
               </h4>
-              <div className="rounded-lg border border-border bg-background p-4 space-y-2">
-                {enrichedMerchant && <DetailRow icon={FileText} label="Merchant" value={enrichedMerchant} />}
-                {enrichedCategory && <DetailRow icon={Hash} label="Category" value={enrichedCategory} />}
-                {enrichedLocation && (
-                  <DetailRow icon={Globe} label="Location" value={
-                    [enrichedLocation.city, enrichedLocation.state, enrichedLocation.country].filter(Boolean).join(', ')
+              {!enrichment && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs gap-1.5"
+                  onClick={handleEnrich}
+                  disabled={tapixEnrich.isPending}
+                >
+                  <Zap className="h-3 w-3" />
+                  {tapixEnrich.isPending ? 'Enriching…' : 'Enrich'}
+                </Button>
+              )}
+            </div>
+
+            {enrichment ? (
+              <div className="rounded-lg border border-border bg-background p-4 space-y-3">
+                {/* Merchant info with logo */}
+                {enrichment.merchantName && (
+                  <div className="flex items-center gap-3 pb-3 border-b border-border">
+                    {enrichment.merchantLogo ? (
+                      <img src={enrichment.merchantLogo} alt={enrichment.merchantName} className="h-8 w-8 rounded-md object-contain bg-white p-0.5 border border-border" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
+                        <Store className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{enrichment.merchantName}</p>
+                      {enrichment.category && (
+                        <p className="text-xs text-muted-foreground">{enrichment.category}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Shop type */}
+                {enrichment.shopType && (
+                  <DetailRow icon={Store} label="Shop Type" value={
+                    <Badge variant="outline" className="text-[10px] capitalize">{enrichment.shopType}</Badge>
                   } />
                 )}
+
+                {/* Category */}
+                {enrichment.category && !enrichment.merchantName && (
+                  <DetailRow icon={Hash} label="Category" value={enrichment.category} />
+                )}
+
+                {/* Address */}
+                {enrichment.address && (
+                  <DetailRow icon={MapPin} label="Location" value={
+                    <span className="text-xs">{enrichment.address}</span>
+                  } />
+                )}
+
+                {/* Tags */}
+                {enrichment.tags.length > 0 && (
+                  <div className="flex items-start gap-2 rounded-lg border border-border bg-background px-3 py-2.5">
+                    <Tag className="h-3.5 w-3.5 text-muted-foreground mt-0.5" />
+                    <div className="flex flex-wrap gap-1">
+                      {enrichment.tags.map((tag: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-[10px]">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Shop URL */}
+                {enrichment.shopUrl && (
+                  <DetailRow icon={ExternalLink} label="Website" value={
+                    <a href={enrichment.shopUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline truncate max-w-[200px] inline-block">
+                      {enrichment.shopUrl.replace(/^https?:\/\//, '')}
+                    </a>
+                  } />
+                )}
+
+                {/* Enrichment type badge */}
+                <div className="pt-2 border-t border-border flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground">Enriched via Tapix</span>
+                  <Badge variant="outline" className="text-[10px] capitalize">{enrichment.enrichmentType}</Badge>
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Click "Enrich" to fetch merchant, shop, and location data from Tapix
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Device Info Section */}
           {deviceInfo && (
@@ -361,24 +404,14 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
           <div className="space-y-3">
             <h4 className="font-heading text-sm font-semibold text-foreground">Details</h4>
             <div className="grid gap-2">
-              <DetailRow icon={Hash} label="Provider" value={
-                <Badge variant="provider">{transaction.provider}</Badge>
-              } />
-              {transaction.customer_email && (
-                <DetailRow icon={Mail} label="Customer" value={transaction.customer_email} />
-              )}
-              {transaction.description && (
-                <DetailRow icon={FileText} label="Description" value={transaction.description} />
-              )}
+              <DetailRow icon={Hash} label="Provider" value={<Badge variant="provider">{transaction.provider}</Badge>} />
+              {transaction.customer_email && <DetailRow icon={Mail} label="Customer" value={transaction.customer_email} />}
+              {transaction.description && <DetailRow icon={FileText} label="Description" value={transaction.description} />}
               {transaction.provider_ref && (
-                <DetailRow icon={Wifi} label="Provider Ref" value={
-                  <span className="font-mono text-xs">{transaction.provider_ref}</span>
-                } />
+                <DetailRow icon={Wifi} label="Provider Ref" value={<span className="font-mono text-xs">{transaction.provider_ref}</span>} />
               )}
               {transaction.idempotency_key && (
-                <DetailRow icon={RefreshCw} label="Idempotency Key" value={
-                  <span className="font-mono text-xs break-all">{transaction.idempotency_key}</span>
-                } />
+                <DetailRow icon={RefreshCw} label="Idempotency Key" value={<span className="font-mono text-xs break-all">{transaction.idempotency_key}</span>} />
               )}
             </div>
           </div>
@@ -391,9 +424,7 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground">{transaction.currency}</p>
-                    <p className="font-heading font-bold text-foreground">
-                      {formatCurrency(transaction.amount, transaction.currency)}
-                    </p>
+                    <p className="font-heading font-bold text-foreground">{formatCurrency(transaction.amount, transaction.currency)}</p>
                   </div>
                   <div className="flex flex-col items-center">
                     <ArrowRight className="h-4 w-4 text-primary" />
@@ -401,9 +432,7 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground">{transaction.settlement_currency}</p>
-                    <p className="font-heading font-bold text-foreground">
-                      {formatCurrency(transaction.settlement_amount || 0, transaction.settlement_currency || 'USD')}
-                    </p>
+                    <p className="font-heading font-bold text-foreground">{formatCurrency(transaction.settlement_amount || 0, transaction.settlement_currency || 'USD')}</p>
                   </div>
                 </div>
               </div>
