@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
 import { formatCurrency } from '@/lib/format';
 import { generateInvoicePDF } from '@/lib/invoice-pdf';
+import { CountrySelect } from '@/components/CountrySelect';
 
 export default function PayInvoice() {
   const { invoiceId } = useParams<{ invoiceId: string }>();
@@ -27,6 +28,7 @@ export default function PayInvoice() {
   const [show3DS, setShow3DS] = useState(false);
   const [threeDSUrl, setThreeDSUrl] = useState('');
   const [threeDSTxId, setThreeDSTxId] = useState('');
+  const [billingCountry, setBillingCountry] = useState('');
 
   useEffect(() => { if (invoiceId) loadInvoice(); }, [invoiceId]);
 
@@ -71,6 +73,7 @@ export default function PayInvoice() {
               <div className="space-y-2"><Label className="text-xs">Cardholder Name</Label><Input value={holderName} onChange={(e) => setHolderName(e.target.value)} placeholder="John Doe" required /></div>
               <div className="space-y-2"><Label className="text-xs">Card Number</Label><Input value={formatCardNum(cardNumber)} onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ''))} placeholder="4242 4242 4242 4242" className="font-mono" maxLength={19} required /></div>
               <div className="grid grid-cols-3 gap-3"><div className="space-y-2"><Label className="text-xs">Month</Label><Input value={expMonth} onChange={(e) => setExpMonth(e.target.value)} placeholder="12" maxLength={2} required /></div><div className="space-y-2"><Label className="text-xs">Year</Label><Input value={expYear} onChange={(e) => setExpYear(e.target.value)} placeholder="2030" maxLength={4} required /></div><div className="space-y-2"><Label className="text-xs">CVC</Label><Input value={cvc} onChange={(e) => setCvc(e.target.value)} placeholder="123" maxLength={4} required /></div></div>
+              <div className="space-y-2"><Label className="text-xs">Country</Label><CountrySelect value={billingCountry} onValueChange={setBillingCountry} /></div>
             </TabsContent>
             <TabsContent value="openbanking" className="mt-4 space-y-3"><div className="flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /><p className="text-sm font-medium text-foreground">Select your bank</p></div><div className="grid grid-cols-2 gap-2">{['Revolut', 'Monzo', 'Barclays', 'HSBC'].map((bank) => (<button key={bank} type="button" className="flex items-center gap-2 rounded-lg border border-border bg-background p-3 text-sm text-foreground hover:border-primary transition-colors text-left">🏦 {bank}</button>))}</div></TabsContent>
             <TabsContent value="apple_pay" className="mt-4 space-y-3 text-center"><div className="bg-foreground text-background rounded-lg py-3 font-medium cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center gap-2"><img src="/logos/apple-pay-icon.png" alt="Apple Pay" className="h-5 w-auto brightness-0 invert" /> Pay with Apple Pay</div></TabsContent>
