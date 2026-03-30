@@ -24,10 +24,10 @@ export function GlobalReachSection() {
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-4 font-body">
             Global Coverage
           </p>
-          <h2 className="text-3xl md:text-[44px] font-extrabold text-foreground leading-tight mb-5 font-heading">
+          <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-foreground leading-[1.1] tracking-[-0.02em] mb-6 font-heading">
             One integration, every market.
           </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl font-body">
+          <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl font-body">
             Accept 135+ currencies and hundreds of local payment methods across six continents. Our smart routing automatically selects the best payment path for each transaction.
           </p>
         </motion.div>

@@ -31,10 +31,10 @@ export function DeveloperSection() {
             <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-4 font-body">
               Developer First
             </p>
-            <h2 className="text-3xl md:text-[40px] font-extrabold text-white leading-tight mb-5 font-heading">
+            <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-white leading-[1.1] tracking-[-0.02em] mb-6 font-heading">
               Built for developers. Designed for business.
             </h2>
-            <p className="text-lg text-white/60 leading-relaxed mb-10 max-w-lg font-body">
+            <p className="text-lg md:text-xl text-white/60 leading-relaxed mb-10 max-w-lg font-body">
               Accept your first payment in minutes, not weeks. Our API is built on familiar REST conventions with clear documentation and predictable behavior.
             </p>
 

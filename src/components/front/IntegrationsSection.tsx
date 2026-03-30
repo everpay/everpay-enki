@@ -29,10 +29,10 @@ export function IntegrationsSection() {
           className="text-center mb-16"
         >
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-4 font-body">Integrations</p>
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-foreground leading-tight mb-5 font-heading">
+          <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-foreground leading-[1.1] tracking-[-0.02em] mb-6 font-heading">
             Works with the tools you already use.
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed font-body">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed font-body">
             Connect Everpay to your existing stack in minutes. Pre-built integrations for the most popular platforms.
           </p>
         </motion.div>

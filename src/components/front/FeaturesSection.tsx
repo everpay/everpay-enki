@@ -56,7 +56,7 @@ export function FeaturesSection() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-foreground leading-tight mb-4 font-heading">
+          <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-foreground leading-[1.1] tracking-[-0.02em] mb-5 font-heading">
             With Everpay, you get more sales,{" "}
             <br className="hidden md:block" />
             more reach, more repeat customers
@@ -105,10 +105,10 @@ export function FeaturesSection() {
               className="grid md:grid-cols-2 gap-12 items-center"
             >
               <div>
-                <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-5 leading-snug font-heading">
+                <h3 className="text-[26px] md:text-[32px] font-bold text-foreground mb-5 leading-[1.15] tracking-tight font-heading">
                   {active.title}
                 </h3>
-                <p className="text-muted-foreground text-base leading-relaxed mb-8 font-body">
+                <p className="text-muted-foreground text-lg leading-relaxed mb-8 font-body">
                   {active.description}
                 </p>
                 <ul className="space-y-3">

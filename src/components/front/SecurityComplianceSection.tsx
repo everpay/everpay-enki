@@ -24,10 +24,10 @@ export function SecurityComplianceSection() {
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-4 font-body">
             Security & Compliance
           </p>
-          <h2 className="text-3xl md:text-[44px] font-extrabold text-foreground leading-tight mb-5 font-heading">
+          <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-foreground leading-[1.1] tracking-[-0.02em] mb-6 font-heading">
             Enterprise-grade security, built in.
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-body">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-body">
             Your customers' data is protected by the same infrastructure trusted by the world's largest financial institutions.
           </p>
         </motion.div>

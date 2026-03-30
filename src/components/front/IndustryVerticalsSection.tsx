@@ -27,10 +27,10 @@ export function IndustryVerticalsSection() {
           className="mb-16"
         >
           <p className="text-sm font-semibold tracking-widest uppercase text-primary mb-3 font-body">Industry Solutions</p>
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl mb-5 font-heading" style={{ lineHeight: 1.1 }}>
+          <h2 className="text-[32px] sm:text-[44px] lg:text-[52px] font-extrabold tracking-[-0.02em] mb-6 font-heading" style={{ lineHeight: 1.1 }}>
             Built for How You Work
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl font-body" style={{ textWrap: "pretty" as any }}>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-xl font-body" style={{ textWrap: "pretty" as any }}>
             Whether you flip burgers or style hair, Everpay POS adapts to your workflow — not the other way around.
           </p>
         </motion.div>

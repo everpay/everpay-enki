@@ -11,7 +11,7 @@ export function CTASection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-3xl md:text-[44px] font-extrabold text-white leading-tight mb-5 font-heading"
+          className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-white leading-[1.1] tracking-[-0.02em] mb-6 font-heading"
         >
           Ready to grow your business?
         </motion.h2>
@@ -20,7 +20,7 @@ export function CTASection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-lg text-white/60 mb-10 max-w-lg mx-auto leading-relaxed font-body"
+          className="text-lg md:text-xl text-white/60 mb-12 max-w-lg mx-auto leading-relaxed font-body"
         >
           Get a free demo and see how Everpay can help you accept payments globally, prevent fraud, and increase revenue.
         </motion.p>

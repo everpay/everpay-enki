@@ -21,10 +21,10 @@ export function BusinessTypesSection() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-[40px] font-extrabold text-foreground leading-tight mb-4 font-heading">
+          <h2 className="text-[32px] md:text-[44px] lg:text-[52px] font-extrabold text-foreground leading-[1.1] tracking-[-0.02em] mb-5 font-heading">
             Everything you need to get paid
           </h2>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto font-body">
+          <p className="text-muted-foreground text-lg md:text-xl max-w-xl mx-auto font-body">
             One platform with all the tools to accept payments, prevent fraud, and grow your business globally.
           </p>
         </motion.div>
