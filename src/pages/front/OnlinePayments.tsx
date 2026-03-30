@@ -29,7 +29,7 @@ const features = [
 
 export default function OnlinePaymentsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-[#0A2F2F]">
+    <div className="flex flex-col min-h-screen bg-white">
       <SiteHeader />
       
       <main className="flex-1">
