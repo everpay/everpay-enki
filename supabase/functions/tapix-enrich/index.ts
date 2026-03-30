@@ -276,14 +276,23 @@ serve(async (req) => {
           if (meta.city) cardParams.city = meta.city;
           if (meta.country) cardParams.country = meta.country;
           if (meta.mcc) cardParams.mcc = meta.mcc;
+          // Build a synthetic card descriptor from metadata if available
+          if (meta.cardFirst6) cardParams.cardNumber = meta.cardFirst6;
           cardParams.refresh = 'false';
 
-          try {
-            const findResult = await findByCardTransaction(cardParams, TAPIX_TOKEN);
-            enrichResult = await enrichFull(findResult, TAPIX_TOKEN, true);
-          } catch (e) {
-            console.warn('Card enrichment failed:', e);
-            enrichResult = { findResult: { result: 'error', error: String(e) } };
+          // Tapix requires at least description or posId+merchantId or cardNumber
+          const hasEnoughParams = cardParams.description || cardParams.posId || cardParams.merchantId || cardParams.cardNumber;
+          if (!hasEnoughParams) {
+            console.warn('Insufficient data for card enrichment, skipping');
+            enrichResult = { findResult: { result: 'not_found', reason: 'insufficient_params' } };
+          } else {
+            try {
+              const findResult = await findByCardTransaction(cardParams, TAPIX_TOKEN);
+              enrichResult = await enrichFull(findResult, TAPIX_TOKEN, true);
+            } catch (e) {
+              console.warn('Card enrichment failed:', e);
+              enrichResult = { findResult: { result: 'error', error: String(e) } };
+            }
           }
         }
 
