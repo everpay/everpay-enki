@@ -34,7 +34,7 @@ export default function OnlinePaymentsPage() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="bg- bg-gradient-to-br from-white via-green-50 to-white py-20 md:py-32 animate-fade-in text-gray-900">
+        <section className="bg-gradient-to-br from-white via-green-50 to-white py-20 md:py-32 animate-fade-in text-gray-900">
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
