@@ -1572,6 +1572,63 @@ export type Database = {
           },
         ]
       }
+      payment_links: {
+        Row: {
+          amount: number | null
+          cancel_url: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          description: string | null
+          id: string
+          merchant_id: string
+          order_id: string | null
+          payment_method: string | null
+          products: Json | null
+          status: string
+          success_url: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          amount?: number | null
+          cancel_url?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          merchant_id: string
+          order_id?: string | null
+          payment_method?: string | null
+          products?: Json | null
+          status?: string
+          success_url?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          amount?: number | null
+          cancel_url?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          merchant_id?: string
+          order_id?: string | null
+          payment_method?: string | null
+          products?: Json | null
+          status?: string
+          success_url?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       payment_methods: {
         Row: {
           card_brand: string | null

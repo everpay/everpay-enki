@@ -9,11 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Currency } from '@/lib/types';
-import { Link2, Copy, ExternalLink, Mail, MessageSquare, QrCode, Check, Code, Globe } from 'lucide-react';
+import { Link2, Copy, ExternalLink, Mail, MessageSquare, QrCode, Check, Code, Globe, Trash2, Pencil, Save, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { EVERPAY_CONFIG } from '@/lib/everpay-api';
 import { ProductSelector } from '@/components/product/ProductSelector';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/lib/format';
 
 interface SelectedProduct {
   id: string;
@@ -21,6 +23,24 @@ interface SelectedProduct {
   price: number;
   quantity: number;
   image_url?: string;
+}
+
+interface SavedLink {
+  id: string;
+  merchant_id: string;
+  amount: number | null;
+  currency: string;
+  description: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  order_id: string | null;
+  payment_method: string | null;
+  success_url: string | null;
+  cancel_url: string | null;
+  url: string;
+  products: any;
+  status: string;
+  created_at: string;
 }
 
 export default function PaymentLinks() {
@@ -36,6 +56,9 @@ export default function PaymentLinks() {
   const [copied, setCopied] = useState(false);
   const [merchantId, setMerchantId] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const fetchMerchantId = async () => {
@@ -50,6 +73,22 @@ export default function PaymentLinks() {
     };
     fetchMerchantId();
   }, []);
+
+  // Fetch saved payment links
+  const { data: savedLinks = [], isLoading: linksLoading } = useQuery({
+    queryKey: ['payment-links', merchantId],
+    queryFn: async () => {
+      if (!merchantId) return [];
+      const { data, error } = await supabase
+        .from('payment_links')
+        .select('*')
+        .eq('merchant_id', merchantId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as SavedLink[];
+    },
+    enabled: !!merchantId,
+  });
 
   // Auto-calculate amount from selected products
   useEffect(() => {
@@ -83,11 +122,98 @@ export default function PaymentLinks() {
 
   const paymentLink = generatePaymentLink();
 
-  const copyToClipboard = async () => {
-    await navigator.clipboard.writeText(paymentLink);
+  const copyToClipboard = async (link?: string) => {
+    await navigator.clipboard.writeText(link || paymentLink);
     setCopied(true);
     toast.success('Payment link copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const savePaymentLink = async () => {
+    if (!merchantId) { toast.error('Merchant not found'); return; }
+    setSaving(true);
+    try {
+      const linkData = {
+        merchant_id: merchantId,
+        amount: amount ? parseFloat(amount) : null,
+        currency,
+        description: description || null,
+        customer_email: customerEmail || null,
+        customer_name: customerName || null,
+        order_id: orderId,
+        payment_method: paymentMethod,
+        success_url: successUrl || null,
+        cancel_url: cancelUrl || null,
+        url: paymentLink,
+        products: selectedProducts.length > 0 ? JSON.stringify(selectedProducts) : null,
+        status: 'active',
+      };
+
+      if (editingLinkId) {
+        const { error } = await supabase
+          .from('payment_links')
+          .update({ ...linkData, updated_at: new Date().toISOString() })
+          .eq('id', editingLinkId);
+        if (error) throw error;
+        toast.success('Payment link updated');
+        setEditingLinkId(null);
+      } else {
+        const { error } = await supabase
+          .from('payment_links')
+          .insert(linkData);
+        if (error) throw error;
+        toast.success('Payment link saved');
+      }
+      queryClient.invalidateQueries({ queryKey: ['payment-links'] });
+      resetForm();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteLink = async (id: string) => {
+    try {
+      const { error } = await supabase.from('payment_links').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('Payment link deleted');
+      queryClient.invalidateQueries({ queryKey: ['payment-links'] });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete');
+    }
+  };
+
+  const loadLinkForEditing = (link: SavedLink) => {
+    setEditingLinkId(link.id);
+    setAmount(link.amount?.toString() || '');
+    setCurrency((link.currency || 'USD') as Currency);
+    setDescription(link.description || '');
+    setCustomerEmail(link.customer_email || '');
+    setCustomerName(link.customer_name || '');
+    setOrderId(link.order_id || '');
+    setPaymentMethod((link.payment_method || 'all') as any);
+    setSuccessUrl(link.success_url || '');
+    setCancelUrl(link.cancel_url || '');
+    if (link.products) {
+      try { setSelectedProducts(JSON.parse(link.products)); } catch { setSelectedProducts([]); }
+    } else {
+      setSelectedProducts([]);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const resetForm = () => {
+    setAmount('');
+    setDescription('');
+    setCustomerEmail('');
+    setCustomerName('');
+    setOrderId(`ORD-${Date.now().toString(36).toUpperCase()}`);
+    setPaymentMethod('all');
+    setSuccessUrl('');
+    setCancelUrl('');
+    setSelectedProducts([]);
+    setEditingLinkId(null);
   };
 
   const generateEmbedCode = () => {
@@ -119,9 +245,11 @@ export default function PaymentLinks() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Link2 className="h-5 w-5 text-primary" />
-                Link Configuration
+                {editingLinkId ? 'Edit Payment Link' : 'Link Configuration'}
               </CardTitle>
-              <CardDescription>Configure your payment link parameters</CardDescription>
+              <CardDescription>
+                {editingLinkId ? 'Update your payment link and save changes' : 'Configure your payment link parameters'}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               {/* Product Selection */}
@@ -242,6 +370,19 @@ export default function PaymentLinks() {
                   />
                 </div>
               </div>
+
+              {/* Save / Update Button */}
+              <div className="flex gap-3 pt-2">
+                <Button onClick={savePaymentLink} disabled={saving} className="gap-2">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {editingLinkId ? 'Update Link' : 'Save Link'}
+                </Button>
+                {editingLinkId && (
+                  <Button variant="outline" onClick={resetForm}>
+                    <Plus className="h-4 w-4 mr-1" /> New Link
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -270,7 +411,7 @@ export default function PaymentLinks() {
                       readOnly
                       className="bg-muted/50 border-border font-mono text-xs"
                     />
-                    <Button onClick={copyToClipboard} variant="outline" className="shrink-0">
+                    <Button onClick={() => copyToClipboard()} variant="outline" className="shrink-0">
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
                     <Button asChild variant="outline" className="shrink-0">
@@ -279,9 +420,6 @@ export default function PaymentLinks() {
                       </a>
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Share this link directly with your customer via email, SMS, or any messaging platform.
-                  </p>
                 </TabsContent>
 
                 <TabsContent value="embed" className="mt-4 space-y-4">
@@ -294,49 +432,100 @@ export default function PaymentLinks() {
                     <Copy className="h-4 w-4" />
                     Copy Embed Code
                   </Button>
-                  <p className="text-xs text-muted-foreground">
-                    Embed the payment widget directly on your website. The iframe will adapt to your container width.
-                  </p>
                 </TabsContent>
 
                 <TabsContent value="qr" className="mt-4 space-y-4">
                   <div className="flex flex-col items-center gap-4">
                     <div className="rounded-lg border border-border bg-white p-4">
-                      <img
-                        src={generateQRUrl()}
-                        alt="Payment QR Code"
-                        className="h-[200px] w-[200px]"
-                      />
+                      <img src={generateQRUrl()} alt="Payment QR Code" className="h-[200px] w-[200px]" />
                     </div>
                     <Button asChild variant="outline" className="gap-2">
                       <a href={generateQRUrl()} download="payment-qr.png">
-                        <QrCode className="h-4 w-4" />
-                        Download QR Code
+                        <QrCode className="h-4 w-4" /> Download QR Code
                       </a>
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Display this QR code for in-person payments or print it on invoices.
-                  </p>
                 </TabsContent>
 
                 <TabsContent value="share" className="mt-4 space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <Button variant="outline" className="gap-2 justify-start" asChild>
                       <a href={`mailto:${customerEmail}?subject=Payment%20Request&body=Please%20complete%20your%20payment%20here:%20${encodeURIComponent(paymentLink)}`}>
-                        <Mail className="h-4 w-4" />
-                        Send via Email
+                        <Mail className="h-4 w-4" /> Send via Email
                       </a>
                     </Button>
                     <Button variant="outline" className="gap-2 justify-start" asChild>
                       <a href={`https://wa.me/?text=Complete%20your%20payment%20here:%20${encodeURIComponent(paymentLink)}`} target="_blank">
-                        <MessageSquare className="h-4 w-4" />
-                        WhatsApp
+                        <MessageSquare className="h-4 w-4" /> WhatsApp
                       </a>
                     </Button>
                   </div>
                 </TabsContent>
               </Tabs>
+            </CardContent>
+          </Card>
+
+          {/* Saved Payment Links */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Link2 className="h-5 w-5 text-primary" />
+                Saved Payment Links
+              </CardTitle>
+              <CardDescription>Reuse, edit, or delete your previously created links</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {linksLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : savedLinks.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  No saved payment links yet. Create and save one above.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {savedLinks.map((link) => (
+                    <div
+                      key={link.id}
+                      className={`rounded-lg border p-4 space-y-2 transition-colors ${
+                        editingLinkId === link.id ? 'border-primary bg-primary/5' : 'border-border bg-background'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Badge variant={link.status === 'active' ? 'default' : 'secondary'} className="text-[10px] shrink-0">
+                            {link.status}
+                          </Badge>
+                          <span className="font-medium text-sm text-foreground truncate">
+                            {link.description || link.order_id || 'Payment Link'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyToClipboard(link.url)}>
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => loadLinkForEditing(link)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deleteLink(link.id)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          {link.amount ? formatCurrency(link.amount, link.currency as Currency) : 'Custom amount'} · {link.currency}
+                        </span>
+                        <span>{new Date(link.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="font-mono text-[10px] text-muted-foreground truncate">
+                        {link.url}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -399,8 +588,8 @@ export default function PaymentLinks() {
                   {(paymentMethod === 'all' || paymentMethod === 'card') && (
                     <>
                       <Badge variant="secondary" className="gap-1">💳 Card</Badge>
-                      <Badge variant="secondary" className="gap-1"><img src="/logos/apple-pay-icon.png" alt="" className="h-3.5 w-auto" /> Apple Pay</Badge>
-                      <Badge variant="secondary" className="gap-1"><img src="/logos/google-pay-icon.png" alt="" className="h-3.5 w-auto" /> Google Pay</Badge>
+                      <Badge variant="secondary" className="gap-1">Apple Pay</Badge>
+                      <Badge variant="secondary" className="gap-1">Google Pay</Badge>
                     </>
                   )}
                   {(paymentMethod === 'all' || paymentMethod === 'openbanking') && (

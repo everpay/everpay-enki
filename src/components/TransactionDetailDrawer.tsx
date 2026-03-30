@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Transaction } from '@/lib/types';
 import { useProviderEvents } from '@/hooks/useProviderEvents';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe, Building2, Wallet, RotateCcw, MapPin, Tag, ExternalLink, Store } from 'lucide-react';
+import { ArrowRight, Clock, Zap, CreditCard, Mail, FileText, Hash, RefreshCw, Shield, Wifi, Monitor, Smartphone, Globe, Building2, Wallet, RotateCcw, MapPin, Tag, ExternalLink, Store, Loader2 } from 'lucide-react';
 import { CardBrandBadge } from '@/components/CardBrandBadge';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -141,11 +141,21 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const customerId = txMetadata?.customer_id || txMetadata?.customerId || null;
   const { data: paymentMethod } = usePaymentMethod(transaction?.id || null, customerId);
 
-  // Tapix enrichment
+  // Tapix enrichment - auto-enrich on open
   const txIds = transaction ? [transaction.id] : [];
   const { data: tapixCache = {} } = useTapixCache(txIds);
   const tapixEnrich = useTapixEnrich();
   const enrichment = transaction ? getEnrichmentSummary(tapixCache[transaction.id]) : null;
+
+  // Auto-enrich when drawer opens and no cached enrichment exists
+  useEffect(() => {
+    if (open && transaction && !enrichment && !tapixEnrich.isPending) {
+      tapixEnrich.mutate({
+        transactionId: transaction.id,
+        merchantId: transaction.merchant_id,
+      });
+    }
+  }, [open, transaction?.id, enrichment]);
 
   if (!transaction) return null;
 
@@ -175,12 +185,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const PaymentMethodIcon = methodType === 'bank' ? Building2 : methodType === 'wallet' ? Wallet : CreditCard;
   const methodLabel = methodType === 'bank' ? 'Bank Payment' : methodType === 'wallet' ? 'Digital Wallet' : 'Card Payment';
 
-  const handleEnrich = () => {
-    tapixEnrich.mutate({
-      transactionId: transaction.id,
-      merchantId: transaction.merchant_id,
-    });
-  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -288,24 +292,11 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
 
           {/* Tapix Enrichment Section */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" />
-                Payment Enrichment
-              </h4>
-              {!enrichment && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs gap-1.5"
-                  onClick={handleEnrich}
-                  disabled={tapixEnrich.isPending}
-                >
-                  <Zap className="h-3 w-3" />
-                  {tapixEnrich.isPending ? 'Enriching…' : 'Enrich'}
-                </Button>
-              )}
-            </div>
+            <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
+              <Zap className="h-4 w-4 text-primary" />
+              Payment Enrichment
+              {tapixEnrich.isPending && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+            </h4>
 
             {enrichment ? (
               <div className="rounded-lg border border-border bg-background p-4 space-y-3">
@@ -377,7 +368,7 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             ) : (
               <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
                 <p className="text-xs text-muted-foreground">
-                  Click "Enrich" to fetch merchant, shop, and location data from Tapix
+                  {tapixEnrich.isPending ? 'Enriching transaction data…' : 'No enrichment data available'}
                 </p>
               </div>
             )}
@@ -409,9 +400,6 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
               {transaction.description && <DetailRow icon={FileText} label="Description" value={transaction.description} />}
               {transaction.provider_ref && (
                 <DetailRow icon={Wifi} label="Provider Ref" value={<span className="font-mono text-xs">{transaction.provider_ref}</span>} />
-              )}
-              {transaction.idempotency_key && (
-                <DetailRow icon={RefreshCw} label="Idempotency Key" value={<span className="font-mono text-xs break-all">{transaction.idempotency_key}</span>} />
               )}
             </div>
           </div>
