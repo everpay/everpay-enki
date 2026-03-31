@@ -27,6 +27,7 @@ import {
   Globe,
   Bell,
   BookOpen,
+  Handshake,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -120,6 +121,8 @@ const navSections: NavSection[] = [
     items: [
       { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "admin", "super_admin"] },
       { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
+      { to: "/affiliate", icon: Handshake, label: "Affiliate Program", visibleTo: ["reseller", "developer"] },
+      { to: "/chargeflow", icon: Shield, label: "Chargeflow" },
     ],
   },
 ];
