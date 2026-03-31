@@ -65,6 +65,8 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import BoardOverview from "./pages/admin/BoardOverview";
 import AdminProcessorInfo from "./pages/admin/AdminProcessorInfo";
 import ResellerPortal from "./pages/ResellerPortal";
+import AffiliateProgram from "./pages/AffiliateProgram";
+import ChargeflowDashboard from "./pages/ChargeflowDashboard";
 import Treasury from "./pages/Treasury";
 import LiveAnalytics from "./pages/LiveAnalytics";
 import Settlements from "./pages/Settlements";
