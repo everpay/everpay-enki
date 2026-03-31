@@ -133,6 +133,78 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_links: {
+        Row: {
+          clicks: number
+          code: string
+          created_at: string
+          id: string
+          label: string | null
+          signups: number
+          user_id: string
+        }
+        Insert: {
+          clicks?: number
+          code: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          signups?: number
+          user_id: string
+        }
+        Update: {
+          clicks?: number
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          signups?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      affiliate_referrals: {
+        Row: {
+          commission_amount: number | null
+          commission_rate: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          referral_code: string
+          referred_email: string | null
+          referred_user_id: string | null
+          referrer_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number | null
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          referral_code: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number | null
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          referral_code?: string
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       api_request_logs: {
         Row: {
           created_at: string | null
@@ -518,6 +590,82 @@ export type Database = {
             foreignKeyName: "card_velocity_merchant_id_fkey"
             columns: ["merchant_id"]
             isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chargeflow_notifications: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          merchant_id: string
+          message: string | null
+          payload: Json | null
+          read: boolean
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          merchant_id: string
+          message?: string | null
+          payload?: Json | null
+          read?: boolean
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          merchant_id?: string
+          message?: string | null
+          payload?: Json | null
+          read?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chargeflow_notifications_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chargeflow_settings: {
+        Row: {
+          api_key_encrypted: string | null
+          connected: boolean
+          created_at: string
+          id: string
+          merchant_external_id: string | null
+          merchant_id: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          connected?: boolean
+          created_at?: string
+          id?: string
+          merchant_external_id?: string | null
+          merchant_id: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          connected?: boolean
+          created_at?: string
+          id?: string
+          merchant_external_id?: string | null
+          merchant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chargeflow_settings_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
             referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
