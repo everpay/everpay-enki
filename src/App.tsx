@@ -265,6 +265,8 @@ const AppRoutes = () => {
     <Route path="/enki/processors" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminProcessorInfo /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/cascading" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminCascading /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/affiliate" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller', 'developer']}><AffiliateProgram /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/chargeflow" element={<ProtectedRoute><ChargeflowDashboard /></ProtectedRoute>} />
 
     {/* Developer portal — public (no login required) */}
     <Route path="/developers" element={<DeveloperPortal />}>
