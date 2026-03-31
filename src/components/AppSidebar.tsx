@@ -121,7 +121,7 @@ const navSections: NavSection[] = [
     items: [
       { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "admin", "super_admin"] },
       { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
-      { to: "/affiliate", icon: Link2, label: "Affiliate Program", visibleTo: ["reseller", "developer"] },
+      { to: "/affiliate", icon: Handshake, label: "Affiliate Program", visibleTo: ["reseller", "developer"] },
       { to: "/chargeflow", icon: Shield, label: "Chargeflow" },
     ],
   },
