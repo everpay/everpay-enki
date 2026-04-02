@@ -7,10 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import everpayIcon from '@/assets/everpay-icon.png';
+import { getAppContext, getSubdomainConfig } from '@/lib/subdomain';
 
 export default function Auth() {
   const location = useLocation();
-  const [isLogin, setIsLogin] = useState(location.pathname !== '/signup');
+  const appContext = getAppContext();
+  const config = getSubdomainConfig(appContext);
+
+  const [isLogin, setIsLogin] = useState(
+    location.pathname !== '/signup' || !config.signupEnabled
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -28,16 +34,18 @@ export default function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success('Signed in successfully');
-        navigate('/dashboard');
+        navigate(config.redirectAfterLogin);
       } else {
-        const isDeveloperPortal = window.location.hostname.startsWith('developers.');
+        const signupSource = config.autoRole || (
+          window.location.hostname.startsWith('developers.') ? 'developers' : undefined
+        );
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               display_name: displayName,
-              ...(isDeveloperPortal ? { signup_source: 'developers' } : {}),
+              ...(signupSource ? { signup_source: signupSource } : {}),
             },
             emailRedirectTo: window.location.origin,
           },
