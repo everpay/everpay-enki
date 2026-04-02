@@ -145,6 +145,13 @@ const adminSections: NavSection[] = [
     ],
   },
   {
+    title: "Finance",
+    items: [
+      { to: "/enki/payment-graph", icon: Eye, label: "Payment Graph" },
+      { to: "/enki/refund-management", icon: RotateCcw, label: "Refund Management" },
+    ],
+  },
+  {
     title: "Routing & Controls",
     items: [
       { to: "/enki/routing", icon: Globe, label: "PSP Routing" },
