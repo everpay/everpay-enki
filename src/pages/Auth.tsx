@@ -168,18 +168,20 @@ export default function Auth() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                navigate(isLogin ? '/signup' : '/login', { replace: true });
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isLogin ? "Don't have an account? " : 'Already have an account? '}
-              <span className="text-primary font-medium">{isLogin ? 'Sign up' : 'Sign in'}</span>
-            </button>
-          </div>
+          {config.signupEnabled && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  navigate(isLogin ? '/signup' : '/login', { replace: true });
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                <span className="text-primary font-medium">{isLogin ? 'Sign up' : 'Sign in'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
