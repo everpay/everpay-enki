@@ -85,7 +85,7 @@ export default function Auth() {
       <div className="relative w-full max-w-md">
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <img src={everpayIcon} alt="Everpay" className="h-10 w-10 rounded-xl" />
-          <span className="font-heading text-2xl font-bold text-foreground tracking-tight">Everpay</span>
+          <span className="font-heading text-2xl font-bold text-foreground tracking-tight">{config.title}</span>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-card">
@@ -93,7 +93,7 @@ export default function Auth() {
             {isLogin ? 'Welcome back' : 'Create account'}
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            {isLogin ? 'Sign in to your merchant dashboard' : 'Set up your merchant account'}
+            {isLogin ? config.subtitle : `Sign up for ${config.title}`}
           </p>
 
           {formError && (
