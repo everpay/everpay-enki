@@ -7,10 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import everpayIcon from '@/assets/everpay-icon.png';
+import { getAppContext, getSubdomainConfig } from '@/lib/subdomain';
 
 export default function Auth() {
   const location = useLocation();
-  const [isLogin, setIsLogin] = useState(location.pathname !== '/signup');
+  const appContext = getAppContext();
+  const config = getSubdomainConfig(appContext);
+
+  const [isLogin, setIsLogin] = useState(
+    location.pathname !== '/signup' || !config.signupEnabled
+  );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -28,16 +34,18 @@ export default function Auth() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success('Signed in successfully');
-        navigate('/dashboard');
+        navigate(config.redirectAfterLogin);
       } else {
-        const isDeveloperPortal = window.location.hostname.startsWith('developers.');
+        const signupSource = config.autoRole || (
+          window.location.hostname.startsWith('developers.') ? 'developers' : undefined
+        );
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               display_name: displayName,
-              ...(isDeveloperPortal ? { signup_source: 'developers' } : {}),
+              ...(signupSource ? { signup_source: signupSource } : {}),
             },
             emailRedirectTo: window.location.origin,
           },
@@ -77,7 +85,7 @@ export default function Auth() {
       <div className="relative w-full max-w-md">
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <img src={everpayIcon} alt="Everpay" className="h-10 w-10 rounded-xl" />
-          <span className="font-heading text-2xl font-bold text-foreground tracking-tight">Everpay</span>
+          <span className="font-heading text-2xl font-bold text-foreground tracking-tight">{config.title}</span>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6 shadow-card">
@@ -85,7 +93,7 @@ export default function Auth() {
             {isLogin ? 'Welcome back' : 'Create account'}
           </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            {isLogin ? 'Sign in to your merchant dashboard' : 'Set up your merchant account'}
+            {isLogin ? config.subtitle : `Sign up for ${config.title}`}
           </p>
 
           {formError && (
@@ -160,18 +168,20 @@ export default function Auth() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => {
-                setIsLogin(!isLogin);
-                navigate(isLogin ? '/signup' : '/login', { replace: true });
-              }}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {isLogin ? "Don't have an account? " : 'Already have an account? '}
-              <span className="text-primary font-medium">{isLogin ? 'Sign up' : 'Sign in'}</span>
-            </button>
-          </div>
+          {config.signupEnabled && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  navigate(isLogin ? '/signup' : '/login', { replace: true });
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                <span className="text-primary font-medium">{isLogin ? 'Sign up' : 'Sign in'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
