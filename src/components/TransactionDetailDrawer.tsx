@@ -422,6 +422,50 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             </div>
           </div>
 
+          {/* Processor Response */}
+          {txMetadata.provider_response && (
+            <div className="space-y-3">
+              <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                Processor Response
+              </h4>
+              <div className="rounded-lg border border-border bg-background p-4 space-y-2">
+                {txMetadata.provider_response.status && (
+                  <DetailRow icon={Hash} label="Status" value={
+                    <Badge variant={txMetadata.provider_response.status === 'Approved' ? 'success' : txMetadata.provider_response.status === 'Declined' || txMetadata.provider_response.status === 'Failed' ? 'destructive' : 'warning'}>
+                      {txMetadata.provider_response.status}
+                    </Badge>
+                  } />
+                )}
+                {txMetadata.provider_response.message && (
+                  <DetailRow icon={FileText} label="Message" value={
+                    <span className="text-xs">{txMetadata.provider_response.message}</span>
+                  } />
+                )}
+                {(txMetadata.provider_response.error?.code || txMetadata.provider_response.respcode || txMetadata.provider_response.statusCode) && (
+                  <DetailRow icon={Hash} label="Response Code" value={
+                    <span className="font-mono text-xs">{txMetadata.provider_response.error?.code || txMetadata.provider_response.respcode || txMetadata.provider_response.statusCode}</span>
+                  } />
+                )}
+                {txMetadata.provider_response.error?.message && (
+                  <DetailRow icon={FileText} label="Error" value={
+                    <span className="text-xs text-destructive">{txMetadata.provider_response.error.message}</span>
+                  } />
+                )}
+                {txMetadata.provider_response.transaction_reference && (
+                  <DetailRow icon={Wifi} label="Txn Reference" value={
+                    <span className="font-mono text-[10px]">{txMetadata.provider_response.transaction_reference}</span>
+                  } />
+                )}
+                {txMetadata.provider_response.test_mode && (
+                  <div className="pt-1 border-t border-border">
+                    <Badge variant="outline" className="text-[10px]">Test Mode</Badge>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* FX Details */}
           {transaction.fx_rate && (
             <div className="space-y-3">
