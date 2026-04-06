@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, ArrowRight, Loader2, Shield, Lock, CheckCircle, Globe, Building2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
+
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
 

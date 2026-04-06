@@ -19,7 +19,7 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 import { useFraudDetection, FraudRiskResult } from '@/hooks/useFraudDetection';
-import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
+
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
 // Detect region from browser locale / timezone
