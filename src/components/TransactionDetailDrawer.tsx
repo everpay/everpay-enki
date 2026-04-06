@@ -3,7 +3,8 @@ import { Transaction } from '@/lib/types';
 import { useProviderEvents } from '@/hooks/useProviderEvents';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
+import { formatCurrency, formatDate } from '@/lib/format';
+import { getTransactionStatusInfo } from '@/lib/transaction-status';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -201,20 +202,37 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
 
         <div className="space-y-6">
           {/* Amount & Status */}
-          <div className="rounded-lg border border-border bg-background p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-heading text-2xl font-bold text-foreground">
-                {formatCurrency(transaction.amount, transaction.currency)}
-              </span>
-              <Badge variant={getStatusVariant(transaction.status)} className="text-xs">
-                {transaction.status}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              {formatDate(transaction.created_at)}
-            </div>
-          </div>
+          {(() => {
+            const statusInfo = getTransactionStatusInfo(transaction.status, txMetadata);
+            return (
+              <div className="rounded-lg border border-border bg-background p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-heading text-2xl font-bold text-foreground">
+                    {formatCurrency(transaction.amount, transaction.currency)}
+                  </span>
+                  <Badge variant={statusInfo.variant} className="text-xs">
+                    {statusInfo.label}
+                  </Badge>
+                </div>
+                {statusInfo.reason && (
+                  <div className="flex items-center gap-2 text-sm mb-2">
+                    <span className={`text-xs ${statusInfo.variant === 'destructive' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      {statusInfo.reason}
+                    </span>
+                    {statusInfo.responseCode && (
+                      <Badge variant="outline" className="font-mono text-[10px]">
+                        {statusInfo.responseCode}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  {formatDate(transaction.created_at)}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Refund Button */}
           {(transaction.status === 'completed' || transaction.status === 'processing') && (
