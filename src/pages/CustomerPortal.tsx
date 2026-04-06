@@ -12,6 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/format';
 import { format } from 'date-fns';
+import { getTransactionStatusInfo } from '@/lib/transaction-status';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 function useCustomerData() {
@@ -173,7 +175,23 @@ export default function CustomerPortal() {
                         <TableCell className="text-sm text-muted-foreground">{format(new Date(tx.created_at), 'MMM d, yyyy')}</TableCell>
                         <TableCell className="text-sm font-medium text-foreground">{tx.description || 'Payment'}</TableCell>
                         <TableCell className="text-sm font-semibold">{formatCurrency(tx.amount, tx.currency)}</TableCell>
-                        <TableCell><Badge className={statusColor(tx.status)}>{tx.status}</Badge></TableCell>
+                        <TableCell>
+                          {(() => {
+                            const info = getTransactionStatusInfo(tx.status, tx.metadata);
+                            return (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant={info.variant}>{info.label}</Badge>
+                                  </TooltipTrigger>
+                                  {info.reason && (
+                                    <TooltipContent><p className="text-xs">{info.reason}{info.responseCode ? ` (${info.responseCode})` : ''}</p></TooltipContent>
+                                  )}
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
+                          })()}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
