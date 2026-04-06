@@ -8,11 +8,16 @@ import {
   Container,
   Head,
   Heading,
+  Hr,
   Html,
+  Img,
   Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
+
+const LOGO_URL = 'https://dhobjuetzkvnkdoqeavy.supabase.co/storage/v1/object/public/email-assets/everpay-icon.png'
 
 interface EmailChangeEmailProps {
   siteName: string
@@ -29,31 +34,37 @@ export const EmailChangeEmail = ({
 }: EmailChangeEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your email change for {siteName}</Preview>
+    <Preview>Confirm your new Everpay email</Preview>
     <Body style={main}>
       <Container style={container}>
+        <table cellPadding="0" cellSpacing="0" border={0} style={{ border: 'none', borderCollapse: 'collapse' }}>
+          <tr>
+            <td style={{ verticalAlign: 'middle', paddingRight: '12px', lineHeight: '1' }}>
+              <Img src={LOGO_URL} width="32" height="32" alt="Everpay" style={logoImg} />
+            </td>
+            <td style={{ verticalAlign: 'middle', lineHeight: '1' }}>
+              <span style={{ fontSize: '24px', fontWeight: 700, fontFamily: "Sora, 'Helvetica Neue', sans-serif", color: '#0f1419', lineHeight: '1' }}>Everpay</span>
+            </td>
+          </tr>
+        </table>
+        <Hr style={divider} />
         <Heading style={h1}>Confirm your email change</Heading>
         <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
-          <Link href={`mailto:${email}`} style={link}>
-            {email}
-          </Link>{' '}
+          You requested to change your email address from{' '}
+          <Link href={`mailto:${email}`} style={link}>{email}</Link>{' '}
           to{' '}
-          <Link href={`mailto:${newEmail}`} style={link}>
-            {newEmail}
-          </Link>
-          .
+          <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>.
         </Text>
+        <Section style={buttonSection}>
+          <Button style={button} href={confirmationUrl}>
+            Confirm email change
+          </Button>
+        </Section>
         <Text style={text}>
-          Click the button below to confirm this change:
+          If you didn't request this change, please secure your account immediately.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Confirm Email Change
-        </Button>
-        <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
-        </Text>
+        <Hr style={divider} />
+        <Text style={footerAddress}>Everpay Inc.</Text>
       </Container>
     </Body>
   </Html>
@@ -61,27 +72,34 @@ export const EmailChangeEmail = ({
 
 export default EmailChangeEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = { backgroundColor: '#f6f9fc', fontFamily: "Manrope, 'Helvetica Neue', Arial, sans-serif" }
+const container = { backgroundColor: '#ffffff', padding: '40px 32px', maxWidth: '520px', margin: '40px auto', borderRadius: '8px' }
+const logoImg = { borderRadius: '8px' }
+const divider = { borderColor: '#e6ebf1', margin: '24px 0' }
 const h1 = {
   fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
+  fontWeight: '700' as const,
+  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
+  color: '#0f1419',
+  margin: '0 0 16px',
+  lineHeight: '1.4',
 }
 const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
+  fontSize: '15px',
+  color: '#525f7f',
+  lineHeight: '1.7',
+  margin: '0 0 20px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: '#1aa478', textDecoration: 'underline' }
+const buttonSection = { textAlign: 'center' as const, margin: '28px 0' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: '#1aa478',
   color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  fontSize: '15px',
+  fontWeight: '600' as const,
+  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
+  borderRadius: '999px',
+  padding: '14px 32px',
   textDecoration: 'none',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const footerAddress = { fontSize: '12px', color: '#aab7c4', margin: '0' }
