@@ -90,7 +90,7 @@ export default function Invoices() {
       if (!user) throw new Error('Not authenticated');
       const { data: merchant } = await supabase.from('merchants').select('id').eq('user_id', user.id).single();
       if (!merchant) throw new Error('Merchant not found');
-      const { error } = await supabase.from('invoices').insert({ merchant_id: merchant.id, customer_email: customerEmail, customer_name: customerName, amount: parseFloat(amount), currency, description, due_date: dueDate ? new Date(dueDate).toISOString() : null, notes, invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`, status: 'draft', items: lineItems.length > 0 ? lineItems as any : null, metadata: { processor: currency === 'PKR' ? 'paygate10' : 'shieldhub' } as any });
+      const { error } = await supabase.from('invoices').insert({ merchant_id: merchant.id, customer_email: customerEmail, customer_name: customerName, amount: parseFloat(amount), currency, description, due_date: dueDate ? new Date(dueDate).toISOString() : null, notes, invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`, status: 'draft', items: lineItems.length > 0 ? lineItems as any : null });
       if (error) throw error;
       toast.success('Invoice created');
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
@@ -131,7 +131,7 @@ export default function Invoices() {
                 />
               </div>
               <InvoiceLineItems items={lineItems} onChange={handleLineItemsChange} currency={currency} />
-              <div className="space-y-2"><Label className="text-xs">Total Amount & Currency *</Label><CurrencyInput value={amount} onChange={setAmount} currency={currency} onCurrencyChange={(v) => setCurrency(v as Currency)} currencies={['USD','EUR','GBP','BRL','CAD']} readOnly={lineItems.length > 0} min="0.01" step="0.01" /></div>
+              <div className="space-y-2"><Label className="text-xs">Total Amount & Currency *</Label><CurrencyInput value={amount} onChange={setAmount} currency={currency} onCurrencyChange={(v) => setCurrency(v as Currency)} currencies={['USD','EUR','GBP','BRL','CAD','PKR','KES','NGN','ZAR','INR','BDT','MXN']} readOnly={lineItems.length > 0} min="0.01" step="0.01" /></div>
               <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
               <div className="space-y-2"><Label className="text-xs">Due Date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
               <div className="space-y-2"><Label className="text-xs">Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} /></div>
