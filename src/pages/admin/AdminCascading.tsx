@@ -253,7 +253,7 @@ export default function AdminCascading() {
                             <div className={`border rounded-lg px-3 py-2 text-xs ${attempt.status === 'succeeded' || attempt.status === 'completed' ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-destructive/30 bg-destructive/5'}`}>
                               <div className="font-medium">{attempt.provider}</div>
                               <div className="text-muted-foreground">#{attempt.attempt_number} • {attempt.latency_ms || '—'}ms</div>
-                              <Badge variant={attempt.status === 'succeeded' || attempt.status === 'completed' ? 'default' : 'destructive'} className="text-[10px] mt-1">{attempt.status}</Badge>
+                              <Badge variant={attempt.status === 'succeeded' || attempt.status === 'completed' ? 'default' : 'destructive'} className="text-[10px] mt-1">{attempt.status === 'succeeded' || attempt.status === 'completed' ? 'Approved' : attempt.status === 'failed' ? 'Declined' : attempt.status}</Badge>
                             </div>
                           </div>
                         ))}

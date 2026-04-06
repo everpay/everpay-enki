@@ -131,7 +131,7 @@ export default function Invoices() {
                 />
               </div>
               <InvoiceLineItems items={lineItems} onChange={handleLineItemsChange} currency={currency} />
-              <div className="space-y-2"><Label className="text-xs">Total Amount & Currency *</Label><CurrencyInput value={amount} onChange={setAmount} currency={currency} onCurrencyChange={(v) => setCurrency(v as Currency)} currencies={['USD','EUR','GBP','BRL','CAD']} readOnly={lineItems.length > 0} min="0.01" step="0.01" /></div>
+              <div className="space-y-2"><Label className="text-xs">Total Amount & Currency *</Label><CurrencyInput value={amount} onChange={setAmount} currency={currency} onCurrencyChange={(v) => setCurrency(v as Currency)} currencies={['USD','EUR','GBP','BRL','CAD','PKR','KES','NGN','ZAR','INR','BDT','MXN']} readOnly={lineItems.length > 0} min="0.01" step="0.01" /></div>
               <div className="space-y-2"><Label className="text-xs">Description</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} /></div>
               <div className="space-y-2"><Label className="text-xs">Due Date</Label><Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
               <div className="space-y-2"><Label className="text-xs">Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} /></div>

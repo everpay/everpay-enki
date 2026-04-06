@@ -15,6 +15,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTransactions } from '@/hooks/useTransactions';
 import { formatCurrency } from '@/lib/format';
+import { getTransactionStatusInfo } from '@/lib/transaction-status';
 import { format } from 'date-fns';
 import { Search, MoreHorizontal, Eye, Pencil, UserCircle, CreditCard, MapPin, Package, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -142,7 +143,7 @@ export default function Customers() {
               <div className="grid grid-cols-2 gap-4"><div><Label className="text-xs font-semibold text-muted-foreground uppercase">Email</Label><p className="text-sm font-semibold text-foreground">{viewCustomer?.email}</p></div><div><Label className="text-xs font-semibold text-muted-foreground uppercase">Created</Label><p className="text-sm font-semibold text-foreground">{viewCustomer ? format(new Date(viewCustomer.created_at), 'PPP') : ''}</p></div></div>
             </TabsContent>
             <TabsContent value="purchases" className="mt-4">{customerTransactions.length === 0 ? <p className="text-sm text-muted-foreground py-4">No transactions yet</p> : customerTransactions.map(tx => (
-              <div key={tx.id} className="flex items-center justify-between py-2 border-b border-border"><div><p className="text-sm font-medium">{formatCurrency(tx.amount, tx.currency as any)}</p><p className="text-xs text-muted-foreground">{format(new Date(tx.created_at), 'PP')}</p></div><Badge variant={tx.status === 'completed' ? 'default' : 'secondary'}>{tx.status}</Badge></div>
+              <div key={tx.id} className="flex items-center justify-between py-2 border-b border-border"><div><p className="text-sm font-medium">{formatCurrency(tx.amount, tx.currency as any)}</p><p className="text-xs text-muted-foreground">{format(new Date(tx.created_at), 'PP')}</p></div>{(() => { const info = getTransactionStatusInfo(tx.status, (tx as any).metadata); return <Badge variant={info.variant}>{info.label}</Badge>; })()}</div>
             ))}</TabsContent>
             <TabsContent value="cards" className="mt-4 space-y-2">{paymentMethods.length === 0 ? <p className="text-sm text-muted-foreground py-4">No saved cards</p> : paymentMethods.map((pm: any) => <CardBrandBadge key={pm.id} brand={pm.card_brand} last4={pm.card_last4} expMonth={pm.exp_month} expYear={pm.exp_year} />)}</TabsContent>
           </Tabs>
