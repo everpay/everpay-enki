@@ -3,7 +3,8 @@ import { Transaction } from '@/lib/types';
 import { useProviderEvents } from '@/hooks/useProviderEvents';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
+import { formatCurrency, formatDate } from '@/lib/format';
+import { getTransactionStatusInfo } from '@/lib/transaction-status';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -201,20 +202,37 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
 
         <div className="space-y-6">
           {/* Amount & Status */}
-          <div className="rounded-lg border border-border bg-background p-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-heading text-2xl font-bold text-foreground">
-                {formatCurrency(transaction.amount, transaction.currency)}
-              </span>
-              <Badge variant={getStatusVariant(transaction.status)} className="text-xs">
-                {transaction.status}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              {formatDate(transaction.created_at)}
-            </div>
-          </div>
+          {(() => {
+            const statusInfo = getTransactionStatusInfo(transaction.status, txMetadata);
+            return (
+              <div className="rounded-lg border border-border bg-background p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-heading text-2xl font-bold text-foreground">
+                    {formatCurrency(transaction.amount, transaction.currency)}
+                  </span>
+                  <Badge variant={statusInfo.variant} className="text-xs">
+                    {statusInfo.label}
+                  </Badge>
+                </div>
+                {statusInfo.reason && (
+                  <div className="flex items-center gap-2 text-sm mb-2">
+                    <span className={`text-xs ${statusInfo.variant === 'destructive' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      {statusInfo.reason}
+                    </span>
+                    {statusInfo.responseCode && (
+                      <Badge variant="outline" className="font-mono text-[10px]">
+                        {statusInfo.responseCode}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  {formatDate(transaction.created_at)}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Refund Button */}
           {(transaction.status === 'completed' || transaction.status === 'processing') && (
@@ -403,6 +421,50 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
               )}
             </div>
           </div>
+
+          {/* Processor Response */}
+          {txMetadata.provider_response && (
+            <div className="space-y-3">
+              <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                Processor Response
+              </h4>
+              <div className="rounded-lg border border-border bg-background p-4 space-y-2">
+                {txMetadata.provider_response.status && (
+                  <DetailRow icon={Hash} label="Status" value={
+                    <Badge variant={txMetadata.provider_response.status === 'Approved' ? 'success' : txMetadata.provider_response.status === 'Declined' || txMetadata.provider_response.status === 'Failed' ? 'destructive' : 'warning'}>
+                      {txMetadata.provider_response.status}
+                    </Badge>
+                  } />
+                )}
+                {txMetadata.provider_response.message && (
+                  <DetailRow icon={FileText} label="Message" value={
+                    <span className="text-xs">{txMetadata.provider_response.message}</span>
+                  } />
+                )}
+                {(txMetadata.provider_response.error?.code || txMetadata.provider_response.respcode || txMetadata.provider_response.statusCode) && (
+                  <DetailRow icon={Hash} label="Response Code" value={
+                    <span className="font-mono text-xs">{txMetadata.provider_response.error?.code || txMetadata.provider_response.respcode || txMetadata.provider_response.statusCode}</span>
+                  } />
+                )}
+                {txMetadata.provider_response.error?.message && (
+                  <DetailRow icon={FileText} label="Error" value={
+                    <span className="text-xs text-destructive">{txMetadata.provider_response.error.message}</span>
+                  } />
+                )}
+                {txMetadata.provider_response.transaction_reference && (
+                  <DetailRow icon={Wifi} label="Txn Reference" value={
+                    <span className="font-mono text-[10px]">{txMetadata.provider_response.transaction_reference}</span>
+                  } />
+                )}
+                {txMetadata.provider_response.test_mode && (
+                  <div className="pt-1 border-t border-border">
+                    <Badge variant="outline" className="text-[10px]">Test Mode</Badge>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* FX Details */}
           {transaction.fx_rate && (

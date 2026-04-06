@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { Transaction } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatCurrency, formatDate, getStatusVariant } from '@/lib/format';
+import { formatCurrency, formatDate } from '@/lib/format';
+import { getTransactionStatusInfo } from '@/lib/transaction-status';
 import { TransactionDetailDrawer } from './TransactionDetailDrawer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ChevronLeft, ChevronRight, Eye, Zap, CreditCard } from 'lucide-react';
@@ -163,7 +164,26 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                       <Badge variant="outline" className="font-mono text-[10px]">{tx.currency}</Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={getStatusVariant(tx.status)}>{tx.status}</Badge>
+                      {(() => {
+                        const statusInfo = getTransactionStatusInfo(tx.status, (tx as any).metadata);
+                        return (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant={statusInfo.variant}>
+                                {statusInfo.label}
+                              </Badge>
+                            </TooltipTrigger>
+                            {statusInfo.reason && (
+                              <TooltipContent side="bottom" className="max-w-[250px]">
+                                <p className="text-xs">{statusInfo.reason}</p>
+                                {statusInfo.responseCode && (
+                                  <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">Code: {statusInfo.responseCode}</p>
+                                )}
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <div className="flex items-center gap-1.5">
