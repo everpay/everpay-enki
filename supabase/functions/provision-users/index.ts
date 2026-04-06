@@ -14,7 +14,6 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
-  // Verify caller is super_admin
   const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
   const { data: { user: caller } } = await anonClient.auth.getUser(authHeader.replace("Bearer ", ""));
   if (!caller) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
