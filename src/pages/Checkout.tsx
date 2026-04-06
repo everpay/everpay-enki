@@ -479,16 +479,7 @@ export default function Checkout() {
         </div>
       )}
 
-      {/* 3DS Modal */}
-      <ThreeDSecureModal
-        open={showThreeDS}
-        onClose={() => setShowThreeDS(false)}
-        redirectUrl={threeDSUrl}
-        transactionId={threeDSTransactionId}
-        onComplete={() => {
-          setShowThreeDS(false);
-        }}
-      />
+      {/* 3DS is handled natively by ShieldHub at processor level */}
     </div>
   );
 }
