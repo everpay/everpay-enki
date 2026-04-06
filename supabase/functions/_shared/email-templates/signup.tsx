@@ -33,7 +33,7 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Welcome to Everpay — confirm your email</Preview>
+    <Preview>Confirm your Everpay email</Preview>
     <Body style={main}>
       <Container style={container}>
         <table cellPadding="0" cellSpacing="0" border={0} style={{ border: 'none', borderCollapse: 'collapse' }}>
@@ -47,22 +47,19 @@ export const SignupEmail = ({
           </tr>
         </table>
         <Hr style={divider} />
-        <Heading style={h1}>You're ready to get started with Everpay</Heading>
+        <Heading style={h1}>Confirm your email</Heading>
         <Text style={text}>
-          Thank you for setting up your Everpay account. To help us protect your account, please confirm your email address.
+          Thanks for signing up for Everpay! Please confirm your email address ({recipient}) by clicking the button below.
         </Text>
         <Section style={buttonSection}>
           <Button style={button} href={confirmationUrl}>
-            Confirm your email
+            Verify email
           </Button>
         </Section>
         <Text style={text}>
-          By signing up for an Everpay account, you gain access to a secure payment platform built for modern businesses to accept and manage payments worldwide.
-        </Text>
-        <Hr style={divider} />
-        <Text style={footer}>
           If you didn't create an account, you can safely ignore this email.
         </Text>
+        <Hr style={divider} />
         <Text style={footerAddress}>Everpay Inc.</Text>
       </Container>
     </Body>
@@ -74,13 +71,6 @@ export default SignupEmail
 const main = { backgroundColor: '#f6f9fc', fontFamily: "Manrope, 'Helvetica Neue', Arial, sans-serif" }
 const container = { backgroundColor: '#ffffff', padding: '40px 32px', maxWidth: '520px', margin: '40px auto', borderRadius: '8px' }
 const logoImg = { borderRadius: '8px' }
-const logoText = {
-  fontSize: '22px',
-  fontWeight: '700' as const,
-  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
-  color: '#0f1419',
-  margin: '0',
-}
 const divider = { borderColor: '#e6ebf1', margin: '24px 0' }
 const h1 = {
   fontSize: '22px',
@@ -107,5 +97,4 @@ const button = {
   padding: '14px 32px',
   textDecoration: 'none',
 }
-const footer = { fontSize: '13px', color: '#8898aa', margin: '0 0 8px', lineHeight: '1.5' }
 const footerAddress = { fontSize: '12px', color: '#aab7c4', margin: '0' }

@@ -11,7 +11,6 @@ import {
   Hr,
   Html,
   Img,
-  Link,
   Preview,
   Section,
   Text,
@@ -46,21 +45,19 @@ export const InviteEmail = ({
           </tr>
         </table>
         <Hr style={divider} />
-        <Heading style={h1}>You've been invited to Everpay</Heading>
+        <Heading style={h1}>You've been invited</Heading>
         <Text style={text}>
-          You've been invited to join{' '}
-          <Link href={siteUrl} style={link}><strong>Everpay</strong></Link>.
-          Click the button below to accept the invitation and set up your merchant account.
+          You've been invited to join Everpay. Click the button below to accept the invitation and create your account.
         </Text>
         <Section style={buttonSection}>
           <Button style={button} href={confirmationUrl}>
             Accept invitation
           </Button>
         </Section>
-        <Hr style={divider} />
-        <Text style={footer}>
+        <Text style={text}>
           If you weren't expecting this invitation, you can safely ignore this email.
         </Text>
+        <Hr style={divider} />
         <Text style={footerAddress}>Everpay Inc.</Text>
       </Container>
     </Body>
@@ -72,13 +69,6 @@ export default InviteEmail
 const main = { backgroundColor: '#f6f9fc', fontFamily: "Manrope, 'Helvetica Neue', Arial, sans-serif" }
 const container = { backgroundColor: '#ffffff', padding: '40px 32px', maxWidth: '520px', margin: '40px auto', borderRadius: '8px' }
 const logoImg = { borderRadius: '8px' }
-const logoText = {
-  fontSize: '22px',
-  fontWeight: '700' as const,
-  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
-  color: '#0f1419',
-  margin: '0',
-}
 const divider = { borderColor: '#e6ebf1', margin: '24px 0' }
 const h1 = {
   fontSize: '22px',
@@ -94,7 +84,6 @@ const text = {
   lineHeight: '1.7',
   margin: '0 0 20px',
 }
-const link = { color: '#1aa478', textDecoration: 'underline' }
 const buttonSection = { textAlign: 'center' as const, margin: '28px 0' }
 const button = {
   backgroundColor: '#1aa478',
@@ -106,5 +95,4 @@ const button = {
   padding: '14px 32px',
   textDecoration: 'none',
 }
-const footer = { fontSize: '13px', color: '#8898aa', margin: '0 0 8px', lineHeight: '1.5' }
 const footerAddress = { fontSize: '12px', color: '#aab7c4', margin: '0' }

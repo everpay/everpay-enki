@@ -70,13 +70,6 @@ export default MagicLinkEmail
 const main = { backgroundColor: '#f6f9fc', fontFamily: "Manrope, 'Helvetica Neue', Arial, sans-serif" }
 const container = { backgroundColor: '#ffffff', padding: '40px 32px', maxWidth: '520px', margin: '40px auto', borderRadius: '8px' }
 const logoImg = { borderRadius: '8px' }
-const logoText = {
-  fontSize: '22px',
-  fontWeight: '700' as const,
-  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
-  color: '#0f1419',
-  margin: '0',
-}
 const divider = { borderColor: '#e6ebf1', margin: '24px 0' }
 const h1 = {
   fontSize: '22px',

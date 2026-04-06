@@ -34,7 +34,7 @@ export const EmailChangeEmail = ({
 }: EmailChangeEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your email change for Everpay</Preview>
+    <Preview>Confirm your new Everpay email</Preview>
     <Body style={main}>
       <Container style={container}>
         <table cellPadding="0" cellSpacing="0" border={0} style={{ border: 'none', borderCollapse: 'collapse' }}>
@@ -50,7 +50,7 @@ export const EmailChangeEmail = ({
         <Hr style={divider} />
         <Heading style={h1}>Confirm your email change</Heading>
         <Text style={text}>
-          You requested to change your Everpay account email from{' '}
+          You requested to change your email address from{' '}
           <Link href={`mailto:${email}`} style={link}>{email}</Link>{' '}
           to{' '}
           <Link href={`mailto:${newEmail}`} style={link}>{newEmail}</Link>.
@@ -60,10 +60,10 @@ export const EmailChangeEmail = ({
             Confirm email change
           </Button>
         </Section>
-        <Hr style={divider} />
-        <Text style={footer}>
+        <Text style={text}>
           If you didn't request this change, please secure your account immediately.
         </Text>
+        <Hr style={divider} />
         <Text style={footerAddress}>Everpay Inc.</Text>
       </Container>
     </Body>
@@ -75,13 +75,6 @@ export default EmailChangeEmail
 const main = { backgroundColor: '#f6f9fc', fontFamily: "Manrope, 'Helvetica Neue', Arial, sans-serif" }
 const container = { backgroundColor: '#ffffff', padding: '40px 32px', maxWidth: '520px', margin: '40px auto', borderRadius: '8px' }
 const logoImg = { borderRadius: '8px' }
-const logoText = {
-  fontSize: '22px',
-  fontWeight: '700' as const,
-  fontFamily: "Sora, 'Helvetica Neue', sans-serif",
-  color: '#0f1419',
-  margin: '0',
-}
 const divider = { borderColor: '#e6ebf1', margin: '24px 0' }
 const h1 = {
   fontSize: '22px',
@@ -109,5 +102,4 @@ const button = {
   padding: '14px 32px',
   textDecoration: 'none',
 }
-const footer = { fontSize: '13px', color: '#8898aa', margin: '0 0 8px', lineHeight: '1.5' }
 const footerAddress = { fontSize: '12px', color: '#aab7c4', margin: '0' }
