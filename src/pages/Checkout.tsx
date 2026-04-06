@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, ArrowRight, Loader2, Shield, Lock, CheckCircle, Globe, Building2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
+
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
 
@@ -479,16 +479,7 @@ export default function Checkout() {
         </div>
       )}
 
-      {/* 3DS Modal */}
-      <ThreeDSecureModal
-        open={showThreeDS}
-        onClose={() => setShowThreeDS(false)}
-        redirectUrl={threeDSUrl}
-        transactionId={threeDSTransactionId}
-        onComplete={() => {
-          setShowThreeDS(false);
-        }}
-      />
+      {/* 3DS is handled natively by ShieldHub at processor level */}
     </div>
   );
 }

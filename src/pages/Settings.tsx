@@ -301,7 +301,7 @@ export default function Settings() {
     { key: "processor-routing" as any, label: "Processor Routing", icon: Globe, link: "/processor-transparency" },
     { key: "multi-acquirer" as any, label: "Multi-Acquirer", icon: Globe, link: "/multi-acquirer" },
     { key: "smart-retry" as any, label: "Smart Retry AI", icon: Zap, link: "/smart-retry" },
-    { key: "3ds-settings" as any, label: "3D Secure", icon: Shield, link: "/3ds-settings" },
+    { key: "3ds-settings" as any, label: "3D Secure (Processor-Managed)", icon: Shield, link: "/3ds-settings" },
     { key: "deactivation", label: "Close Account", icon: AlertTriangle, destructive: true },
   ];
 

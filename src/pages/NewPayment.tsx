@@ -19,7 +19,7 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 import { useFraudDetection, FraudRiskResult } from '@/hooks/useFraudDetection';
-import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
+
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
 // Detect region from browser locale / timezone
@@ -591,17 +591,7 @@ export default function NewPayment() {
         </div>
       </div>
 
-      <ThreeDSecureModal
-        open={showThreeDS}
-        onClose={() => setShowThreeDS(false)}
-        redirectUrl={threeDSUrl}
-        transactionId={threeDSTransactionId}
-        onComplete={() => {
-          toast.success('3D Secure authentication completed!');
-          queryClient.invalidateQueries({ queryKey: ['transactions'] });
-          setShowThreeDS(false);
-        }}
-      />
+      {/* 3DS is handled natively by ShieldHub at processor level */}
     </AppLayout>
   );
 }

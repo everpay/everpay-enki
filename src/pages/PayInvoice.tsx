@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreditCard, ArrowRight, Loader2, Shield, Lock, CheckCircle, Globe, Building2, FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { ThreeDSecureModal } from '@/components/ThreeDSecureModal';
+
 import { formatCurrency } from '@/lib/format';
 import { generateInvoicePDF } from '@/lib/invoice-pdf';
 import { CountrySelect } from '@/components/CountrySelect';
@@ -84,7 +84,7 @@ export default function PayInvoice() {
         <Button variant="ghost" size="sm" className="gap-1 text-xs mx-auto flex" onClick={() => generateInvoicePDF(invoice)}><Download className="h-3 w-3" /> Download Invoice PDF</Button>
         <p className="text-center text-xs text-muted-foreground">Secured by <span className="font-medium text-foreground">Everpay</span></p>
       </div>
-      <ThreeDSecureModal open={show3DS} onClose={() => setShow3DS(false)} redirectUrl={threeDSUrl} transactionId={threeDSTxId} onComplete={async () => { if (invoice && threeDSTxId) await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString(), transaction_id: threeDSTxId }).eq('id', invoice.id); setPaymentComplete(true); }} />
+      {/* 3DS is handled natively by ShieldHub at processor level */}
     </div>
   );
 }
