@@ -15,6 +15,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTransactions } from '@/hooks/useTransactions';
 import { formatCurrency } from '@/lib/format';
+import { getTransactionStatusInfo } from '@/lib/transaction-status';
 import { format } from 'date-fns';
 import { Search, MoreHorizontal, Eye, Pencil, UserCircle, CreditCard, MapPin, Package, Plus } from 'lucide-react';
 import { toast } from 'sonner';

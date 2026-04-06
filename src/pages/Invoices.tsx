@@ -90,7 +90,7 @@ export default function Invoices() {
       if (!user) throw new Error('Not authenticated');
       const { data: merchant } = await supabase.from('merchants').select('id').eq('user_id', user.id).single();
       if (!merchant) throw new Error('Merchant not found');
-      const { error } = await supabase.from('invoices').insert({ merchant_id: merchant.id, customer_email: customerEmail, customer_name: customerName, amount: parseFloat(amount), currency, description, due_date: dueDate ? new Date(dueDate).toISOString() : null, notes, invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`, status: 'draft', items: lineItems.length > 0 ? lineItems as any : null });
+      const { error } = await supabase.from('invoices').insert({ merchant_id: merchant.id, customer_email: customerEmail, customer_name: customerName, amount: parseFloat(amount), currency, description, due_date: dueDate ? new Date(dueDate).toISOString() : null, notes, invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`, status: 'draft', items: lineItems.length > 0 ? lineItems as any : null, metadata: { processor: currency === 'PKR' ? 'paygate10' : 'shieldhub' } as any });
       if (error) throw error;
       toast.success('Invoice created');
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
