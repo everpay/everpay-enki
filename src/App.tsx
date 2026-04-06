@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
+import { getAppContext, getSubdomainConfig } from "@/lib/subdomain";
 import Index from "./pages/Index";
 import Transactions from "./pages/Transactions";
 import Wallets from "./pages/Wallets";
@@ -139,12 +140,20 @@ import FrontPaymentGateway from "./pages/front/products/PaymentGateway";
 
 const queryClient = new QueryClient();
 
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
 function ProtectedRoute({ children, skipOnboardingCheck }: { children: React.ReactNode; skipOnboardingCheck?: boolean }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   const { data: onboarding, isLoading: onboardingLoading } = useOnboardingStatus();
 
-  if (loading || onboardingLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading || onboardingLoading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
 
   if (!skipOnboardingCheck && onboarding?.needsOnboarding && location.pathname !== '/onboarding') {
@@ -156,9 +165,26 @@ function ProtectedRoute({ children, skipOnboardingCheck }: { children: React.Rea
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-  if (user) return <Navigate to="/dashboard" replace />;
+  const config = getSubdomainConfig(getAppContext());
+
+  if (loading) return <LoadingScreen />;
+  if (user) return <Navigate to={config.redirectAfterLogin} replace />;
   return <>{children}</>;
+}
+
+function ContextHomeRoute() {
+  const { user, loading } = useAuth();
+  const appContext = getAppContext();
+  const config = getSubdomainConfig(appContext);
+
+  if (appContext === 'main') return <Landing />;
+  if (loading) return <LoadingScreen />;
+
+  if (appContext === 'developer') {
+    return <Navigate to={user ? config.redirectAfterLogin : '/developers'} replace />;
+  }
+
+  return <Navigate to={user ? config.redirectAfterLogin : '/login'} replace />;
 }
 
 const AppRoutes = () => {
@@ -169,7 +195,7 @@ const AppRoutes = () => {
   <InactivityWarningDialog open={showWarning} secondsLeft={secondsLeft} onStayActive={handleStayActive} />
   <Routes>
     {/* Front site pages (public) */}
-    <Route path="/" element={<Landing />} />
+    <Route path="/" element={<ContextHomeRoute />} />
     <Route path="/about" element={<FrontAbout />} />
     <Route path="/pricing" element={<FrontPricing />} />
     <Route path="/contact" element={<FrontContact />} />
