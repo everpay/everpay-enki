@@ -7,9 +7,19 @@ Deno.serve(async (req) => {
   };
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
+
+  const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+  const { data: { user: caller } } = await anonClient.auth.getUser(authHeader.replace("Bearer ", ""));
+  if (!caller) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+  const { data: callerRoles } = await admin.from("user_roles").select("role").eq("user_id", caller.id);
+  const isSuperAdmin = callerRoles?.some((r: any) => r.role === "super_admin");
+  if (!isSuperAdmin) return new Response("Forbidden", { status: 403, headers: corsHeaders });
 
   const users = [
     { email: "richard@rcfitnessflorida.com", password: "RCFitness2026!", displayName: "Richard - RC Fitness", merchantName: "RC Fitness Florida" },
