@@ -139,6 +139,7 @@ import FrontMarketplaces from "./pages/front/solutions/Marketplaces";
 import FrontEnterprise from "./pages/front/solutions/Enterprise";
 import FrontPos from "./pages/front/solutions/Pos";
 import FrontPaymentGateway from "./pages/front/products/PaymentGateway";
+import FrontIntegrations from "./pages/front/FrontIntegrations";
 
 const queryClient = new QueryClient();
 
@@ -205,6 +206,7 @@ const AppRoutes = () => {
     <Route path="/blog" element={<FrontBlog />} />
     <Route path="/careers" element={<FrontCareers />} />
     <Route path="/partners" element={<FrontPartners />} />
+    <Route path="/integrations-directory" element={<FrontIntegrations />} />
     <Route path="/funding" element={<FrontFunding />} />
     <Route path="/commerce" element={<FrontCommerce />} />
     <Route path="/security" element={<FrontSecurity />} />

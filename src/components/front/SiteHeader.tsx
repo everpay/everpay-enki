@@ -44,6 +44,7 @@ export function SiteHeader() {
     { icon: Laptop, label: 'SaaS & Platforms', to: '/solutions/saas-platforms' },
     { icon: Store, label: 'Marketplaces', to: '/solutions/marketplaces' },
     { icon: Building2, label: 'Enterprise', to: '/solutions/enterprise' },
+    { icon: Plug, label: 'Integrations', to: '/integrations-directory' },
   ];
   const productItems = [
     { icon: CreditCard, label: 'Online Payments', to: '/online-payments' },
