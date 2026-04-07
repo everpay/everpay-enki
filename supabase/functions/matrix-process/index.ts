@@ -79,7 +79,9 @@ serve(async (req) => {
     const baseUrl = sandbox ? SANDBOX_URL : LIVE_URL;
 
     // Build auth header — sandbox only needs public key
-    const authHeader = `Basic ${btoa(MATRIX_PUBLIC_KEY + ':')}`;
+    const encoder = new TextEncoder();
+    const authBytes = encoder.encode(MATRIX_PUBLIC_KEY + ':');
+    const authHeader = `Basic ${btoa(String.fromCharCode(...authBytes))}`;
 
     let endpoint: string;
     let payload: Record<string, unknown>;
