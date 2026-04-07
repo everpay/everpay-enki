@@ -6,6 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Globe, CreditCard, Smartphone, Building2, Landmark, ShieldCheck, Zap, ArrowRight, ExternalLink } from 'lucide-react';
+import { GatewayCredentialsManager } from '@/components/integrations/GatewayCredentialsManager';
+import { GatewayMigrationTool } from '@/components/integrations/GatewayMigrationTool';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Integration {
   id: string;
@@ -202,6 +207,17 @@ const categories = [
 export default function Integrations() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const { user } = useAuth();
+
+  const { data: merchant } = useQuery({
+    queryKey: ['merchant-for-integrations', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase.from('merchants').select('id').eq('user_id', user.id).single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
 
   const filtered = integrations.filter(i => {
     const matchesSearch = !search || i.name.toLowerCase().includes(search.toLowerCase()) || i.description.toLowerCase().includes(search.toLowerCase());
@@ -214,6 +230,12 @@ export default function Integrations() {
   return (
     <AppLayout>
       <div className="space-y-6">
+        {/* Gateway Credentials & Migration */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <GatewayCredentialsManager merchantId={merchant?.id} />
+          <GatewayMigrationTool merchantId={merchant?.id} />
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>

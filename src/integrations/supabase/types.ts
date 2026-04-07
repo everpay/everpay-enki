@@ -1212,6 +1212,53 @@ export type Database = {
         }
         Relationships: []
       }
+      gateway_credentials: {
+        Row: {
+          created_at: string
+          credentials: Json
+          environment: string
+          gateway_name: string
+          gateway_type: string
+          id: string
+          is_active: boolean
+          label: string | null
+          merchant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credentials?: Json
+          environment?: string
+          gateway_name: string
+          gateway_type?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          merchant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credentials?: Json
+          environment?: string
+          gateway_name?: string
+          gateway_type?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          merchant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gateway_credentials_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       iban_accounts: {
         Row: {
           bank_name: string | null
@@ -1715,6 +1762,65 @@ export type Database = {
           webhook_url?: string | null
         }
         Relationships: []
+      }
+      migration_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          data_types: string[]
+          error_log: Json | null
+          file_url: string | null
+          id: string
+          import_method: string
+          imported_records: number | null
+          merchant_id: string
+          progress_pct: number
+          source_gateway: string
+          status: string
+          total_records: number | null
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          data_types?: string[]
+          error_log?: Json | null
+          file_url?: string | null
+          id?: string
+          import_method?: string
+          imported_records?: number | null
+          merchant_id: string
+          progress_pct?: number
+          source_gateway: string
+          status?: string
+          total_records?: number | null
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          data_types?: string[]
+          error_log?: Json | null
+          file_url?: string | null
+          id?: string
+          import_method?: string
+          imported_records?: number | null
+          merchant_id?: string
+          progress_pct?: number
+          source_gateway?: string
+          status?: string
+          total_records?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_jobs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_attempts: {
         Row: {
