@@ -36,6 +36,8 @@ const PROVIDER_REGIONS: Record<string, string[]> = {
   makapay: ['BD'],
   payok: ['TR'],
   lipad: ['KE', 'TZ', 'UG', 'GH', 'ZA', 'NG', 'RW', 'ET', 'CI', 'SN', 'CM'],
+  matrix: ['GLOBAL'], // Gaming/Casino/Lottery only
+  dcbank: ['CA'],     // Canadian e-Transfer processing
 };
 
 const CURRENCY_PROVIDERS: Record<string, string> = {

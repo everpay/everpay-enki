@@ -79,6 +79,20 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['KE', 'TZ', 'UG', 'GH', 'ZA', 'RW', 'ET', 'NG', 'CI', 'SN', 'CM'],
     methods: ['M-Pesa', 'Mobile Money', 'Bank Transfer', 'Card', 'Airtel Money'],
   },
+  matrix: {
+    name: 'matrix',
+    displayName: 'Matrix Pay',
+    supportedCurrencies: ['EUR', 'USD'],
+    regions: ['GLOBAL'],
+    methods: ['Card', 'Apple Pay', 'Google Pay', 'Checkout HPP', 'Crypto'],
+  },
+  dcbank: {
+    name: 'dcbank',
+    displayName: 'DC Bank',
+    supportedCurrencies: ['CAD'],
+    regions: ['CA'],
+    methods: ['Interac e-Transfer', 'EFT', 'VISA Direct', 'Bill Payment'],
+  },
   prometeo: {
     name: 'prometeo',
     displayName: 'Prometeo',
@@ -177,6 +191,8 @@ export function getProviderColor(provider: Provider): string {
     case 'payok': return 'hsl(200 80% 50%)';
     case 'lipad': return 'hsl(35 90% 50%)';
     case 'prometeo': return 'hsl(155 65% 42%)';
+    case 'matrix': return 'hsl(270 70% 55%)';
+    case 'dcbank': return 'hsl(210 85% 45%)';
     default: return 'hsl(var(--chart-1))';
   }
 }
