@@ -78,10 +78,7 @@ serve(async (req) => {
 
     const baseUrl = sandbox ? SANDBOX_URL : LIVE_URL;
 
-    // Build auth header — sandbox only needs public key
-    const encoder = new TextEncoder();
-    const authBytes = encoder.encode(MATRIX_PUBLIC_KEY + ':');
-    const authHeader = `Basic ${btoa(String.fromCharCode(...authBytes))}`;
+    // Matrix sandbox uses public_key in request body, not auth header
 
     let endpoint: string;
     let payload: Record<string, unknown>;
