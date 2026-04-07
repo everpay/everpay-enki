@@ -21,7 +21,7 @@ const BankDebitsApiPage = () => {
               { method: 'ACH Debit', region: 'United States', currency: 'USD', provider: 'Plaid + ShieldHub', settlement: '3-5 business days' },
               { method: 'SEPA Direct Debit', region: 'European Union', currency: 'EUR', provider: 'Mondo Open Banking', settlement: '5-14 business days' },
               { method: 'BACS Direct Debit', region: 'United Kingdom', currency: 'GBP', provider: 'Mondo Open Banking', settlement: '3-5 business days' },
-              { method: 'PIX', region: 'Brazil', currency: 'BRL', provider: 'FacilitaPay', settlement: 'Instant' },
+              { method: 'PIX', region: 'Brazil', currency: 'BRL', provider: 'Paygate10', settlement: 'Instant' },
             ].map((m) => (
               <div key={m.method} className="border rounded-lg p-4 space-y-2">
                 <div className="flex items-center gap-2">
