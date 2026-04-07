@@ -72,7 +72,7 @@ const CascadingPaymentsApiPage = () => {
   "response_message": "Payment was approved",
   "auth_code": "654321",
   "latency_ms": 1240,
-  "excluded_gateways": ["gw_facilitapay_01"],
+  "excluded_gateways": ["gw_paygate10_01"],
   "created_at": "2026-03-25T12:00:02Z"
 }`} language="curl" />
         </CardContent>
@@ -149,8 +149,8 @@ const CascadingPaymentsApiPage = () => {
     "attempts": [
       {
         "attempt": 1,
-        "gateway_id": "gw_facilitapay_01",
-        "processor": "facilitapay",
+        "gateway_id": "gw_paygate10_01",
+        "processor": "paygate10",
         "status": "failed",
         "response_code": "E.5001",
         "latency_ms": 890
@@ -185,16 +185,16 @@ const CascadingPaymentsApiPage = () => {
   -H "Authorization: Bearer sk_live_your_key" \\
   -d '{
     "payment_intent_id": "pi_failed_abc",
-    "excluded_gateways": ["gw_facilitapay_01", "gw_makapay_01"],
+    "excluded_gateways": ["gw_paygate10_01", "gw_makapay_01"],
     "duplicate_check": false
   }'`,
           node: `const retry = await everpay.payments.cascadeRetry({
   payment_intent_id: 'pi_failed_abc',
-  excluded_gateways: ['gw_facilitapay_01', 'gw_makapay_01'],
+  excluded_gateways: ['gw_paygate10_01', 'gw_makapay_01'],
 });`,
           python: `retry = everpay.Payments.cascade_retry(
   payment_intent_id="pi_failed_abc",
-  excluded_gateways=["gw_facilitapay_01", "gw_makapay_01"],
+  excluded_gateways=["gw_paygate10_01", "gw_makapay_01"],
 )`,
         }}
         response={`{
@@ -231,8 +231,8 @@ const CascadingPaymentsApiPage = () => {
   "data": [
     {
       "attempt": 1,
-      "gateway_id": "gw_facilitapay_01",
-      "processor": "facilitapay",
+      "gateway_id": "gw_paygate10_01",
+      "processor": "paygate10",
       "status": "failed",
       "response_code": "E.5001",
       "response_message": "Insufficient funds",
