@@ -39,12 +39,12 @@ export function SiteHeader() {
     { icon: UtensilsCrossed, label: 'Restaurant', to: '/solutions/restaurant' },
     { icon: ShoppingCart, label: 'E-commerce', to: '/solutions/ecommerce' },
     { icon: Smartphone, label: 'Mobile Payments', to: '/solutions/mobile-payments' },
-    { icon: Plug, label: 'Integrations', to: '/integrations-directory' },
   ];
   const platformItems = [
     { icon: Laptop, label: 'SaaS & Platforms', to: '/solutions/saas-platforms' },
     { icon: Store, label: 'Marketplaces', to: '/solutions/marketplaces' },
     { icon: Building2, label: 'Enterprise', to: '/solutions/enterprise' },
+    { icon: Plug, label: 'Integrations', to: '/integrations-directory' },
   ];
   const productItems = [
     { icon: CreditCard, label: 'Online Payments', to: '/online-payments' },
