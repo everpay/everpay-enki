@@ -2975,44 +2975,124 @@ export type Database = {
           },
         ]
       }
+      subscription_plan_prices: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          is_default: boolean
+          plan_id: string
+          subscription_price: number
+          trial_price: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          is_default?: boolean
+          plan_id: string
+          subscription_price?: number
+          trial_price?: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          is_default?: boolean
+          plan_id?: string
+          subscription_price?: number
+          trial_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plan_prices_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           amount: number
+          billing_period_unit: string
           created_at: string
           currency: string
           description: string | null
+          ends_after_count: number | null
+          ends_after_unit: string | null
+          ends_type: string
           id: string
           interval: string
           interval_count: number
           merchant_id: string
           name: string
+          retry_logic: string
+          starts_day: number | null
+          starts_weekday: string | null
+          starts_weekday_occurrence: number | null
+          status: string
+          subscription_starts: string
           trial_days: number | null
+          trial_duration: number | null
+          trial_enabled: boolean
+          trial_price: number | null
+          trial_unit: string | null
           updated_at: string
         }
         Insert: {
           amount: number
+          billing_period_unit?: string
           created_at?: string
           currency: string
           description?: string | null
+          ends_after_count?: number | null
+          ends_after_unit?: string | null
+          ends_type?: string
           id?: string
           interval: string
           interval_count?: number
           merchant_id: string
           name: string
+          retry_logic?: string
+          starts_day?: number | null
+          starts_weekday?: string | null
+          starts_weekday_occurrence?: number | null
+          status?: string
+          subscription_starts?: string
           trial_days?: number | null
+          trial_duration?: number | null
+          trial_enabled?: boolean
+          trial_price?: number | null
+          trial_unit?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
+          billing_period_unit?: string
           created_at?: string
           currency?: string
           description?: string | null
+          ends_after_count?: number | null
+          ends_after_unit?: string | null
+          ends_type?: string
           id?: string
           interval?: string
           interval_count?: number
           merchant_id?: string
           name?: string
+          retry_logic?: string
+          starts_day?: number | null
+          starts_weekday?: string | null
+          starts_weekday_occurrence?: number | null
+          status?: string
+          subscription_starts?: string
           trial_days?: number | null
+          trial_duration?: number | null
+          trial_enabled?: boolean
+          trial_price?: number | null
+          trial_unit?: string | null
           updated_at?: string
         }
         Relationships: [
