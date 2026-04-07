@@ -5,16 +5,9 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { getTransactionStatusInfo } from '@/lib/transaction-status';
 import { TransactionDetailDrawer } from './TransactionDetailDrawer';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ChevronLeft, ChevronRight, Eye, Zap, CreditCard } from 'lucide-react';
 import { useTapixCache, getEnrichmentSummary } from '@/hooks/useTapixEnrichment';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-function getUIAvatarUrl(email: string | undefined | null, size = 32): string {
-  if (!email) return `https://ui-avatars.com/api/?name=?&size=${size}&background=6366f1&color=fff&font-size=0.4`;
-  const name = email.split('@')[0].replace(/[._-]/g, '+');
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=${size}&background=6366f1&color=fff&font-size=0.4&rounded=true`;
-}
 
 const BRAND_LOGOS: Record<string, string> = {
   visa: '/logos/visa.svg',
@@ -31,6 +24,15 @@ const BRAND_LOGOS: Record<string, string> = {
   ideal: '/logos/ideal.svg',
   bancontact: '/logos/bancontact.svg',
   alipay: '/logos/alipay.svg',
+};
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  US: '🇺🇸', CA: '🇨🇦', GB: '🇬🇧', DE: '🇩🇪', FR: '🇫🇷', BR: '🇧🇷', MX: '🇲🇽',
+  IN: '🇮🇳', PK: '🇵🇰', BD: '🇧🇩', NG: '🇳🇬', KE: '🇰🇪', ZA: '🇿🇦', EG: '🇪🇬',
+  JP: '🇯🇵', CN: '🇨🇳', AU: '🇦🇺', HK: '🇭🇰', KR: '🇰🇷', TH: '🇹🇭', VN: '🇻🇳',
+  ID: '🇮🇩', MY: '🇲🇾', PH: '🇵🇭', CO: '🇨🇴', AR: '🇦🇷', UA: '🇺🇦', PL: '🇵🇱',
+  LB: '🇱🇧', NL: '🇳🇱', IT: '🇮🇹', ES: '🇪🇸', SE: '🇸🇪', CH: '🇨🇭', AT: '🇦🇹',
+  BE: '🇧🇪', PT: '🇵🇹', IE: '🇮🇪', SG: '🇸🇬', NZ: '🇳🇿', AE: '🇦🇪', SA: '🇸🇦',
 };
 
 function getCardBrand(first6: string): string {
@@ -70,6 +72,11 @@ function getPaymentMethodInfo(tx: Transaction): { logoSrc?: string; label: strin
   return { label: 'Card' };
 }
 
+function getTransactionType(tx: Transaction): string {
+  const meta = (tx as any).metadata || {};
+  return meta.transaction_type || meta.type || tx.type || 'payment';
+}
+
 interface TransactionTableProps {
   transactions: Transaction[];
   compact?: boolean;
@@ -82,7 +89,6 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
   const paged = transactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Fetch cached Tapix enrichment for visible transactions
   const visibleIds = useMemo(() => paged.map(tx => tx.id), [paged]);
   const { data: enrichmentCache = {} } = useTapixCache(visibleIds);
 
@@ -92,35 +98,29 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
         <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-card">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Method</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Currency</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Gateway</th>
-                {!compact && (
-                  <>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Merchant</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Card</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">FX</th>
-                  </>
-                )}
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">Date</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tx ID</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Method</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cards & APM IDs</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Customer IP</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Created</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider w-10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {paged.map((tx) => {
-                const cardFirst6 = (tx as any).metadata?.cardFirst6 || (tx as any).metadata?.card_first6 || '';
-                const cardLast4 = (tx as any).metadata?.cardLast4 || (tx as any).metadata?.card_last4 || '';
-                const brand = getCardBrand(cardFirst6);
+                const meta = (tx as any).metadata || {};
+                const cardFirst6 = meta.cardFirst6 || meta.card_first6 || '';
+                const cardLast4 = meta.cardLast4 || meta.card_last4 || '';
                 const pmInfo = getPaymentMethodInfo(tx);
-                const avatarUrl = getUIAvatarUrl(tx.customer_email);
-                const initials = tx.customer_email ? tx.customer_email.slice(0, 2).toUpperCase() : '?';
-
-                // Tapix enrichment
+                const txType = getTransactionType(tx);
+                const cardCountry = meta.card_country || meta.cardCountry || '';
+                const customerIp = meta.customer_ip || meta.ip_address || meta.customerIp || '';
+                const ipCountry = meta.ip_country || meta.ipCountry || '';
+                const statusInfo = getTransactionStatusInfo(tx.status, meta);
                 const enrichment = getEnrichmentSummary(enrichmentCache[tx.id]);
 
                 return (
@@ -129,29 +129,18 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                     className="transition-colors hover:bg-muted/30 cursor-pointer"
                     onClick={() => setSelectedTx(tx)}
                   >
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-xs text-muted-foreground">{tx.id.slice(0, 8)}…</span>
+                    {/* Tx ID */}
+                    <td className="px-3 py-2.5">
+                      <span className="font-mono text-xs text-primary hover:underline">{tx.id.slice(0, 12)}…</span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={avatarUrl} alt={tx.customer_email || 'Customer'} />
-                          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm text-foreground truncate max-w-[140px]">
-                          {tx.customer_email || <span className="text-muted-foreground">—</span>}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 font-medium text-foreground">
-                      {formatCurrency(tx.amount, tx.currency)}
-                    </td>
-                    <td className="px-4 py-3">
+
+                    {/* Method - card brand icon */}
+                    <td className="px-3 py-2.5">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center justify-center w-8 h-8">
+                          <div className="flex items-center justify-center w-10 h-6">
                             {pmInfo.logoSrc ? (
-                              <img src={pmInfo.logoSrc} alt={pmInfo.label} className="h-5 w-auto rounded-sm" />
+                              <img src={pmInfo.logoSrc} alt={pmInfo.label} className="h-5 w-auto" />
                             ) : (
                               <CreditCard className="h-4 w-4 text-muted-foreground" />
                             )}
@@ -160,83 +149,90 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                         <TooltipContent>{pmInfo.label}</TooltipContent>
                       </Tooltip>
                     </td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className="font-mono text-[10px]">{tx.currency}</Badge>
+
+                    {/* Amount */}
+                    <td className="px-3 py-2.5 font-medium text-foreground whitespace-nowrap">
+                      {formatCurrency(tx.amount, tx.currency)}
                     </td>
-                    <td className="px-4 py-3">
-                      {(() => {
-                        const statusInfo = getTransactionStatusInfo(tx.status, (tx as any).metadata);
-                        return (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge variant={statusInfo.variant}>
-                                {statusInfo.label}
-                              </Badge>
-                            </TooltipTrigger>
-                            {statusInfo.reason && (
-                              <TooltipContent side="bottom" className="max-w-[250px]">
-                                <p className="text-xs">{statusInfo.reason}</p>
-                                {statusInfo.responseCode && (
-                                  <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">Code: {statusInfo.responseCode}</p>
-                                )}
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        );
-                      })()}
+
+                    {/* Type */}
+                    <td className="px-3 py-2.5">
+                      <span className="text-xs text-muted-foreground capitalize">{txType}</span>
                     </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant="provider">{tx.provider}</Badge>
-                        {enrichment?.found && (
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Zap className="h-3 w-3 text-primary" />
-                            </TooltipTrigger>
-                            <TooltipContent>Enriched by Tapix</TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                    </td>
-                    {!compact && (
-                      <>
-                        <td className="px-4 py-3 hidden lg:table-cell">
-                          {enrichment?.merchantName ? (
-                            <div className="flex items-center gap-1.5">
-                              {enrichment.merchantLogo && (
-                                <img src={enrichment.merchantLogo} alt={enrichment.merchantName} className="h-4 w-4 rounded-sm object-contain" />
-                              )}
-                              <span className="text-xs text-foreground truncate max-w-[120px]">{enrichment.merchantName}</span>
+
+                    {/* Cards & APM IDs - show card number with country flag */}
+                    <td className="px-3 py-2.5">
+                      {cardFirst6 ? (
+                        <div className="space-y-0.5">
+                          <span className="font-mono text-xs text-primary">
+                            {cardFirst6} •••• {cardLast4}
+                          </span>
+                          {cardCountry && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs">{COUNTRY_FLAGS[cardCountry] || '🌍'}</span>
+                              <span className="text-[10px] text-muted-foreground">{cardCountry}</span>
                             </div>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
                           )}
-                        </td>
-                        <td className="px-4 py-3 hidden lg:table-cell">
-                          {cardFirst6 ? (
-                            <div className="flex items-center gap-1.5">
-                              {brand !== 'unknown' && BRAND_LOGOS[brand] && (
-                                <img src={BRAND_LOGOS[brand]} alt={brand} className="h-4 w-auto rounded-sm" />
-                              )}
-                              <span className="font-mono text-xs">{cardFirst6} •••• {cardLast4}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+
+                    {/* Customer IP */}
+                    <td className="px-3 py-2.5 hidden md:table-cell">
+                      {customerIp ? (
+                        <div className="space-y-0.5">
+                          <span className="font-mono text-xs text-foreground">{customerIp}</span>
+                          {ipCountry && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs">{COUNTRY_FLAGS[ipCountry] || '🌍'}</span>
+                              <span className="text-[10px] text-muted-foreground">{ipCountry}</span>
                             </div>
-                          ) : <span className="text-muted-foreground text-xs">—</span>}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">
-                          {tx.fx_rate ? (
-                            <span>
-                              {tx.fx_rate} → {formatCurrency(tx.settlement_amount || 0, tx.settlement_currency || 'USD')}
-                            </span>
-                          ) : '—'}
-                        </td>
-                      </>
-                    )}
-                    <td className="px-4 py-3 text-muted-foreground text-xs hidden md:table-cell">
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+
+                    {/* Created */}
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap hidden md:table-cell">
                       {formatDate(tx.created_at)}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setSelectedTx(tx); }}>
-                        <Eye className="h-4 w-4" />
+
+                    {/* Status */}
+                    <td className="px-3 py-2.5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge
+                            variant={statusInfo.variant}
+                            className={
+                              statusInfo.label === 'Approved' || statusInfo.label === 'Completed'
+                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/25'
+                                : statusInfo.label === 'Declined' || statusInfo.label === 'Failed'
+                                ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20 hover:bg-red-500/25'
+                                : ''
+                            }
+                          >
+                            {statusInfo.label}
+                          </Badge>
+                        </TooltipTrigger>
+                        {statusInfo.reason && (
+                          <TooltipContent side="bottom" className="max-w-[280px]">
+                            <p className="text-xs">{statusInfo.reason}</p>
+                            {statusInfo.responseCode && (
+                              <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">Code: {statusInfo.responseCode}</p>
+                            )}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-3 py-2.5 text-right">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); setSelectedTx(tx); }}>
+                        <Eye className="h-3.5 w-3.5" />
                       </Button>
                     </td>
                   </tr>
