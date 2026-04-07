@@ -13,6 +13,7 @@ export default function Auth() {
   const location = useLocation();
   const appContext = getAppContext();
   const config = getSubdomainConfig(appContext);
+  const passwordResetRedirectTo = new URL('/reset-password', config.authOrigin).toString();
 
   const [isLogin, setIsLogin] = useState(
     location.pathname !== '/signup' || !config.signupEnabled
@@ -68,7 +69,7 @@ export default function Auth() {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: passwordResetRedirectTo,
       });
       if (error) throw error;
       toast.success('Password reset link sent to your email');
