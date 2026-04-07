@@ -260,6 +260,10 @@ export default function Payouts() {
             <CreditCard className="h-4 w-4" />
             Payout to Card
           </TabsTrigger>
+          <TabsTrigger value="mass" className="gap-2">
+            <Users className="h-4 w-4" />
+            Mass Payouts
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="bank">
