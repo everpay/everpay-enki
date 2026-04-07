@@ -37,6 +37,8 @@ const countryProviderMap: Record<string, string> = {
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
   BD: 'makapay', TR: 'payok',
+  // Note: 'matrix' is only for Gaming/Casino/Lottery merchants — routed via merchant routing_rules
+  // Note: 'dcbank' is for Canadian e-Transfer — routed via merchant routing_rules for CA customers
 };
 
 function resolveProvider(data: PaymentRequest): string {
