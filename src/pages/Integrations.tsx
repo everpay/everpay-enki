@@ -6,6 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Globe, CreditCard, Smartphone, Building2, Landmark, ShieldCheck, Zap, ArrowRight, ExternalLink } from 'lucide-react';
+import { GatewayCredentialsManager } from '@/components/integrations/GatewayCredentialsManager';
+import { GatewayMigrationTool } from '@/components/integrations/GatewayMigrationTool';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Integration {
   id: string;
