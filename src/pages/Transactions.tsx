@@ -67,7 +67,6 @@ export default function Transactions() {
             <SelectItem value="all">All Providers</SelectItem>
             <SelectItem value="shieldhub">ShieldHub</SelectItem>
             <SelectItem value="mondo">Mondo</SelectItem>
-            <SelectItem value="facilitapay">FacilitaPay</SelectItem>
             <SelectItem value="lipad">Lipad</SelectItem>
             <SelectItem value="moneto">Moneto</SelectItem>
             <SelectItem value="paygate10">Paygate10</SelectItem>

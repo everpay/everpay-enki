@@ -12,16 +12,17 @@ export interface CountryPaymentConfig {
 }
 
 export const COUNTRY_PAYMENT_CONFIGS: CountryPaymentConfig[] = [
-  // Paygate10 countries
+  // Paygate10 countries (including LATAM)
   { code: 'IN', name: 'India', flag: '🇮🇳', currency: 'INR', currencySymbol: '₹', provider: 'paygate10', paymentMethods: ['UPI', 'NB', 'UPIQRCode', 'Bank Transfer', 'Wallet'] },
-  { code: 'BR', name: 'Brazil', flag: '🇧🇷', currency: 'BRL', currencySymbol: 'R$', provider: 'facilitapay', paymentMethods: ['PIX', 'Boleto', 'Bank Transfer'] },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷', currency: 'BRL', currencySymbol: 'R$', provider: 'paygate10', paymentMethods: ['PIX', 'Boleto', 'Bank Transfer'] },
   { code: 'AR', name: 'Argentina', flag: '🇦🇷', currency: 'ARS', currencySymbol: '$', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Cash'] },
-  { code: 'NG', name: 'Nigeria', flag: '🇳🇬', currency: 'NGN', currencySymbol: '₦', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Bank Deposit'] },
+  { code: 'NG', name: 'Nigeria', flag: '🇳🇬', currency: 'NGN', currencySymbol: '₦', provider: 'lipad', paymentMethods: ['Bank Transfer', 'Mobile Money'] },
   { code: 'EG', name: 'Egypt', flag: '🇪🇬', currency: 'EGP', currencySymbol: 'E£', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Cash'] },
   { code: 'MX', name: 'Mexico', flag: '🇲🇽', currency: 'MXN', currencySymbol: '$', provider: 'paygate10', paymentMethods: ['SPEI', 'Cash', 'Bank Transfer'] },
-  { code: 'ZA', name: 'South Africa', flag: '🇿🇦', currency: 'ZAR', currencySymbol: 'R', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Cash'] },
-  { code: 'KE', name: 'Kenya', flag: '🇰🇪', currency: 'KES', currencySymbol: 'KSh', provider: 'paygate10', paymentMethods: ['Bank Transfer', 'Wallet'] },
+  { code: 'ZA', name: 'South Africa', flag: '🇿🇦', currency: 'ZAR', currencySymbol: 'R', provider: 'lipad', paymentMethods: ['Bank Transfer', 'Mobile Money'] },
+  { code: 'KE', name: 'Kenya', flag: '🇰🇪', currency: 'KES', currencySymbol: 'KSh', provider: 'lipad', paymentMethods: ['M-Pesa', 'Bank Transfer'] },
   { code: 'PK', name: 'Pakistan', flag: '🇵🇰', currency: 'PKR', currencySymbol: '₨', provider: 'paygate10', paymentMethods: ['JazzCash', 'EasyPaisa', 'Bank Transfer'] },
+  { code: 'CO', name: 'Colombia', flag: '🇨🇴', currency: 'COP', currencySymbol: '$', provider: 'paygate10', paymentMethods: ['PSE', 'Bank Transfer'] },
   
   // OFA countries
   { code: 'CN', name: 'China', flag: '🇨🇳', currency: 'CNY', currencySymbol: '¥', provider: 'ofa', paymentMethods: ['P2P', 'P2C', 'QP', 'Bank Transfer'] },
@@ -54,9 +55,6 @@ export const COUNTRY_PAYMENT_CONFIGS: CountryPaymentConfig[] = [
   
   // Moneto (Canada)
   { code: 'CA', name: 'Canada', flag: '🇨🇦', currency: 'CAD', currencySymbol: 'C$', provider: 'moneto', paymentMethods: ['Wallet', 'Bank Transfer'] },
-  
-  // FacilitaPay (LATAM)
-  { code: 'CO', name: 'Colombia', flag: '🇨🇴', currency: 'COP', currencySymbol: '$', provider: 'facilitapay', paymentMethods: ['PSE', 'Bank Transfer'] },
   
   // PayOK (Turkey)
   { code: 'TR', name: 'Turkey', flag: '🇹🇷', currency: 'TRY', currencySymbol: '₺', provider: 'payok', paymentMethods: ['Card', 'Bank Transfer'] },

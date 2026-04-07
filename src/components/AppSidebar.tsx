@@ -113,6 +113,7 @@ const navSections: NavSection[] = [
   {
     title: "Integrations",
     items: [
+      { to: "/integrations", icon: Globe, label: "All Integrations" },
       { to: "/bigcommerce", icon: Store, label: "BigCommerce" },
       { to: "/shopify", icon: Package, label: "Shopify" },
     ],

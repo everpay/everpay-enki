@@ -22,7 +22,7 @@ const BankRedirectsApiPage = () => {
               { method: 'Open Banking (EU)', region: 'European Union', currency: 'EUR', provider: 'Mondo', logo: '/logos/ideal.svg' },
               { method: 'iDEAL', region: 'Netherlands', currency: 'EUR', provider: 'Mondo', logo: '/logos/ideal.svg' },
               { method: 'Bancontact', region: 'Belgium', currency: 'EUR', provider: 'Mondo', logo: '/logos/bancontact.svg' },
-              { method: 'PIX', region: 'Brazil', currency: 'BRL', provider: 'FacilitaPay', logo: null },
+              { method: 'PIX', region: 'Brazil', currency: 'BRL', provider: 'Paygate10', logo: null },
               { method: 'Plaid Pay', region: 'United States', currency: 'USD', provider: 'Plaid', logo: null },
               { method: 'SPEI (Mexico)', region: 'Mexico', currency: 'MXN', provider: 'Prometeo', logo: null },
               { method: 'PSE (Colombia)', region: 'Colombia', currency: 'COP', provider: 'Prometeo', logo: null },

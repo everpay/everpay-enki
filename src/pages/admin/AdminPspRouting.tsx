@@ -13,7 +13,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const PROCESSORS = ['shieldhub', 'mondo', 'moneto', 'paygate10', 'facilitapay', 'ofa', 'makapay', 'lipad', 'payok'];
+const PROCESSORS = ['shieldhub', 'mondo', 'moneto', 'paygate10', 'ofa', 'makapay', 'lipad', 'payok', 'matrix', 'dcbank'];
 
 export default function AdminPspRouting() {
   const queryClient = useQueryClient();

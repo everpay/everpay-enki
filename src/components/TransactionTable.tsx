@@ -66,7 +66,7 @@ function getPaymentMethodInfo(tx: Transaction): { logoSrc?: string; label: strin
   }
 
   if (tx.provider === 'lipad') return { label: 'Mobile Money' };
-  if (tx.provider === 'facilitapay') return { label: 'Local Payment' };
+  if (tx.provider === 'paygate10') return { label: 'Local Payment' };
   return { label: 'Card' };
 }
 

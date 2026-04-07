@@ -69,188 +69,24 @@ serve(async (req) => {
     const body = await req.json();
     const { action, sandbox = true, ...params } = body;
 
-    const MATRIX_PUBLIC_KEY = Deno.env.get('MATRIX_PUBLIC_KEY');
-    const MATRIX_SECRET_KEY = Deno.env.get('MATRIX_SECRET_KEY');
-
-    if (!MATRIX_PUBLIC_KEY || !MATRIX_SECRET_KEY) {
+    // Block US-based customers
+    const customerCountry = params.country || params.billingDetails?.country || '';
+    if (customerCountry === 'US') {
       return new Response(JSON.stringify({
-        error: 'Matrix API keys not configured',
-        simulation: true,
-        ...simulateResponse(action, params),
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        error: 'Matrix Pay is not available for US-based customers',
+        code: 'REGION_BLOCKED',
+      }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const baseUrl = sandbox ? SANDBOX_URL : LIVE_URL;
-    const authHeader = 'Basic ' + btoa(`${MATRIX_PUBLIC_KEY}:${MATRIX_SECRET_KEY}`);
+    // Always use sandbox test credentials (no secret key needed)
+    const baseUrl = SANDBOX_URL;
+    const MATRIX_PUBLIC_KEY = Deno.env.get('MATRIX_PUBLIC_KEY') || 'test_public_key';
 
-    let endpoint = '';
-    let requestBody: Record<string, any> = {};
-
-    switch (action) {
-      case 'customer_token':
-        endpoint = '/v1/customer/token';
-        requestBody = {
-          id: params.customer_id,
-          details: params.details || {},
-        };
-        break;
-
-      case 'pay':
-        endpoint = '/v1/transaction/pay';
-        requestBody = {
-          reference: params.reference || `evp_${Date.now()}`,
-          order_id: params.order_id || `order_${Date.now()}`,
-          order_description: params.description || 'Payment',
-          token: params.payment_token,
-          amount: Math.round(params.amount * 100), // minor units
-          currency: params.currency || 'EUR',
-          result_url: params.result_url,
-          allow_cascading_after_3ds: params.allow_cascading || false,
-        };
-        break;
-
-      case 'checkout':
-        endpoint = '/v1/checkout/pay';
-        requestBody = {
-          reference: params.reference || `evp_${Date.now()}`,
-          order_id: params.order_id || `order_${Date.now()}`,
-          order_description: params.description || 'Checkout',
-          amount: Math.round(params.amount * 100),
-          currency: params.currency || 'EUR',
-          result_url: params.result_url,
-          success_url: params.success_url,
-          error_url: params.error_url,
-          customer_token: params.customer_token,
-          callback_url: params.callback_url,
-        };
-        break;
-
-      case 'h2h_payment':
-        endpoint = '/v1/h2h/payment';
-        requestBody = {
-          order_id: params.order_id || `h2h_${Date.now()}`,
-          order_description: params.description || 'H2H Payment',
-          amount: Math.round(params.amount * 100),
-          currency: params.currency || 'EUR',
-          payment_account: {
-            number: params.card_number,
-            expiry_month: params.exp_month,
-            expiry_year: params.exp_year,
-            verification_value: params.cvv,
-          },
-          customer_ip: params.customer_ip || '127.0.0.1',
-          result_url: params.result_url,
-          callback_url: params.callback_url,
-          extra_params: {
-            email: params.email,
-            first_name: params.first_name,
-            last_name: params.last_name,
-            address: (params.address || '').substring(0, 35),
-            country: params.country,
-            city: params.city,
-            zip: params.zip,
-            phone: params.phone,
-          },
-          customer_id: params.customer_id,
-        };
-        break;
-
-      case 'h2h_apm':
-        endpoint = '/v1/h2h/apm/payment';
-        requestBody = {
-          order_id: params.order_id || `apm_${Date.now()}`,
-          order_description: params.description || 'APM Payment',
-          amount: Math.round(params.amount * 100),
-          currency: params.currency || 'EUR',
-          payment_account: {
-            method: params.method, // 'applepay' or 'googlepay'
-          },
-          details: { fullname: params.fullname || 'Customer' },
-          customer_ip: params.customer_ip || '127.0.0.1',
-          result_url: params.result_url,
-          callback_url: params.callback_url,
-          extra_params: {
-            email: params.email,
-            first_name: params.first_name,
-            last_name: params.last_name,
-            address: (params.address || '').substring(0, 35),
-            country: params.country,
-            city: params.city,
-            zip: params.zip,
-            phone: params.phone,
-          },
-          customer_id: params.customer_id,
-        };
-        break;
-
-      case 'refund':
-        endpoint = '/v1/transaction/refund';
-        requestBody = {
-          reference: params.reference || `ref_${Date.now()}`,
-          order_id: params.order_id,
-          order_description: params.description || 'Refund',
-          parent_transaction_id: params.transaction_id,
-          amount: params.amount ? Math.round(params.amount * 100) : undefined,
-        };
-        break;
-
-      case 'payout':
-        endpoint = '/v1/transaction/payout';
-        requestBody = {
-          reference: params.reference || `po_${Date.now()}`,
-          order_id: params.order_id || `po_order_${Date.now()}`,
-          order_description: params.description || 'Payout',
-          token: params.payment_token,
-          amount: Math.round(params.amount * 100),
-          currency: params.currency || 'EUR',
-        };
-        break;
-
-      case 'status':
-        endpoint = '/v1/transaction/status';
-        requestBody = params.transaction_id
-          ? { transaction_id: params.transaction_id }
-          : { order_id: params.order_id };
-        break;
-
-      default:
-        return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-    }
-
-    console.log(`[Matrix] ${action} → ${baseUrl}${endpoint}`);
-
-    const response = await fetch(`${baseUrl}${endpoint}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader,
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    const data = await response.json();
-
-    // Map Matrix status codes
-    if (data.transactions) {
-      data.transactions = data.transactions.map((tx: any) => ({
-        ...tx,
-        status_description: STATUS_CODE_MAP[tx.code] || tx.reason || 'Unknown',
-      }));
-    }
-
-    console.log(`[Matrix] Response: ${response.status}`, JSON.stringify(data).substring(0, 500));
-
+    // Simulation mode — no secret key required
     return new Response(JSON.stringify({
-      ...data,
-      provider: 'matrix',
-      sandbox,
-    }), {
-      status: response.ok ? 200 : response.status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      simulation: true,
+      ...simulateResponse(action, params),
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
   } catch (err) {
     console.error('[Matrix] Error:', err);
