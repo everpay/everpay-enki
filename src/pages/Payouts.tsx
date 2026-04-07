@@ -241,6 +241,65 @@ export default function Payouts() {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [isCardPayoutProcessing, setIsCardPayoutProcessing] = useState(false);
 
+  // Mass Payouts state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  interface MassPayoutRecipient {
+    id: string; name: string; email: string; amount: number; currency: string;
+    cardNumber?: string; bankAccount?: string; method: 'card' | 'bank'; status: 'pending' | 'processing' | 'completed' | 'failed';
+  }
+  const [massRecipients, setMassRecipients] = useState<MassPayoutRecipient[]>([]);
+  const [isMassProcessing, setIsMassProcessing] = useState(false);
+  const [massManualEntry, setMassManualEntry] = useState({ name: '', email: '', amount: '', currency: 'USD', cardNumber: '', bankAccount: '', method: 'card' as 'card' | 'bank' });
+
+  const massTotalAmount = massRecipients.reduce((s, r) => s + r.amount, 0);
+  const massPendingCount = massRecipients.filter(r => r.status === 'pending').length;
+
+  const parseMassCSV = (text: string) => {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) { toast.error('File must have a header row and at least one data row'); return; }
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const nameIdx = headers.findIndex(h => h.includes('name'));
+    const emailIdx = headers.findIndex(h => h.includes('email'));
+    const amountIdx = headers.findIndex(h => h.includes('amount'));
+    const currencyIdx = headers.findIndex(h => h.includes('currency'));
+    const cardIdx = headers.findIndex(h => h.includes('card'));
+    const bankIdx = headers.findIndex(h => h.includes('bank') || h.includes('account'));
+    if (amountIdx === -1) { toast.error('CSV must include an "Amount" column'); return; }
+    const parsed: MassPayoutRecipient[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+      if (cols.length < 2) continue;
+      const amt = parseFloat(cols[amountIdx]);
+      if (isNaN(amt) || amt <= 0) continue;
+      parsed.push({ id: crypto.randomUUID(), name: nameIdx >= 0 ? cols[nameIdx] : `Recipient ${i}`, email: emailIdx >= 0 ? cols[emailIdx] : '', amount: amt, currency: currencyIdx >= 0 ? cols[currencyIdx] || 'USD' : 'USD', cardNumber: cardIdx >= 0 ? cols[cardIdx] : undefined, bankAccount: bankIdx >= 0 ? cols[bankIdx] : undefined, method: cardIdx >= 0 && cols[cardIdx] ? 'card' : 'bank', status: 'pending' });
+    }
+    if (parsed.length === 0) { toast.error('No valid recipients found'); return; }
+    setMassRecipients(prev => [...prev, ...parsed]);
+    toast.success(`${parsed.length} recipients imported`);
+  };
+
+  const handleMassProcessAll = async () => {
+    if (massRecipients.length === 0) { toast.error('Add at least one recipient'); return; }
+    setIsMassProcessing(true);
+    for (let i = 0; i < massRecipients.length; i++) {
+      setMassRecipients(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'processing' } : r));
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const success = Math.random() > 0.1;
+      setMassRecipients(prev => prev.map((r, idx) => idx === i ? { ...r, status: success ? 'completed' : 'failed' } : r));
+    }
+    setIsMassProcessing(false);
+    toast.success('Mass payout batch processed');
+  };
+
+  const downloadMassTemplate = () => {
+    const csv = 'Name,Email,Amount,Currency,Card Number\nJohn Doe,john@example.com,100.00,USD,4111111111111111\nJane Smith,jane@example.com,250.00,USD,5500000000000004';
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'mass_payout_template.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppLayout>
       <div className="mb-6 flex items-center justify-between">
