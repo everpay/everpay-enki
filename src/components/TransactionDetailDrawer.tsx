@@ -310,7 +310,7 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
               {methodType === 'card' && (cardBrand || cardLast4 || cardFirst6) && (
                 <div className="flex justify-center">
-                  <CardBrandBadge brand={cardBrand} last4={cardLast4} first4={cardFirst6?.slice(0, 4)} expMonth={expMonth} expYear={expYear} />
+                  <CardBrandBadge brand={cardBrand} last4={cardLast4} first6={cardFirst6} first4={cardFirst6?.slice(0, 4)} expMonth={expMonth} expYear={expYear} issuerBank={issuerBank} />
                 </div>
               )}
 
@@ -465,7 +465,14 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             <h4 className="font-heading text-sm font-semibold text-foreground">Details</h4>
             <div className="grid gap-2">
               <DetailRow icon={Hash} label="Provider" value={<Badge variant="provider">{transaction.provider}</Badge>} />
-              {transaction.customer_email && <DetailRow icon={Mail} label="Customer" value={transaction.customer_email} />}
+              {(customerName || transaction.customer_email) && (
+                <DetailRow icon={User} label="Customer" value={
+                  <div className="text-right">
+                    {customerName && <p className="text-sm font-medium text-foreground">{customerName}</p>}
+                    {transaction.customer_email && <p className="text-xs text-muted-foreground">{transaction.customer_email}</p>}
+                  </div>
+                } />
+              )}
               {transaction.description && <DetailRow icon={FileText} label="Description" value={transaction.description} />}
               {transaction.provider_ref && (
                 <DetailRow icon={Wifi} label="Provider Ref" value={<span className="font-mono text-xs">{transaction.provider_ref}</span>} />
@@ -473,49 +480,7 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
             </div>
           </div>
 
-          {/* Processor Response */}
-          {txMetadata.provider_response && (
-            <div className="space-y-3">
-              <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" />
-                Processor Response
-              </h4>
-              <div className="rounded-lg border border-border bg-background p-4 space-y-2">
-                {txMetadata.provider_response.status && (
-                  <DetailRow icon={Hash} label="Status" value={
-                    <Badge variant={txMetadata.provider_response.status === 'Approved' ? 'success' : txMetadata.provider_response.status === 'Declined' || txMetadata.provider_response.status === 'Failed' ? 'destructive' : 'warning'}>
-                      {txMetadata.provider_response.status}
-                    </Badge>
-                  } />
-                )}
-                {txMetadata.provider_response.message && (
-                  <DetailRow icon={FileText} label="Message" value={
-                    <span className="text-xs">{txMetadata.provider_response.message}</span>
-                  } />
-                )}
-                {(txMetadata.provider_response.error?.code || txMetadata.provider_response.respcode || txMetadata.provider_response.statusCode) && (
-                  <DetailRow icon={Hash} label="Response Code" value={
-                    <span className="font-mono text-xs">{txMetadata.provider_response.error?.code || txMetadata.provider_response.respcode || txMetadata.provider_response.statusCode}</span>
-                  } />
-                )}
-                {txMetadata.provider_response.error?.message && (
-                  <DetailRow icon={FileText} label="Error" value={
-                    <span className="text-xs text-destructive">{txMetadata.provider_response.error.message}</span>
-                  } />
-                )}
-                {txMetadata.provider_response.transaction_reference && (
-                  <DetailRow icon={Wifi} label="Txn Reference" value={
-                    <span className="font-mono text-[10px]">{txMetadata.provider_response.transaction_reference}</span>
-                  } />
-                )}
-                {txMetadata.provider_response.test_mode && (
-                  <div className="pt-1 border-t border-border">
-                    <Badge variant="outline" className="text-[10px]">Test Mode</Badge>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Duplicate processor response removed — now shown above */}
 
           {/* FX Details */}
           {transaction.fx_rate && (
@@ -541,19 +506,50 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
           )}
 
           {/* Ledger Entries */}
-          <div className="space-y-3">
-            <h4 className="font-heading text-sm font-semibold text-foreground">Ledger Entries</h4>
-            <div className="rounded-lg border border-border bg-background divide-y divide-border">
-              <LedgerRow type="debit" account={`${transaction.currency} Receivable`} amount={formatCurrency(transaction.amount, transaction.currency)} />
-              <LedgerRow type="credit" account={`${transaction.currency} Revenue`} amount={formatCurrency(transaction.amount, transaction.currency)} />
-              {transaction.fx_rate && transaction.settlement_amount && (
-                <>
-                  <LedgerRow type="debit" account={`${transaction.settlement_currency} Settlement`} amount={formatCurrency(transaction.settlement_amount, transaction.settlement_currency || 'USD')} />
-                  <LedgerRow type="credit" account="FX Conversion" amount={formatCurrency(transaction.settlement_amount, transaction.settlement_currency || 'USD')} />
-                </>
-              )}
-            </div>
-          </div>
+          {(() => {
+            const isCompleted = transaction.status === 'completed';
+            const isRefunded = transaction.status === 'refunded';
+            const isFailed = transaction.status === 'failed';
+            const settlementReady = isCompleted && !isRefunded;
+            const settlementAmount = settlementReady ? transaction.amount : 0;
+
+            return (
+              <div className="space-y-3">
+                <h4 className="font-heading text-sm font-semibold text-foreground flex items-center gap-2">
+                  Ledger Entries
+                  {settlementReady ? (
+                    <Badge variant="success" className="text-[10px] gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Collected for Settlement
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] gap-1 text-muted-foreground">
+                      {isFailed ? 'Not Collected — Declined' : isRefunded ? 'Refunded — Not Settleable' : 'Pending Collection'}
+                    </Badge>
+                  )}
+                </h4>
+                <div className="rounded-lg border border-border bg-background divide-y divide-border">
+                  <LedgerRow type="debit" account={`${transaction.currency} Receivable`} amount={formatCurrency(settlementAmount, transaction.currency)} />
+                  <LedgerRow type="credit" account={`${transaction.currency} Revenue`} amount={formatCurrency(settlementAmount, transaction.currency)} />
+                  {transaction.fx_rate && transaction.settlement_amount && settlementReady && (
+                    <>
+                      <LedgerRow type="debit" account={`${transaction.settlement_currency} Settlement`} amount={formatCurrency(transaction.settlement_amount, transaction.settlement_currency || 'USD')} />
+                      <LedgerRow type="credit" account="FX Conversion" amount={formatCurrency(transaction.settlement_amount, transaction.settlement_currency || 'USD')} />
+                    </>
+                  )}
+                </div>
+                {!settlementReady && (
+                  <p className="text-[10px] text-muted-foreground italic">
+                    {isFailed
+                      ? 'This transaction was declined. $0.00 will be collected for settlement.'
+                      : isRefunded
+                        ? 'This transaction was refunded. Funds will not be settled.'
+                        : 'Funds are pending processor confirmation before settlement.'}
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Event Timeline */}
           {relatedEvents.length > 0 && (
