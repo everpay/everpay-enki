@@ -4,74 +4,12 @@ import { CTASection } from "@/components/front/CtaSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Search, ArrowRight, ExternalLink, Globe, CreditCard, Landmark,
-  ShieldCheck, ShoppingCart, Smartphone, Building2, Code2, Zap,
+  Search, ArrowRight, ExternalLink, Zap,
 } from "lucide-react";
-
-const CATEGORIES = [
-  { key: "all", label: "All Categories" },
-  { key: "accounting", label: "Accounting & ERP" },
-  { key: "ecommerce", label: "E-commerce & Marketplaces" },
-  { key: "gateways", label: "Payment Gateways" },
-  { key: "crm", label: "CRM & Sales Platforms" },
-  { key: "banking", label: "Banking & Treasury" },
-  { key: "fraud", label: "Fraud & Risk" },
-  { key: "developer", label: "Developer Tools" },
-];
-
-interface IntegrationItem {
-  name: string;
-  description: string;
-  category: string;
-  icon: string;
-  learnMore?: string;
-}
-
-const integrations: IntegrationItem[] = [
-  // Accounting & ERP
-  { name: "QuickBooks", description: "Simplify financial reporting and automate reconciliation with seamless ERP integrations.", category: "accounting", icon: "/logos/integrations/quickbooks.png" },
-  { name: "Xero", description: "Cloud-based financial tracking for growing businesses.", category: "accounting", icon: "/logos/integrations/xero.png" },
-  { name: "SAP", description: "Enterprise-scale financial management and reporting.", category: "accounting", icon: "/logos/integrations/sap.png" },
-  { name: "NetSuite", description: "Connect ERP to your payment gateway for real-time insights.", category: "accounting", icon: "/logos/integrations/netsuite.png" },
-  // E-commerce
-  { name: "Shopify", description: "Powerful e-commerce platform with seamless payment integration.", category: "ecommerce", icon: "/logos/integrations/shopify.png" },
-  { name: "WooCommerce", description: "Flexible payment solutions for your online store.", category: "ecommerce", icon: "/logos/integrations/woocommerce.png" },
-  { name: "BigCommerce", description: "Enterprise e-commerce with advanced checkout experiences.", category: "ecommerce", icon: "/logos/integrations/bigcommerce.png" },
-  { name: "Magento", description: "Open-source e-commerce with customizable payment flows.", category: "ecommerce", icon: "/logos/integrations/magento.png" },
-  // Payment Gateways
-  { name: "Mondo", description: "EU & UK card processing with multi-currency support.", category: "gateways", icon: "/logos/integrations/mondo.png" },
-  { name: "ShieldHub", description: "US & Global acquiring with advanced tokenization.", category: "gateways", icon: "/logos/integrations/shieldhub.png" },
-  { name: "Paygate10", description: "Emerging market coverage — India, Mexico, Pakistan, Brazil, Colombia.", category: "gateways", icon: "/logos/integrations/paygate10.png" },
-  { name: "Matrix Partners", description: "Gaming, casino & lottery processing — EUR/USD. Not available in the US.", category: "gateways", icon: "/logos/integrations/matrix.png" },
-  { name: "DC Bank", description: "Canadian-only processing for domestic transactions.", category: "gateways", icon: "/logos/integrations/dcbank.png" },
-  { name: "OFA Pay", description: "Asia-Pacific coverage with local payment methods.", category: "gateways", icon: "/logos/integrations/ofa.png" },
-  { name: "Moneto", description: "Canadian digital wallet and payment solutions.", category: "gateways", icon: "/logos/integrations/moneto.png" },
-  { name: "Makapay", description: "Bangladesh market with mobile money support.", category: "gateways", icon: "/logos/integrations/makapay.png" },
-  { name: "Lipad.io", description: "African payment coverage — Kenya, Nigeria, South Africa.", category: "gateways", icon: "/logos/integrations/lipad.png" },
-  { name: "PayOK", description: "Alternative payment methods for global coverage.", category: "gateways", icon: "/logos/integrations/payok.png" },
-  { name: "PacoPay", description: "LATAM & emerging markets card processing.", category: "gateways", icon: "/logos/integrations/pacopay.png" },
-  // CRM
-  { name: "HubSpot", description: "Automate payment workflows to accelerate your sales pipeline.", category: "crm", icon: "/logos/integrations/hubspot.png" },
-  { name: "Salesforce", description: "Integrate payments in enterprise sales and service workflows.", category: "crm", icon: "/logos/integrations/salesforce.png" },
-  { name: "Pipedrive", description: "Payment tracking directly within your CRM deals.", category: "crm", icon: "/logos/integrations/pipedrive.png" },
-  // Banking & Treasury
-  { name: "Plaid", description: "Secure bank account linking and financial data access.", category: "banking", icon: "/logos/integrations/plaid.png" },
-  { name: "Wise", description: "Low-cost international payments with real FX rates.", category: "banking", icon: "/logos/integrations/wise.png" },
-  { name: "Open Banking APIs", description: "Direct bank-to-bank transactions via open banking standards.", category: "banking", icon: "/logos/integrations/openbanking.png" },
-  { name: "Prometeo", description: "Latin American open banking and account connectivity.", category: "banking", icon: "/logos/integrations/prometeo.png" },
-  // Fraud & Risk
-  { name: "Chargeflow", description: "Automated chargeback management and dispute resolution.", category: "fraud", icon: "/logos/integrations/chargeflow.png" },
-  { name: "Tapix", description: "Transaction enrichment and merchant intelligence.", category: "fraud", icon: "/logos/integrations/tapix.png" },
-  { name: "3D Secure 2.0", description: "Strong customer authentication for card-not-present transactions.", category: "fraud", icon: "/logos/integrations/3dsecure.png" },
-  // Developer Tools
-  { name: "REST API v2", description: "Full-featured payment API with idempotency and rate limiting.", category: "developer", icon: "⚡" },
-  { name: "Webhooks", description: "Real-time event notifications for payment lifecycle events.", category: "developer", icon: "🔔" },
-  { name: "SDKs", description: "Client libraries for Node.js, Python, PHP, and more.", category: "developer", icon: "📦" },
-];
+import { CATEGORIES, CATEGORY_DESCRIPTIONS, integrations } from "@/data/integrations-directory";
 
 export default function FrontIntegrations() {
   const [activeCategory, setActiveCategory] = useState("all");
