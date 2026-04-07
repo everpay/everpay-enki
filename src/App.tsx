@@ -81,6 +81,8 @@ import ThreeDSecureSettings from "./pages/ThreeDSecureSettings";
 import AdminCascading from "./pages/admin/AdminCascading";
 import PaymentGraphExplorer from "./components/admin/PaymentGraphExplorer";
 import AdminRefundManagement from "./components/admin/AdminRefundManagement";
+import AdminFxTreasury from "./pages/admin/AdminFxTreasury";
+import MerchantTreasury from "./pages/merchant/MerchantTreasury";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
@@ -272,6 +274,7 @@ const AppRoutes = () => {
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
     <Route path="/treasury" element={<ProtectedRoute><Treasury /></ProtectedRoute>} />
+    <Route path="/merchant-treasury" element={<ProtectedRoute><MerchantTreasury /></ProtectedRoute>} />
     <Route path="/live" element={<ProtectedRoute><LiveAnalytics /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
     <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
@@ -299,6 +302,7 @@ const AppRoutes = () => {
     <Route path="/enki/cascading" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminCascading /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/payment-graph" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><PaymentGraphExplorer /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/refund-management" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRefundManagement /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/fx-treasury" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminFxTreasury /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/affiliate" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller', 'developer']}><AffiliateProgram /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/chargeflow" element={<ProtectedRoute><ChargeflowDashboard /></ProtectedRoute>} />

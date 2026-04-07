@@ -1187,30 +1187,96 @@ export type Database = {
       }
       fx_rates: {
         Row: {
+          applied_rate: number | null
           base_currency: string
           created_at: string
           id: string
+          mid_market_rate: number | null
           quote_currency: string
           rate: number
           source: string | null
+          spread_bps: number | null
         }
         Insert: {
+          applied_rate?: number | null
           base_currency: string
           created_at?: string
           id?: string
+          mid_market_rate?: number | null
           quote_currency: string
           rate: number
           source?: string | null
+          spread_bps?: number | null
         }
         Update: {
+          applied_rate?: number | null
           base_currency?: string
           created_at?: string
           id?: string
+          mid_market_rate?: number | null
           quote_currency?: string
           rate?: number
           source?: string | null
+          spread_bps?: number | null
         }
         Relationships: []
+      }
+      fx_revenue_logs: {
+        Row: {
+          amount: number
+          applied_rate: number
+          base_currency: string
+          created_at: string
+          id: string
+          merchant_id: string
+          mid_market_rate: number
+          quote_currency: string
+          revenue_amount: number
+          spread_bps: number
+          transaction_id: string | null
+        }
+        Insert: {
+          amount?: number
+          applied_rate: number
+          base_currency: string
+          created_at?: string
+          id?: string
+          merchant_id: string
+          mid_market_rate: number
+          quote_currency: string
+          revenue_amount?: number
+          spread_bps?: number
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          applied_rate?: number
+          base_currency?: string
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          mid_market_rate?: number
+          quote_currency?: string
+          revenue_amount?: number
+          spread_bps?: number
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fx_revenue_logs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fx_revenue_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gateway_credentials: {
         Row: {
@@ -1663,6 +1729,41 @@ export type Database = {
             foreignKeyName: "merchant_acquirer_mids_merchant_id_fkey"
             columns: ["merchant_id"]
             isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_fx_settings: {
+        Row: {
+          created_at: string
+          currency_spreads: Json | null
+          default_spread_bps: number
+          id: string
+          merchant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency_spreads?: Json | null
+          default_spread_bps?: number
+          id?: string
+          merchant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency_spreads?: Json | null
+          default_spread_bps?: number
+          id?: string
+          merchant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_fx_settings_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
             referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
@@ -3374,24 +3475,89 @@ export type Database = {
           created_at: string | null
           currency: string | null
           id: string
+          liquidity_type: string
+          merchant_id: string | null
+          min_threshold: number | null
           provider: string | null
           region: string | null
+          target_balance: number | null
+          updated_at: string
         }
         Insert: {
           balance?: number | null
           created_at?: string | null
           currency?: string | null
           id?: string
+          liquidity_type?: string
+          merchant_id?: string | null
+          min_threshold?: number | null
           provider?: string | null
           region?: string | null
+          target_balance?: number | null
+          updated_at?: string
         }
         Update: {
           balance?: number | null
           created_at?: string | null
           currency?: string | null
           id?: string
+          liquidity_type?: string
+          merchant_id?: string | null
+          min_threshold?: number | null
           provider?: string | null
           region?: string | null
+          target_balance?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treasury_accounts_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treasury_movements: {
+        Row: {
+          amount: number
+          converted_amount: number
+          created_at: string
+          from_currency: string
+          fx_rate: number
+          id: string
+          initiated_by: string | null
+          notes: string | null
+          purpose: string
+          status: string
+          to_currency: string
+        }
+        Insert: {
+          amount: number
+          converted_amount?: number
+          created_at?: string
+          from_currency: string
+          fx_rate?: number
+          id?: string
+          initiated_by?: string | null
+          notes?: string | null
+          purpose?: string
+          status?: string
+          to_currency: string
+        }
+        Update: {
+          amount?: number
+          converted_amount?: number
+          created_at?: string
+          from_currency?: string
+          fx_rate?: number
+          id?: string
+          initiated_by?: string | null
+          notes?: string | null
+          purpose?: string
+          status?: string
+          to_currency?: string
         }
         Relationships: []
       }
