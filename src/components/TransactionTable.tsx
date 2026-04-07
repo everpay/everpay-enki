@@ -74,7 +74,7 @@ function getPaymentMethodInfo(tx: Transaction): { logoSrc?: string; label: strin
 
 function getTransactionType(tx: Transaction): string {
   const meta = (tx as any).metadata || {};
-  return meta.transaction_type || meta.type || tx.type || 'payment';
+  return meta.transaction_type || meta.type || (tx as any).type || 'payment';
 }
 
 interface TransactionTableProps {
