@@ -113,7 +113,7 @@ export default function FrontIntegrations() {
                 </Button>
               </Link>
               <Link to="/developers/api/payments">
-                <Button variant="outline" className="rounded-full px-8 h-12 text-[15px] font-semibold border-white/20 text-white hover:bg-white/10 active:scale-[0.97] transition-all font-body">
+                <Button variant="outline" className="rounded-full px-8 h-12 text-[15px] font-semibold border-white/30 text-white bg-white/10 hover:bg-white/20 active:scale-[0.97] transition-all font-body">
                   View docs <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -216,7 +216,11 @@ export default function FrontIntegrations() {
                         className="group border border-border rounded-2xl p-5 hover:shadow-md hover:border-primary/20 transition-all bg-card"
                       >
                         <div className="flex items-start gap-3 mb-3">
-                          <span className="text-2xl">{item.icon}</span>
+                          {item.icon.startsWith('/') ? (
+                            <img src={item.icon} alt={item.name} className="w-10 h-10 rounded-lg object-contain" loading="lazy" />
+                          ) : (
+                            <span className="text-2xl w-10 h-10 flex items-center justify-center">{item.icon}</span>
+                          )}
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-foreground font-heading text-[15px]">{item.name}</h4>
                           </div>
