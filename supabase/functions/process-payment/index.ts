@@ -401,4 +401,4 @@ async function processMakapay(data: PaymentRequest) {
     console.error('MakaPay error:', err);
     return simulatePayment('makapay', data);
 }
-
+}
