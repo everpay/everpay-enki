@@ -105,6 +105,7 @@ const navSections: NavSection[] = [
     title: "Treasury",
     items: [
       { to: "/wallets", icon: Wallet, label: "Wallets" },
+      { to: "/merchant-treasury", icon: ArrowUpRight, label: "Treasury & FX" },
       { to: "/treasury", icon: Landmark, label: "Liquidity & FX", visibleTo: ["admin", "super_admin"] },
       { to: "/settlements", icon: Landmark, label: "Settlements" },
       { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
@@ -147,6 +148,7 @@ const adminSections: NavSection[] = [
     items: [
       { to: "/enki/payment-graph", icon: Eye, label: "Payment Graph" },
       { to: "/enki/refund-management", icon: RotateCcw, label: "Refund Management" },
+      { to: "/enki/fx-treasury", icon: Landmark, label: "FX & Treasury" },
     ],
   },
   {
