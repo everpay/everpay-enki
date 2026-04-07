@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,39 +7,17 @@ const corsHeaders = {
 
 /**
  * Matrix Pay Solution Integration
- * Only for Gaming, Online Casinos, Lottery merchant types.
+ * Gaming, Online Casinos, Lottery merchant types only.
+ * NOT available for US-based customers/cards/wallets.
  * 
- * Sandbox: https://api-sandbox.matrixpaysolution.com/
- * Live:    https://api.matrixpaysolution.com/
- * 
- * Auth: Basic HTTP Auth with public_key:secret_key
- * Currencies: EUR, USD (sandbox)
- * 
- * API Methods:
- *   POST /v1/customer/token      — Get customer token
- *   POST /v1/transaction/pay     — Card payment
- *   POST /v1/checkout/pay        — Hosted checkout (HPP)
- *   POST /v1/transaction/payout  — Payout to card
- *   POST /v1/transaction/refund  — Refund
- *   POST /v1/transaction/status  — Check status
- *   POST /v1/h2h/payment         — H2H card payment
- *   POST /v1/h2h/apm/payment     — H2H APM (Apple Pay, Google Pay)
+ * Auth: Basic HTTP Auth — public_key:secret_key
+ * Without secret_key, runs in simulation mode.
+ * Card.js frontend SDK only needs public_key.
  */
 
 const SANDBOX_URL = 'https://api-sandbox.matrixpaysolution.com';
 const LIVE_URL = 'https://api.matrixpaysolution.com';
 
-// Matrix test cards
-const TEST_CARDS = {
-  visa_3ds: { number: '4012000300001003', expiry: '01/29', cvv: '030' },
-  visa_no3ds: { number: '4012888888881881', expiry: '10/27', cvv: '000' },
-  mc_no3ds: { number: '5413330300003002', expiry: '04/28', cvv: '440' },
-  mc_no3ds_2: { number: '5555555555554444', expiry: '12/27', cvv: '111' },
-  amex: { number: '371449635398431', expiry: '01/28', cvv: '0203' },
-  unionpay: { number: '6212345678901232', expiry: '02/28', cvv: '092' },
-};
-
-// Matrix transaction status codes mapped to human-readable
 const STATUS_CODE_MAP: Record<number, string> = {
   0: 'Successful transaction',
   1003: 'No payment routes found',
@@ -60,44 +37,24 @@ const STATUS_CODE_MAP: Record<number, string> = {
   2099: 'Pending cascading after 3DS',
 };
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+const API_RESPONSE_CODES: Record<number, string> = {
+  0: 'Successful operation',
+  30003: 'No payment routes found',
+  30005: 'Unknown merchant account',
+  30010: 'Invalid order data',
+  30011: 'Invalid parent transaction',
+  30012: 'Order already exists',
+  30020: 'Unknown payment provider',
+  30022: 'Unknown payment route',
+  30030: 'Blocked by antifraud',
+  30031: 'Blocked manually',
+  30401: 'Unauthorized request',
+  30404: 'Transaction is not found',
+  30500: 'Internal server error',
+  30600: 'Foreign error',
+  30700: 'Request timed out',
+};
 
-  try {
-    const body = await req.json();
-    const { action, sandbox = true, ...params } = body;
-
-    // Block US-based customers
-    const customerCountry = params.country || params.billingDetails?.country || '';
-    if (customerCountry === 'US') {
-      return new Response(JSON.stringify({
-        error: 'Matrix Pay is not available for US-based customers',
-        code: 'REGION_BLOCKED',
-      }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    // Always use sandbox test credentials (no secret key needed)
-    const baseUrl = SANDBOX_URL;
-    const MATRIX_PUBLIC_KEY = Deno.env.get('MATRIX_PUBLIC_KEY') || 'test_public_key';
-
-    // Simulation mode — no secret key required
-    return new Response(JSON.stringify({
-      simulation: true,
-      ...simulateResponse(action, params),
-    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-
-  } catch (err) {
-    console.error('[Matrix] Error:', err);
-    return new Response(JSON.stringify({ error: 'Matrix processing error', message: String(err) }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-});
-
-// Simulation for when keys aren't configured
 function simulateResponse(action: string, params: any) {
   const txId = `mtx_sim_${Date.now().toString(36)}`;
   switch (action) {
@@ -106,17 +63,11 @@ function simulateResponse(action: string, params: any) {
     case 'pay':
     case 'h2h_payment':
       return {
-        status: 'success',
-        code: 0,
-        reason: 'ok',
+        status: 'success', code: 0, reason: 'ok',
         id: params.order_id || txId,
         transactions: [{
-          id: txId,
-          status: 'success',
-          code: 0,
-          reason: 'ok',
-          amount: params.amount,
-          currency: params.currency || 'EUR',
+          id: txId, status: 'success', code: 0, reason: 'ok',
+          amount: params.amount, currency: params.currency || 'EUR',
           status_description: 'Successful transaction',
         }],
       };
@@ -130,7 +81,158 @@ function simulateResponse(action: string, params: any) {
       return { status: 'success', code: 0, reason: 'ok', id: txId };
     case 'status':
       return { status: 'success', code: 0, transactions: [] };
+    case 'plan_create':
+    case 'plan_update':
+    case 'plan_deactivate':
+    case 'plan_details':
+      return { status: 'success', code: 0, plan_id: `plan_sim_${Date.now().toString(36)}` };
+    case 'subscription_init':
+    case 'subscription_details':
+    case 'subscription_list':
+    case 'subscription_cancel':
+      return { status: 'success', code: 0, subscription_id: `sub_sim_${Date.now().toString(36)}` };
     default:
       return { status: 'ok' };
   }
 }
+
+// Map action -> Matrix API endpoint
+function getEndpoint(action: string): string {
+  const map: Record<string, string> = {
+    customer_token: '/v1/customer/token',
+    pay: '/v1/transaction/pay',
+    checkout: '/v1/checkout/pay',
+    refund: '/v1/transaction/refund',
+    status: '/v1/transaction/status',
+    payout: '/v1/transaction/payout/init',
+    h2h_payment: '/v1/h2h/payment',
+    h2h_apm: '/v1/h2h/apm/payment',
+    cascade: '/v1/transaction/cascade',
+    cascade_reject: '/v1/transaction/cascade/reject',
+    order_status: '/v1/order/status',
+    // Subscriptions v2
+    plan_create: '/v2/subscription/plan/create',
+    plan_update: '/v2/subscription/plan/update',
+    plan_deactivate: '/v2/subscription/plan/deactivate',
+    plan_details: '/v2/subscription/plan/details',
+    subscription_init: '/v2/subscription/init',
+    subscription_hpp: '/v2/checkout/subscription/init',
+    subscription_details: '/v2/subscription/details',
+    subscription_list: '/v2/subscription/list',
+    subscription_cancel: '/v2/subscription/cancel',
+    subscription_token_pay: '/v1/subscription/transaction/pay',
+    // Oneclick
+    oneclick_create: '/v1/checkout/oneclick/init',
+    oneclick_pay: '/v1/oneclick/transaction/pay',
+    // Project/MID
+    project_details: '/v1/project/details',
+    mid_details: '/v1/mid/details',
+    mid_balance: '/v1/balance/mid',
+  };
+  return map[action] || '';
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const body = await req.json();
+    const { action, sandbox = true, ...params } = body;
+
+    // Block US-based customers/cards
+    const customerCountry = params.country || params.billingDetails?.country || '';
+    if (customerCountry === 'US') {
+      return new Response(JSON.stringify({
+        error: 'Matrix Pay is not available for US-based customers',
+        code: 'REGION_BLOCKED',
+      }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const MATRIX_PUBLIC_KEY = Deno.env.get('MATRIX_PUBLIC_KEY');
+    const MATRIX_SECRET_KEY = Deno.env.get('MATRIX_SECRET_KEY');
+
+    if (!MATRIX_PUBLIC_KEY) {
+      return new Response(JSON.stringify({
+        error: 'Matrix public key not configured',
+        code: 'CONFIG_ERROR',
+      }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Without secret key, return simulation
+    if (!MATRIX_SECRET_KEY) {
+      console.log(`[Matrix] Simulation mode (no secret key) — action: ${action}`);
+      return new Response(JSON.stringify({
+        simulation: true,
+        public_key_configured: true,
+        ...simulateResponse(action, params),
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Live API call with both keys
+    const baseUrl = sandbox ? SANDBOX_URL : LIVE_URL;
+    const endpoint = getEndpoint(action);
+
+    if (!endpoint) {
+      return new Response(JSON.stringify({
+        error: `Unknown action: ${action}`,
+        code: 'INVALID_ACTION',
+      }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const authHeader = `Basic ${btoa(`${MATRIX_PUBLIC_KEY}:${MATRIX_SECRET_KEY}`)}`;
+
+    console.log(`[Matrix] ${action} -> ${baseUrl}${endpoint}`);
+
+    const response = await fetch(`${baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+      },
+      body: JSON.stringify(params),
+    });
+
+    const responseText = await response.text();
+    console.log(`[Matrix] Response ${response.status}: ${responseText.substring(0, 500)}`);
+
+    let data: any;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = { raw_response: responseText };
+    }
+
+    // Enrich with human-readable status descriptions
+    if (data.code !== undefined) {
+      data.status_description = STATUS_CODE_MAP[data.code] || API_RESPONSE_CODES[data.code] || `Code ${data.code}`;
+    }
+    if (data.transactions) {
+      for (const tx of data.transactions) {
+        if (tx.code !== undefined) {
+          tx.status_description = STATUS_CODE_MAP[tx.code] || `Code ${tx.code}`;
+        }
+      }
+    }
+
+    return new Response(JSON.stringify({
+      sandbox,
+      matrix_status: response.status,
+      ...data,
+    }), {
+      status: response.ok ? 200 : response.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (err) {
+    console.error('[Matrix] Error:', err);
+    return new Response(JSON.stringify({
+      error: 'Matrix processing error',
+      message: String(err),
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
