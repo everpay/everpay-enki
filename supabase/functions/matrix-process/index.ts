@@ -170,7 +170,6 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader,
       },
       body: JSON.stringify(payload),
     });
