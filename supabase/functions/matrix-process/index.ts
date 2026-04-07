@@ -69,15 +69,24 @@ serve(async (req) => {
     const body = await req.json();
     const { action, sandbox = true, ...params } = body;
 
-    const MATRIX_PUBLIC_KEY = Deno.env.get('MATRIX_PUBLIC_KEY');
-    const MATRIX_SECRET_KEY = Deno.env.get('MATRIX_SECRET_KEY');
-
-    if (!MATRIX_PUBLIC_KEY || !MATRIX_SECRET_KEY) {
+    // Block US-based customers
+    const customerCountry = params.country || params.billingDetails?.country || '';
+    if (customerCountry === 'US') {
       return new Response(JSON.stringify({
-        error: 'Matrix API keys not configured',
-        simulation: true,
-        ...simulateResponse(action, params),
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        error: 'Matrix Pay is not available for US-based customers',
+        code: 'REGION_BLOCKED',
+      }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Always use sandbox test credentials (no secret key needed)
+    const baseUrl = SANDBOX_URL;
+    const MATRIX_PUBLIC_KEY = Deno.env.get('MATRIX_PUBLIC_KEY') || 'test_public_key';
+
+    // Simulation mode — no secret key required
+    return new Response(JSON.stringify({
+      simulation: true,
+      ...simulateResponse(action, params),
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const baseUrl = sandbox ? SANDBOX_URL : LIVE_URL;
