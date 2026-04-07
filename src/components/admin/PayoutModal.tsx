@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Minus, ArrowRight } from "lucide-react";
+import { encryptFields } from "@/lib/vgs-encrypt";
+import { Loader2, Minus, ArrowRight, Lock } from "lucide-react";
 
 interface PayoutModalProps {
   open: boolean;
@@ -46,7 +47,16 @@ export default function PayoutModal({ open, onOpenChange, merchant }: PayoutModa
     }
     try {
       setLoading(true);
-      toast({ title: "Payout Initiated", description: `Payout of ${fmt(finalPayoutAmount)} has been scheduled for ${merchant.merchant_name}` });
+      // Encrypt bank account PII via VGS before processing
+      const encryptedBankInfo = await encryptFields({
+        account_number: bankAccount,
+        account_holder: accountHolder,
+        routing_number: routingNumber,
+      }, 'bank_account_pii');
+      
+      console.log('Bank info encrypted via VGS:', Object.keys(encryptedBankInfo).map(k => `${k}: tok_***`));
+      
+      toast({ title: "Payout Initiated", description: `Payout of ${fmt(finalPayoutAmount)} has been scheduled for ${merchant.merchant_name}. Bank details encrypted via VGS.` });
       onOpenChange(false);
       setBankAccount(""); setAccountHolder(""); setRoutingNumber(""); setNotes("");
     } catch (error: any) {
@@ -78,6 +88,10 @@ export default function PayoutModal({ open, onOpenChange, merchant }: PayoutModa
             <div className="space-y-2"><Label>Bank Account Number *</Label><Input value={bankAccount} onChange={e => setBankAccount(e.target.value)} placeholder="1234567890" /></div>
             <div className="space-y-2"><Label>Routing Number *</Label><Input value={routingNumber} onChange={e => setRoutingNumber(e.target.value)} placeholder="021000021" /></div>
             <div className="space-y-2"><Label>Notes (Optional)</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Add any additional notes..." rows={3} /></div>
+            <div className="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/10 p-3">
+              <Lock className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-xs text-muted-foreground">Bank account details are encrypted via VGS vault before processing. Raw data never touches our database.</p>
+            </div>
           </div>
         </div>
         <DialogFooter>

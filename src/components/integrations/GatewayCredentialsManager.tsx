@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Key, Plus, Trash2, Eye, EyeOff, Settings2, Shield } from 'lucide-react';
+import { encryptFields } from '@/lib/vgs-encrypt';
+import { Key, Plus, Trash2, Eye, EyeOff, Settings2, Shield, Lock } from 'lucide-react';
 
 // Active Merchant gateway credential field definitions
 const GATEWAY_FIELDS: Record<string, { label: string; fields: { key: string; label: string; type: string; required: boolean }[] }> = {
@@ -91,11 +92,13 @@ export function GatewayCredentialsManager({ merchantId }: GatewayCredentialsMana
   const addCredential = useMutation({
     mutationFn: async () => {
       if (!merchantId || !selectedGateway) throw new Error('Missing data');
+      // Encrypt all credential values via VGS before storing
+      const encryptedCredentials = await encryptFields(credentials, 'gateway_credentials');
       const { error } = await supabase.from('gateway_credentials').insert({
         merchant_id: merchantId,
         gateway_name: selectedGateway,
         gateway_type: 'active_merchant',
-        credentials,
+        credentials: encryptedCredentials,
         environment,
         label: label || selectedGateway,
       });
@@ -103,7 +106,7 @@ export function GatewayCredentialsManager({ merchantId }: GatewayCredentialsMana
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gateway-credentials'] });
-      toast.success('Gateway credentials saved');
+      toast.success('Gateway credentials encrypted & saved via VGS');
       setIsAddOpen(false);
       resetForm();
     },
@@ -250,9 +253,9 @@ export function GatewayCredentialsManager({ merchantId }: GatewayCredentialsMana
                   ))}
 
                   <div className="flex items-center gap-2 rounded-lg bg-primary/5 border border-primary/10 p-3">
-                    <Shield className="h-4 w-4 text-primary shrink-0" />
+                    <Lock className="h-4 w-4 text-primary shrink-0" />
                     <p className="text-xs text-muted-foreground">
-                      Credentials are encrypted and stored securely. They are only used for transaction processing and data migration.
+                      Credentials are tokenized via VGS (Very Good Security) vault before storage. Raw keys never touch our database.
                     </p>
                   </div>
                 </>
