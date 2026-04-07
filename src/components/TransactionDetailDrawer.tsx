@@ -175,13 +175,13 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
   const expMonth = paymentMethod?.exp_month || txMetadata.exp_month || null;
   const expYear = paymentMethod?.exp_year || txMetadata.exp_year || null;
   const deviceInfo = txMetadata.device_info || null;
+  const issuerBank = txMetadata.issuer_bank || txMetadata.bank_name || txMetadata.issuer || enrichment?.merchantName || null;
 
-  const methodType = detectPaymentMethodType(transaction, txMetadata);
-
-  const bankName = txMetadata.bank_name || txMetadata.institution_name || null;
-  const bankAccountLast4 = txMetadata.account_last4 || txMetadata.bank_last4 || null;
-  const bankType = txMetadata.bank_method || txMetadata.payment_rail || null;
-  const walletType = txMetadata.wallet_type || txMetadata.payment_method_type || null;
+  const customerFirstName = txMetadata.customer_first_name || txMetadata.first_name || null;
+  const customerLastName = txMetadata.customer_last_name || txMetadata.last_name || null;
+  const customerName = customerFirstName || customerLastName
+    ? [customerFirstName, customerLastName].filter(Boolean).join(' ')
+    : txMetadata.customer_name || null;
 
   const PaymentMethodIcon = methodType === 'bank' ? Building2 : methodType === 'wallet' ? Wallet : CreditCard;
   const methodLabel = methodType === 'bank' ? 'Bank Payment' : methodType === 'wallet' ? 'Digital Wallet' : 'Card Payment';
