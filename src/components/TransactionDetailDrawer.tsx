@@ -183,6 +183,13 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
     ? [customerFirstName, customerLastName].filter(Boolean).join(' ')
     : txMetadata.customer_name || null;
 
+  const methodType = detectPaymentMethodType(transaction, txMetadata);
+
+  const bankName = txMetadata.bank_name || txMetadata.institution_name || null;
+  const bankAccountLast4 = txMetadata.account_last4 || txMetadata.bank_last4 || null;
+  const bankType = txMetadata.bank_method || txMetadata.payment_rail || null;
+  const walletType = txMetadata.wallet_type || txMetadata.payment_method_type || null;
+
   const PaymentMethodIcon = methodType === 'bank' ? Building2 : methodType === 'wallet' ? Wallet : CreditCard;
   const methodLabel = methodType === 'bank' ? 'Bank Payment' : methodType === 'wallet' ? 'Digital Wallet' : 'Card Payment';
 
