@@ -48,6 +48,7 @@ import BigCommerce from "./pages/BigCommerce";
 import Shopify from "./pages/Shopify";
 import Ledger from "./pages/Ledger";
 import AuditTrail from "./pages/AuditTrail";
+import Integrations from "./pages/Integrations";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 import { usePostHogTracking } from "./hooks/usePostHogTracking";
 import { InactivityWarningDialog } from "./components/InactivityWarningDialog";
@@ -266,6 +267,7 @@ const AppRoutes = () => {
     <Route path="/bigcommerce" element={<ProtectedRoute><BigCommerce /></ProtectedRoute>} />
     <Route path="/shopify" element={<ProtectedRoute><Shopify /></ProtectedRoute>} />
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+    <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
     <Route path="/treasury" element={<ProtectedRoute><Treasury /></ProtectedRoute>} />
     <Route path="/live" element={<ProtectedRoute><LiveAnalytics /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />
