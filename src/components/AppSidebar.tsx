@@ -204,6 +204,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { data: userRole } = useUserRole();
+  const { environment, setEnvironment, isTestMode } = useEnvironment();
 
   const isAdmin = userRole?.isAdmin || false;
   const isOnAdminRoute = location.pathname.startsWith("/enki");
@@ -229,6 +230,36 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </span>
         </div>
       </div>
+
+      {/* Environment Toggle */}
+      {!isOnAdminRoute && (
+        <div className="px-3 pt-3 pb-1">
+          <div className="flex items-center rounded-lg bg-muted/50 p-0.5">
+            <button
+              onClick={() => setEnvironment("test")}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                isTestMode
+                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${isTestMode ? "bg-amber-500" : "bg-muted-foreground/40"}`} />
+              Test
+            </button>
+            <button
+              onClick={() => setEnvironment("live")}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                !isTestMode
+                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${!isTestMode ? "bg-emerald-500" : "bg-muted-foreground/40"}`} />
+              Live
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-3">
