@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/lib/format';
@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Banknote, Building2, ArrowRight, CheckCircle2, Clock, AlertCircle, Save, CreditCard, Send } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Banknote, Building2, ArrowRight, CheckCircle2, Clock, AlertCircle, Save, CreditCard, Send, Upload, Trash2, FileSpreadsheet, Users, DollarSign, Download } from 'lucide-react';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useCreateMonetoPayout } from '@/hooks/useMoneto';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
@@ -238,6 +241,65 @@ export default function Payouts() {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [isCardPayoutProcessing, setIsCardPayoutProcessing] = useState(false);
 
+  // Mass Payouts state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  interface MassPayoutRecipient {
+    id: string; name: string; email: string; amount: number; currency: string;
+    cardNumber?: string; bankAccount?: string; method: 'card' | 'bank'; status: 'pending' | 'processing' | 'completed' | 'failed';
+  }
+  const [massRecipients, setMassRecipients] = useState<MassPayoutRecipient[]>([]);
+  const [isMassProcessing, setIsMassProcessing] = useState(false);
+  const [massManualEntry, setMassManualEntry] = useState({ name: '', email: '', amount: '', currency: 'USD', cardNumber: '', bankAccount: '', method: 'card' as 'card' | 'bank' });
+
+  const massTotalAmount = massRecipients.reduce((s, r) => s + r.amount, 0);
+  const massPendingCount = massRecipients.filter(r => r.status === 'pending').length;
+
+  const parseMassCSV = (text: string) => {
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) { toast.error('File must have a header row and at least one data row'); return; }
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const nameIdx = headers.findIndex(h => h.includes('name'));
+    const emailIdx = headers.findIndex(h => h.includes('email'));
+    const amountIdx = headers.findIndex(h => h.includes('amount'));
+    const currencyIdx = headers.findIndex(h => h.includes('currency'));
+    const cardIdx = headers.findIndex(h => h.includes('card'));
+    const bankIdx = headers.findIndex(h => h.includes('bank') || h.includes('account'));
+    if (amountIdx === -1) { toast.error('CSV must include an "Amount" column'); return; }
+    const parsed: MassPayoutRecipient[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+      if (cols.length < 2) continue;
+      const amt = parseFloat(cols[amountIdx]);
+      if (isNaN(amt) || amt <= 0) continue;
+      parsed.push({ id: crypto.randomUUID(), name: nameIdx >= 0 ? cols[nameIdx] : `Recipient ${i}`, email: emailIdx >= 0 ? cols[emailIdx] : '', amount: amt, currency: currencyIdx >= 0 ? cols[currencyIdx] || 'USD' : 'USD', cardNumber: cardIdx >= 0 ? cols[cardIdx] : undefined, bankAccount: bankIdx >= 0 ? cols[bankIdx] : undefined, method: cardIdx >= 0 && cols[cardIdx] ? 'card' : 'bank', status: 'pending' });
+    }
+    if (parsed.length === 0) { toast.error('No valid recipients found'); return; }
+    setMassRecipients(prev => [...prev, ...parsed]);
+    toast.success(`${parsed.length} recipients imported`);
+  };
+
+  const handleMassProcessAll = async () => {
+    if (massRecipients.length === 0) { toast.error('Add at least one recipient'); return; }
+    setIsMassProcessing(true);
+    for (let i = 0; i < massRecipients.length; i++) {
+      setMassRecipients(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'processing' } : r));
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const success = Math.random() > 0.1;
+      setMassRecipients(prev => prev.map((r, idx) => idx === i ? { ...r, status: success ? 'completed' : 'failed' } : r));
+    }
+    setIsMassProcessing(false);
+    toast.success('Mass payout batch processed');
+  };
+
+  const downloadMassTemplate = () => {
+    const csv = 'Name,Email,Amount,Currency,Card Number\nJohn Doe,john@example.com,100.00,USD,4111111111111111\nJane Smith,jane@example.com,250.00,USD,5500000000000004';
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'mass_payout_template.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppLayout>
       <div className="mb-6 flex items-center justify-between">
@@ -256,6 +318,10 @@ export default function Payouts() {
           <TabsTrigger value="card" className="gap-2">
             <CreditCard className="h-4 w-4" />
             Payout to Card
+          </TabsTrigger>
+          <TabsTrigger value="mass" className="gap-2">
+            <Users className="h-4 w-4" />
+            Mass Payouts
           </TabsTrigger>
         </TabsList>
 
@@ -635,6 +701,109 @@ export default function Payouts() {
               <Badge variant="outline">Instant Push</Badge>
             </div>
           </div>
+        </TabsContent>
+
+        {/* Mass Payouts Tab */}
+        <TabsContent value="mass">
+          <div className="flex items-center justify-between mb-6">
+            <div />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={downloadMassTemplate} className="gap-2">
+                <Download className="h-4 w-4" />
+                Download Template
+              </Button>
+              <Button onClick={handleMassProcessAll} disabled={isMassProcessing || massPendingCount === 0} className="gap-2">
+                <Send className="h-4 w-4" />
+                {isMassProcessing ? 'Processing...' : `Process ${massPendingCount} Payouts`}
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2.5 rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-heading font-bold text-foreground">{massRecipients.length}</p><p className="text-xs text-muted-foreground">Total Recipients</p></div></CardContent></Card>
+            <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2.5 rounded-lg bg-primary/10"><DollarSign className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-heading font-bold text-foreground">{formatCurrency(massTotalAmount, 'USD')}</p><p className="text-xs text-muted-foreground">Total Amount</p></div></CardContent></Card>
+            <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2.5 rounded-lg bg-warning/10"><AlertCircle className="h-5 w-5 text-warning" /></div><div><p className="text-2xl font-heading font-bold text-foreground">{massPendingCount}</p><p className="text-xs text-muted-foreground">Pending</p></div></CardContent></Card>
+          </div>
+
+          <Tabs defaultValue="upload" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="upload" className="gap-2"><FileSpreadsheet className="h-4 w-4" />Upload File</TabsTrigger>
+              <TabsTrigger value="manual" className="gap-2"><Plus className="h-4 w-4" />Add Manually</TabsTrigger>
+            </TabsList>
+            <TabsContent value="upload">
+              <Card><CardContent className="p-6">
+                <div className="border-2 border-dashed border-border rounded-xl p-10 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="font-medium text-foreground">Drop your file here or click to browse</p>
+                  <p className="text-sm text-muted-foreground mt-1">Supports .csv, .xls, and .xlsx files</p>
+                  <p className="text-xs text-muted-foreground mt-3">Required columns: Name, Email, Amount, Currency, Card Number (or Bank Account)</p>
+                  <input ref={fileInputRef} type="file" accept=".csv,.xls,.xlsx" onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const ext = f.name.split('.').pop()?.toLowerCase(); if (!['csv','xls','xlsx'].includes(ext||'')) { toast.error('Upload a .csv, .xls, or .xlsx file'); return; } const reader = new FileReader(); reader.onload = (ev) => parseMassCSV(ev.target?.result as string); reader.readAsText(f); }} className="hidden" />
+                </div>
+              </CardContent></Card>
+            </TabsContent>
+            <TabsContent value="manual">
+              <Card>
+                <CardHeader><CardTitle className="text-lg">Add Recipient</CardTitle><CardDescription>Manually add a payout recipient</CardDescription></CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Full Name</Label><Input placeholder="John Doe" value={massManualEntry.name} onChange={(e) => setMassManualEntry(p => ({ ...p, name: e.target.value }))} /></div>
+                    <div className="space-y-2"><Label>Email</Label><Input type="email" placeholder="john@example.com" value={massManualEntry.email} onChange={(e) => setMassManualEntry(p => ({ ...p, email: e.target.value }))} /></div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Amount & Currency</Label><CurrencyInput value={massManualEntry.amount} onChange={(v) => setMassManualEntry(p => ({ ...p, amount: v }))} currency={massManualEntry.currency} onCurrencyChange={(v) => setMassManualEntry(p => ({ ...p, currency: v }))} currencies={['USD','EUR','GBP','CAD']} placeholder="0.00" /></div>
+                    <div className="space-y-2"><Label>Method</Label>
+                      <Select value={massManualEntry.method} onValueChange={(v: 'card'|'bank') => setMassManualEntry(p => ({ ...p, method: v }))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="card">Payout to Card</SelectItem><SelectItem value="bank">Bank Transfer</SelectItem></SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {massManualEntry.method === 'card' ? (
+                    <div className="space-y-2"><Label>Card Number</Label><Input placeholder="4111 1111 1111 1111" value={massManualEntry.cardNumber} onChange={(e) => setMassManualEntry(p => ({ ...p, cardNumber: e.target.value }))} maxLength={19} /></div>
+                  ) : (
+                    <div className="space-y-2"><Label>Bank Account / IBAN</Label><Input placeholder="Enter bank account or IBAN" value={massManualEntry.bankAccount} onChange={(e) => setMassManualEntry(p => ({ ...p, bankAccount: e.target.value }))} /></div>
+                  )}
+                  <Button onClick={() => {
+                    if (!massManualEntry.name || !massManualEntry.amount || parseFloat(massManualEntry.amount) <= 0) { toast.error('Name and valid amount required'); return; }
+                    if (massManualEntry.method === 'card' && !massManualEntry.cardNumber) { toast.error('Card number required'); return; }
+                    setMassRecipients(prev => [...prev, { id: crypto.randomUUID(), name: massManualEntry.name, email: massManualEntry.email, amount: parseFloat(massManualEntry.amount), currency: massManualEntry.currency, cardNumber: massManualEntry.method === 'card' ? massManualEntry.cardNumber : undefined, bankAccount: massManualEntry.method === 'bank' ? massManualEntry.bankAccount : undefined, method: massManualEntry.method, status: 'pending' }]);
+                    setMassManualEntry({ name: '', email: '', amount: '', currency: 'USD', cardNumber: '', bankAccount: '', method: 'card' });
+                    toast.success('Recipient added');
+                  }} className="gap-2"><Plus className="h-4 w-4" />Add Recipient</Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          {massRecipients.length > 0 ? (
+            <Card className="mt-6">
+              <CardHeader><CardTitle className="text-lg">Payout Queue ({massRecipients.length})</CardTitle></CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader><TableRow><TableHead>Recipient</TableHead><TableHead>Method</TableHead><TableHead>Destination</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead><TableHead className="w-12"></TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {massRecipients.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell><div><p className="font-medium text-foreground">{r.name}</p><p className="text-xs text-muted-foreground">{r.email}</p></div></TableCell>
+                        <TableCell><Badge variant="outline" className="capitalize">{r.method}</Badge></TableCell>
+                        <TableCell className="font-mono text-sm">{r.method === 'card' ? `•••• ${r.cardNumber?.slice(-4) || '****'}` : (r.bankAccount?.slice(0, 8) + '...' || '—')}</TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(r.amount, r.currency as any)}</TableCell>
+                        <TableCell>
+                          {r.status === 'pending' && <Badge variant="outline">Pending</Badge>}
+                          {r.status === 'processing' && <Badge className="bg-warning/10 text-warning border-warning/20">Processing</Badge>}
+                          {r.status === 'completed' && <Badge className="bg-success/10 text-success border-success/20 gap-1"><CheckCircle2 className="h-3 w-3" />Completed</Badge>}
+                          {r.status === 'failed' && <Badge variant="destructive">Failed</Badge>}
+                        </TableCell>
+                        <TableCell>{r.status === 'pending' && <Button variant="ghost" size="icon" onClick={() => setMassRecipients(prev => prev.filter(x => x.id !== r.id))} className="h-8 w-8"><Trash2 className="h-4 w-4 text-destructive" /></Button>}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="mt-6"><CardContent className="p-12 text-center"><FileSpreadsheet className="h-10 w-10 text-muted-foreground mx-auto mb-3" /><p className="font-medium text-foreground">No recipients yet</p><p className="text-sm text-muted-foreground mt-1">Upload a file or add recipients manually to get started</p></CardContent></Card>
+          )}
         </TabsContent>
       </Tabs>
     </AppLayout>
