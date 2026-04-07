@@ -20,6 +20,7 @@ const footerSections = [
     { to: '/solutions/retail', label: 'Retail' },
     { to: '/solutions/restaurant', label: 'Restaurant' },
     { to: '/solutions/mobile-payments', label: 'Mobile Payments' },
+    { to: '/integrations-directory', label: 'Integrations' },
   ]},
   { title: 'Developers', links: [
     { to: '/developers', label: 'Documentation' },
