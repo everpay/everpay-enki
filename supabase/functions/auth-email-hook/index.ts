@@ -9,6 +9,7 @@ import { MagicLinkEmail } from '../_shared/email-templates/magic-link.tsx'
 import { RecoveryEmail } from '../_shared/email-templates/recovery.tsx'
 import { EmailChangeEmail } from '../_shared/email-templates/email-change.tsx'
 import { ReauthenticationEmail } from '../_shared/email-templates/reauthentication.tsx'
+import { describeAuthActionUrl, normalizeAuthActionUrl } from './url-utils.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -217,12 +218,19 @@ async function handleWebhook(req: Request): Promise<Response> {
     )
   }
 
+  const confirmationUrl = normalizeAuthActionUrl(
+    payload.data.url,
+    emailType,
+    `https://${ROOT_DOMAIN}`
+  )
+  const { linkHost, redirectHost } = describeAuthActionUrl(confirmationUrl)
+
   // Build template props from payload.data (HookData structure)
   const templateProps = {
     siteName: SITE_NAME,
     siteUrl: `https://${ROOT_DOMAIN}`,
     recipient: payload.data.email,
-    confirmationUrl: payload.data.url,
+    confirmationUrl,
     token: payload.data.token,
     email: payload.data.email,
     newEmail: payload.data.new_email,
@@ -282,7 +290,13 @@ async function handleWebhook(req: Request): Promise<Response> {
     })
   }
 
-  console.log('Auth email enqueued', { emailType, email: payload.data.email, run_id })
+  console.log('Auth email enqueued', {
+    emailType,
+    email: payload.data.email,
+    run_id,
+    linkHost,
+    redirectHost,
+  })
 
   return new Response(
     JSON.stringify({ success: true, queued: true }),

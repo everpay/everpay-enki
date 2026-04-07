@@ -5,6 +5,16 @@
 
 export type AppContext = 'main' | 'admin' | 'reseller' | 'developer';
 
+export interface SubdomainConfig {
+  title: string;
+  subtitle: string;
+  signupEnabled: boolean;
+  autoRole: string | null;
+  redirectAfterLogin: string;
+  brandColor: 'primary' | 'destructive';
+  authOrigin: string;
+}
+
 export function getAppContext(): AppContext {
   const hostname = window.location.hostname;
 
@@ -15,7 +25,7 @@ export function getAppContext(): AppContext {
   return 'main';
 }
 
-export function getSubdomainConfig(context: AppContext) {
+export function getSubdomainConfig(context: AppContext): SubdomainConfig {
   switch (context) {
     case 'admin':
       return {
@@ -25,6 +35,7 @@ export function getSubdomainConfig(context: AppContext) {
         autoRole: null as string | null,
         redirectAfterLogin: '/enki',
         brandColor: 'destructive' as const,
+        authOrigin: 'https://enki.everpayinc.com',
       };
     case 'reseller':
       return {
@@ -34,6 +45,7 @@ export function getSubdomainConfig(context: AppContext) {
         autoRole: 'reseller',
         redirectAfterLogin: '/reseller',
         brandColor: 'primary' as const,
+        authOrigin: 'https://resellers.everpayinc.com',
       };
     case 'developer':
       return {
@@ -43,6 +55,7 @@ export function getSubdomainConfig(context: AppContext) {
         autoRole: 'developer',
         redirectAfterLogin: '/developers',
         brandColor: 'primary' as const,
+        authOrigin: 'https://developers.everpayinc.com',
       };
     default:
       return {
@@ -52,6 +65,7 @@ export function getSubdomainConfig(context: AppContext) {
         autoRole: null as string | null,
         redirectAfterLogin: '/dashboard',
         brandColor: 'primary' as const,
+        authOrigin: 'https://everpayinc.com',
       };
   }
 }
