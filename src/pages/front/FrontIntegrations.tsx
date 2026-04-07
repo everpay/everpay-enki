@@ -137,15 +137,14 @@ export default function FrontIntegrations() {
 
               {grouped.map((group) => (
                 <div key={group.key} className="mb-12">
-                  <h3 className="text-xl font-bold tracking-tight font-heading mb-2">{group.label}</h3>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-xl font-bold tracking-tight font-heading">{group.label}</h3>
+                    {group.key === "supported" && (
+                      <Badge variant="secondary" className="text-[10px]">{group.items.length} gateways</Badge>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground font-body mb-6">
-                    {group.key === "accounting" && "Simplify financial reporting and automate reconciliation with seamless ERP integrations."}
-                    {group.key === "ecommerce" && "Enhance checkout experiences and streamline payment processing for your online store."}
-                    {group.key === "gateways" && "Connect to multiple payment processors and acquirers via our multi-PSP architecture."}
-                    {group.key === "crm" && "Track revenue, manage customer payments, and automate billing from your sales tools."}
-                    {group.key === "banking" && "Connect directly to bank accounts for real-time cash flow visibility and payments."}
-                    {group.key === "fraud" && "Protect transactions with intelligent fraud detection and dispute management."}
-                    {group.key === "developer" && "Build, test, and deploy custom payment integrations with our developer toolkit."}
+                    {CATEGORY_DESCRIPTIONS[group.key] || ""}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {group.items.map((item) => (
@@ -164,12 +163,25 @@ export default function FrontIntegrations() {
                           </div>
                         </div>
                         <p className="text-sm text-muted-foreground font-body leading-relaxed mb-4">{item.description}</p>
-                        <Link
-                          to="/developers"
-                          className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors font-body gap-1"
-                        >
-                          Learn More <ArrowRight className="h-3.5 w-3.5" />
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          {item.learnMore ? (
+                            <a
+                              href={item.learnMore}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors font-body gap-1"
+                            >
+                              Visit <ExternalLink className="h-3 w-3" />
+                            </a>
+                          ) : (
+                            <Link
+                              to="/developers"
+                              className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors font-body gap-1"
+                            >
+                              Learn More <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
