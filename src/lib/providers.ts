@@ -9,13 +9,6 @@ interface ProviderConfig {
 }
 
 export const providerConfigs: Record<Provider, ProviderConfig> = {
-  facilitapay: {
-    name: 'facilitapay',
-    displayName: 'FacilitaPay',
-    supportedCurrencies: ['BRL', 'MXN', 'COP'],
-    regions: ['BR', 'MX', 'CO'],
-    methods: ['PIX', 'Boleto', 'SPEI', 'PSE'],
-  },
   mondo: {
     name: 'mondo',
     displayName: 'Mondo',
@@ -48,8 +41,8 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     name: 'paygate10',
     displayName: 'Paygate10',
     supportedCurrencies: ['USD', 'BRL', 'MXN', 'COP', 'PKR'],
-    regions: ['IN', 'PK', 'AR', 'EG', 'MX'],
-    methods: ['UPI', 'NB', 'LBT', 'Bank Deposit', 'SPEI', 'Cash', 'Bank Transfer', 'Wallet', 'UPIQRCode', 'JazzCash', 'EasyPaisa'],
+    regions: ['IN', 'PK', 'AR', 'EG', 'MX', 'BR', 'CO'],
+    methods: ['UPI', 'NB', 'LBT', 'Bank Deposit', 'SPEI', 'Cash', 'Bank Transfer', 'Wallet', 'UPIQRCode', 'JazzCash', 'EasyPaisa', 'PIX', 'Boleto', 'PSE'],
   },
   ofa: {
     name: 'ofa',
@@ -84,7 +77,7 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     displayName: 'Matrix Pay',
     supportedCurrencies: ['EUR', 'USD'],
     regions: ['GLOBAL'],
-    methods: ['Card', 'Apple Pay', 'Google Pay', 'Checkout HPP', 'Crypto'],
+    methods: ['Card', 'Checkout HPP', 'Crypto'],
   },
   dcbank: {
     name: 'dcbank',
@@ -117,7 +110,7 @@ const countryProviderMap: Record<string, Provider> = {
   CA: 'moneto',
   // Paygate10: India, Pakistan, Brazil, Argentina, Nigeria, Egypt, Mexico, South Africa, Kenya
   IN: 'paygate10', PK: 'paygate10', EG: 'paygate10',
-  AR: 'paygate10',
+  AR: 'paygate10', BR: 'paygate10', MX: 'paygate10', CO: 'paygate10',
   // Lipad: Africa
   NG: 'lipad', ZA: 'lipad', KE: 'lipad', TZ: 'lipad', UG: 'lipad', GH: 'lipad', RW: 'lipad', ET: 'lipad', CI: 'lipad', SN: 'lipad', CM: 'lipad',
   // OFA: Asia-Pacific
@@ -127,8 +120,6 @@ const countryProviderMap: Record<string, Provider> = {
   BD: 'makapay',
   // Turkey: PayOK
   TR: 'payok',
-  // LATAM shared: PG10 primary, FacilitaPay fallback
-  BR: 'facilitapay', MX: 'paygate10', CO: 'facilitapay',
 };
 
 // Currency → provider fallback
@@ -137,9 +128,9 @@ const currencyProviderMap: Record<string, Provider> = {
   EUR: 'mondo',
   GBP: 'mondo',
   CAD: 'moneto',
-  BRL: 'facilitapay',
+  BRL: 'paygate10',
   MXN: 'paygate10',
-  COP: 'facilitapay',
+  COP: 'paygate10',
   INR: 'paygate10',
   NGN: 'lipad',
   EGP: 'paygate10',
@@ -164,23 +155,18 @@ const currencyProviderMap: Record<string, Provider> = {
 };
 
 export function resolveProvider(currency: Currency, region?: string): Provider {
-  // Country takes priority
   if (region && countryProviderMap[region]) {
     return countryProviderMap[region];
   }
-  // Then currency
   if (currencyProviderMap[currency]) {
     return currencyProviderMap[currency] as Provider;
   }
-  // EU/UK currencies
   if (['EUR', 'GBP'].includes(currency)) return 'mondo';
-  // Default
   return 'shieldhub';
 }
 
 export function getProviderColor(provider: Provider): string {
   switch (provider) {
-    case 'facilitapay': return 'hsl(var(--chart-4))';
     case 'mondo': return 'hsl(var(--chart-3))';
     case 'stripe': return 'hsl(var(--chart-1))';
     case 'shieldhub': return 'hsl(var(--chart-2))';
@@ -197,14 +183,12 @@ export function getProviderColor(provider: Provider): string {
   }
 }
 
-// Get payment methods available for a country
 export function getPaymentMethodsForCountry(countryCode: string): string[] {
   const provider = countryProviderMap[countryCode];
   if (!provider) return ['Card'];
   return providerConfigs[provider]?.methods || ['Card'];
 }
 
-// Get provider for a country
 export function getProviderForCountry(countryCode: string): Provider | null {
   return countryProviderMap[countryCode] || null;
 }
