@@ -31,9 +31,9 @@ const countryProviderMap: Record<string, string> = {
   BE: 'mondo', AT: 'mondo', PT: 'mondo', IE: 'mondo', FI: 'mondo', SE: 'mondo',
   DK: 'mondo', NO: 'mondo', CH: 'mondo', PL: 'mondo', CZ: 'mondo', GR: 'mondo',
   CA: 'moneto',
-  IN: 'paygate10', NG: 'paygate10', EG: 'paygate10', ZA: 'paygate10', KE: 'paygate10',
+  IN: 'paygate10', NG: 'lipad', EG: 'paygate10', ZA: 'lipad', KE: 'lipad',
   AR: 'paygate10', MX: 'paygate10', PK: 'paygate10',
-  BR: 'facilitapay', CO: 'facilitapay',
+  BR: 'paygate10', CO: 'paygate10',
   CN: 'ofa', VN: 'ofa', TH: 'ofa', ID: 'ofa', MY: 'ofa', PH: 'ofa',
   JP: 'ofa', KR: 'ofa', HK: 'ofa', AU: 'ofa', TW: 'ofa',
   BD: 'makapay', TR: 'payok',
@@ -46,7 +46,7 @@ function resolveProvider(data: PaymentRequest): string {
   if (c && countryProviderMap[c]) return countryProviderMap[c];
   const cur = data.currency;
   if (['EUR', 'GBP'].includes(cur)) return 'mondo';
-  if (cur === 'BRL' || cur === 'COP') return 'facilitapay';
+  if (cur === 'BRL' || cur === 'COP') return 'paygate10';
   if (['INR', 'NGN', 'EGP', 'ZAR', 'KES', 'ARS', 'PKR'].includes(cur)) return 'paygate10';
   if (cur === 'BDT') return 'makapay';
   if (['CNY', 'VND', 'THB', 'IDR', 'MYR', 'PHP', 'JPY', 'KRW', 'HKD', 'AUD'].includes(cur)) return 'ofa';
@@ -220,7 +220,6 @@ serve(async (req) => {
       case 'mondo': providerResponse = await processMondo(paymentData); break;
       case 'shieldhub': providerResponse = await processShieldHub(paymentData, req); break;
       case 'makapay': providerResponse = await processMakapay(paymentData); break;
-      case 'facilitapay': providerResponse = await processFacilitaPay(paymentData); break;
       default: providerResponse = simulatePayment(provider, paymentData); break;
     }
     const latencyMs = Date.now() - t0;
