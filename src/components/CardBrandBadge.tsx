@@ -19,16 +19,19 @@ interface CardBrandBadgeProps {
   brand?: string | null;
   last4?: string | null;
   first4?: string | null;
+  first6?: string | null;
   expMonth?: string | null;
   expYear?: string | null;
+  issuerBank?: string | null;
   size?: 'sm' | 'md';
 }
 
-export function CardBrandBadge({ brand, last4, first4, expMonth, expYear, size = 'md' }: CardBrandBadgeProps) {
+export function CardBrandBadge({ brand, last4, first4, first6, expMonth, expYear, issuerBank, size = 'md' }: CardBrandBadgeProps) {
   const normalizedBrand = (brand || 'unknown').toLowerCase().replace(/\s+/g, '');
   const logoSrc = brandLogos[normalizedBrand];
   const colorClass = brandColors[normalizedBrand] || 'bg-muted text-muted-foreground border-border';
-  const maskedNumber = first4 ? `${first4} •••• •••• ${last4 || '••••'}` : `•••• •••• •••• ${last4 || '••••'}`;
+  const displayPrefix = first6 || first4 || '';
+  const maskedNumber = displayPrefix ? `${displayPrefix} •••• •••• ${last4 || '••••'}` : `•••• •••• •••• ${last4 || '••••'}`;
 
   if (size === 'sm') {
     return (
@@ -44,6 +47,7 @@ export function CardBrandBadge({ brand, last4, first4, expMonth, expYear, size =
       {logoSrc ? <img src={logoSrc} alt={brand || 'Card'} className="h-6 w-auto" /> : <CreditCard className="h-5 w-5" />}
       <div>
         <p className="font-mono text-sm font-medium tracking-wider">{maskedNumber}</p>
+        {issuerBank && <p className="text-[10px] opacity-70">{issuerBank}</p>}
         {expMonth && expYear && <p className="text-[10px] opacity-70">Expires {expMonth}/{expYear}</p>}
       </div>
     </div>
