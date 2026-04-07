@@ -67,15 +67,15 @@ const navSections: NavSection[] = [
       { to: "/payment-links", icon: Link2, label: "Payment Links" },
       { to: "/payment-widget", icon: Globe, label: "Payment Widget" },
       { to: "/refunds", icon: RotateCcw, label: "Refunds" },
-      { to: "/saved-cards", icon: CreditCard, label: "Saved Cards" },
     ],
   },
   {
     title: "Commerce",
     items: [
+      { to: "/invoices", icon: FileText, label: "Invoices" },
       { to: "/products", icon: Package, label: "Products" },
       { to: "/subscriptions", icon: RefreshCw, label: "Subscriptions" },
-      { to: "/invoices", icon: FileText, label: "Invoices" },
+      { to: "/saved-cards", icon: CreditCard, label: "Saved Cards" },
     ],
   },
   {
@@ -107,15 +107,12 @@ const navSections: NavSection[] = [
       { to: "/treasury", icon: Landmark, label: "Liquidity & FX", visibleTo: ["admin", "super_admin"] },
       { to: "/settlements", icon: Landmark, label: "Settlements" },
       { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },
-      { to: "/mass-payouts", icon: Users, label: "Mass Payouts" },
     ],
   },
   {
     title: "Integrations",
     items: [
-      { to: "/integrations", icon: Globe, label: "All Integrations" },
-      { to: "/bigcommerce", icon: Store, label: "BigCommerce" },
-      { to: "/shopify", icon: Package, label: "Shopify" },
+      { to: "/integrations", icon: Globe, label: "Overview" },
     ],
   },
   {
@@ -123,7 +120,6 @@ const navSections: NavSection[] = [
       { to: "/developers", icon: BookOpen, label: "Developer Portal", visibleTo: ["developer", "admin", "super_admin"] },
       { to: "/reseller", icon: Users, label: "Reseller Portal", visibleTo: ["reseller"] },
       { to: "/affiliate", icon: Handshake, label: "Affiliate Program", visibleTo: ["reseller", "developer"] },
-      { to: "/chargeflow", icon: Shield, label: "Chargeflow" },
     ],
   },
 ];
