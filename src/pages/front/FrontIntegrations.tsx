@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import {
   Search, ArrowRight, ExternalLink, Zap,
 } from "lucide-react";
-import { CATEGORIES, CATEGORY_DESCRIPTIONS, integrations } from "@/data/integrations-directory";
+import { CATEGORIES, CATEGORY_DESCRIPTIONS, integrations, type IntegrationItem } from "@/data/integrations-directory";
 
 export default function FrontIntegrations() {
   const [activeCategory, setActiveCategory] = useState("all");
