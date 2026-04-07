@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { encryptFields } from '@/lib/vgs-encrypt';
-import { Key, Plus, Trash2, Eye, EyeOff, Settings2, Shield, Lock } from 'lucide-react';
+import { Key, Plus, Trash2, Eye, EyeOff, Settings2, Shield, Lock, Zap, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 // Active Merchant gateway credential field definitions
 const GATEWAY_FIELDS: Record<string, { label: string; fields: { key: string; label: string; type: string; required: boolean }[] }> = {
@@ -130,6 +130,34 @@ export function GatewayCredentialsManager({ merchantId }: GatewayCredentialsMana
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['gateway-credentials'] }),
+  });
+
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { passed: boolean; message: string } | null>>({});
+
+  const testCredential = useMutation({
+    mutationFn: async (id: string) => {
+      setTestingId(id);
+      const { data, error } = await supabase.functions.invoke('gateway-test-harness', {
+        body: { gateway_credential_id: id },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, id) => {
+      setTestResults(prev => ({ ...prev, [id]: { passed: data.test_passed, message: data.message } }));
+      if (data.test_passed) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.error || data.message || 'Test failed');
+      }
+      setTestingId(null);
+    },
+    onError: (e: any, id) => {
+      setTestResults(prev => ({ ...prev, [id]: { passed: false, message: e.message } }));
+      toast.error(e.message || 'Connection test failed');
+      setTestingId(null);
+    },
   });
 
   function resetForm() {
@@ -299,7 +327,25 @@ export function GatewayCredentialsManager({ merchantId }: GatewayCredentialsMana
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs gap-1.5"
+                    disabled={testingId === cred.id}
+                    onClick={() => testCredential.mutate(cred.id)}
+                  >
+                    {testingId === cred.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : testResults[cred.id]?.passed === true ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : testResults[cred.id]?.passed === false ? (
+                      <XCircle className="h-3.5 w-3.5 text-destructive" />
+                    ) : (
+                      <Zap className="h-3.5 w-3.5" />
+                    )}
+                    {testingId === cred.id ? 'Testing...' : 'Test'}
+                  </Button>
                   <Switch
                     checked={cred.is_active}
                     onCheckedChange={(active) => toggleActive.mutate({ id: cred.id, active })}
