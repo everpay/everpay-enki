@@ -152,6 +152,7 @@ serve(async (req) => {
 
     const MATRIX_PUBLIC_KEY = Deno.env.get('MATRIX_PUBLIC_KEY');
     const MATRIX_SECRET_KEY = Deno.env.get('MATRIX_SECRET_KEY');
+    const MATRIX_PROJECT_ID = '1219560793';
 
     if (!MATRIX_PUBLIC_KEY) {
       return new Response(JSON.stringify({
@@ -162,10 +163,11 @@ serve(async (req) => {
 
     // Without secret key, return simulation
     if (!MATRIX_SECRET_KEY) {
-      console.log(`[Matrix] Simulation mode (no secret key) — action: ${action}`);
+      console.log(`[Matrix] Simulation mode (no secret key) — action: ${action}, project: ${MATRIX_PROJECT_ID}`);
       return new Response(JSON.stringify({
         simulation: true,
         public_key_configured: true,
+        project_id: MATRIX_PROJECT_ID,
         ...simulateResponse(action, params),
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -183,7 +185,10 @@ serve(async (req) => {
 
     const authHeader = `Basic ${btoa(`${MATRIX_PUBLIC_KEY}:${MATRIX_SECRET_KEY}`)}`;
 
-    console.log(`[Matrix] ${action} -> ${baseUrl}${endpoint}`);
+    // Inject project_id into params for Matrix API
+    const enrichedParams = { ...params, project_id: MATRIX_PROJECT_ID };
+
+    console.log(`[Matrix] ${action} -> ${baseUrl}${endpoint} (project: ${MATRIX_PROJECT_ID})`);
 
     const response = await fetch(`${baseUrl}${endpoint}`, {
       method: 'POST',
@@ -191,7 +196,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
         'Authorization': authHeader,
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify(enrichedParams),
     });
 
     const responseText = await response.text();
