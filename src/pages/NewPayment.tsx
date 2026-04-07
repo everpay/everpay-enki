@@ -240,7 +240,6 @@ export default function NewPayment() {
   const providerRegionLabel: Record<string, { label: string; badge: string }> = {
     mondo: { label: 'EU / UK payments', badge: '🇪🇺 Mondo' },
     shieldhub: { label: 'US & Global payments', badge: '🌐 ShieldHub' },
-    facilitapay: { label: 'LATAM payments', badge: '🌎 FacilitaPay' },
     stripe: { label: 'Global fallback', badge: '⚡ Stripe' },
     paygate10: { label: 'Emerging markets', badge: '🌍 Paygate10' },
     ofa: { label: 'Asia-Pacific payments', badge: '🌏 OFA Pay' },

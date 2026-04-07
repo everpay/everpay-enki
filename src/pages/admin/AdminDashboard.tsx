@@ -121,7 +121,7 @@ export default function AdminDashboard() {
               <Card>
                 <CardHeader><CardTitle className="text-lg">System Health</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
-                  {['ShieldHub', 'Mondo', 'FacilitaPay', 'Paygate10', 'Lipad.io', 'VGS Vault'].map(name => (
+                  {['ShieldHub', 'Mondo', 'Paygate10', 'Paygate10', 'Lipad.io', 'VGS Vault'].map(name => (
                     <div key={name} className="flex items-center justify-between py-2 border-b last:border-0">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-success" />
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
               {[
                 { name: 'ShieldHub', region: 'US/Global', type: 'gateway' },
                 { name: 'Mondo', region: 'EU/UK', type: 'gateway' },
-                { name: 'FacilitaPay', region: 'LATAM', type: 'gateway' },
+                { name: 'Paygate10', region: 'LATAM', type: 'gateway' },
                 { name: 'Paygate10', region: 'India/BR/MX/PK', type: 'gateway' },
                 { name: 'OFA', region: 'APAC', type: 'gateway' },
                 { name: 'Moneto', region: 'Canada', type: 'wallet' },
