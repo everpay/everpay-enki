@@ -205,16 +205,7 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                     <td className="px-3 py-2.5">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Badge
-                            variant={statusInfo.variant}
-                            className={
-                              statusInfo.label === 'Approved' || statusInfo.label === 'Completed'
-                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/25'
-                                : statusInfo.label === 'Declined' || statusInfo.label === 'Failed'
-                                ? 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/20 hover:bg-red-500/25'
-                                : ''
-                            }
-                          >
+                          <Badge variant={statusInfo.variant}>
                             {statusInfo.label}
                           </Badge>
                         </TooltipTrigger>
