@@ -39,6 +39,7 @@ export function SiteHeader() {
     { icon: UtensilsCrossed, label: 'Restaurant', to: '/solutions/restaurant' },
     { icon: ShoppingCart, label: 'E-commerce', to: '/solutions/ecommerce' },
     { icon: Smartphone, label: 'Mobile Payments', to: '/solutions/mobile-payments' },
+    { icon: Plug, label: 'Integrations', to: '/integrations-directory' },
   ];
   const platformItems = [
     { icon: Laptop, label: 'SaaS & Platforms', to: '/solutions/saas-platforms' },
