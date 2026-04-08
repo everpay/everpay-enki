@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       const { data: callerRoles } = await admin.from("user_roles").select("role").eq("user_id", caller.id);
       console.log("Roles:", JSON.stringify(callerRoles));
       const isSuperAdmin = callerRoles?.some((r: any) => r.role === "super_admin");
-      const isPlatformOwner = caller.email === "richard.r@everpayinc.com";
+      const isPlatformOwner = caller.email === "richard.r@everpayinc.com" || caller.email === "everpay@gmail.com";
       if (!isSuperAdmin && !isPlatformOwner) {
         return new Response(JSON.stringify({ error: "Forbidden", email: caller.email, roles: callerRoles }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
