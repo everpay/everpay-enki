@@ -161,6 +161,7 @@ const adminSections: NavSection[] = [
       { to: "/enki/processors", icon: Globe, label: "Processor Info" },
       { to: "/enki/risk-engine", icon: Shield, label: "Risk Engine" },
       { to: "/enki/rate-limits", icon: Gauge, label: "Rate Limits" },
+      { to: "/enki/token-lifecycle", icon: CreditCardIcon, label: "Token Lifecycle" },
     ],
   },
   {
