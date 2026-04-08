@@ -70,11 +70,12 @@ export default function AdminDashboard() {
           </Select>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <KPICard title="Total Volume" value={fmt(data?.totalVolume || 0)} change={`${data?.totalTransactions || 0} txns`} trend="up" icon={DollarSign} description="Processing volume" />
           <KPICard title="Active Merchants" value={(data?.totalMerchants || 0).toString()} change={`of ${data?.totalUsers || 0} users`} trend="neutral" icon={Store} description="Onboarded merchants" />
           <KPICard title="Total Users" value={(data?.totalUsers || 0).toString()} change="" trend="neutral" icon={Users} description="All registered users" />
           <KPICard title="Auth Rate" value={`${authRate}%`} change="" trend="neutral" icon={CheckCircle2} description="Transaction approval" />
+          <KPICard title="Crypto Commission" value={fmt(data?.cryptoTotalFees || 0)} change={`${data?.cryptoPaymentCount || 0} crypto txns`} trend="up" icon={Wallet} description="5% + $1.00 per txn" />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">

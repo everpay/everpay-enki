@@ -71,6 +71,7 @@ export default function Transactions() {
             <SelectItem value="moneto">Moneto</SelectItem>
             <SelectItem value="paygate10">Paygate10</SelectItem>
             <SelectItem value="makapay">Makapay</SelectItem>
+            <SelectItem value="elektropay">Elektropay</SelectItem>
             <SelectItem value="payok">PayOK</SelectItem>
             <SelectItem value="ofa">OFA</SelectItem>
           </SelectContent>
