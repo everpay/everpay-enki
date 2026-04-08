@@ -363,12 +363,15 @@ export default function Checkout() {
           {/* Payment Method Tabs */}
           {method === 'all' ? (
             <Tabs value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="card" className="gap-2">
                   <CreditCard className="h-3.5 w-3.5" /> Card
                 </TabsTrigger>
                 <TabsTrigger value="openbanking" className="gap-2">
                   <Building2 className="h-3.5 w-3.5" /> Bank
+                </TabsTrigger>
+                <TabsTrigger value="crypto" className="gap-2">
+                  <Bitcoin className="h-3.5 w-3.5" /> Crypto
                 </TabsTrigger>
               </TabsList>
 
@@ -385,7 +388,29 @@ export default function Checkout() {
               <TabsContent value="openbanking" className="mt-4">
                 <OpenBankingSection currency={currency} />
               </TabsContent>
+
+              <TabsContent value="crypto" className="mt-4">
+                <CryptoCheckoutSection
+                  amount={displayAmount}
+                  currency={currency}
+                  customerEmail={customerEmail}
+                  customerName={customerName}
+                  description={description}
+                  successUrl={successUrl}
+                  cancelUrl={cancelUrl}
+                />
+              </TabsContent>
             </Tabs>
+          ) : method === 'crypto' ? (
+            <CryptoCheckoutSection
+              amount={displayAmount}
+              currency={currency}
+              customerEmail={customerEmail}
+              customerName={customerName}
+              description={description}
+              successUrl={successUrl}
+              cancelUrl={cancelUrl}
+            />
           ) : method === 'openbanking' ? (
             <OpenBankingSection currency={currency} />
           ) : (
