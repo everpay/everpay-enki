@@ -38,7 +38,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 
 // Configuration
 const SITE_NAME = "Enki Admin"
-const SENDER_DOMAIN = "notify.everpayinc.com"
+const SENDER_DOMAIN = "notify.enki.everpayinc.com"
 const ROOT_DOMAIN = "everpayinc.com"
 const FROM_DOMAIN = "everpayinc.com" // Domain shown in From address (may be root or sender subdomain)
 
