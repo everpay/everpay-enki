@@ -32,6 +32,7 @@ export default function Balances() {
     return txs;
   }, [transactions, period, currency]);
 
+  const displayCurrency = (currency === 'all' ? 'USD' : currency) as Currency;
   const totalAvailable = filteredAccounts.reduce((s, a) => s + (a.available_balance || 0), 0);
   const totalPending = filteredAccounts.reduce((s, a) => s + (a.pending_balance || 0), 0);
   const totalBalance = filteredAccounts.reduce((s, a) => s + a.balance, 0);
