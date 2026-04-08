@@ -286,15 +286,17 @@ export function TransactionDetailDrawer({ transaction, open, onOpenChange }: Tra
 
               {methodType === 'wallet' && (
                 <div className="flex items-center justify-center gap-3 rounded-lg border border-border bg-background px-4 py-3">
-                  {walletType?.toLowerCase().includes('apple') ? (
-                    <img src="/logos/apple-pay.svg" alt="Apple Pay" className="h-6 w-auto" />
-                  ) : walletType?.toLowerCase().includes('google') ? (
-                    <img src="/logos/google-pay.svg" alt="Google Pay" className="h-6 w-auto" />
-                  ) : walletType?.toLowerCase().includes('paypal') ? (
-                    <img src="/logos/paypal.svg" alt="PayPal" className="h-6 w-auto" />
-                  ) : (
-                    <Wallet className="h-6 w-6 text-primary" />
-                  )}
+                  {(() => {
+                    const wt = walletType?.toLowerCase() || '';
+                    const methodLogo = getMethodLogo(wt) || getMethodLogo(walletType || '');
+                    if (methodLogo) {
+                      return <img src={methodLogo} alt={walletType || 'Wallet'} className="h-6 w-auto" />;
+                    }
+                    if (wt.includes('apple')) return <img src="/logos/apple-pay.svg" alt="Apple Pay" className="h-6 w-auto" />;
+                    if (wt.includes('google')) return <img src="/logos/google-pay.svg" alt="Google Pay" className="h-6 w-auto" />;
+                    if (wt.includes('paypal')) return <img src="/logos/paypal.svg" alt="PayPal" className="h-6 w-auto" />;
+                    return <Wallet className="h-6 w-6 text-primary" />;
+                  })()}
                   <p className="font-medium text-sm text-foreground capitalize">
                     {walletType?.replace(/_/g, ' ') || 'Digital Wallet'}
                   </p>
