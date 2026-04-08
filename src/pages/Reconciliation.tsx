@@ -162,14 +162,7 @@ export default function Reconciliation() {
           <p className="mt-1 text-sm text-muted-foreground">Daily settlement vs ledger vs processor comparison</p>
         </div>
         <div className="flex items-center gap-3">
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <PeriodSelector value={period as any} onValueChange={(v) => setPeriod(v)} />
           <Button variant="outline" size="sm" onClick={() => refetch()}><RefreshCw className="h-4 w-4 mr-1" />Refresh</Button>
           <Button variant="outline" size="sm" onClick={exportCSV}><Download className="h-4 w-4 mr-1" />Export CSV</Button>
         </div>
