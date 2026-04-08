@@ -2217,9 +2217,14 @@ export type Database = {
           exp_year: string | null
           id: string
           is_default: boolean
+          last_used_at: string | null
+          merchant_id: string | null
           network_token_status: string | null
+          previous_token_id: string | null
+          status: string
           token_last_updated: string | null
           updated_at: string
+          usage_count: number
           vgs_alias: string
         }
         Insert: {
@@ -2232,9 +2237,14 @@ export type Database = {
           exp_year?: string | null
           id?: string
           is_default?: boolean
+          last_used_at?: string | null
+          merchant_id?: string | null
           network_token_status?: string | null
+          previous_token_id?: string | null
+          status?: string
           token_last_updated?: string | null
           updated_at?: string
+          usage_count?: number
           vgs_alias: string
         }
         Update: {
@@ -2247,9 +2257,14 @@ export type Database = {
           exp_year?: string | null
           id?: string
           is_default?: boolean
+          last_used_at?: string | null
+          merchant_id?: string | null
           network_token_status?: string | null
+          previous_token_id?: string | null
+          status?: string
           token_last_updated?: string | null
           updated_at?: string
+          usage_count?: number
           vgs_alias?: string
         }
         Relationships: [
@@ -2258,6 +2273,20 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_methods_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_methods_previous_token_id_fkey"
+            columns: ["previous_token_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
             referencedColumns: ["id"]
           },
         ]
@@ -3702,6 +3731,48 @@ export type Database = {
           },
         ]
       }
+      token_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          merchant_id: string | null
+          metadata: Json | null
+          token_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          merchant_id?: string | null
+          metadata?: Json | null
+          token_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          merchant_id?: string | null
+          metadata?: Json | null
+          token_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_events_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "token_events_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
@@ -4152,6 +4223,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_usage_count: { Args: { token_id: string }; Returns: undefined }
       move_to_dlq: {
         Args: {
           dlq_name: string
