@@ -9,9 +9,8 @@ import { Building2, FileText, CheckCircle2, Clock, AlertCircle, Upload, Shield }
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-
-const BUSINESS_TYPES = ['sole_proprietorship', 'partnership', 'llc', 'corporation', 'non_profit'];
-const INDUSTRIES = ['e_commerce', 'saas', 'marketplace', 'fintech', 'gaming', 'travel', 'retail', 'healthcare', 'education', 'other'];
+import { CountrySelect } from '@/components/CountrySelect';
+import { BUSINESS_TYPES, INDUSTRY_CATEGORIES, getIndustryGroups } from '@/data/business-categories';
 
 function useMerchantProfile() {
   return useQuery({
@@ -190,7 +189,7 @@ export function BusinessVerificationSection() {
                     <Select value={businessType} onValueChange={setBusinessType}>
                       <SelectTrigger><SelectValue placeholder="Select type..." /></SelectTrigger>
                       <SelectContent>
-                        {BUSINESS_TYPES.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
+                        {BUSINESS_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -210,8 +209,13 @@ export function BusinessVerificationSection() {
                     <Label>Industry</Label>
                     <Select value={industry} onValueChange={setIndustry}>
                       <SelectTrigger><SelectValue placeholder="Select industry..." /></SelectTrigger>
-                      <SelectContent>
-                        {INDUSTRIES.map(i => <SelectItem key={i} value={i}>{i.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
+                      <SelectContent className="max-h-[300px]">
+                        {Object.entries(getIndustryGroups()).map(([group, items]) => (
+                          <div key={group}>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{group}</div>
+                            {items.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}
+                          </div>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -223,7 +227,7 @@ export function BusinessVerificationSection() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Country</Label>
-                    <Input value={country} onChange={e => setCountry(e.target.value)} placeholder="US" />
+                    <CountrySelect value={country} onValueChange={setCountry} />
                   </div>
                   <div className="space-y-2">
                     <Label>Website</Label>
