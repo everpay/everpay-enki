@@ -16,6 +16,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTapixCache, useTapixEnrich, getEnrichmentSummary } from '@/hooks/useTapixEnrichment';
+import { getMethodLogo } from '@/lib/payment-method-logos';
 
 interface TransactionDetailDrawerProps {
   transaction: Transaction | null;
