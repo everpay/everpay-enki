@@ -6,12 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Globe } from 'lucide-react';
+import { PeriodSelector, type PeriodValue, getPeriodCutoff } from '@/components/PeriodSelector';
+import { CurrencySelector } from '@/components/CurrencySelector';
 
 export default function Transactions() {
   const { data: transactions = [], isLoading } = useTransactions();
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currencyFilter, setCurrencyFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<PeriodValue>('30d');
   const [search, setSearch] = useState('');
 
   const filtered = transactions.filter((tx) => {
