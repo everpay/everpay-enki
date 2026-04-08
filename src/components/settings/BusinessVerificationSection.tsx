@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CountrySelect } from '@/components/CountrySelect';
-import { BUSINESS_TYPES, INDUSTRY_CATEGORIES, getIndustryGroups } from '@/data/business-categories';
+import { BUSINESS_TYPES, INDUSTRY_CATEGORIES, getIndustryGroups, getMccByIndustry } from '@/data/business-categories';
 
 function useMerchantProfile() {
   return useQuery({
@@ -207,7 +207,7 @@ export function BusinessVerificationSection() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Industry</Label>
-                    <Select value={industry} onValueChange={setIndustry}>
+                    <Select value={industry} onValueChange={(v) => { setIndustry(v); const mcc = getMccByIndustry(v); if (mcc) setMccCode(mcc); }}>
                       <SelectTrigger><SelectValue placeholder="Select industry..." /></SelectTrigger>
                       <SelectContent className="max-h-[300px]">
                         {Object.entries(getIndustryGroups()).map(([group, items]) => (

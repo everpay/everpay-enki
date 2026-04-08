@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Globe, Trash2, Loader2, ArrowUpDown } from 'lucide-react';
+import { CountrySelect } from '@/components/CountrySelect';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -103,7 +104,7 @@ export default function AdminPspRouting() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Country (optional)</Label>
-                  <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="US, GB, etc." />
+                  <CountrySelect value={country} onValueChange={setCountry} placeholder="Any country" />
                 </div>
                 <div className="space-y-2">
                   <Label>Card Brand (optional)</Label>
