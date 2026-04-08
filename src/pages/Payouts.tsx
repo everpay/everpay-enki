@@ -810,6 +810,10 @@ export default function Payouts() {
             <Card className="mt-6"><CardContent className="p-12 text-center"><FileSpreadsheet className="h-10 w-10 text-muted-foreground mx-auto mb-3" /><p className="font-medium text-foreground">No recipients yet</p><p className="text-sm text-muted-foreground mt-1">Upload a file or add recipients manually to get started</p></CardContent></Card>
           )}
         </TabsContent>
+
+        <TabsContent value="crypto">
+          <CryptoWalletDashboard />
+        </TabsContent>
       </Tabs>
     </AppLayout>
   );
