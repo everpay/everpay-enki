@@ -4,6 +4,7 @@ import { CreditCard, Building2, Smartphone } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/format';
+import { getMethodLogo } from '@/lib/payment-method-logos';
 
 interface MethodItem {
   name: string;
@@ -39,6 +40,9 @@ const WALLET_METHODS = [
   { name: 'PayPal', provider: 'paypal', enabled: false },
   { name: 'JazzCash', provider: 'paygate10', enabled: true },
   { name: 'EasyPaisa', provider: 'paygate10', enabled: true },
+  { name: 'NCash', provider: 'paygate10', enabled: true },
+  { name: 'bKash', provider: 'makapay', enabled: true },
+  { name: 'Nagad', provider: 'makapay', enabled: true },
 ];
 
 function usePaymentMethodsData() {
@@ -112,6 +116,7 @@ const providerLabel: Record<string, string> = {
   prometeo: 'Prometeo',
   matrix: 'Matrix',
   paypal: 'PayPal',
+  makapay: 'MakaPay',
 };
 
 export default function PaymentMethodsPage() {
@@ -181,7 +186,15 @@ export default function PaymentMethodsPage() {
                     <tbody>
                       {group.items.map((item: MethodItem) => (
                         <tr key={item.name} className="border-b border-border last:border-0">
-                          <td className="py-3 font-medium">{item.name}</td>
+                          <td className="py-3 font-medium">
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const logo = getMethodLogo(item.name);
+                                return logo ? <img src={logo} alt={item.name} className="h-5 w-auto max-w-[28px] object-contain" /> : null;
+                              })()}
+                              {item.name}
+                            </div>
+                          </td>
                           <td className="py-3 text-sm text-muted-foreground">{providerLabel[item.provider] || item.provider}</td>
                           <td className="py-3">
                             <Badge variant={item.enabled ? 'default' : 'secondary'}>{item.enabled ? 'Active' : 'Inactive'}</Badge>

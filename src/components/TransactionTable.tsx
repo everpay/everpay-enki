@@ -8,23 +8,9 @@ import { TransactionDetailDrawer } from './TransactionDetailDrawer';
 import { ChevronLeft, ChevronRight, Eye, Zap, CreditCard } from 'lucide-react';
 import { useTapixCache, getEnrichmentSummary } from '@/hooks/useTapixEnrichment';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { METHOD_LOGOS, getMethodLogo } from '@/lib/payment-method-logos';
 
-const BRAND_LOGOS: Record<string, string> = {
-  visa: '/logos/visa.svg',
-  mastercard: '/logos/mastercard.svg',
-  amex: '/logos/american-express.svg',
-  'american express': '/logos/american-express.svg',
-  discover: '/logos/discover.svg',
-  jcb: '/logos/jcb.svg',
-  unionpay: '/logos/unionpay.svg',
-  apple_pay: '/logos/apple-pay.svg',
-  google_pay: '/logos/google-pay.svg',
-  paypal: '/logos/paypal.svg',
-  klarna: '/logos/klarna.svg',
-  ideal: '/logos/ideal.svg',
-  bancontact: '/logos/bancontact.svg',
-  alipay: '/logos/alipay.svg',
-};
+const BRAND_LOGOS = METHOD_LOGOS;
 
 const COUNTRY_FLAGS: Record<string, string> = {
   US: '🇺🇸', CA: '🇨🇦', GB: '🇬🇧', DE: '🇩🇪', FR: '🇫🇷', BR: '🇧🇷', MX: '🇲🇽',
@@ -49,12 +35,17 @@ function getPaymentMethodInfo(tx: Transaction): { logoSrc?: string; label: strin
   const method = meta.payment_method || meta.paymentMethod || '';
   const brand = (meta.card_brand || meta.cardBrand || '').toLowerCase();
 
-  if (method === 'apple_pay') return { logoSrc: BRAND_LOGOS.apple_pay, label: 'Apple Pay' };
-  if (method === 'google_pay') return { logoSrc: BRAND_LOGOS.google_pay, label: 'Google Pay' };
-  if (method === 'paypal') return { logoSrc: BRAND_LOGOS.paypal, label: 'PayPal' };
-  if (method === 'klarna') return { logoSrc: BRAND_LOGOS.klarna, label: 'Klarna' };
-  if (method === 'ideal') return { logoSrc: BRAND_LOGOS.ideal, label: 'iDEAL' };
-  if (method === 'mobile_money' || method === 'mpesa') return { label: 'Mobile Money' };
+  // Check explicit method first via centralized registry
+  if (method) {
+    const logo = getMethodLogo(method);
+    if (logo) {
+      const label = method.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+      return { logoSrc: logo, label };
+    }
+  }
+
+  // Known method strings
+  if (method === 'mobile_money' || method === 'mpesa') return { logoSrc: getMethodLogo('mpesa'), label: 'M-Pesa' };
   if (method === 'bank_transfer' || method === 'sepa' || method === 'pix' || method === 'spei') return { label: method.toUpperCase() };
   if (method === 'wallet') return { label: 'Wallet' };
 
@@ -67,8 +58,16 @@ function getPaymentMethodInfo(tx: Transaction): { logoSrc?: string; label: strin
     return { label: 'Card' };
   }
 
-  if (tx.provider === 'lipad') return { label: 'Mobile Money' };
-  if (tx.provider === 'paygate10') return { label: 'Local Payment' };
+  // Provider-based fallbacks with logos
+  if (tx.provider === 'makapay') return { logoSrc: getMethodLogo('bkash'), label: 'Mobile Wallet' };
+  if (tx.provider === 'lipad') return { logoSrc: getMethodLogo('mpesa'), label: 'Mobile Money' };
+  if (tx.provider === 'paygate10') {
+    // Check for known PK wallets
+    const providerMethod = meta.provider_method || '';
+    if (providerMethod.toLowerCase().includes('jazz')) return { logoSrc: getMethodLogo('jazzcash'), label: 'JazzCash' };
+    if (providerMethod.toLowerCase().includes('easy')) return { logoSrc: getMethodLogo('easypaisa'), label: 'EasyPaisa' };
+    return { label: 'Local Payment' };
+  }
   return { label: 'Card' };
 }
 

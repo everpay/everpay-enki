@@ -96,7 +96,7 @@ const integrations: Integration[] = [
   {
     id: 'makapay',
     name: 'MakaPay',
-    description: 'Bangladesh payment gateway supporting SSLCommerz, bKash, Nagad, and SurjoPay.',
+    description: 'Bangladesh payment gateway supporting SSLCommerz, bKash, Nagad, and SurjoPay mobile wallets.',
     category: 'payments',
     status: 'connected',
     regions: ['BD'],
