@@ -47,8 +47,8 @@ const Index = () => {
 
   // Filters
   const [providerFilter, setProviderFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<string>('30d');
+  const [dateRange, setDateRange] = useState<PeriodValue>('30d');
+  const [currencyFilter, setCurrencyFilter] = useState('all');
 
   const allProviders = useMemo(() => [...new Set(transactions.map(tx => tx.provider))], [transactions]);
 
