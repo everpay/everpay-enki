@@ -14,23 +14,27 @@ Deno.serve(async (req) => {
   // Validate provision secret from request body
   let body: any = {};
   try { body = await req.json(); } catch {}
-  const provisionSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "") || "";
   const provisionKey = req.headers.get("x-provision-key") || body.provision_key || "";
   
-  // Auth: service role key via header, body, or x-provision-key OR super_admin user
-  if (token === provisionSecret || provisionKey === provisionSecret) {
-    // Service role - allowed
-  } else if (token) {
-    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
-    const { data: { user: caller } } = await anonClient.auth.getUser(token);
-    if (!caller) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
-    const { data: callerRoles } = await admin.from("user_roles").select("role").eq("user_id", caller.id);
-    const isSuperAdmin = callerRoles?.some((r: any) => r.role === "super_admin");
-    if (!isSuperAdmin) return new Response("Forbidden", { status: 403, headers: corsHeaders });
-  } else {
-    return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+  // Auth: service role key via bearer/header/body, OR authenticated super_admin, OR valid user token (we'll check role)
+  const isServiceRole = token === serviceRoleKey2 || provisionKey === serviceRoleKey2;
+  
+  if (!isServiceRole) {
+    if (token) {
+      const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+      const { data: { user: caller } } = await anonClient.auth.getUser(token);
+      if (!caller) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+      // Allow platform owner OR super_admin
+      const { data: callerRoles } = await admin.from("user_roles").select("role").eq("user_id", caller.id);
+      const isSuperAdmin = callerRoles?.some((r: any) => r.role === "super_admin");
+      const isPlatformOwner = caller.email === "richard.r@everpayinc.com";
+      if (!isSuperAdmin && !isPlatformOwner) return new Response("Forbidden", { status: 403, headers: corsHeaders });
+    } else {
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    }
   }
 
   const action = body.action || "provision";
