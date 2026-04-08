@@ -10,7 +10,8 @@ import { CurrencySelector } from '@/components/CurrencySelector';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useTransactions } from '@/hooks/useTransactions';
 import { formatCurrency } from '@/lib/format';
-import { DollarSign, ArrowUpRight, ArrowDownRight, Clock, Wallet, TrendingUp } from 'lucide-react';
+import type { Currency } from '@/lib/types';
+import { DollarSign, ArrowUpRight, Clock, TrendingUp } from 'lucide-react';
 
 export default function Balances() {
   const { data: accounts = [], isLoading: loadingAccounts } = useAccounts();
