@@ -39,6 +39,7 @@ const navSections = [
       { label: "Disputes", icon: Users, to: "/developers/api/disputes" },
       { label: "Bank Debits", icon: Landmark, to: "/developers/api/bank-debits" },
       { label: "Bank Redirects", icon: ArrowLeftRight, to: "/developers/api/bank-redirects" },
+      { label: "Matrix Partners", icon: Landmark, to: "/developers/api/matrix" },
     ],
   },
   {
