@@ -93,6 +93,7 @@ import AdminRiskEngine from "./pages/admin/AdminRiskEngine";
 import AdminRateLimits from "./pages/admin/AdminRateLimits";
 import RateLimits from "./pages/RateLimits";
 import RiskProfilePage from "./pages/RiskProfile";
+import AdminTokenManagement from "./pages/admin/AdminTokenManagement";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
@@ -323,6 +324,7 @@ const AppRoutes = () => {
     <Route path="/enki/strategy/merchant-view" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminMerchantView /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/risk-engine" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRiskEngine /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/rate-limits" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRateLimits /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/token-lifecycle" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminTokenManagement /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/affiliate" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller', 'developer']}><AffiliateProgram /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/chargeflow" element={<ProtectedRoute><ChargeflowDashboard /></ProtectedRoute>} />
