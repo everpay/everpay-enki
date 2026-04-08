@@ -1432,3 +1432,211 @@ function RiskProfileSection() {
     </Card>
   );
 }
+
+// ─── Settlement Bank Account Add Form ───
+function SettlementBankAccountForm({ merchantId, onSuccess }: { merchantId?: string; onSuccess: () => void }) {
+  const [holderName, setHolderName] = useState("");
+  const [institutionNumber, setInstitutionNumber] = useState("");
+  const [transitNumber, setTransitNumber] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [currency, setCurrency] = useState("USD");
+  const [nickname, setNickname] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!merchantId) return;
+    setIsAdding(true);
+    try {
+      const { error } = await supabase.from("saved_bank_accounts").insert({
+        merchant_id: merchantId,
+        account_holder_name: holderName,
+        institution_number: institutionNumber,
+        transit_number: transitNumber,
+        account_last4: accountNumber.slice(-4),
+        currency,
+        nickname: nickname || null,
+        is_default: false,
+      });
+      if (error) throw error;
+      toast.success("Settlement bank account added");
+      setHolderName(""); setInstitutionNumber(""); setTransitNumber(""); setAccountNumber(""); setNickname("");
+      setShowForm(false);
+      onSuccess();
+    } catch {
+      toast.error("Failed to add bank account");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  if (!showForm) {
+    return (
+      <Button variant="outline" className="w-full gap-2" onClick={() => setShowForm(true)}>
+        <Plus className="h-4 w-4" /> Add Settlement Bank Account
+      </Button>
+    );
+  }
+
+  return (
+    <form onSubmit={handleAdd} className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2 col-span-2">
+          <Label>Account Holder Name</Label>
+          <Input value={holderName} onChange={e => setHolderName(e.target.value)} placeholder="Business Name or Full Name" required />
+        </div>
+        <div className="space-y-2">
+          <Label>Institution Number</Label>
+          <Input value={institutionNumber} onChange={e => setInstitutionNumber(e.target.value)} placeholder="e.g. 001" required />
+        </div>
+        <div className="space-y-2">
+          <Label>Transit / Routing Number</Label>
+          <Input value={transitNumber} onChange={e => setTransitNumber(e.target.value)} placeholder="e.g. 12345" required />
+        </div>
+        <div className="space-y-2">
+          <Label>Account Number</Label>
+          <Input value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder="Full account number" required />
+        </div>
+        <div className="space-y-2">
+          <Label>Currency</Label>
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="CAD">CAD</SelectItem>
+              <SelectItem value="EUR">EUR</SelectItem>
+              <SelectItem value="GBP">GBP</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2 col-span-2">
+          <Label>Nickname (optional)</Label>
+          <Input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="e.g. Main operating account" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button type="submit" disabled={isAdding}>{isAdding ? "Adding..." : "Add Account"}</Button>
+        <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+      </div>
+    </form>
+  );
+}
+
+// ─── Crypto Wallet Form ───
+function CryptoWalletForm({ merchantId }: { merchantId?: string }) {
+  const queryClient = useQueryClient();
+  const [walletAddress, setWalletAddress] = useState("");
+  const [network, setNetwork] = useState("ethereum");
+  const [walletCurrency, setWalletCurrency] = useState("USDT");
+  const [isAdding, setIsAdding] = useState(false);
+
+  const { data: wallets = [], isLoading } = useQuery({
+    queryKey: ["crypto-wallets", merchantId],
+    queryFn: async () => {
+      if (!merchantId) return [];
+      const { data, error } = await supabase
+        .from("crypto_wallets")
+        .select("*")
+        .eq("merchant_id", merchantId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!merchantId,
+  });
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!merchantId) return;
+    setIsAdding(true);
+    try {
+      const { error } = await supabase.from("crypto_wallets").insert({
+        merchant_id: merchantId,
+        address: walletAddress,
+        network,
+        currency: walletCurrency,
+      });
+      if (error) throw error;
+      toast.success("Crypto wallet added");
+      setWalletAddress("");
+      queryClient.invalidateQueries({ queryKey: ["crypto-wallets"] });
+    } catch {
+      toast.error("Failed to add wallet");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
+    const { error } = await supabase.from("crypto_wallets").delete().eq("id", id);
+    if (error) { toast.error("Failed to remove"); return; }
+    toast.success("Wallet removed");
+    queryClient.invalidateQueries({ queryKey: ["crypto-wallets"] });
+  };
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={handleAdd} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Network</Label>
+            <Select value={network} onValueChange={setNetwork}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ethereum">Ethereum</SelectItem>
+                <SelectItem value="polygon">Polygon</SelectItem>
+                <SelectItem value="bsc">BNB Smart Chain</SelectItem>
+                <SelectItem value="tron">Tron (TRC-20)</SelectItem>
+                <SelectItem value="solana">Solana</SelectItem>
+                <SelectItem value="bitcoin">Bitcoin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Currency</Label>
+            <Select value={walletCurrency} onValueChange={setWalletCurrency}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USDT">USDT</SelectItem>
+                <SelectItem value="USDC">USDC</SelectItem>
+                <SelectItem value="ETH">ETH</SelectItem>
+                <SelectItem value="BTC">BTC</SelectItem>
+                <SelectItem value="SOL">SOL</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Wallet Address</Label>
+          <Input value={walletAddress} onChange={e => setWalletAddress(e.target.value)} placeholder="0x... or wallet address" required className="font-mono text-sm" />
+        </div>
+        <Button type="submit" disabled={isAdding} className="gap-2">
+          <Plus className="h-4 w-4" /> {isAdding ? "Adding..." : "Add Crypto Wallet"}
+        </Button>
+      </form>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : wallets.length > 0 && (
+        <div className="space-y-3 border-t border-border pt-4">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Saved Wallets</p>
+          {wallets.map((w: any) => (
+            <div key={w.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">{w.network}</Badge>
+                  <Badge variant="secondary" className="text-xs">{w.currency}</Badge>
+                </div>
+                <p className="font-mono text-xs text-muted-foreground mt-1 truncate max-w-[300px]">{w.address}</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => handleRemove(w.id)}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
