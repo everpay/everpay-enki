@@ -237,7 +237,7 @@ export default function Onboarding() {
                     <Select value={businessType} onValueChange={setBusinessType}>
                       <SelectTrigger><SelectValue placeholder="Select type..." /></SelectTrigger>
                       <SelectContent>
-                        {BUSINESS_TYPES.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
+                        {BUSINESS_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -257,8 +257,13 @@ export default function Onboarding() {
                     <Label>Industry</Label>
                     <Select value={industry} onValueChange={setIndustry}>
                       <SelectTrigger><SelectValue placeholder="Select industry..." /></SelectTrigger>
-                      <SelectContent>
-                        {INDUSTRIES.map(i => <SelectItem key={i} value={i}>{i.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
+                      <SelectContent className="max-h-[300px]">
+                        {Object.entries(getIndustryGroups()).map(([group, items]) => (
+                          <div key={group}>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{group}</div>
+                            {items.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}
+                          </div>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
