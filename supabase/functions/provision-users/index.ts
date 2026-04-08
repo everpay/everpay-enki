@@ -17,9 +17,10 @@ Deno.serve(async (req) => {
   const provisionSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "") || "";
+  const provisionKey = req.headers.get("x-provision-key") || body.provision_key || "";
   
-  // Auth: service role key via header OR super_admin user
-  if (token && token === provisionSecret) {
+  // Auth: service role key via header, body, or x-provision-key OR super_admin user
+  if (token === provisionSecret || provisionKey === provisionSecret) {
     // Service role - allowed
   } else if (token) {
     const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
