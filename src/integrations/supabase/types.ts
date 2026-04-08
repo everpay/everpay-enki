@@ -2361,6 +2361,114 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          discount_amount: number
+          id: string
+          invoice_id: string | null
+          merchant_id: string
+          metadata: Json | null
+          notes: string | null
+          order_number: string
+          payment_intent_id: string | null
+          payment_method: string | null
+          shipping_amount: number
+          status: string
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          discount_amount?: number
+          id?: string
+          invoice_id?: string | null
+          merchant_id: string
+          metadata?: Json | null
+          notes?: string | null
+          order_number: string
+          payment_intent_id?: string | null
+          payment_method?: string | null
+          shipping_amount?: number
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          discount_amount?: number
+          id?: string
+          invoice_id?: string | null
+          merchant_id?: string
+          metadata?: Json | null
+          notes?: string | null
+          order_number?: string
+          payment_intent_id?: string | null
+          payment_method?: string | null
+          shipping_amount?: number
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_payment_intent_id_fkey"
+            columns: ["payment_intent_id"]
+            isOneToOne: false
+            referencedRelation: "payment_intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_attempts: {
         Row: {
           attempt_number: number

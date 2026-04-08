@@ -9,7 +9,8 @@ import { useAccounts } from '@/hooks/useAccounts';
 import { useProfile } from '@/hooks/useProfile';
 import { useElektropayWallets } from '@/hooks/useElektropay';
 import { formatCurrency } from '@/lib/format';
-import { DollarSign, ArrowUpRight, ArrowLeftRight, Clock, Filter, X, Users, Bitcoin, ArrowDownLeft, Send } from 'lucide-react';
+import { DollarSign, ArrowUpRight, ShoppingCart, Clock, Filter, X, Users, Bitcoin, ArrowDownLeft, Send } from 'lucide-react';
+import { useOrderCount } from '@/hooks/useOrders';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,9 @@ const Index = () => {
   const { data: profile } = useProfile();
   const { data: wallets = [] } = useElektropayWallets();
   const navigate = useNavigate();
+
+  // Order count
+  const { data: orderCount = 0 } = useOrderCount();
 
   // Customer count
   const { data: customerCount = 0 } = useQuery({
@@ -164,10 +168,10 @@ const Index = () => {
             subtitle: `${todayTransactions.length} transactions`,
           },
           {
-            title: "Active Providers",
-            value: loadingTx ? '...' : providers.length.toString(),
-            icon: ArrowLeftRight,
-            subtitle: providers.join(' · ') || 'No providers yet',
+            title: "Orders",
+            value: orderCount.toString(),
+            icon: ShoppingCart,
+            subtitle: "Total orders",
           },
           {
             title: "Pending Settlement",
