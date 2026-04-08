@@ -161,6 +161,17 @@ const adminSections: NavSection[] = [
     ],
   },
   {
+    title: "Processor Strategy",
+    items: [
+      { to: "/enki/strategy", icon: LayoutDashboard, label: "Strategy Overview" },
+      { to: "/enki/strategy/processors", icon: Shield, label: "Processor Mgmt" },
+      { to: "/enki/strategy/routing", icon: ArrowLeftRight, label: "Routing Chains" },
+      { to: "/enki/strategy/fees", icon: CreditCardIcon, label: "Fee Engine" },
+      { to: "/enki/strategy/logs", icon: Eye, label: "Routing Logs" },
+      { to: "/enki/strategy/merchant-view", icon: Store, label: "Merchant View" },
+    ],
+  },
+  {
     title: "Operations",
     items: [
       { to: "/enki/notifications", icon: Bell, label: "Notifications" },

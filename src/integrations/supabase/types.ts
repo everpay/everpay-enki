@@ -1838,8 +1838,13 @@ export type Database = {
         Row: {
           api_key_hash: string | null
           created_at: string
+          currency: string | null
+          email: string | null
           id: string
           name: string
+          region: string | null
+          risk_score: number | null
+          status: string | null
           updated_at: string
           user_id: string
           webhook_url: string | null
@@ -1847,8 +1852,13 @@ export type Database = {
         Insert: {
           api_key_hash?: string | null
           created_at?: string
+          currency?: string | null
+          email?: string | null
           id?: string
           name: string
+          region?: string | null
+          risk_score?: number | null
+          status?: string | null
           updated_at?: string
           user_id: string
           webhook_url?: string | null
@@ -1856,8 +1866,13 @@ export type Database = {
         Update: {
           api_key_hash?: string | null
           created_at?: string
+          currency?: string | null
+          email?: string | null
           id?: string
           name?: string
+          region?: string | null
+          risk_score?: number | null
+          status?: string | null
           updated_at?: string
           user_id?: string
           webhook_url?: string | null
@@ -2160,6 +2175,47 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_fee_markups: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          markup_flat_fee: number
+          markup_percentage: number
+          merchant_id: string | null
+          processor_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          markup_flat_fee?: number
+          markup_percentage?: number
+          merchant_id?: string | null
+          processor_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          markup_flat_fee?: number
+          markup_percentage?: number
+          merchant_id?: string | null
+          processor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_fee_markups_processor_id_fkey"
+            columns: ["processor_id"]
+            isOneToOne: false
+            referencedRelation: "processors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processor_fee_profiles: {
         Row: {
           chargeback_fee: number
@@ -2237,6 +2293,87 @@ export type Database = {
           region?: string | null
           success_rate?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      processor_strategy: {
+        Row: {
+          created_at: string
+          fallback_processor_id: string | null
+          id: string
+          processor_id: string
+          routing_priority: number
+          tier_level: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fallback_processor_id?: string | null
+          id?: string
+          processor_id: string
+          routing_priority?: number
+          tier_level?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fallback_processor_id?: string | null
+          id?: string
+          processor_id?: string
+          routing_priority?: number
+          tier_level?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processor_strategy_fallback_processor_id_fkey"
+            columns: ["fallback_processor_id"]
+            isOneToOne: false
+            referencedRelation: "processors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "processor_strategy_processor_id_fkey"
+            columns: ["processor_id"]
+            isOneToOne: true
+            referencedRelation: "processors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processors: {
+        Row: {
+          active: boolean
+          approval_rate: number
+          created_at: string
+          currencies: string[]
+          id: string
+          name: string
+          region: string[]
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          approval_rate?: number
+          created_at?: string
+          currencies?: string[]
+          id: string
+          name: string
+          region?: string[]
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          approval_rate?: number
+          created_at?: string
+          currencies?: string[]
+          id?: string
+          name?: string
+          region?: string[]
+          tier?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2652,6 +2789,47 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routing_attempt_logs: {
+        Row: {
+          attempt_order: number
+          created_at: string
+          id: string
+          processor_id: string
+          response_code: string | null
+          response_time: number | null
+          status: string
+          transaction_id: string
+        }
+        Insert: {
+          attempt_order?: number
+          created_at?: string
+          id?: string
+          processor_id: string
+          response_code?: string | null
+          response_time?: number | null
+          status?: string
+          transaction_id: string
+        }
+        Update: {
+          attempt_order?: number
+          created_at?: string
+          id?: string
+          processor_id?: string
+          response_code?: string | null
+          response_time?: number | null
+          status?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routing_attempt_logs_processor_id_fkey"
+            columns: ["processor_id"]
+            isOneToOne: false
+            referencedRelation: "processors"
             referencedColumns: ["id"]
           },
         ]

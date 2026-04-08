@@ -83,6 +83,12 @@ import PaymentGraphExplorer from "./components/admin/PaymentGraphExplorer";
 import AdminRefundManagement from "./components/admin/AdminRefundManagement";
 import AdminFxTreasury from "./pages/admin/AdminFxTreasury";
 import MerchantTreasury from "./pages/merchant/MerchantTreasury";
+import AdminProcessorOverview from "./pages/admin/AdminProcessorOverview";
+import AdminProcessorManagement from "./pages/admin/AdminProcessorManagement";
+import AdminRoutingChains from "./pages/admin/AdminRoutingChains";
+import AdminRoutingLogs from "./pages/admin/AdminRoutingLogs";
+import AdminFeeEngine from "./pages/admin/AdminFeeEngine";
+import AdminMerchantView from "./pages/admin/AdminMerchantView";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
@@ -303,6 +309,12 @@ const AppRoutes = () => {
     <Route path="/enki/payment-graph" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><PaymentGraphExplorer /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/refund-management" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRefundManagement /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/fx-treasury" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminFxTreasury /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/strategy" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminProcessorOverview /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/strategy/processors" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminProcessorManagement /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/strategy/routing" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRoutingChains /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/strategy/logs" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRoutingLogs /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/strategy/fees" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminFeeEngine /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/strategy/merchant-view" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminMerchantView /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/affiliate" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller', 'developer']}><AffiliateProgram /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/chargeflow" element={<ProtectedRoute><ChargeflowDashboard /></ProtectedRoute>} />
