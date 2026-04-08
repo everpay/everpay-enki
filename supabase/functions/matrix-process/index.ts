@@ -6,13 +6,11 @@ const corsHeaders = {
 };
 
 /**
- * Matrix Pay Solution Integration
- * Gaming, Online Casinos, Lottery merchant types only.
+ * Matrix Pay Solution — Full API Integration
+ * Gaming, Online Casinos, Lottery merchant types.
  * NOT available for US-based customers/cards/wallets.
- * 
  * Auth: Basic HTTP Auth — public_key:secret_key
- * Without secret_key, runs in simulation mode.
- * Card.js frontend SDK only needs public_key.
+ * Without secret_key → simulation mode.
  */
 
 const SANDBOX_URL = 'https://api-sandbox.matrixpaysolution.com';
@@ -55,81 +53,307 @@ const API_RESPONSE_CODES: Record<number, string> = {
   30700: 'Request timed out',
 };
 
+// Full endpoint map covering every Matrix API method
+const ENDPOINT_MAP: Record<string, string> = {
+  // Core payments
+  customer_token: '/v1/customer/token',
+  pay: '/v1/transaction/pay',
+  checkout: '/v1/checkout/pay',
+  refund: '/v1/transaction/refund',
+  status: '/v1/transaction/status',
+  order_status: '/v1/order/status',
+  // Payout
+  payout: '/v1/transaction/payout/init',
+  // Cascading
+  cascade: '/v1/transaction/cascade',
+  cascade_reject: '/v1/transaction/cascade/reject',
+  // H2H (host-to-host) — PCI DSS Level 1 required
+  h2h_payment: '/v1/h2h/payment',
+  h2h_payout: '/v1/h2h/payout/init',
+  h2h_p2p_init: '/v1/h2h/payment/p2p/init',
+  h2h_apm: '/v1/h2h/apm/payment',
+  // Subscriptions v2 — Billing Plans
+  plan_create: '/v2/subscription/plan/create',
+  plan_update: '/v2/subscription/plan/update',
+  plan_deactivate: '/v2/subscription/plan/deactivate',
+  plan_details: '/v2/subscription/plan/details',
+  subscription_init: '/v2/subscription/init',
+  subscription_hpp: '/v2/checkout/subscription/init',
+  subscription_details: '/v2/subscription/details',
+  subscription_list: '/v2/subscription/list',
+  subscription_cancel: '/v2/subscription/cancel',
+  // Subscription tokens (flexible recurring)
+  subscription_token_pay: '/v1/subscription/transaction/pay',
+  // Oneclick
+  oneclick_create: '/v1/checkout/oneclick/init',
+  oneclick_pay: '/v1/oneclick/transaction/pay',
+  checkout_oneclick_pay: '/v1/checkout/oneclick/pay',
+  // Project & MID details
+  project_details: '/v1/project/details',
+  mid_details: '/v1/mid/details',
+  external_mid_details: '/v1/external_mid/details',
+  mid_balance: '/v1/balance/mid',
+  external_mid_balance: '/v1/balance/external_mid',
+  aggregated_mid_balance: '/v1/balance/aggregated_mid',
+};
+
 function simulateResponse(action: string, params: any) {
   const txId = `mtx_sim_${Date.now().toString(36)}`;
+  const orderId = params.order_id || `ord_${Date.now().toString(36)}`;
+  const now = Math.floor(Date.now() / 1000);
+
   switch (action) {
     case 'customer_token':
-      return { customer_token: `ct_sim_${Date.now().toString(36)}` };
-    case 'pay':
-    case 'h2h_payment':
       return {
         status: 'success', code: 0, reason: 'ok',
-        id: params.order_id || txId,
+        customer_token: `ct_sim_${Date.now().toString(36)}`,
+      };
+
+    case 'pay':
+    case 'h2h_payment':
+    case 'h2h_p2p_init':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        id: orderId, timestamp: now,
         transactions: [{
           id: txId, status: 'success', code: 0, reason: 'ok',
-          amount: params.amount, currency: params.currency || 'EUR',
+          amount: params.amount || 100, currency: params.currency || 'EUR',
+          status_description: 'Successful transaction',
+          type: 'payment',
+        }],
+        card: { mask: '424242******4242', brand: 'visa' },
+      };
+
+    case 'checkout':
+      return {
+        status: 'pending', code: 0, reason: 'ok',
+        redirect_url: `https://checkout-sandbox.matrixpaysolution.com/pay/${txId}`,
+        id: orderId,
+      };
+
+    case 'refund':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        id: orderId, timestamp: now,
+        transactions: [{
+          id: txId, status: 'success', code: 0, reason: 'ok',
+          amount: params.amount || 100, type: 'refund',
           status_description: 'Successful transaction',
         }],
       };
-    case 'checkout':
-      return {
-        status: 'pending',
-        redirect_url: `https://checkout-sandbox.matrixpaysolution.com/pay/${txId}`,
-        id: txId,
-      };
-    case 'refund':
-      return { status: 'success', code: 0, reason: 'ok', id: txId };
-    case 'status':
-      return { status: 'success', code: 0, transactions: [] };
-    case 'plan_create':
-    case 'plan_update':
-    case 'plan_deactivate':
-    case 'plan_details':
-      return { status: 'success', code: 0, plan_id: `plan_sim_${Date.now().toString(36)}` };
-    case 'subscription_init':
-    case 'subscription_details':
-    case 'subscription_list':
-    case 'subscription_cancel':
-      return { status: 'success', code: 0, subscription_id: `sub_sim_${Date.now().toString(36)}` };
-    default:
-      return { status: 'ok' };
-  }
-}
 
-// Map action -> Matrix API endpoint
-function getEndpoint(action: string): string {
-  const map: Record<string, string> = {
-    customer_token: '/v1/customer/token',
-    pay: '/v1/transaction/pay',
-    checkout: '/v1/checkout/pay',
-    refund: '/v1/transaction/refund',
-    status: '/v1/transaction/status',
-    payout: '/v1/transaction/payout/init',
-    h2h_payment: '/v1/h2h/payment',
-    h2h_apm: '/v1/h2h/apm/payment',
-    cascade: '/v1/transaction/cascade',
-    cascade_reject: '/v1/transaction/cascade/reject',
-    order_status: '/v1/order/status',
-    // Subscriptions v2
-    plan_create: '/v2/subscription/plan/create',
-    plan_update: '/v2/subscription/plan/update',
-    plan_deactivate: '/v2/subscription/plan/deactivate',
-    plan_details: '/v2/subscription/plan/details',
-    subscription_init: '/v2/subscription/init',
-    subscription_hpp: '/v2/checkout/subscription/init',
-    subscription_details: '/v2/subscription/details',
-    subscription_list: '/v2/subscription/list',
-    subscription_cancel: '/v2/subscription/cancel',
-    subscription_token_pay: '/v1/subscription/transaction/pay',
+    case 'payout':
+    case 'h2h_payout':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        id: orderId, timestamp: now,
+        transactions: [{
+          id: txId, status: 'success', code: 0, reason: 'ok',
+          amount: params.amount || 100, currency: params.currency || 'EUR',
+          type: 'payout', status_description: 'Successful transaction',
+        }],
+      };
+
+    case 'status':
+    case 'order_status':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        id: params.order_id || params.transaction_id || orderId,
+        timestamp: now,
+        transactions: [{
+          id: txId, status: 'success', code: 0, reason: 'ok',
+          amount: 100, currency: 'EUR', type: 'payment',
+          status_description: 'Successful transaction',
+        }],
+      };
+
+    case 'cascade':
+    case 'cascade_reject':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        id: orderId, timestamp: now,
+        transactions: [{
+          id: txId, status: action === 'cascade' ? 'pending' : 'error',
+          code: action === 'cascade' ? 2099 : 2025,
+        }],
+      };
+
+    case 'h2h_apm':
+      return {
+        status: 'pending', code: 0, reason: 'ok',
+        redirect_url: `https://checkout-sandbox.matrixpaysolution.com/apm/${txId}`,
+        id: orderId,
+      };
+
+    // Subscription Plans
+    case 'plan_create':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        plan: {
+          id: `plan_sim_${Date.now().toString(36)}`,
+          name: params.name || 'Test Plan',
+          status: 'ACTIVE',
+          billing_period: params.billing_period || { kind: 'MONTHS', value: 1 },
+          prices: params.prices || [{ currency: 'USD', value: 999 }],
+        },
+      };
+    case 'plan_update':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        plan: { id: params.id, name: params.name, status: 'ACTIVE' },
+      };
+    case 'plan_deactivate':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        plan: { id: params.id, status: 'DEACTIVATED' },
+      };
+    case 'plan_details':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        plan: {
+          id: params.id, name: 'Sample Plan', status: 'ACTIVE',
+          billing_period: { kind: 'MONTHS', value: 1 },
+          prices: [{ currency: 'USD', value: 999 }, { currency: 'EUR', value: 899 }],
+          retries: [{ kind: 'N_DAY', value: 3 }],
+        },
+      };
+
+    // Subscriptions
+    case 'subscription_init':
+    case 'subscription_hpp':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        subscription_id: `sub_sim_${Date.now().toString(36)}`,
+        redirect_url: action === 'subscription_hpp'
+          ? `https://checkout-sandbox.matrixpaysolution.com/sub/${txId}`
+          : undefined,
+        transactions: [{
+          id: txId, status: 'success', code: 0, amount: 999,
+          currency: params.currency || 'USD',
+        }],
+      };
+    case 'subscription_details':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        subscription: {
+          id: params.subscription_id,
+          status: 'ACTIVE',
+          plan_id: 'plan_sim_test',
+          next_payment_date: new Date(Date.now() + 30 * 86400000).toISOString(),
+          invoices: [{ id: 'inv_1', status: 'paid', amount: 999, currency: 'USD' }],
+        },
+      };
+    case 'subscription_list':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        subscriptions: [
+          { id: 'sub_sim_1', status: 'ACTIVE', plan_id: 'plan_1' },
+          { id: 'sub_sim_2', status: 'DEACTIVATED', plan_id: 'plan_2' },
+        ],
+      };
+    case 'subscription_cancel':
+      return { status: 'success', code: 0, reason: 'ok' };
+    case 'subscription_token_pay':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        id: orderId, timestamp: now,
+        transactions: [{
+          id: txId, status: 'success', code: 0,
+          amount: params.amount || 100, currency: params.currency || 'USD',
+          type: 'subscription_payment',
+        }],
+      };
+
     // Oneclick
-    oneclick_create: '/v1/checkout/oneclick/init',
-    oneclick_pay: '/v1/oneclick/transaction/pay',
-    // Project/MID
-    project_details: '/v1/project/details',
-    mid_details: '/v1/mid/details',
-    mid_balance: '/v1/balance/mid',
-  };
-  return map[action] || '';
+    case 'oneclick_create':
+      return {
+        status: 'pending', code: 0, reason: 'ok',
+        redirect_url: `https://checkout-sandbox.matrixpaysolution.com/oneclick/${txId}`,
+        oneclick_token: `oc_sim_${Date.now().toString(36)}`,
+        id: orderId,
+      };
+    case 'oneclick_pay':
+      return {
+        status: 'success', code: 0, reason: 'ok',
+        id: orderId, timestamp: now,
+        transactions: [{
+          id: txId, status: 'success', code: 0,
+          amount: params.amount || 100, currency: params.currency || 'USD',
+          type: 'oneclick_payment',
+        }],
+      };
+    case 'checkout_oneclick_pay':
+      return {
+        status: 'pending', code: 0, reason: 'ok',
+        redirect_url: `https://checkout-sandbox.matrixpaysolution.com/oneclick-pay/${txId}`,
+        id: orderId,
+      };
+
+    // Project & MID
+    case 'project_details':
+      return {
+        status: 'success', code: 0,
+        project: {
+          id: '1219560793', name: 'Everpay Matrix Project',
+          status: 'active', mode: 'test',
+          mids: [
+            { mid: 'TZ-0000000001', status: 'active', provider: 'Provider A', currency: 'EUR' },
+            { mid: 'TZ-0000000002', status: 'active', provider: 'Provider B', currency: 'USD' },
+          ],
+        },
+      };
+    case 'mid_details':
+      return {
+        status: 'success', code: 0,
+        mid: {
+          id: params.mid || 'TZ-0000000001',
+          status: 'active', provider: 'Provider A',
+          currency: 'EUR', descriptor: 'EVERPAY*PAYMENT',
+          payment_methods: ['visa', 'mastercard', 'amex'],
+          features: { subscriptions: true, payouts: true, refunds: true },
+        },
+      };
+    case 'external_mid_details':
+      return {
+        status: 'success', code: 0,
+        external_mid: {
+          id: params.id || 'ext_mid_001',
+          status: 'active', provider: 'External Provider',
+          currency: 'USD',
+        },
+      };
+    case 'mid_balance':
+      return {
+        status: 'success', code: 0,
+        balance: {
+          mid: params.mid || 'TZ-0000000001',
+          currency: 'EUR',
+          available: 125000, pending: 8500, reserved: 12000,
+          total: 145500,
+        },
+      };
+    case 'external_mid_balance':
+      return {
+        status: 'success', code: 0,
+        balance: {
+          id: params.id || 'ext_mid_001',
+          currency: 'USD',
+          available: 50000, pending: 3200, reserved: 5000,
+        },
+      };
+    case 'aggregated_mid_balance':
+      return {
+        status: 'success', code: 0,
+        balances: [
+          { mid: 'TZ-0000000001', currency: 'EUR', available: 125000, pending: 8500 },
+          { mid: 'TZ-0000000002', currency: 'USD', available: 98000, pending: 4200 },
+        ],
+        total: { EUR: 133500, USD: 102200 },
+      };
+
+    default:
+      return { status: 'ok', code: 0 };
+  }
 }
 
 serve(async (req) => {
@@ -161,9 +385,9 @@ serve(async (req) => {
       }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Without secret key, return simulation
+    // Without secret key → simulation mode
     if (!MATRIX_SECRET_KEY) {
-      console.log(`[Matrix] Simulation mode (no secret key) — action: ${action}, project: ${MATRIX_PROJECT_ID}`);
+      console.log(`[Matrix] Simulation mode — action: ${action}`);
       return new Response(JSON.stringify({
         simulation: true,
         public_key_configured: true,
@@ -172,26 +396,25 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Live API call with both keys
+    // Live API call
     const baseUrl = sandbox ? SANDBOX_URL : LIVE_URL;
-    const endpoint = getEndpoint(action);
+    const endpoint = ENDPOINT_MAP[action];
 
     if (!endpoint) {
       return new Response(JSON.stringify({
         error: `Unknown action: ${action}`,
         code: 'INVALID_ACTION',
+        available_actions: Object.keys(ENDPOINT_MAP),
       }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Use TextEncoder for non-Latin1 safe Base64 encoding
     const encoder = new TextEncoder();
     const credentials = encoder.encode(`${MATRIX_PUBLIC_KEY}:${MATRIX_SECRET_KEY}`);
     const authHeader = `Basic ${btoa(String.fromCharCode(...credentials))}`;
 
-    // Inject project_id into params for Matrix API
     const enrichedParams = { ...params, project_id: MATRIX_PROJECT_ID };
 
-    console.log(`[Matrix] ${action} -> ${baseUrl}${endpoint} (project: ${MATRIX_PROJECT_ID})`);
+    console.log(`[Matrix] ${action} -> ${baseUrl}${endpoint}`);
 
     const response = await fetch(`${baseUrl}${endpoint}`, {
       method: 'POST',
