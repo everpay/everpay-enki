@@ -52,6 +52,7 @@ export const integrations: IntegrationItem[] = [
   { name: "Lipad.io", description: "African payment coverage — Kenya, Nigeria, South Africa.", category: "gateways", icon: "/logos/integrations/lipad.png" },
   { name: "PayOK", description: "Alternative payment methods for global coverage.", category: "gateways", icon: "/logos/integrations/payok.png" },
   { name: "PacoPay", description: "LATAM & emerging markets card processing.", category: "gateways", icon: "/logos/integrations/pacopay.png" },
+  { name: "Elektropay", description: "Crypto payment gateway — accept BTC, ETH, USDT, USDC with fiat conversion.", category: "gateways", icon: "/logos/crypto.svg" },
 
   // Supported Gateways (Active Merchant compatible)
   { name: "Adyen", description: "Global payment platform — US, EU, AU, BR, SG, HK, MX and more.", category: "supported", icon: "💳", learnMore: "https://www.adyen.com/" },
