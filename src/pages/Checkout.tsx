@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, ArrowRight, Loader2, Shield, Lock, CheckCircle, Globe, Building2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { CreditCard, ArrowRight, Loader2, Shield, Lock, CheckCircle, Globe, Building2, RefreshCw, AlertTriangle, Bitcoin } from 'lucide-react';
 import { toast } from 'sonner';
+import { CryptoCheckoutSection } from '@/components/CryptoCheckoutSection';
 import { supabase } from '@/integrations/supabase/client';
 
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
@@ -39,8 +40,8 @@ export default function Checkout() {
   const [billingState, setBillingState] = useState('');
   const [billingZip, setBillingZip] = useState('');
   const [billingCountry, setBillingCountry] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'openbanking'>(
-    method === 'openbanking' ? 'openbanking' : 'card'
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'openbanking' | 'crypto'>(
+    method === 'openbanking' ? 'openbanking' : method === 'crypto' ? 'crypto' : 'card'
   );
   const [cardNumber, setCardNumber] = useState('');
   const [expMonth, setExpMonth] = useState('');
@@ -362,12 +363,15 @@ export default function Checkout() {
           {/* Payment Method Tabs */}
           {method === 'all' ? (
             <Tabs value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="card" className="gap-2">
                   <CreditCard className="h-3.5 w-3.5" /> Card
                 </TabsTrigger>
                 <TabsTrigger value="openbanking" className="gap-2">
                   <Building2 className="h-3.5 w-3.5" /> Bank
+                </TabsTrigger>
+                <TabsTrigger value="crypto" className="gap-2">
+                  <Bitcoin className="h-3.5 w-3.5" /> Crypto
                 </TabsTrigger>
               </TabsList>
 
@@ -384,7 +388,29 @@ export default function Checkout() {
               <TabsContent value="openbanking" className="mt-4">
                 <OpenBankingSection currency={currency} />
               </TabsContent>
+
+              <TabsContent value="crypto" className="mt-4">
+                <CryptoCheckoutSection
+                  amount={displayAmount}
+                  currency={currency}
+                  customerEmail={customerEmail}
+                  customerName={customerName}
+                  description={description}
+                  successUrl={successUrl}
+                  cancelUrl={cancelUrl}
+                />
+              </TabsContent>
             </Tabs>
+          ) : method === 'crypto' ? (
+            <CryptoCheckoutSection
+              amount={displayAmount}
+              currency={currency}
+              customerEmail={customerEmail}
+              customerName={customerName}
+              description={description}
+              successUrl={successUrl}
+              cancelUrl={cancelUrl}
+            />
           ) : method === 'openbanking' ? (
             <OpenBankingSection currency={currency} />
           ) : (
