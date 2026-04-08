@@ -912,6 +912,309 @@ export type Database = {
           },
         ]
       }
+      elektropay_payments: {
+        Row: {
+          blockchain_tx_hash: string | null
+          commission_amount: number | null
+          commission_rate: number | null
+          created_at: string | null
+          crypto_amount: number | null
+          crypto_currency: string | null
+          crypto_network: string | null
+          customer_email: string | null
+          customer_name: string | null
+          elektropay_payment_id: string | null
+          exchange_rate: number | null
+          fiat_amount: number
+          fiat_currency: string
+          flat_fee: number | null
+          id: string
+          merchant_id: string
+          metadata: Json | null
+          net_amount: number | null
+          paid_amount: number | null
+          payment_type: string | null
+          payment_url: string | null
+          qrcode_url: string | null
+          rate_date: string | null
+          remain_amount: number | null
+          status: string | null
+          total_fees: number | null
+          transaction_id: string | null
+          updated_at: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          blockchain_tx_hash?: string | null
+          commission_amount?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          crypto_amount?: number | null
+          crypto_currency?: string | null
+          crypto_network?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          elektropay_payment_id?: string | null
+          exchange_rate?: number | null
+          fiat_amount: number
+          fiat_currency?: string
+          flat_fee?: number | null
+          id?: string
+          merchant_id: string
+          metadata?: Json | null
+          net_amount?: number | null
+          paid_amount?: number | null
+          payment_type?: string | null
+          payment_url?: string | null
+          qrcode_url?: string | null
+          rate_date?: string | null
+          remain_amount?: number | null
+          status?: string | null
+          total_fees?: number | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          blockchain_tx_hash?: string | null
+          commission_amount?: number | null
+          commission_rate?: number | null
+          created_at?: string | null
+          crypto_amount?: number | null
+          crypto_currency?: string | null
+          crypto_network?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          elektropay_payment_id?: string | null
+          exchange_rate?: number | null
+          fiat_amount?: number
+          fiat_currency?: string
+          flat_fee?: number | null
+          id?: string
+          merchant_id?: string
+          metadata?: Json | null
+          net_amount?: number | null
+          paid_amount?: number | null
+          payment_type?: string | null
+          payment_url?: string | null
+          qrcode_url?: string | null
+          rate_date?: string | null
+          remain_amount?: number | null
+          status?: string | null
+          total_fees?: number | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elektropay_payments_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "elektropay_payments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elektropay_settings: {
+        Row: {
+          commission_rate: number | null
+          created_at: string | null
+          default_crypto: string | null
+          elektropay_store_id: string | null
+          enabled: boolean | null
+          enabled_assets: string[] | null
+          flat_fee_usd: number | null
+          id: string
+          merchant_id: string
+          updated_at: string | null
+          us_citizen: boolean | null
+          webhook_secret: string | null
+        }
+        Insert: {
+          commission_rate?: number | null
+          created_at?: string | null
+          default_crypto?: string | null
+          elektropay_store_id?: string | null
+          enabled?: boolean | null
+          enabled_assets?: string[] | null
+          flat_fee_usd?: number | null
+          id?: string
+          merchant_id: string
+          updated_at?: string | null
+          us_citizen?: boolean | null
+          webhook_secret?: string | null
+        }
+        Update: {
+          commission_rate?: number | null
+          created_at?: string | null
+          default_crypto?: string | null
+          elektropay_store_id?: string | null
+          enabled?: boolean | null
+          enabled_assets?: string[] | null
+          flat_fee_usd?: number | null
+          id?: string
+          merchant_id?: string
+          updated_at?: string | null
+          us_citizen?: boolean | null
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elektropay_settings_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elektropay_wallets: {
+        Row: {
+          address_id: string | null
+          asset_id: string
+          available: number | null
+          balance: number | null
+          base_balance: number | null
+          base_currency: string | null
+          created_at: string | null
+          crypto_network: string | null
+          crypto_network_name: string | null
+          currency: string
+          dedicate_id: string | null
+          elektropay_account_id: string | null
+          elektropay_store_id: string | null
+          id: string
+          merchant_id: string
+          on_hold: number | null
+          status: string | null
+          updated_at: string | null
+          wallet_address: string | null
+        }
+        Insert: {
+          address_id?: string | null
+          asset_id: string
+          available?: number | null
+          balance?: number | null
+          base_balance?: number | null
+          base_currency?: string | null
+          created_at?: string | null
+          crypto_network?: string | null
+          crypto_network_name?: string | null
+          currency: string
+          dedicate_id?: string | null
+          elektropay_account_id?: string | null
+          elektropay_store_id?: string | null
+          id?: string
+          merchant_id: string
+          on_hold?: number | null
+          status?: string | null
+          updated_at?: string | null
+          wallet_address?: string | null
+        }
+        Update: {
+          address_id?: string | null
+          asset_id?: string
+          available?: number | null
+          balance?: number | null
+          base_balance?: number | null
+          base_currency?: string | null
+          created_at?: string | null
+          crypto_network?: string | null
+          crypto_network_name?: string | null
+          currency?: string
+          dedicate_id?: string | null
+          elektropay_account_id?: string | null
+          elektropay_store_id?: string | null
+          id?: string
+          merchant_id?: string
+          on_hold?: number | null
+          status?: string | null
+          updated_at?: string | null
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elektropay_wallets_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elektropay_withdrawals: {
+        Row: {
+          amount: number
+          asset_id: string
+          blockchain_tx_hash: string | null
+          created_at: string | null
+          crypto_network: string | null
+          description: string | null
+          destination_address: string
+          elektropay_withdraw_id: string | null
+          fee: number | null
+          fee_asset_id: string | null
+          id: string
+          merchant_id: string
+          metadata: Json | null
+          status: string | null
+          updated_at: string | null
+          withdraw_asset_id: string | null
+        }
+        Insert: {
+          amount: number
+          asset_id: string
+          blockchain_tx_hash?: string | null
+          created_at?: string | null
+          crypto_network?: string | null
+          description?: string | null
+          destination_address: string
+          elektropay_withdraw_id?: string | null
+          fee?: number | null
+          fee_asset_id?: string | null
+          id?: string
+          merchant_id: string
+          metadata?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          withdraw_asset_id?: string | null
+        }
+        Update: {
+          amount?: number
+          asset_id?: string
+          blockchain_tx_hash?: string | null
+          created_at?: string | null
+          crypto_network?: string | null
+          description?: string | null
+          destination_address?: string
+          elektropay_withdraw_id?: string | null
+          fee?: number | null
+          fee_asset_id?: string | null
+          id?: string
+          merchant_id?: string
+          metadata?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          withdraw_asset_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elektropay_withdrawals_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
