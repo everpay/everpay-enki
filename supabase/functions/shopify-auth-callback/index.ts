@@ -13,8 +13,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
  *   5. Redirects merchant back to the app dashboard
  */
 
-const PRODUCTION_APP_URL = 'https://everpayinc.com';
-const FALLBACK_APP_URL = 'https://everpay-os.lovable.app';
+const PRODUCTION_APP_URL = 'https://enki.everpayinc.com';
+const FALLBACK_APP_URL = 'https://enki.everpayinc.com';
 
 // ── AES-256-GCM helpers ──
 
