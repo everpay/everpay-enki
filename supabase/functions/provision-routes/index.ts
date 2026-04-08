@@ -12,18 +12,28 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
-  // Auth: service role key or super_admin
+  // Auth: service role key via header or body, or super_admin user
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "") || "";
 
-  if (token !== serviceRoleKey) {
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const anonClient = createClient(supabaseUrl, anonKey);
-    const { data: { user } } = await anonClient.auth.getUser(token);
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
-    if (!roles?.some((r: any) => r.role === "super_admin")) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  // Parse body early to check for provision_key
+  let body: any;
+  try { body = await req.json(); } catch { return new Response(JSON.stringify({ error: "Bad request" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
+
+  const hasServiceRole = token === serviceRoleKey || body.provision_key === serviceRoleKey;
+
+  if (!hasServiceRole) {
+    if (token) {
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const anonClient = createClient(supabaseUrl, anonKey);
+      const { data: { user } } = await anonClient.auth.getUser(token);
+      if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
+      if (!roles?.some((r: any) => r.role === "super_admin")) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    } else {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
   }
 
