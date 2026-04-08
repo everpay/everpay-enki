@@ -1,10 +1,12 @@
 import { AppLayout } from '@/components/AppLayout';
 import { useAccounts } from '@/hooks/useAccounts';
 import { formatCurrency } from '@/lib/format';
-import { Wallet, TrendingUp, Clock, CreditCard, ExternalLink, Banknote } from 'lucide-react';
+import { Wallet, TrendingUp, Clock, CreditCard, ExternalLink, Banknote, Bitcoin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CryptoWalletDashboard } from '@/components/CryptoWalletDashboard';
 
 const currencyFlags: Record<string, string> = {
   USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', BRL: '🇧🇷', MXN: '🇲🇽', COP: '🇨🇴', CAD: '🇨🇦',
