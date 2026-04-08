@@ -296,7 +296,7 @@ const AppRoutes = () => {
     <Route path="/saved-cards" element={<ProtectedRoute><SavedCards /></ProtectedRoute>} />
     <Route path="/3ds-settings" element={<ProtectedRoute><ThreeDSecureSettings /></ProtectedRoute>} />
     {/* Rate limits moved to Settings > Developers */}
-    <Route path="/risk-profile" element={<ProtectedRoute><RiskProfilePage /></ProtectedRoute>} />
+    {/* Risk profile moved to Settings > Developers */}
 
     {/* Admin pages — hidden under /enki, role-gated */}
     <Route path="/enki" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute></ProtectedRoute>} />

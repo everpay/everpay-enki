@@ -48,9 +48,12 @@ import { formatDate } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RateLimitGauge } from "@/components/RateLimitGauge";
+import { RiskScoreGauge } from "@/components/RiskScoreGauge";
 import { useRateLimits } from "@/hooks/useRateLimits";
-import { useRiskProfile } from "@/hooks/useRiskProfile";
+import { useRiskProfile, useRiskSignals } from "@/hooks/useRiskProfile";
 import { useAccounts } from "@/hooks/useAccounts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Activity, TrendingUp, TrendingDown } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import {
