@@ -2,54 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EnvironmentProvider } from "@/contexts/EnvironmentContext";
-import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
-import { getAppContext, getSubdomainConfig } from "@/lib/subdomain";
-import Index from "./pages/Index";
-import Transactions from "./pages/Transactions";
-import Wallets from "./pages/Wallets";
-import Payouts from "./pages/Payouts";
-import NewPayment from "./pages/NewPayment";
-import PaymentLinks from "./pages/PaymentLinks";
-import Checkout from "./pages/Checkout";
-import CheckoutThankYou from "./pages/CheckoutThankYou";
-import CheckoutDeclined from "./pages/CheckoutDeclined";
-import Activity from "./pages/Activity";
-import Subscriptions from "./pages/Subscriptions";
-import CustomerPortal from "./pages/CustomerPortal";
-import Chargebacks from "./pages/Chargebacks";
-import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
-
-import Docs from "./pages/Docs";
-import Analytics from "./pages/Analytics";
-import Customers from "./pages/Customers";
-import Invoices from "./pages/Invoices";
-import PayInvoice from "./pages/PayInvoice";
-import MerchantDisputes from "./pages/merchant/MerchantDisputes";
-import MerchantEvidence from "./pages/merchant/MerchantEvidence";
-import MerchantAnalytics from "./pages/merchant/MerchantAnalytics";
-import Webhooks from "./pages/Webhooks";
-import Refunds from "./pages/Refunds";
-import Reconciliation from "./pages/Reconciliation";
-import Onboarding from "./pages/Onboarding";
-import ProcessorTransparency from "./pages/ProcessorTransparency";
-import Products from "./pages/Products";
-import MultiAcquirer from "./pages/MultiAcquirer";
-import SmartRetry from "./pages/SmartRetry";
-import ProcessorAnalyticsPage from "./pages/ProcessorAnalyticsPage";
-import KycAml from "./pages/KycAml";
-import PaymentMethodsPage from "./pages/PaymentMethodsPage";
-import BigCommerce from "./pages/BigCommerce";
-import Shopify from "./pages/Shopify";
-import Ledger from "./pages/Ledger";
-import AuditTrail from "./pages/AuditTrail";
-import Integrations from "./pages/Integrations";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 import { usePostHogTracking } from "./hooks/usePostHogTracking";
 import { InactivityWarningDialog } from "./components/InactivityWarningDialog";
@@ -67,22 +26,10 @@ import Admin3dsControls from "./pages/admin/Admin3dsControls";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import BoardOverview from "./pages/admin/BoardOverview";
 import AdminProcessorInfo from "./pages/admin/AdminProcessorInfo";
-import ResellerPortal from "./pages/ResellerPortal";
-import AffiliateProgram from "./pages/AffiliateProgram";
-import ChargeflowDashboard from "./pages/ChargeflowDashboard";
-import Treasury from "./pages/Treasury";
-import LiveAnalytics from "./pages/LiveAnalytics";
-import Settlements from "./pages/Settlements";
-import FraudGraph from "./pages/FraudGraph";
-import PaymentWidget from "./pages/PaymentWidget";
-import MassPayouts from "./pages/MassPayouts";
-import SavedCards from "./pages/SavedCards";
-import ThreeDSecureSettings from "./pages/ThreeDSecureSettings";
 import AdminCascading from "./pages/admin/AdminCascading";
 import PaymentGraphExplorer from "./components/admin/PaymentGraphExplorer";
 import AdminRefundManagement from "./components/admin/AdminRefundManagement";
 import AdminFxTreasury from "./pages/admin/AdminFxTreasury";
-import MerchantTreasury from "./pages/merchant/MerchantTreasury";
 import AdminProcessorOverview from "./pages/admin/AdminProcessorOverview";
 import AdminProcessorManagement from "./pages/admin/AdminProcessorManagement";
 import AdminRoutingChains from "./pages/admin/AdminRoutingChains";
@@ -91,43 +38,8 @@ import AdminFeeEngine from "./pages/admin/AdminFeeEngine";
 import AdminMerchantView from "./pages/admin/AdminMerchantView";
 import AdminRiskEngine from "./pages/admin/AdminRiskEngine";
 import AdminRateLimits from "./pages/admin/AdminRateLimits";
-import RateLimits from "./pages/RateLimits";
-import RiskProfilePage from "./pages/RiskProfile";
 import AdminTokenManagement from "./pages/admin/AdminTokenManagement";
 import AdminMatrixManagement from "./pages/admin/AdminMatrixManagement";
-import Balances from "./pages/Balances";
-
-// Developer portal pages
-import DeveloperPortal from "./pages/developer/DeveloperPortal";
-import OverviewPage from "./pages/developer/OverviewPage";
-import QuickStartPage from "./pages/developer/QuickStartPage";
-import GuidesPage from "./pages/developer/GuidesPage";
-import ExamplesPage from "./pages/developer/ExamplesPage";
-import ApiKeysPage from "./pages/developer/ApiKeysPage";
-import SdkDownloadsPage from "./pages/developer/SdkDownloadsPage";
-import DevWebhooksPage from "./pages/developer/WebhooksPage";
-import PaymentsApiPage from "./pages/developer/api/PaymentsApiPage";
-import TransactionsApiPage from "./pages/developer/api/TransactionsApiPage";
-import CustomersApiPage from "./pages/developer/api/CustomersApiPage";
-import InvoicesApiPage from "./pages/developer/api/InvoicesApiPage";
-import SubscriptionsApiPage from "./pages/developer/api/SubscriptionsApiPage";
-import PayoutsApiPage from "./pages/developer/api/PayoutsApiPage";
-import WalletsApiPage from "./pages/developer/api/WalletsApiPage";
-import ProductsApiPage from "./pages/developer/api/ProductsApiPage";
-import MerchantsApiPage from "./pages/developer/api/MerchantsApiPage";
-import BankAccountsApiPage from "./pages/developer/api/BankAccountsApiPage";
-import AuthenticationApiPage from "./pages/developer/api/AuthenticationApiPage";
-import PaymentMethodsApiPage from "./pages/developer/api/PaymentMethodsApiPage";
-import PaymentLinksApiPage from "./pages/developer/api/PaymentLinksApiPage";
-import PlansApiPage from "./pages/developer/api/PlansApiPage";
-import ThreeDSecureApiPage from "./pages/developer/api/ThreeDSecureApiPage";
-import SavedCardsApiPage from "./pages/developer/api/SavedCardsApiPage";
-import CascadingPaymentsApiPage from "./pages/developer/api/CascadingPaymentsApiPage";
-import DisputesApiPage from "./pages/developer/api/DisputesApiPage";
-import BankDebitsApiPage from "./pages/developer/api/BankDebitsApiPage";
-import BankRedirectsApiPage from "./pages/developer/api/BankRedirectsApiPage";
-import MatrixApiPage from "./pages/developer/api/MatrixApiPage";
-
 
 const queryClient = new QueryClient();
 
@@ -139,42 +51,25 @@ function LoadingScreen() {
   );
 }
 
-function ProtectedRoute({ children, skipOnboardingCheck }: { children: React.ReactNode; skipOnboardingCheck?: boolean }) {
+function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  const location = useLocation();
-  const { data: onboarding, isLoading: onboardingLoading } = useOnboardingStatus();
 
-  if (loading || onboardingLoading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (!skipOnboardingCheck && onboarding?.needsOnboarding && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  return <>{children}</>;
+  return (
+    <RoleProtectedRoute allowedRoles={['admin']}>
+      {children}
+    </RoleProtectedRoute>
+  );
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  const config = getSubdomainConfig(getAppContext());
 
   if (loading) return <LoadingScreen />;
-  if (user) return <Navigate to={config.redirectAfterLogin} replace />;
+  if (user) return <Navigate to="/enki" replace />;
   return <>{children}</>;
-}
-
-function ContextHomeRoute() {
-  const { user, loading } = useAuth();
-  const appContext = getAppContext();
-  const config = getSubdomainConfig(appContext);
-
-  if (loading) return <LoadingScreen />;
-
-  if (appContext === 'developer') {
-    return <Navigate to={user ? config.redirectAfterLogin : '/developers'} replace />;
-  }
-
-  return <Navigate to={user ? config.redirectAfterLogin : '/login'} replace />;
 }
 
 const AppRoutes = () => {
@@ -184,131 +79,43 @@ const AppRoutes = () => {
   <>
   <InactivityWarningDialog open={showWarning} secondsLeft={secondsLeft} onStayActive={handleStayActive} />
   <Routes>
-    {/* Home redirects to login or dashboard */}
-    <Route path="/" element={<ContextHomeRoute />} />
+    {/* Root redirects to admin dashboard or login */}
+    <Route path="/" element={<Navigate to="/enki" replace />} />
 
-    {/* Auth & public */}
+    {/* Auth */}
     <Route path="/auth" element={<Navigate to="/login" replace />} />
     <Route path="/login" element={<AuthRoute><Auth /></AuthRoute>} />
-    <Route path="/signup" element={<AuthRoute><Auth /></AuthRoute>} />
-    <Route path="/docs" element={<Docs />} />
     <Route path="/reset-password" element={<ResetPassword />} />
-    <Route path="/checkout" element={<Checkout />} />
-    <Route path="/pay" element={<Checkout />} />
-    <Route path="/checkout/thank-you" element={<CheckoutThankYou />} />
-    <Route path="/checkout/declined" element={<CheckoutDeclined />} />
-    <Route path="/pay/:id" element={<PayInvoice />} />
 
-    {/* App pages (protected) */}
-    <Route path="/dashboard" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-    <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
-    <Route path="/wallets" element={<ProtectedRoute><Wallets /></ProtectedRoute>} />
-    <Route path="/payouts" element={<ProtectedRoute><Payouts /></ProtectedRoute>} />
-    <Route path="/payments/new" element={<ProtectedRoute><NewPayment /></ProtectedRoute>} />
-    <Route path="/payment-links" element={<ProtectedRoute><PaymentLinks /></ProtectedRoute>} />
-    <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
-    <Route path="/portal" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['user']}><CustomerPortal /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/chargebacks" element={<ProtectedRoute><Chargebacks /></ProtectedRoute>} />
-    <Route path="/chargebacks/disputes" element={<ProtectedRoute><MerchantDisputes /></ProtectedRoute>} />
-    <Route path="/chargebacks/evidence" element={<ProtectedRoute><MerchantEvidence /></ProtectedRoute>} />
-    <Route path="/chargebacks/analytics" element={<ProtectedRoute><MerchantAnalytics /></ProtectedRoute>} />
-    <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
-    <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
-    <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-    <Route path="/refunds" element={<ProtectedRoute><Refunds /></ProtectedRoute>} />
-    <Route path="/reconciliation" element={<ProtectedRoute><Reconciliation /></ProtectedRoute>} />
-    <Route path="/webhooks" element={<ProtectedRoute><Webhooks /></ProtectedRoute>} />
-    <Route path="/onboarding" element={<ProtectedRoute skipOnboardingCheck><Onboarding /></ProtectedRoute>} />
-    <Route path="/processor-transparency" element={<ProtectedRoute><ProcessorTransparency /></ProtectedRoute>} />
-    <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-    <Route path="/multi-acquirer" element={<ProtectedRoute><MultiAcquirer /></ProtectedRoute>} />
-    <Route path="/smart-retry" element={<ProtectedRoute><SmartRetry /></ProtectedRoute>} />
-    <Route path="/processor-analytics" element={<ProtectedRoute><ProcessorAnalyticsPage /></ProtectedRoute>} />
-    <Route path="/kyc-aml" element={<ProtectedRoute><KycAml /></ProtectedRoute>} />
-    <Route path="/payment-methods" element={<ProtectedRoute><PaymentMethodsPage /></ProtectedRoute>} />
-    <Route path="/bigcommerce" element={<ProtectedRoute><BigCommerce /></ProtectedRoute>} />
-    <Route path="/shopify" element={<ProtectedRoute><Shopify /></ProtectedRoute>} />
-    <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-    <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
-    <Route path="/treasury" element={<ProtectedRoute><Treasury /></ProtectedRoute>} />
-    <Route path="/balances" element={<ProtectedRoute><Balances /></ProtectedRoute>} />
-    <Route path="/merchant-treasury" element={<ProtectedRoute><MerchantTreasury /></ProtectedRoute>} />
-    <Route path="/live" element={<ProtectedRoute><LiveAnalytics /></ProtectedRoute>} />
-    <Route path="/activity" element={<Navigate to="/settings" replace />} />
-    <Route path="/ledger" element={<ProtectedRoute><Ledger /></ProtectedRoute>} />
-    <Route path="/audit-trail" element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
-    <Route path="/settlements" element={<ProtectedRoute><Settlements /></ProtectedRoute>} />
-    <Route path="/fraud-graph" element={<ProtectedRoute><FraudGraph /></ProtectedRoute>} />
-    <Route path="/payment-widget" element={<ProtectedRoute><PaymentWidget /></ProtectedRoute>} />
-    <Route path="/mass-payouts" element={<ProtectedRoute><MassPayouts /></ProtectedRoute>} />
-    <Route path="/saved-cards" element={<ProtectedRoute><SavedCards /></ProtectedRoute>} />
-    <Route path="/3ds-settings" element={<ProtectedRoute><ThreeDSecureSettings /></ProtectedRoute>} />
-    {/* Rate limits moved to Settings > Developers */}
-    {/* Risk profile moved to Settings > Developers */}
+    {/* Admin pages */}
+    <Route path="/enki" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+    <Route path="/enki/merchants" element={<AdminRoute><AdminMerchants /></AdminRoute>} />
+    <Route path="/enki/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+    <Route path="/enki/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+    <Route path="/enki/regulatory" element={<AdminRoute><AdminRegulatoryExport /></AdminRoute>} />
+    <Route path="/enki/reserves" element={<AdminRoute><AdminReservesDashboard /></AdminRoute>} />
+    <Route path="/enki/fees" element={<AdminRoute><AdminTransactionFees /></AdminRoute>} />
+    <Route path="/enki/routing" element={<AdminRoute><AdminPspRouting /></AdminRoute>} />
+    <Route path="/enki/3ds" element={<AdminRoute><Admin3dsControls /></AdminRoute>} />
+    <Route path="/enki/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
+    <Route path="/enki/board" element={<AdminRoute><BoardOverview /></AdminRoute>} />
+    <Route path="/enki/processors" element={<AdminRoute><AdminProcessorInfo /></AdminRoute>} />
+    <Route path="/enki/cascading" element={<AdminRoute><AdminCascading /></AdminRoute>} />
+    <Route path="/enki/payment-graph" element={<AdminRoute><PaymentGraphExplorer /></AdminRoute>} />
+    <Route path="/enki/refund-management" element={<AdminRoute><AdminRefundManagement /></AdminRoute>} />
+    <Route path="/enki/fx-treasury" element={<AdminRoute><AdminFxTreasury /></AdminRoute>} />
+    <Route path="/enki/strategy" element={<AdminRoute><AdminProcessorOverview /></AdminRoute>} />
+    <Route path="/enki/strategy/processors" element={<AdminRoute><AdminProcessorManagement /></AdminRoute>} />
+    <Route path="/enki/strategy/routing" element={<AdminRoute><AdminRoutingChains /></AdminRoute>} />
+    <Route path="/enki/strategy/logs" element={<AdminRoute><AdminRoutingLogs /></AdminRoute>} />
+    <Route path="/enki/strategy/fees" element={<AdminRoute><AdminFeeEngine /></AdminRoute>} />
+    <Route path="/enki/strategy/merchant-view" element={<AdminRoute><AdminMerchantView /></AdminRoute>} />
+    <Route path="/enki/risk-engine" element={<AdminRoute><AdminRiskEngine /></AdminRoute>} />
+    <Route path="/enki/rate-limits" element={<AdminRoute><AdminRateLimits /></AdminRoute>} />
+    <Route path="/enki/token-lifecycle" element={<AdminRoute><AdminTokenManagement /></AdminRoute>} />
+    <Route path="/enki/matrix" element={<AdminRoute><AdminMatrixManagement /></AdminRoute>} />
 
-    {/* Admin pages — hidden under /enki, role-gated */}
-    <Route path="/enki" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminDashboard /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/merchants" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminMerchants /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/users" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminUsers /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/analytics" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminAnalytics /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/regulatory" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRegulatoryExport /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/reserves" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminReservesDashboard /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/fees" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminTransactionFees /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/routing" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminPspRouting /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/3ds" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><Admin3dsControls /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/notifications" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminNotifications /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/board" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin', 'investor']}><BoardOverview /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/processors" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminProcessorInfo /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/cascading" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminCascading /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/payment-graph" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><PaymentGraphExplorer /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/refund-management" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRefundManagement /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/fx-treasury" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminFxTreasury /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/strategy" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminProcessorOverview /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/strategy/processors" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminProcessorManagement /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/strategy/routing" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRoutingChains /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/strategy/logs" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRoutingLogs /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/strategy/fees" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminFeeEngine /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/strategy/merchant-view" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminMerchantView /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/risk-engine" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRiskEngine /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/rate-limits" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRateLimits /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/token-lifecycle" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminTokenManagement /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/enki/matrix" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminMatrixManagement /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/affiliate" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller', 'developer']}><AffiliateProgram /></RoleProtectedRoute></ProtectedRoute>} />
-    <Route path="/chargeflow" element={<ProtectedRoute><ChargeflowDashboard /></ProtectedRoute>} />
-
-    {/* Developer portal — public (no login required) */}
-    <Route path="/developers" element={<DeveloperPortal />}>
-      <Route index element={<OverviewPage />} />
-      <Route path="quick-start" element={<QuickStartPage />} />
-      <Route path="guides" element={<GuidesPage />} />
-      <Route path="examples" element={<ExamplesPage />} />
-      <Route path="api-keys" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['developer', 'merchant', 'admin']}><ApiKeysPage /></RoleProtectedRoute></ProtectedRoute>} />
-      <Route path="sdks" element={<SdkDownloadsPage />} />
-      <Route path="webhooks" element={<DevWebhooksPage />} />
-      <Route path="api/payments" element={<PaymentsApiPage />} />
-      <Route path="api/transactions" element={<TransactionsApiPage />} />
-      <Route path="api/customers" element={<CustomersApiPage />} />
-      <Route path="api/invoices" element={<InvoicesApiPage />} />
-      <Route path="api/subscriptions" element={<SubscriptionsApiPage />} />
-      <Route path="api/payouts" element={<PayoutsApiPage />} />
-      <Route path="api/wallets" element={<WalletsApiPage />} />
-      <Route path="api/products" element={<ProductsApiPage />} />
-      <Route path="api/merchants" element={<MerchantsApiPage />} />
-      <Route path="api/bank-accounts" element={<BankAccountsApiPage />} />
-      <Route path="api/authentication" element={<AuthenticationApiPage />} />
-      <Route path="api/payment-methods" element={<PaymentMethodsApiPage />} />
-      <Route path="api/payment-links" element={<PaymentLinksApiPage />} />
-      <Route path="api/plans" element={<PlansApiPage />} />
-      <Route path="api/3d-secure" element={<ThreeDSecureApiPage />} />
-      <Route path="api/saved-cards" element={<SavedCardsApiPage />} />
-      <Route path="api/cascading" element={<CascadingPaymentsApiPage />} />
-      <Route path="api/disputes" element={<DisputesApiPage />} />
-      <Route path="api/bank-debits" element={<BankDebitsApiPage />} />
-      <Route path="api/bank-redirects" element={<BankRedirectsApiPage />} />
-      <Route path="api/matrix" element={<MatrixApiPage />} />
-    </Route>
-
+    {/* Catch-all */}
     <Route path="*" element={<NotFound />} />
   </Routes>
   </>
