@@ -113,12 +113,6 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "Operations",
-    items: [
-      { to: "/risk-profile", icon: Shield, label: "Risk Profile" },
-    ],
-  },
-  {
     title: "Integrations",
     items: [
       { to: "/integrations", icon: Globe, label: "Overview" },

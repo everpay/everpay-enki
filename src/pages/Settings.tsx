@@ -799,6 +799,9 @@ export default function Settings() {
           {/* Rate Limits Section */}
           <RateLimitsSection />
 
+          {/* Risk Profile Section */}
+          <RiskProfileSection />
+
           {/* Quick Reference Links */}
           <Card>
             <CardHeader>
