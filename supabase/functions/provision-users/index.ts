@@ -46,17 +46,18 @@ Deno.serve(async (req) => {
 
   // Action: provision-routes-only — add routes to an existing merchant by email
   if (action === "provision-routes") {
-    const targetEmail = body.email;
-    if (!targetEmail) return new Response(JSON.stringify({ error: "email required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-    const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
-    const targetUser = existingUsers?.users?.find((u: any) => u.email === targetEmail);
-    if (!targetUser) return new Response(JSON.stringify({ error: "user not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-    const { data: merchant } = await admin.from("merchants").select("id").eq("user_id", targetUser.id).maybeSingle();
-    if (!merchant) return new Response(JSON.stringify({ error: "merchant not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-    const merchantId = merchant.id;
+    let merchantId = body.merchant_id || "";
+    
+    if (!merchantId && body.email) {
+      const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      const targetUser = existingUsers?.users?.find((u: any) => u.email === body.email);
+      if (!targetUser) return new Response(JSON.stringify({ error: "user not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: merchant } = await admin.from("merchants").select("id").eq("user_id", targetUser.id).maybeSingle();
+      if (!merchant) return new Response(JSON.stringify({ error: "merchant not found", user_id: targetUser.id }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      merchantId = merchant.id;
+    }
+    
+    if (!merchantId) return new Response(JSON.stringify({ error: "merchant_id or email required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     const routeResults: any[] = [];
 
     for (const route of (body.routes || [])) {
