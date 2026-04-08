@@ -83,6 +83,12 @@ import PaymentGraphExplorer from "./components/admin/PaymentGraphExplorer";
 import AdminRefundManagement from "./components/admin/AdminRefundManagement";
 import AdminFxTreasury from "./pages/admin/AdminFxTreasury";
 import MerchantTreasury from "./pages/merchant/MerchantTreasury";
+import AdminProcessorOverview from "./pages/admin/AdminProcessorOverview";
+import AdminProcessorManagement from "./pages/admin/AdminProcessorManagement";
+import AdminRoutingChains from "./pages/admin/AdminRoutingChains";
+import AdminRoutingLogs from "./pages/admin/AdminRoutingLogs";
+import AdminFeeEngine from "./pages/admin/AdminFeeEngine";
+import AdminMerchantView from "./pages/admin/AdminMerchantView";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
