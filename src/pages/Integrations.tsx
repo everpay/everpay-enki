@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Globe, CreditCard, Smartphone, Building2, Landmark, ShieldCheck, Zap, ArrowRight, ExternalLink } from 'lucide-react';
+import { getProviderLogo } from '@/lib/payment-method-logos';
 import { GatewayCredentialsManager } from '@/components/integrations/GatewayCredentialsManager';
 import { GatewayMigrationTool } from '@/components/integrations/GatewayMigrationTool';
 import { supabase } from '@/integrations/supabase/client';
@@ -271,13 +272,22 @@ export default function Integrations() {
               <CardContent className="p-5 space-y-4">
                 {/* Header row */}
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="h-10 w-10 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: `${integration.color}20` }}
-                    >
-                      <integration.icon className="h-5 w-5" style={{ color: integration.color }} />
-                    </div>
+                    <div className="flex items-center gap-3">
+                    {(() => {
+                      const provLogo = getProviderLogo(integration.id);
+                      return provLogo ? (
+                        <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-background border border-border p-1">
+                          <img src={provLogo} alt={integration.name} className="h-7 w-7 object-contain" loading="lazy" />
+                        </div>
+                      ) : (
+                        <div
+                          className="h-10 w-10 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: `${integration.color}20` }}
+                        >
+                          <integration.icon className="h-5 w-5" style={{ color: integration.color }} />
+                        </div>
+                      );
+                    })()}
                     <div>
                       <h3 className="font-semibold text-foreground">{integration.name}</h3>
                     </div>
