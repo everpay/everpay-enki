@@ -58,7 +58,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <RoleProtectedRoute allowedRoles={['admin', 'super_admin']}>
+    <RoleProtectedRoute allowedRoles={['admin']}>
       {children}
     </RoleProtectedRoute>
   );
