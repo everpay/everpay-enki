@@ -27,6 +27,6 @@ export function getSubdomainConfig(_context: AppContext): SubdomainConfig {
     autoRole: null,
     redirectAfterLogin: '/enki',
     brandColor: 'destructive',
-    authOrigin: 'https://enki.everpayinc.com',
+    authOrigin: 'https://everpayinc.com',
   };
 }
