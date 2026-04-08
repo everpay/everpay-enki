@@ -5,6 +5,42 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/format';
 
+interface MethodItem {
+  name: string;
+  provider: string;
+  enabled: boolean;
+  volume: number;
+  rate: string;
+}
+
+// Curated payment method catalog with provider assignments
+const CARD_METHODS = [
+  { name: 'Visa', provider: 'shieldhub' },
+  { name: 'Mastercard', provider: 'shieldhub' },
+  { name: 'Amex', provider: 'shieldhub' },
+  { name: 'Discover', provider: 'shieldhub' },
+  { name: 'Paygate10', provider: 'paygate10' },
+  { name: 'ShieldHub', provider: 'shieldhub' },
+  { name: 'Shopify', provider: 'shopify' },
+];
+
+const BANK_METHODS = [
+  { name: 'ACH', provider: 'plaid', enabled: true },
+  { name: 'SEPA', provider: 'mondo', enabled: true },
+  { name: 'Open Banking', provider: 'mondo', enabled: true },
+  { name: 'PIX', provider: 'paygate10', enabled: false },
+  { name: 'Boleto', provider: 'paygate10', enabled: false },
+  { name: 'Prometeo', provider: 'prometeo', enabled: true },
+];
+
+const WALLET_METHODS = [
+  { name: 'Apple Pay', provider: 'matrix', enabled: true },
+  { name: 'Google Pay', provider: 'matrix', enabled: true },
+  { name: 'PayPal', provider: 'paypal', enabled: false },
+  { name: 'JazzCash', provider: 'paygate10', enabled: true },
+  { name: 'EasyPaisa', provider: 'paygate10', enabled: true },
+];
+
 function usePaymentMethodsData() {
   return useQuery({
     queryKey: ['payment-methods-page'],
@@ -20,17 +56,7 @@ function usePaymentMethodsData() {
         supabase.from('payment_methods').select('id, card_brand, card_last4').limit(500),
       ]);
 
-      // Aggregate by card brand from payment_methods and transactions
-      const cardBrandStats: Record<string, { count: number; volume: number; success: number; total: number }> = {};
-
-      // Count card brands from stored payment methods
-      (paymentMethods || []).forEach((pm: any) => {
-        const brand = (pm.card_brand || 'unknown').toLowerCase();
-        if (!cardBrandStats[brand]) cardBrandStats[brand] = { count: 0, volume: 0, success: 0, total: 0 };
-        cardBrandStats[brand].count++;
-      });
-
-      // Aggregate transaction volumes by provider type
+      // Aggregate transaction volumes by provider
       const providerVolume: Record<string, { volume: number; success: number; total: number }> = {};
       (transactions || []).forEach((t: any) => {
         const p = (t.provider || 'unknown').toLowerCase();
@@ -42,50 +68,51 @@ function usePaymentMethodsData() {
         }
       });
 
-      // Map known brands
-      const knownCards = ['visa', 'mastercard', 'amex', 'discover'];
-      const knownWallets = ['apple_pay', 'google_pay', 'paypal', 'apple pay', 'google pay'];
-      const knownBanks = ['ach', 'sepa', 'open_banking', 'pix', 'boleto', 'open banking'];
+      // Card brand counts
+      const cardBrandCounts: Record<string, number> = {};
+      (paymentMethods || []).forEach((pm: any) => {
+        const brand = (pm.card_brand || 'unknown').toLowerCase();
+        cardBrandCounts[brand] = (cardBrandCounts[brand] || 0) + 1;
+      });
 
-      const buildItems = (knownNames: string[], fallbackProviders: string[]) => {
-        const items: { name: string; enabled: boolean; volume: number; rate: string }[] = [];
-
-        knownNames.forEach(name => {
-          const stats = cardBrandStats[name] || providerVolume[name] || { volume: 0, success: 0, total: 0 };
-          const pStats = providerVolume[name] || stats;
+      const buildFromCatalog = (catalog: { name: string; provider: string; enabled?: boolean }[]): MethodItem[] => {
+        return catalog.map(entry => {
+          const key = entry.name.toLowerCase().replace(/\s+/g, '_');
+          const provKey = entry.provider.toLowerCase();
+          const pStats = providerVolume[provKey] || providerVolume[key] || { volume: 0, success: 0, total: 0 };
+          const brandCount = cardBrandCounts[key] || 0;
+          const hasData = pStats.total > 0 || brandCount > 0;
           const rate = pStats.total > 0 ? `${((pStats.success / pStats.total) * 100).toFixed(1)}%` : '—';
-          items.push({
-            name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
-            enabled: pStats.total > 0 || (cardBrandStats[name]?.count || 0) > 0,
+
+          return {
+            name: entry.name,
+            provider: entry.provider,
+            enabled: entry.enabled !== undefined ? entry.enabled : hasData,
             volume: pStats.volume || 0,
             rate,
-          });
+          };
         });
-
-        return items;
       };
 
-      const cardItems = buildItems(knownCards, []);
-      const bankItems = buildItems(knownBanks, []);
-      const walletItems = buildItems(knownWallets, []);
-
-      // Also add any unknown providers that don't fit categories
-      const categorized = [...knownCards, ...knownWallets, ...knownBanks];
-      Object.entries(providerVolume).forEach(([p, stats]) => {
-        if (!categorized.includes(p)) {
-          cardItems.push({
-            name: p.charAt(0).toUpperCase() + p.slice(1),
-            enabled: stats.total > 0,
-            volume: stats.volume,
-            rate: stats.total > 0 ? `${((stats.success / stats.total) * 100).toFixed(1)}%` : '—',
-          });
-        }
-      });
+      const cardItems = buildFromCatalog(CARD_METHODS);
+      const bankItems = buildFromCatalog(BANK_METHODS);
+      const walletItems = buildFromCatalog(WALLET_METHODS);
 
       return { cardItems, bankItems, walletItems };
     },
   });
 }
+
+const providerLabel: Record<string, string> = {
+  shieldhub: 'ShieldHub',
+  paygate10: 'Paygate10',
+  shopify: 'Shopify',
+  plaid: 'Plaid',
+  mondo: 'Mondo',
+  prometeo: 'Prometeo',
+  matrix: 'Matrix',
+  paypal: 'PayPal',
+};
 
 export default function PaymentMethodsPage() {
   const { data, isLoading } = usePaymentMethodsData();
@@ -145,15 +172,17 @@ export default function PaymentMethodsPage() {
                     <thead>
                       <tr className="border-b border-border">
                         <th className="text-left pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Method</th>
+                        <th className="text-left pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Provider</th>
                         <th className="text-left pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
                         <th className="text-right pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Volume (30d)</th>
                         <th className="text-right pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Auth Rate</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {group.items.map((item: any) => (
+                      {group.items.map((item: MethodItem) => (
                         <tr key={item.name} className="border-b border-border last:border-0">
                           <td className="py-3 font-medium">{item.name}</td>
+                          <td className="py-3 text-sm text-muted-foreground">{providerLabel[item.provider] || item.provider}</td>
                           <td className="py-3">
                             <Badge variant={item.enabled ? 'default' : 'secondary'}>{item.enabled ? 'Active' : 'Inactive'}</Badge>
                           </td>
