@@ -9,9 +9,8 @@ import { Building2, FileText, CheckCircle2, Clock, AlertCircle, Upload, Shield }
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-
-const BUSINESS_TYPES = ['sole_proprietorship', 'partnership', 'llc', 'corporation', 'non_profit'];
-const INDUSTRIES = ['e_commerce', 'saas', 'marketplace', 'fintech', 'gaming', 'travel', 'retail', 'healthcare', 'education', 'other'];
+import { CountrySelect } from '@/components/CountrySelect';
+import { BUSINESS_TYPES, INDUSTRY_CATEGORIES, getIndustryGroups } from '@/data/business-categories';
 
 function useMerchantProfile() {
   return useQuery({

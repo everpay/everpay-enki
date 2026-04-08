@@ -13,8 +13,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CountrySelect } from '@/components/CountrySelect';
 
-const BUSINESS_TYPES = ['sole_proprietorship', 'partnership', 'llc', 'corporation', 'non_profit'];
-const INDUSTRIES = ['e_commerce', 'saas', 'marketplace', 'fintech', 'gaming', 'travel', 'retail', 'healthcare', 'education', 'other'];
+import { BUSINESS_TYPES, INDUSTRY_CATEGORIES, getIndustryGroups } from '@/data/business-categories';
 
 function useMerchantProfile() {
   return useQuery({
