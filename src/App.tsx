@@ -95,6 +95,7 @@ import RateLimits from "./pages/RateLimits";
 import RiskProfilePage from "./pages/RiskProfile";
 import AdminTokenManagement from "./pages/admin/AdminTokenManagement";
 import AdminMatrixManagement from "./pages/admin/AdminMatrixManagement";
+import Balances from "./pages/Balances";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
