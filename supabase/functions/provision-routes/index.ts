@@ -20,7 +20,8 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch { return new Response(JSON.stringify({ error: "Bad request" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
 
-  const hasServiceRole = token === serviceRoleKey || body.provision_key === serviceRoleKey;
+  const provisionHeader = req.headers.get("x-provision-key") || "";
+  const hasServiceRole = token === serviceRoleKey || body.provision_key === serviceRoleKey || provisionHeader === serviceRoleKey;
 
   if (!hasServiceRole) {
     if (token) {
