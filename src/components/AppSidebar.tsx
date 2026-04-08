@@ -115,7 +115,6 @@ const navSections: NavSection[] = [
   {
     title: "Operations",
     items: [
-      { to: "/rate-limits", icon: Gauge, label: "Rate Limits" },
       { to: "/risk-profile", icon: Shield, label: "Risk Profile" },
     ],
   },
