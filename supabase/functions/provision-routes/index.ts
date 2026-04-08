@@ -41,8 +41,6 @@ Deno.serve(async (req) => {
   if (!merchant_id) {
     return new Response(JSON.stringify({ error: "merchant_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-    return new Response(JSON.stringify({ error: "merchant_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  }
 
   const results: any[] = [];
 
