@@ -21,6 +21,8 @@ export default function Transactions() {
     if (providerFilter !== 'all' && tx.provider !== providerFilter) return false;
     if (statusFilter !== 'all' && tx.status !== statusFilter) return false;
     if (currencyFilter !== 'all' && tx.currency !== currencyFilter) return false;
+    const cutoff = getPeriodCutoff(dateRange);
+    if (cutoff && new Date(tx.created_at) < cutoff) return false;
     if (search && !tx.id.includes(search) && !tx.description?.toLowerCase().includes(search.toLowerCase()) && !tx.customer_email?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
