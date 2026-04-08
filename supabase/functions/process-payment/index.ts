@@ -352,9 +352,9 @@ async function processMondo(data: PaymentRequest) {
   const ref = `everpay_${crypto.randomUUID().slice(0, 12)}`;
   const body: Record<string, any> = {
     company_account_id: acctId, gateway_secret_key: secret, amount: data.amount.toFixed(2), currency: data.currency, transaction_reference: ref,
-    partner_return_url_completed: 'https://everpay-os.lovable.app/transactions?status=completed',
-    partner_return_url_canceled: 'https://everpay-os.lovable.app/transactions?status=canceled',
-    partner_return_url_rejected: 'https://everpay-os.lovable.app/transactions?status=rejected',
+    partner_return_url_completed: 'https://enki.everpayinc.com/transactions?status=completed',
+    partner_return_url_canceled: 'https://enki.everpayinc.com/transactions?status=canceled',
+    partner_return_url_rejected: 'https://enki.everpayinc.com/transactions?status=rejected',
     partner_webhook_url: `${Deno.env.get('SUPABASE_URL')}/functions/v1/moneto-webhook`,
     customer_email: data.customerEmail || 'customer@example.com',
     customer_first_name: data.customerDetails?.firstName || 'Customer', customer_last_name: data.customerDetails?.lastName || 'User',
@@ -391,7 +391,7 @@ async function processMakapay(data: PaymentRequest) {
     const orderRef = `EP-${Date.now()}`;
     const iRes = await fetch('https://makapp.xyz/api/v1/payments/initiate', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-API-KEY': apiKey, 'X-API-SECRET': apiSecret, 'X-Request-Id': `ep_${crypto.randomUUID().slice(0, 12)}` },
-      body: JSON.stringify({ payment_method_id: String(sel.id), provider_code: sel.code, amount: Math.round(data.amount), currency: data.currency || 'USD', reference: orderRef, customer_email: data.customerEmail || 'customer@example.com', request_payload: { product_name: data.description || `Payment ${orderRef}`, return_url: 'https://everpay-os.lovable.app/transactions?status=completed' }, process_now: true }),
+      body: JSON.stringify({ payment_method_id: String(sel.id), provider_code: sel.code, amount: Math.round(data.amount), currency: data.currency || 'USD', reference: orderRef, customer_email: data.customerEmail || 'customer@example.com', request_payload: { product_name: data.description || `Payment ${orderRef}`, return_url: 'https://enki.everpayinc.com/transactions?status=completed' }, process_now: true }),
     });
     const id = await iRes.json();
     if (!id.success) return { id: Math.floor(10000 + Math.random() * 90000), transaction_reference: orderRef, status: 'Failed', message: id.message || 'Payment initiation failed', provider: 'makapay' };
