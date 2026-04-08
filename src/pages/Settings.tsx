@@ -1411,3 +1411,118 @@ function RateLimitsSection() {
     </>
   );
 }
+
+const signalLabels: Record<string, string> = {
+  success_rate: 'Success Rate',
+  chargeback_rate: 'Chargeback Rate',
+  fraud_score: 'Fraud Score',
+  velocity_score: 'Velocity Score',
+};
+
+function RiskProfileSection() {
+  const { data: accounts = [] } = useAccounts();
+  const merchantId = accounts[0]?.merchant_id;
+  const { data: profile, isLoading } = useRiskProfile(merchantId);
+  const { data: signals = [] } = useRiskSignals(merchantId);
+
+  const chartData = signals
+    .slice()
+    .reverse()
+    .reduce((acc: any[], s) => {
+      const date = new Date(s.recorded_at).toLocaleDateString();
+      const existing = acc.find((a: any) => a.date === date);
+      if (existing) {
+        existing[s.signal_type] = s.value;
+      } else {
+        acc.push({ date, [s.signal_type]: s.value });
+      }
+      return acc;
+    }, []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Risk Profile</CardTitle>
+        <CardDescription>Your risk assessment and adaptive rate limiting signals.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : !profile ? (
+          <div className="py-8 text-center">
+            <Shield className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground">No risk profile data available yet.</p>
+            <p className="text-xs text-muted-foreground mt-1">Your risk profile will be generated after processing transactions.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Score + Signals Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex items-center justify-center py-4">
+                <RiskScoreGauge score={Number(profile.risk_score)} size="lg" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Activity className="h-4 w-4" /> Adaptive Multiplier
+                </p>
+                <div className="text-3xl font-bold text-foreground">
+                  ×{Number(profile.adaptive_multiplier).toFixed(3)}
+                </div>
+                {profile.locked && (
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                    Locked by Admin
+                  </Badge>
+                )}
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Signal Breakdown</p>
+                {[
+                  { label: 'Success Rate', value: profile.success_rate, icon: TrendingUp },
+                  { label: 'Chargeback Rate', value: profile.chargeback_rate, icon: TrendingDown },
+                  { label: 'Fraud Score', value: profile.fraud_score, icon: Shield },
+                  { label: 'Velocity', value: profile.velocity_score, icon: Activity },
+                ].map(({ label, value, icon: Icon }) => (
+                  <div key={label} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <Icon className="h-3.5 w-3.5" /> {label}
+                    </span>
+                    <span className="font-mono">{Number(value).toFixed(2)}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Signal History Chart */}
+            {chartData.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-foreground mb-3">Signal History</p>
+                <div className="h-[240px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip
+                        contentStyle={{
+                          background: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <Line type="monotone" dataKey="success_rate" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="chargeback_rate" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="fraud_score" stroke="hsl(var(--accent-foreground))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="velocity_score" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
