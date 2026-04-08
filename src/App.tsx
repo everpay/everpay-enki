@@ -95,6 +95,7 @@ import RateLimits from "./pages/RateLimits";
 import RiskProfilePage from "./pages/RiskProfile";
 import AdminTokenManagement from "./pages/admin/AdminTokenManagement";
 import AdminMatrixManagement from "./pages/admin/AdminMatrixManagement";
+import Balances from "./pages/Balances";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
@@ -287,6 +288,7 @@ const AppRoutes = () => {
     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
     <Route path="/treasury" element={<ProtectedRoute><Treasury /></ProtectedRoute>} />
+    <Route path="/balances" element={<ProtectedRoute><Balances /></ProtectedRoute>} />
     <Route path="/merchant-treasury" element={<ProtectedRoute><MerchantTreasury /></ProtectedRoute>} />
     <Route path="/live" element={<ProtectedRoute><LiveAnalytics /></ProtectedRoute>} />
     <Route path="/activity" element={<Navigate to="/settings" replace />} />

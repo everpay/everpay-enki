@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Wallet,
+  DollarSign,
   Settings,
   CreditCard,
   Menu,
@@ -106,6 +107,7 @@ const navSections: NavSection[] = [
     title: "Treasury",
     items: [
       { to: "/wallets", icon: Wallet, label: "Wallets" },
+      { to: "/balances", icon: DollarSign, label: "Balances" },
       { to: "/treasury", icon: Landmark, label: "Liquidity & FX", visibleTo: ["admin", "super_admin"] },
       { to: "/settlements", icon: Landmark, label: "Settlements" },
       { to: "/payouts", icon: ArrowUpRight, label: "Payouts" },

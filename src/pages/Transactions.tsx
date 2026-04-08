@@ -6,18 +6,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Globe } from 'lucide-react';
+import { PeriodSelector, type PeriodValue, getPeriodCutoff } from '@/components/PeriodSelector';
+import { CurrencySelector } from '@/components/CurrencySelector';
 
 export default function Transactions() {
   const { data: transactions = [], isLoading } = useTransactions();
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currencyFilter, setCurrencyFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<PeriodValue>('30d');
   const [search, setSearch] = useState('');
 
   const filtered = transactions.filter((tx) => {
     if (providerFilter !== 'all' && tx.provider !== providerFilter) return false;
     if (statusFilter !== 'all' && tx.status !== statusFilter) return false;
     if (currencyFilter !== 'all' && tx.currency !== currencyFilter) return false;
+    const cutoff = getPeriodCutoff(dateRange);
+    if (cutoff && new Date(tx.created_at) < cutoff) return false;
     if (search && !tx.id.includes(search) && !tx.description?.toLowerCase().includes(search.toLowerCase()) && !tx.customer_email?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -89,26 +94,8 @@ export default function Transactions() {
             <SelectItem value="refunded">Refunded</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-          <SelectTrigger className="w-[140px] bg-card border-border">
-            <SelectValue placeholder="Currency" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Currencies</SelectItem>
-            <SelectItem value="USD">USD</SelectItem>
-            <SelectItem value="EUR">EUR</SelectItem>
-            <SelectItem value="GBP">GBP</SelectItem>
-            <SelectItem value="BRL">BRL</SelectItem>
-            <SelectItem value="MXN">MXN</SelectItem>
-            <SelectItem value="KES">KES</SelectItem>
-            <SelectItem value="NGN">NGN</SelectItem>
-            <SelectItem value="ZAR">ZAR</SelectItem>
-            <SelectItem value="CAD">CAD</SelectItem>
-            <SelectItem value="INR">INR</SelectItem>
-            <SelectItem value="PKR">PKR</SelectItem>
-            <SelectItem value="BDT">BDT</SelectItem>
-          </SelectContent>
-        </Select>
+        <CurrencySelector value={currencyFilter} onValueChange={setCurrencyFilter} />
+        <PeriodSelector value={dateRange} onValueChange={setDateRange} />
       </div>
 
       {isLoading ? (

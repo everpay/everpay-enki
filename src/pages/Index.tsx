@@ -15,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PeriodSelector, type PeriodValue, getPeriodCutoff } from '@/components/PeriodSelector';
+import { CurrencySelector } from '@/components/CurrencySelector';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,7 +48,8 @@ const Index = () => {
   // Filters
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<string>('30d');
+  const [dateRange, setDateRange] = useState<PeriodValue>('30d');
+  const [currencyFilter, setCurrencyFilter] = useState('all');
 
   const allProviders = useMemo(() => [...new Set(transactions.map(tx => tx.provider))], [transactions]);
 
@@ -54,17 +57,14 @@ const Index = () => {
     let filtered = transactions;
     if (providerFilter !== 'all') filtered = filtered.filter(tx => tx.provider === providerFilter);
     if (statusFilter !== 'all') filtered = filtered.filter(tx => tx.status === statusFilter);
-    if (dateRange !== 'all') {
-      const days = parseInt(dateRange);
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - days);
-      filtered = filtered.filter(tx => new Date(tx.created_at) >= cutoff);
-    }
+    if (currencyFilter !== 'all') filtered = filtered.filter(tx => tx.currency === currencyFilter);
+    const cutoff = getPeriodCutoff(dateRange);
+    if (cutoff) filtered = filtered.filter(tx => new Date(tx.created_at) >= cutoff);
     return filtered;
-  }, [transactions, providerFilter, statusFilter, dateRange]);
+  }, [transactions, providerFilter, statusFilter, currencyFilter, dateRange]);
 
-  const hasActiveFilters = providerFilter !== 'all' || statusFilter !== 'all' || dateRange !== '30d';
-  const clearFilters = () => { setProviderFilter('all'); setStatusFilter('all'); setDateRange('30d'); };
+  const hasActiveFilters = providerFilter !== 'all' || statusFilter !== 'all' || currencyFilter !== 'all' || dateRange !== '30d';
+  const clearFilters = () => { setProviderFilter('all'); setStatusFilter('all'); setCurrencyFilter('all'); setDateRange('30d'); };
 
   const rates: Record<string, number> = { USD: 1, EUR: 1.08, GBP: 1.27, BRL: 0.195, MXN: 0.057, COP: 0.00024, CAD: 0.74 };
   const totalBalance = accounts.reduce((sum, a) => sum + a.balance * (rates[a.currency] || 1), 0);
@@ -132,15 +132,8 @@ const Index = () => {
             <SelectItem value="refunded">Refunded</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Date Range" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30d">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="all">All time</SelectItem>
-          </SelectContent>
-        </Select>
+        <CurrencySelector value={currencyFilter} onValueChange={setCurrencyFilter} />
+        <PeriodSelector value={dateRange} onValueChange={setDateRange} />
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1"><X className="h-3 w-3" />Clear</Button>
         )}
