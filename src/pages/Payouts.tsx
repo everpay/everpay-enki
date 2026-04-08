@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Banknote, Building2, ArrowRight, CheckCircle2, Clock, AlertCircle, Save, CreditCard, Send, Upload, Trash2, FileSpreadsheet, Users, DollarSign, Download } from 'lucide-react';
+import { Plus, Banknote, Building2, ArrowRight, CheckCircle2, Clock, AlertCircle, Save, CreditCard, Send, Upload, Trash2, FileSpreadsheet, Users, DollarSign, Download, Bitcoin } from 'lucide-react';
+import { CryptoWalletDashboard } from '@/components/CryptoWalletDashboard';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useCreateMonetoPayout } from '@/hooks/useMoneto';
 import { toast } from 'sonner';
@@ -322,6 +323,10 @@ export default function Payouts() {
           <TabsTrigger value="mass" className="gap-2">
             <Users className="h-4 w-4" />
             Mass Payouts
+          </TabsTrigger>
+          <TabsTrigger value="crypto" className="gap-2">
+            <Bitcoin className="h-4 w-4" />
+            Crypto Wallet
           </TabsTrigger>
         </TabsList>
 
