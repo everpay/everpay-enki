@@ -450,134 +450,32 @@ export default function Settings() {
         </div>
       )}
 
-      {/* BUSINESS DETAILS */}
+      {/* BUSINESS DETAILS & VERIFICATION */}
       {section === "business" && (
-        <div className="max-w-2xl">
-          <Card>
-            <CardHeader>
-              <CardTitle>Business Details</CardTitle>
-              <CardDescription>Complete your Know Your Business (KYB) information.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <Label>Legal Business Name</Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="pl-9" placeholder="Acme Corp Ltd." />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Company Registration No.</Label>
-                  <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={companyRegNumber} onChange={(e) => setCompanyRegNumber(e.target.value)} className="pl-9" placeholder="e.g. 12345678" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Tax ID / VAT Number</Label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={taxId} onChange={(e) => setTaxId(e.target.value)} className="pl-9" placeholder="e.g. GB123456789" />
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Business Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input type="email" value={businessEmail} onChange={(e) => setBusinessEmail(e.target.value)} className="pl-9" placeholder="info@business.com" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Business Phone</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input type="tel" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} className="pl-9" placeholder="+1 (555) 000-0000" />
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-              <h4 className="text-sm font-semibold text-foreground">Business Address</h4>
-              <div className="space-y-2">
-                <Label>Street Address</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={businessAddress} onChange={(e) => setBusinessAddress(e.target.value)} className="pl-9" placeholder="123 Business Ave, Suite 100" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>City</Label>
-                  <Input value={businessCity} onChange={(e) => setBusinessCity(e.target.value)} placeholder="City" />
-                </div>
-                <div className="space-y-2">
-                  <Label>State/Province</Label>
-                  <Input value={businessState} onChange={(e) => setBusinessState(e.target.value)} placeholder="State" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Postal Code</Label>
-                  <Input value={businessPostalCode} onChange={(e) => setBusinessPostalCode(e.target.value)} placeholder="Postal" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Country</Label>
-                  <CountrySelect value={businessCountry} onValueChange={setBusinessCountry} />
-                </div>
-              </div>
-
-              <Separator />
-              <div className="space-y-2">
-                <Label>Website URLs</Label>
-                <div className="space-y-2">
-                  {websiteUrls.map((url, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input value={url} readOnly className="pl-9 bg-muted" />
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={() => removeUrl(i)}>
-                        <X className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input value={newUrl} onChange={(e) => setNewUrl(e.target.value)} className="pl-9" placeholder="https://example.com" onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addUrl())} />
-                    </div>
-                    <Button variant="outline" size="icon" onClick={addUrl}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <Button onClick={() => saveBusiness.mutate()} disabled={saveBusiness.isPending}>
-                <Save className="h-4 w-4 mr-2" /> {saveBusiness.isPending ? "Saving..." : "Save Business Details"}
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="space-y-6 max-w-4xl">
+          <BusinessVerificationSectionComponent />
         </div>
       )}
 
-      {/* BANK ACCOUNTS */}
+      {/* SETTLEMENT ACCOUNTS */}
       {section === "bank-accounts" && (
-        <div className="max-w-2xl">
+        <div className="max-w-2xl space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" /> Saved Bank Accounts</CardTitle>
-              <CardDescription>Manage your saved bank accounts for quick payouts.</CardDescription>
+              <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" /> Settlement Bank Accounts</CardTitle>
+              <CardDescription>Add or manage bank accounts to receive your payment settlements.</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <SettlementBankAccountForm merchantId={merchant?.id} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["saved-bank-accounts"] })} />
+
               {savedBankAccounts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Building2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No saved bank accounts</p>
-                  <p className="text-sm">Bank accounts are saved automatically when you make a payout</p>
+                <div className="text-center py-6 text-muted-foreground border-t border-border mt-4">
+                  <Building2 className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No settlement bank accounts added yet</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 border-t border-border pt-4">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Saved Accounts</p>
                   {savedBankAccounts.map((account) => (
                     <div key={account.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors">
                       <div className="flex items-center gap-4">
@@ -599,6 +497,16 @@ export default function Settings() {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Crypto Settlement Wallet</CardTitle>
+              <CardDescription>Add a crypto wallet address to receive settlements in cryptocurrency.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CryptoWalletForm merchantId={merchant?.id} />
             </CardContent>
           </Card>
         </div>
