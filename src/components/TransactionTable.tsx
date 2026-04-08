@@ -8,23 +8,9 @@ import { TransactionDetailDrawer } from './TransactionDetailDrawer';
 import { ChevronLeft, ChevronRight, Eye, Zap, CreditCard } from 'lucide-react';
 import { useTapixCache, getEnrichmentSummary } from '@/hooks/useTapixEnrichment';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { METHOD_LOGOS, getMethodLogo } from '@/lib/payment-method-logos';
 
-const BRAND_LOGOS: Record<string, string> = {
-  visa: '/logos/visa.svg',
-  mastercard: '/logos/mastercard.svg',
-  amex: '/logos/american-express.svg',
-  'american express': '/logos/american-express.svg',
-  discover: '/logos/discover.svg',
-  jcb: '/logos/jcb.svg',
-  unionpay: '/logos/unionpay.svg',
-  apple_pay: '/logos/apple-pay.svg',
-  google_pay: '/logos/google-pay.svg',
-  paypal: '/logos/paypal.svg',
-  klarna: '/logos/klarna.svg',
-  ideal: '/logos/ideal.svg',
-  bancontact: '/logos/bancontact.svg',
-  alipay: '/logos/alipay.svg',
-};
+const BRAND_LOGOS = METHOD_LOGOS;
 
 const COUNTRY_FLAGS: Record<string, string> = {
   US: '🇺🇸', CA: '🇨🇦', GB: '🇬🇧', DE: '🇩🇪', FR: '🇫🇷', BR: '🇧🇷', MX: '🇲🇽',
