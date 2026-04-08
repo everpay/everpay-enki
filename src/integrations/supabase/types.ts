@@ -1734,6 +1734,44 @@ export type Database = {
           },
         ]
       }
+      merchant_endpoint_rate_limits: {
+        Row: {
+          burst_limit: number
+          created_at: string
+          endpoint_type: string
+          id: string
+          merchant_id: string
+          requests_per_minute: number
+          updated_at: string
+        }
+        Insert: {
+          burst_limit?: number
+          created_at?: string
+          endpoint_type: string
+          id?: string
+          merchant_id: string
+          requests_per_minute?: number
+          updated_at?: string
+        }
+        Update: {
+          burst_limit?: number
+          created_at?: string
+          endpoint_type?: string
+          id?: string
+          merchant_id?: string
+          requests_per_minute?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_endpoint_rate_limits_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_fx_settings: {
         Row: {
           created_at: string
@@ -1829,6 +1867,88 @@ export type Database = {
             foreignKeyName: "merchant_profiles_merchant_id_fkey"
             columns: ["merchant_id"]
             isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_risk_profiles: {
+        Row: {
+          adaptive_multiplier: number
+          chargeback_rate: number | null
+          created_at: string
+          fraud_score: number | null
+          id: string
+          locked: boolean
+          merchant_id: string
+          risk_score: number
+          success_rate: number | null
+          updated_at: string
+          velocity_score: number | null
+        }
+        Insert: {
+          adaptive_multiplier?: number
+          chargeback_rate?: number | null
+          created_at?: string
+          fraud_score?: number | null
+          id?: string
+          locked?: boolean
+          merchant_id: string
+          risk_score?: number
+          success_rate?: number | null
+          updated_at?: string
+          velocity_score?: number | null
+        }
+        Update: {
+          adaptive_multiplier?: number
+          chargeback_rate?: number | null
+          created_at?: string
+          fraud_score?: number | null
+          id?: string
+          locked?: boolean
+          merchant_id?: string
+          risk_score?: number
+          success_rate?: number | null
+          updated_at?: string
+          velocity_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_risk_profiles_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_risk_signals: {
+        Row: {
+          id: string
+          merchant_id: string
+          recorded_at: string
+          signal_type: string
+          value: number
+        }
+        Insert: {
+          id?: string
+          merchant_id: string
+          recorded_at?: string
+          signal_type: string
+          value: number
+        }
+        Update: {
+          id?: string
+          merchant_id?: string
+          recorded_at?: string
+          signal_type?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_risk_signals_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
             referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
