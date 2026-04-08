@@ -32,6 +32,51 @@ Deno.serve(async (req) => {
     return new Response("Unauthorized", { status: 401, headers: corsHeaders });
   }
 
+  const action = body.action || "provision";
+
+  // Action: provision-routes-only — add routes to an existing merchant by email
+  if (action === "provision-routes") {
+    const targetEmail = body.email;
+    if (!targetEmail) return new Response(JSON.stringify({ error: "email required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
+    const targetUser = existingUsers?.users?.find((u: any) => u.email === targetEmail);
+    if (!targetUser) return new Response(JSON.stringify({ error: "user not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    const { data: merchant } = await admin.from("merchants").select("id").eq("user_id", targetUser.id).maybeSingle();
+    if (!merchant) return new Response(JSON.stringify({ error: "merchant not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    const merchantId = merchant.id;
+    const routeResults: any[] = [];
+
+    for (const route of (body.routes || [])) {
+      const { data, error } = await admin.from("psp_routes").insert({
+        merchant_id: merchantId, processor: route.processor, priority: route.priority ?? 0,
+        active: route.active ?? true, country: route.country || null,
+      }).select();
+      routeResults.push({ type: "route", processor: route.processor, data, error: error?.message });
+    }
+
+    for (const rule of (body.rules || [])) {
+      const { data, error } = await admin.from("routing_rules").insert({
+        merchant_id: merchantId, name: rule.name, priority: rule.priority ?? 0,
+        target_provider: rule.target_provider, fallback_provider: rule.fallback_provider || null,
+        active: rule.active ?? true, currency_match: rule.currency_match || "{}",
+      }).select();
+      routeResults.push({ type: "rule", name: rule.name, data, error: error?.message });
+    }
+
+    // Update existing routes/rules if provided
+    for (const upd of (body.updates || [])) {
+      const { error } = await admin.from(upd.table).update(upd.set).eq("id", upd.id);
+      routeResults.push({ type: "update", table: upd.table, id: upd.id, error: error?.message });
+    }
+
+    return new Response(JSON.stringify({ merchantId, results: routeResults }, null, 2), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const users = [
     { email: "richard@rcfitnessflorida.com", password: "RCFitness2026!", displayName: "Richard - RC Fitness", merchantName: "RC Fitness Florida" },
     { email: "admin@mzzpay.io", password: "MzzPay2026!", displayName: "MzzPay Admin", merchantName: "MzzPay" },
