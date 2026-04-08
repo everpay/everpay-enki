@@ -71,7 +71,7 @@ export default function Balances() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalBalance, currency === 'all' ? 'USD' : currency)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(totalBalance, displayCurrency)}</div>
               <p className="text-xs text-muted-foreground">{filteredAccounts.length} account{filteredAccounts.length !== 1 ? 's' : ''}</p>
             </CardContent>
           </Card>
@@ -81,7 +81,7 @@ export default function Balances() {
               <ArrowUpRight className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{formatCurrency(totalAvailable, currency === 'all' ? 'USD' : currency)}</div>
+              <div className="text-2xl font-bold text-primary">{formatCurrency(totalAvailable, displayCurrency)}</div>
               <p className="text-xs text-muted-foreground">Ready for payout</p>
             </CardContent>
           </Card>
@@ -91,7 +91,7 @@ export default function Balances() {
               <Clock className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">{formatCurrency(totalPending, currency === 'all' ? 'USD' : currency)}</div>
+              <div className="text-2xl font-bold text-amber-600">{formatCurrency(totalPending, displayCurrency)}</div>
               <p className="text-xs text-muted-foreground">In settlement queue</p>
             </CardContent>
           </Card>
@@ -101,7 +101,7 @@ export default function Balances() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(pendingTxAmount, currency === 'all' ? 'USD' : currency)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(pendingTxAmount, displayCurrency)}</div>
               <p className="text-xs text-muted-foreground">{pendingTransactions.length} pending transaction{pendingTransactions.length !== 1 ? 's' : ''}</p>
             </CardContent>
           </Card>
