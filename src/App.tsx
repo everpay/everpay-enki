@@ -8,6 +8,7 @@ import { EnvironmentProvider } from "@/contexts/EnvironmentContext";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 import { useInactivityLogout } from "./hooks/useInactivityLogout";
 import { usePostHogTracking } from "./hooks/usePostHogTracking";
@@ -86,6 +87,7 @@ const AppRoutes = () => {
     <Route path="/auth" element={<Navigate to="/login" replace />} />
     <Route path="/login" element={<AuthRoute><Auth /></AuthRoute>} />
     <Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/unsubscribe" element={<Unsubscribe />} />
 
     {/* Admin pages */}
     <Route path="/enki" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
