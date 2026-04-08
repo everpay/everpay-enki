@@ -28,6 +28,7 @@ import {
   Bell,
   BookOpen,
   Handshake,
+  Gauge,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -112,6 +113,13 @@ const navSections: NavSection[] = [
     ],
   },
   {
+    title: "Operations",
+    items: [
+      { to: "/rate-limits", icon: Gauge, label: "Rate Limits" },
+      { to: "/risk-profile", icon: Shield, label: "Risk Profile" },
+    ],
+  },
+  {
     title: "Integrations",
     items: [
       { to: "/integrations", icon: Globe, label: "Overview" },
@@ -158,6 +166,8 @@ const adminSections: NavSection[] = [
       { to: "/enki/3ds", icon: Shield, label: "3DS Controls" },
       { to: "/enki/cascading", icon: ArrowLeftRight, label: "Cascading" },
       { to: "/enki/processors", icon: Globe, label: "Processor Info" },
+      { to: "/enki/risk-engine", icon: Shield, label: "Risk Engine" },
+      { to: "/enki/rate-limits", icon: Gauge, label: "Rate Limits" },
     ],
   },
   {
