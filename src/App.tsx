@@ -25,7 +25,7 @@ import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
-import Landing from "./pages/Landing";
+
 import Docs from "./pages/Docs";
 import Analytics from "./pages/Analytics";
 import Customers from "./pages/Customers";
@@ -128,34 +128,6 @@ import BankDebitsApiPage from "./pages/developer/api/BankDebitsApiPage";
 import BankRedirectsApiPage from "./pages/developer/api/BankRedirectsApiPage";
 import MatrixApiPage from "./pages/developer/api/MatrixApiPage";
 
-import FrontAbout from "./pages/front/About";
-import FrontPricing from "./pages/front/Pricing";
-import FrontContact from "./pages/front/Contact";
-import FrontDemo from "./pages/front/Demo";
-import FrontBlog from "./pages/front/Blog";
-import FrontCareers from "./pages/front/Careers";
-import FrontPartners from "./pages/front/Partners";
-import FrontFunding from "./pages/front/Funding";
-import FrontCommerce from "./pages/front/Commerce";
-import FrontSecurity from "./pages/front/Security";
-import FrontFraudPrevention from "./pages/front/FraudPrevention";
-import FrontOnlinePayments from "./pages/front/OnlinePayments";
-import FrontPayments from "./pages/front/Payments";
-import FrontCardIssuing from "./pages/front/CardIssuing";
-import FrontAmlPolicy from "./pages/front/AmlPolicy";
-import FrontTerms from "./pages/front/Terms";
-import FrontPrivacyPolicy from "./pages/front/PrivacyPolicy";
-import FrontCookiePolicy from "./pages/front/CookiePolicy";
-import FrontRetail from "./pages/front/solutions/Retail";
-import FrontRestaurant from "./pages/front/solutions/Restaurant";
-import FrontEcommerce from "./pages/front/solutions/Ecommerce";
-import FrontMobilePayments from "./pages/front/solutions/MobilePayments";
-import FrontSaasPlaftorms from "./pages/front/solutions/SaasPlaftorms";
-import FrontMarketplaces from "./pages/front/solutions/Marketplaces";
-import FrontEnterprise from "./pages/front/solutions/Enterprise";
-import FrontPos from "./pages/front/solutions/Pos";
-import FrontPaymentGateway from "./pages/front/products/PaymentGateway";
-import FrontIntegrations from "./pages/front/FrontIntegrations";
 
 const queryClient = new QueryClient();
 
@@ -196,7 +168,6 @@ function ContextHomeRoute() {
   const appContext = getAppContext();
   const config = getSubdomainConfig(appContext);
 
-  if (appContext === 'main') return <Landing />;
   if (loading) return <LoadingScreen />;
 
   if (appContext === 'developer') {
@@ -213,36 +184,8 @@ const AppRoutes = () => {
   <>
   <InactivityWarningDialog open={showWarning} secondsLeft={secondsLeft} onStayActive={handleStayActive} />
   <Routes>
-    {/* Front site pages (public) */}
+    {/* Home redirects to login or dashboard */}
     <Route path="/" element={<ContextHomeRoute />} />
-    <Route path="/about" element={<FrontAbout />} />
-    <Route path="/pricing" element={<FrontPricing />} />
-    <Route path="/contact" element={<FrontContact />} />
-    <Route path="/demo" element={<FrontDemo />} />
-    <Route path="/blog" element={<FrontBlog />} />
-    <Route path="/careers" element={<FrontCareers />} />
-    <Route path="/partners" element={<FrontPartners />} />
-    <Route path="/integrations-directory" element={<FrontIntegrations />} />
-    <Route path="/funding" element={<FrontFunding />} />
-    <Route path="/commerce" element={<FrontCommerce />} />
-    <Route path="/security" element={<FrontSecurity />} />
-    <Route path="/fraud-prevention" element={<FrontFraudPrevention />} />
-    <Route path="/online-payments" element={<FrontOnlinePayments />} />
-    <Route path="/payments" element={<FrontPayments />} />
-    <Route path="/card-issuing" element={<FrontCardIssuing />} />
-    <Route path="/aml-policy" element={<FrontAmlPolicy />} />
-    <Route path="/terms" element={<FrontTerms />} />
-    <Route path="/privacy-policy" element={<FrontPrivacyPolicy />} />
-    <Route path="/cookie-policy" element={<FrontCookiePolicy />} />
-    <Route path="/solutions/retail" element={<FrontRetail />} />
-    <Route path="/solutions/restaurant" element={<FrontRestaurant />} />
-    <Route path="/solutions/ecommerce" element={<FrontEcommerce />} />
-    <Route path="/solutions/mobile-payments" element={<FrontMobilePayments />} />
-    <Route path="/solutions/saas-platforms" element={<FrontSaasPlaftorms />} />
-    <Route path="/solutions/marketplaces" element={<FrontMarketplaces />} />
-    <Route path="/solutions/enterprise" element={<FrontEnterprise />} />
-    <Route path="/solutions/pos" element={<FrontPos />} />
-    <Route path="/products/payment-gateway" element={<FrontPaymentGateway />} />
 
     {/* Auth & public */}
     <Route path="/auth" element={<Navigate to="/login" replace />} />
