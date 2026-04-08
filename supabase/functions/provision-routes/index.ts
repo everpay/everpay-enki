@@ -37,11 +37,10 @@ Deno.serve(async (req) => {
     }
   }
 
-  let body: any;
-  try { body = await req.json(); } catch { return new Response(JSON.stringify({ error: "Bad request" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }); }
-
   const { merchant_id, routes, rules } = body;
   if (!merchant_id) {
+    return new Response(JSON.stringify({ error: "merchant_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
     return new Response(JSON.stringify({ error: "merchant_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
