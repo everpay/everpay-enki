@@ -43,8 +43,8 @@ export const METHOD_LOGOS: Record<string, string> = {
   ncash: '/logos/methods/ncash.svg',
 
   // Bangladesh wallets
-  bkash: '/logos/methods/bkash.svg',
-  nagad: '/logos/methods/nagad.svg',
+  bkash: '/logos/methods/bkash.png',
+  nagad: '/logos/methods/nagad.png',
 
   // African mobile money
   mpesa: '/logos/methods/mpesa.svg',
