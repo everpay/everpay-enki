@@ -94,6 +94,7 @@ import AdminRateLimits from "./pages/admin/AdminRateLimits";
 import RateLimits from "./pages/RateLimits";
 import RiskProfilePage from "./pages/RiskProfile";
 import AdminTokenManagement from "./pages/admin/AdminTokenManagement";
+import AdminMatrixManagement from "./pages/admin/AdminMatrixManagement";
 
 // Developer portal pages
 import DeveloperPortal from "./pages/developer/DeveloperPortal";
@@ -124,6 +125,7 @@ import CascadingPaymentsApiPage from "./pages/developer/api/CascadingPaymentsApi
 import DisputesApiPage from "./pages/developer/api/DisputesApiPage";
 import BankDebitsApiPage from "./pages/developer/api/BankDebitsApiPage";
 import BankRedirectsApiPage from "./pages/developer/api/BankRedirectsApiPage";
+import MatrixApiPage from "./pages/developer/api/MatrixApiPage";
 
 import FrontAbout from "./pages/front/About";
 import FrontPricing from "./pages/front/Pricing";
@@ -325,6 +327,7 @@ const AppRoutes = () => {
     <Route path="/enki/risk-engine" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRiskEngine /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/rate-limits" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminRateLimits /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/enki/token-lifecycle" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminTokenManagement /></RoleProtectedRoute></ProtectedRoute>} />
+    <Route path="/enki/matrix" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['admin']}><AdminMatrixManagement /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/reseller" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller']}><ResellerPortal /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/affiliate" element={<ProtectedRoute><RoleProtectedRoute allowedRoles={['reseller', 'developer']}><AffiliateProgram /></RoleProtectedRoute></ProtectedRoute>} />
     <Route path="/chargeflow" element={<ProtectedRoute><ChargeflowDashboard /></ProtectedRoute>} />
@@ -358,6 +361,7 @@ const AppRoutes = () => {
       <Route path="api/disputes" element={<DisputesApiPage />} />
       <Route path="api/bank-debits" element={<BankDebitsApiPage />} />
       <Route path="api/bank-redirects" element={<BankRedirectsApiPage />} />
+      <Route path="api/matrix" element={<MatrixApiPage />} />
     </Route>
 
     <Route path="*" element={<NotFound />} />
