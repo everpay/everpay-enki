@@ -42,10 +42,15 @@ import {
   CreditCard,
   ArrowLeftRight,
 } from "lucide-react";
+import { Gauge } from "lucide-react";
 import { useProviderEvents } from "@/hooks/useProviderEvents";
 import { formatDate } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RateLimitGauge } from "@/components/RateLimitGauge";
+import { useRateLimits } from "@/hooks/useRateLimits";
+import { useRiskProfile } from "@/hooks/useRiskProfile";
+import { useAccounts } from "@/hooks/useAccounts";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import {
