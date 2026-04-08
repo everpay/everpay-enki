@@ -82,16 +82,16 @@ export const PAYMENT_METHOD_CATALOG: PaymentMethodMeta[] = [
   { name: 'PayPal', logo: METHOD_LOGOS.paypal, description: 'PayPal wallet-based online payments', provider: 'paypal', type: 'wallet' },
 
   // Pakistan wallets (PG10)
-  { name: 'JazzCash', logo: METHOD_LOGOS.jazzcash, description: 'Pakistan's leading mobile wallet by Jazz (80k+ agents). Send/receive money, pay bills, shop online.', provider: 'paygate10', type: 'wallet', region: 'PK' },
-  { name: 'EasyPaisa', logo: METHOD_LOGOS.easypaisa, description: 'Pakistan's pioneer digital bank by Telenor. Mobile account, money transfer, bill payments.', provider: 'paygate10', type: 'wallet', region: 'PK' },
+  { name: 'JazzCash', logo: METHOD_LOGOS.jazzcash, description: 'Pakistan leading mobile wallet by Jazz (80k+ agents). Send/receive money, pay bills, shop online.', provider: 'paygate10', type: 'wallet', region: 'PK' },
+  { name: 'EasyPaisa', logo: METHOD_LOGOS.easypaisa, description: 'Pakistan pioneer digital bank by Telenor. Mobile account, money transfer, bill payments.', provider: 'paygate10', type: 'wallet', region: 'PK' },
   { name: 'NCash', logo: METHOD_LOGOS.ncash, description: 'Pakistan mobile wallet for cash-in, cash-out, and bill payments.', provider: 'paygate10', type: 'wallet', region: 'PK' },
 
   // Bangladesh wallets (Makapay)
-  { name: 'bKash', logo: METHOD_LOGOS.bkash, description: 'Bangladesh's largest mobile financial service (80M+ users). Cash-in, cash-out, send money, payments.', provider: 'makapay', type: 'wallet', region: 'BD' },
-  { name: 'Nagad', logo: METHOD_LOGOS.nagad, description: 'Bangladesh digital financial service by Bangladesh Post Office. Secure cash-in, cash-out, send money, mobile recharge.', provider: 'makapay', type: 'wallet', region: 'BD' },
+  { name: 'bKash', logo: METHOD_LOGOS.bkash, description: 'Bangladesh largest mobile financial service (80M+ users). Cash-in, cash-out, send money, payments.', provider: 'makapay', type: 'wallet', region: 'BD' },
+  { name: 'Nagad', logo: METHOD_LOGOS.nagad, description: 'Bangladesh digital financial service by Post Office. Secure cash-in, cash-out, send money, mobile recharge.', provider: 'makapay', type: 'wallet', region: 'BD' },
 
   // African mobile money
-  { name: 'M-Pesa', logo: METHOD_LOGOS.mpesa, description: 'East Africa's leading mobile money platform (Kenya, Tanzania, Uganda).', provider: 'lipad', type: 'mobile_money', region: 'KE/TZ/UG' },
+  { name: 'M-Pesa', logo: METHOD_LOGOS.mpesa, description: 'East Africa leading mobile money platform (Kenya, Tanzania, Uganda).', provider: 'lipad', type: 'mobile_money', region: 'KE/TZ/UG' },
   { name: 'Mobile Money', logo: METHOD_LOGOS.mobile_money, description: 'Pan-African mobile money across 11+ countries including Airtel Money.', provider: 'lipad', type: 'mobile_money', region: 'Africa' },
 ];
 
