@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PeriodSelector, type PeriodValue } from '@/components/PeriodSelector';
+import { CurrencySelector } from '@/components/CurrencySelector';
 import { Button } from '@/components/ui/button';
 import { Users, DollarSign, Store, CheckCircle2, ArrowUpRight, ArrowDownRight, CreditCard, ArrowRightLeft, Wallet, CreditCard as CreditCardIcon } from 'lucide-react';
 import { useAdminDashboardData } from '@/hooks/useAdminDashboardData';
@@ -60,14 +61,7 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
             <p className="text-muted-foreground">Payment orchestration overview and system health</p>
           </div>
-          <Select defaultValue="30d">
-            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <PeriodSelector value="30d" onValueChange={() => {}} />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
