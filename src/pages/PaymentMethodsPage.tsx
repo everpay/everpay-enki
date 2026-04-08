@@ -4,6 +4,7 @@ import { CreditCard, Building2, Smartphone } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/format';
+import { getMethodLogo } from '@/lib/payment-method-logos';
 
 interface MethodItem {
   name: string;
@@ -39,6 +40,9 @@ const WALLET_METHODS = [
   { name: 'PayPal', provider: 'paypal', enabled: false },
   { name: 'JazzCash', provider: 'paygate10', enabled: true },
   { name: 'EasyPaisa', provider: 'paygate10', enabled: true },
+  { name: 'NCash', provider: 'paygate10', enabled: true },
+  { name: 'bKash', provider: 'makapay', enabled: true },
+  { name: 'Nagad', provider: 'makapay', enabled: true },
 ];
 
 function usePaymentMethodsData() {
