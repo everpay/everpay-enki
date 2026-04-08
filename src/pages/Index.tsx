@@ -132,15 +132,8 @@ const Index = () => {
             <SelectItem value="refunded">Refunded</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue placeholder="Date Range" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30d">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="all">All time</SelectItem>
-          </SelectContent>
-        </Select>
+        <CurrencySelector value={currencyFilter} onValueChange={setCurrencyFilter} />
+        <PeriodSelector value={dateRange} onValueChange={setDateRange} />
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1"><X className="h-3 w-3" />Clear</Button>
         )}
