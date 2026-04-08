@@ -27,6 +27,9 @@ const Index = () => {
   const { data: wallets = [] } = useElektropayWallets();
   const navigate = useNavigate();
 
+  // Order count
+  const { data: orderCount = 0 } = useOrderCount();
+
   // Customer count
   const { data: customerCount = 0 } = useQuery({
     queryKey: ['customer-count'],
@@ -165,10 +168,10 @@ const Index = () => {
             subtitle: `${todayTransactions.length} transactions`,
           },
           {
-            title: "Active Providers",
-            value: loadingTx ? '...' : providers.length.toString(),
-            icon: ArrowLeftRight,
-            subtitle: providers.join(' · ') || 'No providers yet',
+            title: "Orders",
+            value: orderCount.toString(),
+            icon: ShoppingCart,
+            subtitle: "Total orders",
           },
           {
             title: "Pending Settlement",
