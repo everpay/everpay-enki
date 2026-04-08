@@ -94,26 +94,8 @@ export default function Transactions() {
             <SelectItem value="refunded">Refunded</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-          <SelectTrigger className="w-[140px] bg-card border-border">
-            <SelectValue placeholder="Currency" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Currencies</SelectItem>
-            <SelectItem value="USD">USD</SelectItem>
-            <SelectItem value="EUR">EUR</SelectItem>
-            <SelectItem value="GBP">GBP</SelectItem>
-            <SelectItem value="BRL">BRL</SelectItem>
-            <SelectItem value="MXN">MXN</SelectItem>
-            <SelectItem value="KES">KES</SelectItem>
-            <SelectItem value="NGN">NGN</SelectItem>
-            <SelectItem value="ZAR">ZAR</SelectItem>
-            <SelectItem value="CAD">CAD</SelectItem>
-            <SelectItem value="INR">INR</SelectItem>
-            <SelectItem value="PKR">PKR</SelectItem>
-            <SelectItem value="BDT">BDT</SelectItem>
-          </SelectContent>
-        </Select>
+        <CurrencySelector value={currencyFilter} onValueChange={setCurrencyFilter} />
+        <PeriodSelector value={dateRange} onValueChange={setDateRange} />
       </div>
 
       {isLoading ? (
