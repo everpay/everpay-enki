@@ -183,7 +183,10 @@ serve(async (req) => {
       }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const authHeader = `Basic ${btoa(`${MATRIX_PUBLIC_KEY}:${MATRIX_SECRET_KEY}`)}`;
+    // Use TextEncoder for non-Latin1 safe Base64 encoding
+    const encoder = new TextEncoder();
+    const credentials = encoder.encode(`${MATRIX_PUBLIC_KEY}:${MATRIX_SECRET_KEY}`);
+    const authHeader = `Basic ${btoa(String.fromCharCode(...credentials))}`;
 
     // Inject project_id into params for Matrix API
     const enrichedParams = { ...params, project_id: MATRIX_PROJECT_ID };
