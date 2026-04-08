@@ -177,7 +177,6 @@ export default function PaymentMethodsPage() {
                     <thead>
                       <tr className="border-b border-border">
                         <th className="text-left pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Method</th>
-                        <th className="text-left pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Provider</th>
                         <th className="text-left pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
                         <th className="text-right pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Volume (30d)</th>
                         <th className="text-right pb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Auth Rate</th>
@@ -190,12 +189,11 @@ export default function PaymentMethodsPage() {
                             <div className="flex items-center gap-2">
                               {(() => {
                                 const logo = getMethodLogo(item.name);
-                                return logo ? <img src={logo} alt={item.name} className="h-5 w-auto max-w-[28px] object-contain" /> : null;
+                                return logo ? <img src={logo} alt={item.name} className="h-5 w-auto max-w-[28px] object-contain" loading="lazy" /> : null;
                               })()}
                               {item.name}
                             </div>
                           </td>
-                          <td className="py-3 text-sm text-muted-foreground">{providerLabel[item.provider] || item.provider}</td>
                           <td className="py-3">
                             <Badge variant={item.enabled ? 'default' : 'secondary'}>{item.enabled ? 'Active' : 'Inactive'}</Badge>
                           </td>
