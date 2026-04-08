@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, ArrowRight, Loader2, Shield, Lock, CheckCircle, Globe, Building2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { CreditCard, ArrowRight, Loader2, Shield, Lock, CheckCircle, Globe, Building2, RefreshCw, AlertTriangle, Bitcoin } from 'lucide-react';
 import { toast } from 'sonner';
+import { CryptoCheckoutSection } from '@/components/CryptoCheckoutSection';
 import { supabase } from '@/integrations/supabase/client';
 
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
@@ -39,8 +40,8 @@ export default function Checkout() {
   const [billingState, setBillingState] = useState('');
   const [billingZip, setBillingZip] = useState('');
   const [billingCountry, setBillingCountry] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'openbanking'>(
-    method === 'openbanking' ? 'openbanking' : 'card'
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'openbanking' | 'crypto'>(
+    method === 'openbanking' ? 'openbanking' : method === 'crypto' ? 'crypto' : 'card'
   );
   const [cardNumber, setCardNumber] = useState('');
   const [expMonth, setExpMonth] = useState('');
