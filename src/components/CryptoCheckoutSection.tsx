@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreateCryptoPayment, useConvertCrypto } from '@/hooks/useElektropay';
+import { useCreateCryptoPayment } from '@/hooks/useElektropay';
 import { toast } from 'sonner';
 
 const CRYPTO_OPTIONS = [
@@ -45,7 +45,6 @@ export function CryptoCheckoutSection({
   const [copied, setCopied] = useState(false);
 
   const createPayment = useCreateCryptoPayment();
-  const convertCrypto = useConvertCrypto();
 
   const selectedOption = CRYPTO_OPTIONS.find(c => c.id === selectedCrypto);
 
@@ -91,12 +90,6 @@ export function CryptoCheckoutSection({
     toast.success('Copied to clipboard');
     setTimeout(() => setCopied(false), 2000);
   };
-
-  // Fee breakdown
-  const fiatAmount = parseFloat(amount || '0');
-  const commissionFee = fiatAmount * 0.05;
-  const flatFee = 1.00;
-  const totalAmount = fiatAmount + commissionFee + flatFee;
 
   if (paymentData) {
     return (
@@ -168,27 +161,6 @@ export function CryptoCheckoutSection({
           </SelectContent>
         </Select>
       </div>
-
-      {fiatAmount > 0 && (
-        <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-xs">
-          <div className="flex justify-between text-muted-foreground">
-            <span>Subtotal</span>
-            <span className="font-mono">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(fiatAmount)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Processing fee (5%)</span>
-            <span className="font-mono">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(commissionFee)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Transaction fee</span>
-            <span className="font-mono">$1.00</span>
-          </div>
-          <div className="flex justify-between font-semibold text-foreground border-t border-border pt-1.5">
-            <span>Total</span>
-            <span className="font-mono">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(totalAmount)}</span>
-          </div>
-        </div>
-      )}
 
       <Button
         className="w-full gap-2"

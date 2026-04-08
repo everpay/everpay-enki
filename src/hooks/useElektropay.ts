@@ -169,3 +169,50 @@ export function useConvertCrypto() {
     },
   });
 }
+
+export function useCreateCryptoDeposit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      crypto_currency: string;
+      payer_email?: string;
+      payer_name?: string;
+      description?: string;
+      timeout?: number;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('elektropay-proxy', {
+        body: { action: 'create_deposit', ...params },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['elektropay-wallets', 'elektropay-payments'] });
+      toast.success('Deposit address created');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useElektropayDeposits() {
+  return useQuery({
+    queryKey: ['elektropay-deposits'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: merchant } = await supabase
+        .from('merchants').select('id').eq('user_id', user.id).single();
+      if (!merchant) throw new Error('Merchant not found');
+
+      const { data, error } = await supabase
+        .from('elektropay_payments' as any)
+        .select('*')
+        .eq('merchant_id', merchant.id)
+        .eq('payment_type', 'DEPOSIT')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}

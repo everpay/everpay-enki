@@ -224,6 +224,44 @@ serve(async (req) => {
         break;
       }
 
+      case 'create_deposit': {
+        const webhookUrl = `${supabaseUrl}/functions/v1/elektropay-webhook`;
+        const depositPayload: any = {
+          asset_id: params.crypto_currency || 'USDT.TRC20',
+          payer_email: params.payer_email,
+          payer_name: params.payer_name,
+          payer_lang: 'en',
+          description: params.description || 'Deposit via Everpay',
+          timeout: params.timeout || 1440,
+          webhook_url: webhookUrl,
+        };
+
+        const res = await fetch(`${ELEKTROPAY_API_URL}/deposit`, {
+          method: 'POST', headers,
+          body: JSON.stringify(depositPayload),
+        });
+        result = await res.json();
+
+        if (merchantId && result.deposit_id) {
+          await supabase.from('elektropay_payments').insert({
+            merchant_id: merchantId,
+            elektropay_payment_id: result.deposit_id,
+            payment_type: 'DEPOSIT',
+            fiat_amount: 0,
+            fiat_currency: 'USD',
+            crypto_currency: params.crypto_currency || 'USDT.TRC20',
+            crypto_network: result.crypto_network,
+            status: 'open',
+            wallet_address: result.address,
+            customer_email: params.payer_email,
+            customer_name: params.payer_name,
+            commission_rate: 0.05,
+            flat_fee: 1.00,
+          });
+        }
+        break;
+      }
+
       case 'sync_balances': {
         const res = await fetch(`${ELEKTROPAY_API_URL}/accounts`, { headers });
         const accountsData = await res.json();
