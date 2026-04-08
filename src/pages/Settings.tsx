@@ -813,14 +813,14 @@ export default function Settings() {
         </div>
       )}
 
-      {/* WEBHOOKS */}
-      {section === "webhooks" && <WebhooksSectionComponent />}
-
-      {/* BUSINESS VERIFICATION */}
-      {section === "verification" && <BusinessVerificationSectionComponent />}
-
-      {/* NOTIFICATIONS */}
-      {section === "notifications" && <WebhookNotificationsSection merchantId={merchant?.id} />}
+      {/* WEBHOOKS (includes notification settings) */}
+      {section === "webhooks" && (
+        <div className="space-y-6 max-w-4xl">
+          <WebhooksSectionComponent />
+          <Separator />
+          <WebhookNotificationsSection merchantId={merchant?.id} />
+        </div>
+      )}
 
       {/* SURCHARGING */}
       {section === "surcharging" && <SurchargeSettingsSection merchantId={merchant?.id} />}
