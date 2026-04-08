@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Wallet,
+  DollarSign,
   Settings,
   CreditCard,
   Menu,
