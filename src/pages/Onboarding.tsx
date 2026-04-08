@@ -12,9 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CountrySelect } from '@/components/CountrySelect';
-
-const BUSINESS_TYPES = ['sole_proprietorship', 'partnership', 'llc', 'corporation', 'non_profit'];
-const INDUSTRIES = ['e_commerce', 'saas', 'marketplace', 'fintech', 'gaming', 'travel', 'retail', 'healthcare', 'education', 'other'];
+import { IndustrySelect, BusinessTypeSelect } from '@/components/IndustrySelect';
+import { getMccForIndustry } from '@/data/business-categories';
 
 function useMerchantProfile() {
   return useQuery({
@@ -235,12 +234,7 @@ export default function Onboarding() {
                   </div>
                   <div className="space-y-2">
                     <Label>Business Type</Label>
-                    <Select value={businessType} onValueChange={setBusinessType}>
-                      <SelectTrigger><SelectValue placeholder="Select type..." /></SelectTrigger>
-                      <SelectContent>
-                        {BUSINESS_TYPES.map(t => <SelectItem key={t} value={t}>{t.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <BusinessTypeSelect value={businessType} onValueChange={setBusinessType} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -256,16 +250,11 @@ export default function Onboarding() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Industry</Label>
-                    <Select value={industry} onValueChange={setIndustry}>
-                      <SelectTrigger><SelectValue placeholder="Select industry..." /></SelectTrigger>
-                      <SelectContent>
-                        {INDUSTRIES.map(i => <SelectItem key={i} value={i}>{i.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <IndustrySelect value={industry} onValueChange={(v) => { setIndustry(v); const mcc = getMccForIndustry(v); if (mcc) setMccCode(mcc); }} />
                   </div>
                   <div className="space-y-2">
                     <Label>MCC Code</Label>
-                    <Input value={mccCode} onChange={e => setMccCode(e.target.value)} placeholder="5411" />
+                    <Input value={mccCode} onChange={e => setMccCode(e.target.value)} placeholder="5411" readOnly={false} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

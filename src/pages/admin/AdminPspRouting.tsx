@@ -103,7 +103,7 @@ export default function AdminPspRouting() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Country (optional)</Label>
-                  <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="US, GB, etc." />
+                  <CountrySelect value={country} onValueChange={setCountry} placeholder="Select country..." />
                 </div>
                 <div className="space-y-2">
                   <Label>Card Brand (optional)</Label>
