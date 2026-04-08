@@ -230,8 +230,8 @@ serve(async (req) => {
         iv,
         auth_tag: tag,
         uninstalled: false,
-        // Store plaintext token for API calls (same as before for backwards compat)
-        access_token: accessToken,
+        // Plaintext token deliberately omitted — use decrypt_token action to retrieve
+        access_token: null,
       };
 
       if (merchant_id) {
