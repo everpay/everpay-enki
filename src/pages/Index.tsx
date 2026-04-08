@@ -174,12 +174,10 @@ const Index = () => {
             subtitle: "Total orders",
           },
           {
-            title: "Pending Settlement",
-            value: loadingTx ? '...' : formatCurrency(pendingAmount, 'USD'),
-            change: pendingChange !== 0 ? `${pendingChange > 0 ? '+' : ''}${pendingChange.toFixed(1)}%` : undefined,
-            changeType: (pendingChange < 0 ? "positive" : pendingChange > 0 ? "negative" : "neutral") as "positive" | "negative" | "neutral",
-            icon: Clock,
-            subtitle: `${pendingTransactions.length} transactions`,
+            title: "Wallet Volume",
+            value: `$${walletVolume.toFixed(2)}`,
+            icon: Bitcoin,
+            subtitle: `${wallets.length} active wallet${wallets.length !== 1 ? 's' : ''}`,
           },
           {
             title: "Customers",
@@ -188,10 +186,12 @@ const Index = () => {
             subtitle: "Total customers",
           },
           {
-            title: "Wallet Volume",
-            value: `$${walletVolume.toFixed(2)}`,
-            icon: Bitcoin,
-            subtitle: `${wallets.length} active wallet${wallets.length !== 1 ? 's' : ''}`,
+            title: "Pending Settlement",
+            value: loadingTx ? '...' : formatCurrency(pendingAmount, 'USD'),
+            change: pendingChange !== 0 ? `${pendingChange > 0 ? '+' : ''}${pendingChange.toFixed(1)}%` : undefined,
+            changeType: (pendingChange < 0 ? "positive" : pendingChange > 0 ? "negative" : "neutral") as "positive" | "negative" | "neutral",
+            icon: Clock,
+            subtitle: `${pendingTransactions.length} transactions`,
           },
         ].map((card, i) => (
           <motion.div key={card.title} custom={i} variants={cardVariants} initial="hidden" animate="visible">
