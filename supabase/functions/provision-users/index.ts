@@ -7,22 +7,29 @@ Deno.serve(async (req) => {
   };
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
-
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
-  // Allow service-role key as direct auth (for provisioning scripts)
-  const token = authHeader.replace("Bearer ", "");
-  if (token !== serviceRoleKey) {
+  // Validate provision secret from request body
+  let body: any = {};
+  try { body = await req.json(); } catch {}
+  const provisionSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace("Bearer ", "") || "";
+  
+  // Auth: service role key via header OR super_admin user
+  if (token && token === provisionSecret) {
+    // Service role - allowed
+  } else if (token) {
     const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
     const { data: { user: caller } } = await anonClient.auth.getUser(token);
     if (!caller) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
     const { data: callerRoles } = await admin.from("user_roles").select("role").eq("user_id", caller.id);
     const isSuperAdmin = callerRoles?.some((r: any) => r.role === "super_admin");
     if (!isSuperAdmin) return new Response("Forbidden", { status: 403, headers: corsHeaders });
+  } else {
+    return new Response("Unauthorized", { status: 401, headers: corsHeaders });
   }
 
   const users = [
