@@ -14,26 +14,31 @@ Deno.serve(async (req) => {
   // Validate provision secret from request body
   let body: any = {};
   try { body = await req.json(); } catch {}
-  const serviceRoleKey2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const serviceRoleKey2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "") || "";
   const provisionKey = req.headers.get("x-provision-key") || body.provision_key || "";
   
-  // Auth: service role key via bearer/header/body, OR authenticated super_admin, OR valid user token (we'll check role)
   const isServiceRole = token === serviceRoleKey2 || provisionKey === serviceRoleKey2;
   
   if (!isServiceRole) {
     if (token) {
-      const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
-      const { data: { user: caller } } = await anonClient.auth.getUser(token);
-      if (!caller) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
-      // Allow platform owner OR super_admin
+      // Use admin client (service role) to get user since it has full access
+      const { data: { user: caller }, error: authErr } = await admin.auth.getUser(token);
+      if (authErr || !caller) {
+        console.log("Auth failed:", authErr?.message);
+        return new Response(JSON.stringify({ error: "Unauthorized", detail: authErr?.message }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      console.log("Caller:", caller.email, caller.id);
       const { data: callerRoles } = await admin.from("user_roles").select("role").eq("user_id", caller.id);
+      console.log("Roles:", JSON.stringify(callerRoles));
       const isSuperAdmin = callerRoles?.some((r: any) => r.role === "super_admin");
       const isPlatformOwner = caller.email === "richard.r@everpayinc.com";
-      if (!isSuperAdmin && !isPlatformOwner) return new Response("Forbidden", { status: 403, headers: corsHeaders });
+      if (!isSuperAdmin && !isPlatformOwner) {
+        return new Response(JSON.stringify({ error: "Forbidden", email: caller.email, roles: callerRoles }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     } else {
-      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "Unauthorized", detail: "no token" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
   }
 
