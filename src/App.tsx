@@ -295,7 +295,7 @@ const AppRoutes = () => {
     <Route path="/mass-payouts" element={<ProtectedRoute><MassPayouts /></ProtectedRoute>} />
     <Route path="/saved-cards" element={<ProtectedRoute><SavedCards /></ProtectedRoute>} />
     <Route path="/3ds-settings" element={<ProtectedRoute><ThreeDSecureSettings /></ProtectedRoute>} />
-    <Route path="/rate-limits" element={<ProtectedRoute><RateLimits /></ProtectedRoute>} />
+    {/* Rate limits moved to Settings > Developers */}
     <Route path="/risk-profile" element={<ProtectedRoute><RiskProfilePage /></ProtectedRoute>} />
 
     {/* Admin pages — hidden under /enki, role-gated */}

@@ -791,6 +791,9 @@ export default function Settings() {
 
           <DevelopersSection />
 
+          {/* Rate Limits Section */}
+          <RateLimitsSection />
+
           {/* Quick Reference Links */}
           <Card>
             <CardHeader>
