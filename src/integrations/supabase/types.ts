@@ -560,6 +560,69 @@ export type Database = {
           },
         ]
       }
+      billing_periods: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string | null
+          merchant_id: string
+          period_end: string
+          period_start: string
+          status: string
+          total_everpay_fees: number
+          total_fees: number
+          total_processor_fees: number
+          total_sponsor_fees: number
+          total_transactions: number
+          total_volume: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          merchant_id: string
+          period_end: string
+          period_start: string
+          status?: string
+          total_everpay_fees?: number
+          total_fees?: number
+          total_processor_fees?: number
+          total_sponsor_fees?: number
+          total_transactions?: number
+          total_volume?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          merchant_id?: string
+          period_end?: string
+          period_start?: string
+          status?: string
+          total_everpay_fees?: number
+          total_fees?: number
+          total_processor_fees?: number
+          total_sponsor_fees?: number
+          total_transactions?: number
+          total_volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_periods_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_periods_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_velocity: {
         Row: {
           created_at: string
@@ -1353,6 +1416,66 @@ export type Database = {
         }
         Relationships: []
       }
+      fee_breakdowns: {
+        Row: {
+          created_at: string
+          everpay_fee: number
+          id: string
+          merchant_id: string
+          net_amount: number
+          pricing_model: string | null
+          pricing_snapshot: Json | null
+          processor_fee: number
+          sponsor_fee: number
+          total_fee: number
+          transaction_amount: number
+          transaction_id: string
+        }
+        Insert: {
+          created_at?: string
+          everpay_fee?: number
+          id?: string
+          merchant_id: string
+          net_amount?: number
+          pricing_model?: string | null
+          pricing_snapshot?: Json | null
+          processor_fee?: number
+          sponsor_fee?: number
+          total_fee?: number
+          transaction_amount?: number
+          transaction_id: string
+        }
+        Update: {
+          created_at?: string
+          everpay_fee?: number
+          id?: string
+          merchant_id?: string
+          net_amount?: number
+          pricing_model?: string | null
+          pricing_snapshot?: Json | null
+          processor_fee?: number
+          sponsor_fee?: number
+          total_fee?: number
+          transaction_amount?: number
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_breakdowns_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_breakdowns_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: true
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fraud_graph_edges: {
         Row: {
           created_at: string | null
@@ -2105,6 +2228,56 @@ export type Database = {
             foreignKeyName: "merchant_fx_settings_merchant_id_fkey"
             columns: ["merchant_id"]
             isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_pricing: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          fixed_fee: number
+          id: string
+          merchant_id: string
+          model_type: string
+          percentage_fee: number
+          sponsor_fee_pct: number
+          tiers: Json | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          fixed_fee?: number
+          id?: string
+          merchant_id: string
+          model_type?: string
+          percentage_fee?: number
+          sponsor_fee_pct?: number
+          tiers?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          fixed_fee?: number
+          id?: string
+          merchant_id?: string
+          model_type?: string
+          percentage_fee?: number
+          sponsor_fee_pct?: number
+          tiers?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_pricing_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
             referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
@@ -3221,6 +3394,44 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reseller_splits: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          merchant_id: string
+          reseller_id: string
+          revenue_share_pct: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          merchant_id: string
+          reseller_id: string
+          revenue_share_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          reseller_id?: string
+          revenue_share_pct?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_splits_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
             referencedColumns: ["id"]
           },
         ]
