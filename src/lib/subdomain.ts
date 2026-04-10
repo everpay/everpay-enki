@@ -21,7 +21,7 @@ export function getAppContext(): AppContext {
 
 export function getSubdomainConfig(_context: AppContext): SubdomainConfig {
   return {
-    title: 'Enki Admin',
+    title: 'Enki',
     subtitle: 'Everpay administrative portal',
     signupEnabled: false,
     autoRole: null,
