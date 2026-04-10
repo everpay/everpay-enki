@@ -30,6 +30,8 @@ import {
   BookOpen,
   Handshake,
   Gauge,
+  TrendingUp,
+  Receipt,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -144,6 +146,9 @@ const adminSections: NavSection[] = [
       { to: "/enki/analytics", icon: BarChart3, label: "Analytics" },
       { to: "/enki/fees", icon: CreditCardIcon, label: "Transaction Fees" },
       { to: "/enki/board", icon: BarChart3, label: "Board Overview" },
+      { to: "/enki/pricing", icon: DollarSign, label: "Pricing" },
+      { to: "/enki/revenue", icon: TrendingUp, label: "Revenue" },
+      { to: "/enki/billing", icon: Receipt, label: "Billing" },
     ],
   },
   {
