@@ -1,140 +1,164 @@
 
 
-# Everpay Platform OS — FastAPI Integration & Operations Extension
+# Merchant Pricing & Billing Engine
 
 ## Summary
-Extend the existing merchant and admin dashboards with FastAPI orchestration layer integration, adaptive rate limiting UI, risk signal dashboards, and real API call patterns — without overwriting existing pages.
+Add a complete SaaS monetization layer to Everpay Enki: configurable per-merchant pricing models, automated fee calculation on every transaction, monthly billing invoice generation, and reseller revenue sharing — with three new admin pages and an edge function for fee computation.
 
----
+## What Exists Today
+- **`transaction_fees`** table: processor-level fee configs (percentage, fixed, chargeback, refund) with per-method/region granularity
+- **`platform_fee_markups`** table: processor-level markup percentages and flat fees, optionally per-merchant
+- **`processor_fee_profiles`** table: per-merchant provider fee profiles (percentage, fixed, settlement days)
+- **`invoices`** table: basic merchant invoices (amount, currency, status, items jsonb, due_date)
+- **Reseller Portal** (`/reseller`): hardcoded 0.125% commission calculation, no stored splits
+- **AdminTransactionFees** page: CRUD for `transaction_fees` table
+- **AdminFeeEngine** page: read-only view of `processor_fee_profiles` and `platform_fee_markups`
+- **No** `merchant_pricing`, `fee_breakdowns`, or `reseller_splits` tables exist
 
-## What Already Exists (No Rebuild Needed)
+## Database Changes (Migration)
 
-| Feature | Current Page | Status |
-|---------|-------------|--------|
-| Merchant Overview | `/dashboard` (Index.tsx) | Has balances, transactions, success rate |
-| Payments/Charges | `/transactions` | Full transaction list with filters |
-| Payouts | `/payouts` | Request + history + balance validation |
-| Settings (API keys, webhooks, profile) | `/settings` | Comprehensive settings page |
-| Admin Overview | `/enki` (AdminDashboard) | Volume, merchants, health |
-| Admin Merchant Management | `/enki/merchants` | List + details |
-| Admin Fee Engine | `/enki/strategy/fees` | Fee markups |
-| Treasury/Liquidity | `/treasury`, `/merchant-treasury` | Multi-currency, FX |
-| Risk/Fraud | `/chargebacks`, `/fraud-graph` | Disputes, fraud intelligence |
-
----
-
-## What's New (To Build)
-
-### Phase 1: Database Schema (Migration)
-
-New tables required:
-
-1. **`merchant_endpoint_rate_limits`** — per-merchant, per-endpoint rate limits
-   - `merchant_id`, `endpoint_type` (payments/payouts/api), `requests_per_minute`, `burst_limit`, `created_at`, `updated_at`
-
-2. **`merchant_risk_profiles`** — adaptive risk engine state
-   - `merchant_id`, `risk_score`, `adaptive_multiplier`, `success_rate`, `chargeback_rate`, `fraud_score`, `velocity_score`, `locked` (boolean), `updated_at`
-
-3. **`merchant_risk_signals`** — historical risk signal log
-   - `merchant_id`, `signal_type`, `value`, `recorded_at`
-
-RLS: merchant-scoped SELECT for merchants; admin full access.
-
-### Phase 2: FastAPI Integration Layer
-
-Create `src/lib/fastapi-client.ts` — a typed HTTP client that routes sensitive operations through FastAPI instead of direct Supabase calls.
+### New Tables
 
 ```text
-┌──────────┐     ┌──────────┐     ┌───────────┐     ┌──────────┐
-│ Frontend │────►│ FastAPI  │────►│ Supabase  │     │ Ruby AM  │
-│ (React)  │     │ Orchestr.│────►│ (DB/Auth) │     │ Engine   │
-└──────────┘     └──────────┘     └───────────┘     └──────────┘
-                      │                                  ▲
-                      └──────────────────────────────────┘
+merchant_pricing
+├── id (uuid PK)
+├── merchant_id (uuid FK → merchants)
+├── model_type (text: 'percentage', 'fixed', 'tiered', 'blended')
+├── percentage_fee (numeric, default 2.9)
+├── fixed_fee (numeric, default 0.30)
+├── currency (text, default 'USD')
+├── tiers (jsonb, nullable — volume-based tiers)
+├── sponsor_fee_pct (numeric, default 0)
+├── active (boolean, default true)
+├── created_at / updated_at
+└── UNIQUE(merchant_id, currency)
+
+fee_breakdowns
+├── id (uuid PK)
+├── transaction_id (uuid FK → transactions, UNIQUE)
+├── merchant_id (uuid FK → merchants)
+├── transaction_amount (numeric)
+├── processor_fee (numeric)
+├── sponsor_fee (numeric)
+├── everpay_fee (numeric)
+├── total_fee (numeric)
+├── net_amount (numeric)
+├── pricing_model (text)
+├── pricing_snapshot (jsonb — frozen pricing at calculation time)
+└── created_at
+
+reseller_splits
+├── id (uuid PK)
+├── reseller_id (uuid FK → profiles.user_id)
+├── merchant_id (uuid FK → merchants)
+├── revenue_share_pct (numeric, default 12.5 — basis points)
+├── active (boolean, default true)
+├── created_at / updated_at
+└── UNIQUE(reseller_id, merchant_id)
+
+billing_periods
+├── id (uuid PK)
+├── merchant_id (uuid FK → merchants)
+├── period_start (timestamptz)
+├── period_end (timestamptz)
+├── total_transactions (integer)
+├── total_volume (numeric)
+├── total_fees (numeric)
+├── total_processor_fees (numeric)
+├── total_sponsor_fees (numeric)
+├── total_everpay_fees (numeric)
+├── invoice_id (uuid FK → invoices, nullable)
+├── status (text: 'open', 'closed', 'invoiced')
+└── created_at
 ```
 
-- Configurable base URL via `VITE_FASTAPI_URL` env var (falls back to edge functions when not set)
-- Endpoints: `/payments/charge`, `/payments/refund`, `/payouts/create`, `/merchants/{id}/summary`, `/treasury/liquidity`, `/config/rate-limit/{merchant_id}/{endpoint_type}`, `/adaptive-rate-limit/{merchant_id}`
-- Bearer token passthrough from Supabase session
-- Typed request/response interfaces
+### RLS Policies
+- `merchant_pricing`: admin full access; merchants SELECT own rows
+- `fee_breakdowns`: admin full access; merchants SELECT own rows
+- `reseller_splits`: admin full CRUD; resellers SELECT own rows
+- `billing_periods`: admin full access; merchants SELECT own rows
 
-### Phase 3: New Merchant Pages
+### Realtime
+- Enable realtime on `fee_breakdowns` for live fee tracking
 
-**A. Rate Limits Page (`/rate-limits`)**
-- Displays per-endpoint rate limits (payments, payouts, api)
-- Shows base limit, adaptive multiplier, effective limit
-- Real-time usage bar charts (polling from FastAPI)
-- Read-only for merchants
+## Edge Functions
 
-**B. Risk Profile Page (`/risk-profile`)**
-- Current risk score with gauge visualization
-- Adaptive multiplier display
-- Underlying signals breakdown (success rate, chargeback rate, fraud score, velocity)
-- Historical signal chart
+### 1. `calculate-fees` (new)
+Called after transaction creation (from `process-payment` or `payment-state-machine`).
 
-**C. Enhanced Dashboard (`/dashboard`)**
-- Add rate limit summary widget and risk score indicator to existing Index.tsx
-- Add pending vs available balance breakdown (already partially exists in accounts table)
+Logic:
+1. Look up `merchant_pricing` for the merchant + currency
+2. If tiered model, find applicable tier based on monthly volume
+3. Calculate: `processor_fee` (from `processor_fee_profiles`), `sponsor_fee` (from pricing), `everpay_fee` (markup)
+4. Insert into `fee_breakdowns`
+5. Create corresponding ledger entries (debit merchant, credit platform fee account)
 
-### Phase 4: New Admin Pages
+### 2. `generate-billing` (new)
+Triggered monthly (cron) or manually by admin.
 
-**A. Risk & Adaptive Engine (`/enki/risk-engine`)**
-- Table of all merchants with risk scores, multipliers, signals
-- Inline edit for manual multiplier override
-- Lock/unlock rate limits per merchant
-- Signal detail drill-down
+Logic:
+1. For each merchant with `billing_periods.status = 'open'`, aggregate `fee_breakdowns` for the period
+2. Create an `invoices` row with line items (processor fees, platform fees, sponsor fees)
+3. Update `billing_periods.status = 'invoiced'` and link `invoice_id`
+4. Optionally enqueue a transactional email (invoice-created template)
 
-**B. Rate Limits Configuration (`/enki/rate-limits`)**
-- Per-merchant, per-endpoint rate limit editor
-- Editable `requests_per_minute` and `burst_limit`
-- Saves to `merchant_endpoint_rate_limits` table
-- Bulk actions (apply template to multiple merchants)
+## Frontend — New Admin Pages
 
-**C. Enhanced Admin Treasury (`/enki/fx-treasury`)**
-- Add payout obligations view and liquidity risk highlighting to existing page
+### 1. `/enki/pricing` — Merchant Pricing Management
+- Table of all merchants with their active pricing model
+- Create/edit pricing modal: model type selector, fee inputs, tiered pricing JSON editor
+- Bulk pricing assignment
+- Per-merchant override indicator
 
-### Phase 5: Shared Components & Hooks
+### 2. `/enki/revenue` — Revenue Dashboard
+- Summary cards: Total Platform Revenue, Processor Costs, Net Margin, Reseller Payouts
+- Monthly revenue chart (stacked: processor + sponsor + everpay)
+- Per-merchant revenue breakdown table
+- Reseller revenue sharing table with split percentages and earned amounts
 
-- `useRateLimits(merchantId)` — fetches rate limits via FastAPI
-- `useRiskProfile(merchantId)` — fetches risk profile via FastAPI
-- `useFastAPI()` — core hook wrapping the FastAPI client with auth token
-- `RateLimitGauge` — visual component showing usage vs limit
-- `RiskScoreGauge` — circular gauge for risk score display
-- `AdaptiveMultiplierBadge` — shows current multiplier
+### 3. `/enki/billing` — Billing Management
+- List of billing periods per merchant with status badges
+- Generate invoice button (calls `generate-billing`)
+- Link to existing invoice detail view
+- Period-level fee aggregation summary
 
-### Phase 6: Routing & Navigation
+## Hooks (new files)
 
-- Add `/rate-limits` and `/risk-profile` to merchant sidebar under new "Operations" section
-- Add `/enki/risk-engine` and `/enki/rate-limits` to admin sidebar under "Routing & Controls"
-- All new pages wrapped in `ProtectedRoute` / `RoleProtectedRoute`
+- `useMerchantPricing()` — CRUD for `merchant_pricing`
+- `useFeeBreakdowns(merchantId?)` — query `fee_breakdowns` with filters
+- `useResellerSplits()` — CRUD for `reseller_splits`
+- `useBillingPeriods(merchantId?)` — query and manage `billing_periods`
+- `useRevenueAnalytics()` — aggregated revenue stats from `fee_breakdowns`
 
----
+## Sidebar Navigation
+Add under the existing Enki admin nav sections:
+- **Pricing** → `/enki/pricing` (DollarSign icon)
+- **Revenue** → `/enki/revenue` (TrendingUp icon)
+- **Billing** → `/enki/billing` (Receipt icon)
 
-## Technical Details
+## Integration Points
+- **process-payment**: After successful transaction, invoke `calculate-fees`
+- **Ledger**: Fee breakdown amounts added as ledger entries
+- **Reseller Portal**: Replace hardcoded 0.125% with actual `reseller_splits` data
+- **Settlement engine**: Net settlement = gross - total_fee from `fee_breakdowns`
 
-- **FastAPI client pattern**: All calls go through `src/lib/fastapi-client.ts` which checks for `VITE_FASTAPI_URL`. If not set, falls back to equivalent Supabase edge function calls (graceful degradation).
-- **Polling**: Rate limit usage and risk signals use 30-second polling via `refetchInterval` in React Query.
-- **No mock data**: All components render empty states when no data is available; real queries only.
-- **Security**: Merchant pages filter by authenticated user's merchant ID; admin pages require `admin`/`super_admin` role via `RoleProtectedRoute`.
-- **Mobile responsive**: All new pages use the existing `AppLayout` wrapper with responsive grid patterns.
-
----
-
-## Files to Create/Edit
+## File Summary
 
 | Action | File |
 |--------|------|
-| Create | `src/lib/fastapi-client.ts` |
-| Create | `src/hooks/useRateLimits.ts` |
-| Create | `src/hooks/useRiskProfile.ts` |
-| Create | `src/pages/RateLimits.tsx` |
-| Create | `src/pages/RiskProfile.tsx` |
-| Create | `src/pages/admin/AdminRiskEngine.tsx` |
-| Create | `src/pages/admin/AdminRateLimits.tsx` |
-| Create | `src/components/RateLimitGauge.tsx` |
-| Create | `src/components/RiskScoreGauge.tsx` |
-| Edit | `src/pages/Index.tsx` — add rate limit + risk widgets |
-| Edit | `src/App.tsx` — add new routes |
-| Edit | `src/components/AppSidebar.tsx` — add nav items |
-| Migration | New tables: `merchant_endpoint_rate_limits`, `merchant_risk_profiles`, `merchant_risk_signals` |
+| Migration | `supabase/migrations/xxx_pricing_billing_engine.sql` |
+| New edge fn | `supabase/functions/calculate-fees/index.ts` |
+| New edge fn | `supabase/functions/generate-billing/index.ts` |
+| New hook | `src/hooks/useMerchantPricing.ts` |
+| New hook | `src/hooks/useFeeBreakdowns.ts` |
+| New hook | `src/hooks/useResellerSplits.ts` |
+| New hook | `src/hooks/useBillingPeriods.ts` |
+| New hook | `src/hooks/useRevenueAnalytics.ts` |
+| New page | `src/pages/admin/AdminPricing.tsx` |
+| New page | `src/pages/admin/AdminRevenue.tsx` |
+| New page | `src/pages/admin/AdminBilling.tsx` |
+| Edit | `src/App.tsx` — add 3 routes |
+| Edit | `src/components/AppSidebar.tsx` — add 3 nav items |
+| Edit | `src/pages/ResellerPortal.tsx` — use `reseller_splits` |
+| Edit | `supabase/config.toml` — register new functions |
 
