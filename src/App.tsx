@@ -41,6 +41,9 @@ import AdminRiskEngine from "./pages/admin/AdminRiskEngine";
 import AdminRateLimits from "./pages/admin/AdminRateLimits";
 import AdminTokenManagement from "./pages/admin/AdminTokenManagement";
 import AdminMatrixManagement from "./pages/admin/AdminMatrixManagement";
+import AdminPricing from "./pages/admin/AdminPricing";
+import AdminRevenue from "./pages/admin/AdminRevenue";
+import AdminBilling from "./pages/admin/AdminBilling";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +119,9 @@ const AppRoutes = () => {
     <Route path="/enki/rate-limits" element={<AdminRoute><AdminRateLimits /></AdminRoute>} />
     <Route path="/enki/token-lifecycle" element={<AdminRoute><AdminTokenManagement /></AdminRoute>} />
     <Route path="/enki/matrix" element={<AdminRoute><AdminMatrixManagement /></AdminRoute>} />
+    <Route path="/enki/pricing" element={<AdminRoute><AdminPricing /></AdminRoute>} />
+    <Route path="/enki/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
+    <Route path="/enki/billing" element={<AdminRoute><AdminBilling /></AdminRoute>} />
 
     {/* Catch-all */}
     <Route path="*" element={<NotFound />} />
