@@ -62,9 +62,9 @@ export default function AdminBilling() {
                       <TableCell className="font-medium">{(p.merchants as any)?.name || p.merchant_id?.slice(0, 8)}</TableCell>
                       <TableCell className="text-sm">{format(new Date(p.period_start), "MMM d")} – {format(new Date(p.period_end), "MMM d, yyyy")}</TableCell>
                       <TableCell>{p.total_transactions}</TableCell>
-                      <TableCell>{formatCurrency(p.total_volume)}</TableCell>
-                      <TableCell>{formatCurrency(p.total_fees)}</TableCell>
-                      <TableCell className="text-primary font-semibold">{formatCurrency(p.total_everpay_fees)}</TableCell>
+                      <TableCell>{formatCurrency(p.total_volume, "USD")}</TableCell>
+                      <TableCell>{formatCurrency(p.total_fees, "USD")}</TableCell>
+                      <TableCell className="text-primary font-semibold">{formatCurrency(p.total_everpay_fees, "USD")}</TableCell>
                       <TableCell><Badge className={statusColors[p.status] || ""}>{p.status}</Badge></TableCell>
                       <TableCell>{p.invoice_id ? <span className="text-xs text-muted-foreground">{p.invoice_id.slice(0, 8)}…</span> : "—"}</TableCell>
                     </TableRow>

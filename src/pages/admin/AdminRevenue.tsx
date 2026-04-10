@@ -50,9 +50,9 @@ export default function AdminRevenue() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard title="Platform Revenue" value={formatCurrency(analytics?.totalRevenue || 0)} icon={DollarSign} />
-          <StatCard title="Processor Costs" value={formatCurrency(analytics?.totalProcessorCosts || 0)} icon={ArrowDownRight} />
-          <StatCard title="Net Margin" value={formatCurrency(analytics?.netMargin || 0)} icon={TrendingUp} />
+          <StatCard title="Platform Revenue" value={formatCurrency(analytics?.totalRevenue || 0, "USD")} icon={DollarSign} />
+          <StatCard title="Processor Costs" value={formatCurrency(analytics?.totalProcessorCosts || 0, "USD")} icon={ArrowDownRight} />
+          <StatCard title="Net Margin" value={formatCurrency(analytics?.netMargin || 0, "USD")} icon={TrendingUp} />
           <StatCard title="Transactions" value={String(analytics?.transactionCount || 0)} icon={Users} />
         </div>
 
@@ -95,9 +95,9 @@ export default function AdminRevenue() {
                   {(analytics?.merchantBreakdown || []).map(m => (
                     <TableRow key={m.merchant_id}>
                       <TableCell className="font-medium">{m.name}</TableCell>
-                      <TableCell>{formatCurrency(m.volume)}</TableCell>
-                      <TableCell>{formatCurrency(m.fees)}</TableCell>
-                      <TableCell className="text-primary font-semibold">{formatCurrency(m.everpay)}</TableCell>
+                      <TableCell>{formatCurrency(m.volume, "USD")}</TableCell>
+                      <TableCell>{formatCurrency(m.fees, "USD")}</TableCell>
+                      <TableCell className="text-primary font-semibold">{formatCurrency(m.everpay, "USD")}</TableCell>
                       <TableCell>{m.count}</TableCell>
                     </TableRow>
                   ))}
