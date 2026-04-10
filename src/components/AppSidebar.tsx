@@ -251,7 +251,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <div className="flex items-center gap-2.5">
           <img src={everpayIcon} alt="Everpay" className="h-7 w-7 rounded-lg" />
           <span className="font-heading text-base font-bold text-foreground tracking-tight">
-            {isOnAdminRoute ? "Enki Admin" : "Everpay"}
+            {isOnAdminRoute ? "Enki" : "Everpay"}
           </span>
         </div>
       </div>
