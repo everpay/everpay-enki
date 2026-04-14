@@ -47,6 +47,8 @@ import AdminBilling from "./pages/admin/AdminBilling";
 
 import AdminTransactionMonitoring from "./pages/admin/AdminTransactionMonitoring";
 
+const queryClient = new QueryClient();
+
 function LoadingScreen() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
