@@ -65,7 +65,12 @@ export default function AdminMerchants() {
           .order('created_at', { ascending: false });
 
         setMerchants((merchantData || []).map(m => ({
-          ...m,
+          id: m.id,
+          name: m.name,
+          user_id: m.user_id,
+          email: (m as any).email || '',
+          phone: (m as any).phone || '',
+          created_at: m.created_at,
           status: 'pending',
           onboarding_status: 'pending',
           source: 'direct',
