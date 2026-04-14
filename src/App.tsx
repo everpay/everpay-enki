@@ -45,6 +45,8 @@ import AdminPricing from "./pages/admin/AdminPricing";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminBilling from "./pages/admin/AdminBilling";
 
+import AdminTransactionMonitoring from "./pages/admin/AdminTransactionMonitoring";
+
 const queryClient = new QueryClient();
 
 function LoadingScreen() {
@@ -122,6 +124,7 @@ const AppRoutes = () => {
     <Route path="/enki/pricing" element={<AdminRoute><AdminPricing /></AdminRoute>} />
     <Route path="/enki/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
     <Route path="/enki/billing" element={<AdminRoute><AdminBilling /></AdminRoute>} />
+    <Route path="/enki/transaction-monitoring" element={<AdminRoute><AdminTransactionMonitoring /></AdminRoute>} />
 
     {/* Catch-all */}
     <Route path="*" element={<NotFound />} />
