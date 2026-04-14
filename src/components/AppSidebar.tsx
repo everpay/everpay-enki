@@ -231,7 +231,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { data: userRole } = useUserRole();
   const { environment, setEnvironment, isTestMode } = useEnvironment();
 
-  const isAdmin = userRole?.isAdmin || false;
+  const isAdmin = userRole?.isAdmin || userRole?.isSuperAdmin || false;
   const isOnAdminRoute = location.pathname.startsWith("/enki");
 
   const currentSections = isOnAdminRoute ? adminSections : navSections;
@@ -327,12 +327,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="border-t border-sidebar-border px-3 py-3 space-y-1">
         {isAdmin && (
           <NavLink
-            to={isOnAdminRoute ? "/dashboard" : "/enki"}
+            to="/enki"
             onClick={onNavigate}
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-foreground transition-colors"
           >
             <ArrowLeftRight className="h-[18px] w-[18px] text-muted-foreground" />
-            {isOnAdminRoute ? "Back to App" : "Admin Panel"}
+            {isOnAdminRoute ? "Admin Home" : "Admin Panel"}
           </NavLink>
         )}
 

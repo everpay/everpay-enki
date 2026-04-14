@@ -243,29 +243,6 @@ async function elektropayRequest(data: Record<string, unknown>, env: Record<stri
   return { success: res.ok, provider: 'elektropay', transaction_id: body.id, status: body.status, raw: body, ...(!res.ok && { error: body.message }) };
 }
 
-// ─── FacilitaPay (LATAM) ────────────────────────────────────────────
-async function facilitapayCharge(data: Record<string, unknown>, env: Record<string, string>): Promise<GatewayResponse> {
-  const baseUrl = env.FACILITAPAY_BASE_URL || 'https://sandbox.facilitapay.com';
-  const res = await fetch(`${baseUrl}/api/v1/payments`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.FACILITAPAY_API_KEY}` },
-    body: JSON.stringify(data),
-  });
-  const body = await res.json();
-  return { success: res.ok, provider: 'facilitapay', transaction_id: body.id, status: body.status, amount: data.amount as number, currency: (data.currency as string) || 'BRL', raw: body, ...(!res.ok && { error: body.message || res.statusText }) };
-}
-
-async function facilitapayPayout(data: Record<string, unknown>, env: Record<string, string>): Promise<GatewayResponse> {
-  const baseUrl = env.FACILITAPAY_BASE_URL || 'https://sandbox.facilitapay.com';
-  const res = await fetch(`${baseUrl}/api/v1/payouts`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.FACILITAPAY_API_KEY}` },
-    body: JSON.stringify(data),
-  });
-  const body = await res.json();
-  return { success: res.ok, provider: 'facilitapay', transaction_id: body.id, status: body.status, raw: body, ...(!res.ok && { error: body.message }) };
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // ACTION ROUTER
 // ═══════════════════════════════════════════════════════════════════
@@ -275,12 +252,12 @@ const ACTION_MAP: Record<string, Record<string, (data: Record<string, unknown>, 
     moneto: monetoCharge, shieldhubpay: shieldhubpayCharge, smartfastpay: smartfastpayCharge,
     global_payments: globalpaymentsCharge, adyen: adyenCharge, mondo: mondoCharge,
     marasoft: marasoftCharge, lipad: lipadCharge, paygate10: paygate10Request,
-    pacopay: pacopayCharge, facilitapay: facilitapayCharge,
+    pacopay: pacopayCharge,
   },
   payout: {
     smartfastpay: smartfastpayPayout, marasoft: marasoftPayout, lipad: lipadPayout,
     paygate10: paygate10Request, pacopay: pacopayCardPayout, elektropay: elektropayRequest,
-    delos: delosRequest, brighty: brightyRequest, facilitapay: facilitapayPayout,
+    delos: delosRequest, brighty: brightyRequest,
   },
   fx_rate: { lipad: lipadFxRate, paygate10: paygate10Request },
   wallet: { elektropay: elektropayRequest },
@@ -340,7 +317,6 @@ Deno.serve(async (req) => {
       'DELOS_API_KEY', 'DELOS_BASE_URL',
       'BRIGHTY_API_KEY', 'BRIGHTY_BASE_URL',
       'ELEKTROPAY_API_KEY',
-      'FACILITAPAY_API_KEY', 'FACILITAPAY_BASE_URL',
     ];
     for (const key of envKeys) {
       const val = Deno.env.get(key);

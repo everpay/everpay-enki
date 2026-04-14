@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { getAppContext, getSubdomainConfig } from '@/lib/subdomain';
 
 export default function Auth() {
   const location = useLocation();
+  const accessDenied = new URLSearchParams(location.search).get('error') === 'access_denied';
   const appContext = getAppContext();
   const config = getSubdomainConfig(appContext);
   const passwordResetRedirectTo = new URL('/reset-password', config.authOrigin).toString();
@@ -25,6 +26,12 @@ export default function Auth() {
   const [formError, setFormError] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (accessDenied) {
+      setFormError('Access denied. Only administrators can sign in to Enki.');
+    }
+  }, [accessDenied]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -32,8 +39,23 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+
+        const { data: adminRoles, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', signInData.user.id)
+          .in('role', ['admin', 'super_admin']);
+
+        if (roleError) throw roleError;
+
+        if (!adminRoles?.length) {
+          await supabase.auth.signOut();
+          setFormError('Access denied. Only administrators can sign in to Enki.');
+          return;
+        }
+
         toast.success('Signed in successfully');
         navigate(config.redirectAfterLogin);
       } else {

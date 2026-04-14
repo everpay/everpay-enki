@@ -95,7 +95,7 @@ export default function AdminRoutingChains() {
             <RuleRow condition="Risk Score > 70" action="Route to Tier 3 (ShieldHubPay → Mondo → PacoPay)" />
             <RuleRow condition="Risk Score < 50" action="Prefer Tier 1 (Adyen → Global Payments)" />
             <RuleRow condition="Region = AF" action="Prefer Paygate10, Lipad, Marasoft" />
-            <RuleRow condition="Region = LATAM" action="Prefer FacilitaPay → PacoPay" />
+            <RuleRow condition="Region = LATAM" action="Prefer PacoPay" />
             <RuleRow condition="Processor = ShieldHubPay" action="Apply 10% rolling reserve automatically" />
             <RuleRow condition="All attempts declined" action="Emit processor.route.completed (failed)" />
           </div>

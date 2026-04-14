@@ -87,6 +87,7 @@ const AppRoutes = () => {
   <Routes>
     {/* Root redirects to admin dashboard or login */}
     <Route path="/" element={<Navigate to="/enki" replace />} />
+    <Route path="/dashboard" element={<Navigate to="/enki" replace />} />
 
     {/* Auth */}
     <Route path="/auth" element={<Navigate to="/login" replace />} />
@@ -95,6 +96,9 @@ const AppRoutes = () => {
     <Route path="/unsubscribe" element={<Unsubscribe />} />
 
     {/* Admin pages */}
+    <Route path="/enki/payments" element={<Navigate to="/enki/transaction-monitoring" replace />} />
+    <Route path="/enki/payment-routing" element={<Navigate to="/enki/routing" replace />} />
+    <Route path="/enki/treasury" element={<Navigate to="/enki/fx-treasury" replace />} />
     <Route path="/enki" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
     <Route path="/enki/merchants" element={<AdminRoute><AdminMerchants /></AdminRoute>} />
     <Route path="/enki/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
