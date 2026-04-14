@@ -49,18 +49,18 @@ const RecentActivitySection = () => {
   const fetchRecent = async () => {
     const { data: txData } = await supabase
       .from('transactions')
-      .select('id, amount, currency, status, payment_method, created_at, customer_email')
+      .select('id, amount, currency, status, created_at')
       .order('created_at', { ascending: false })
       .limit(10);
 
-    const items: ActivityItem[] = (txData || []).map(tx => ({
+    const items: ActivityItem[] = (txData || []).map((tx: any) => ({
       id: tx.id,
-      name: tx.customer_email || 'Payment',
+      name: 'Payment',
       description: `Transaction · ${format(new Date(tx.created_at), 'dd MMM yyyy')}`,
       amount: `$${parseFloat(String(tx.amount || 0)).toLocaleString()}`,
       status: (tx.status === 'succeeded' || tx.status === 'completed' || tx.status === 'settled') ? 'success' as const : 'pending' as const,
-      method: tx.payment_method || 'Card',
-      methodIcon: (tx.payment_method?.includes('bank') ? 'bank' : 'card') as 'card' | 'bank',
+      method: 'Card',
+      methodIcon: 'card' as 'card' | 'bank',
     }));
 
     setActivities(items);

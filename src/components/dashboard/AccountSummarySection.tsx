@@ -35,9 +35,9 @@ const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', c
 
 const AccountSummarySection = () => {
   const { data } = useAdminTransactionAnalytics();
-  const revenue = data?.totalVolume || 0;
-  const refunds = data?.totalRefunds || 0;
-  const chargebacks = data?.totalChargebacks || 0;
+  const revenue = data?.totalRevenue || 0;
+  const refunds = data?.refundAmount || 0;
+  const chargebacks = data?.chargebackAmount || 0;
   const net = revenue - refunds - chargebacks;
 
   return (

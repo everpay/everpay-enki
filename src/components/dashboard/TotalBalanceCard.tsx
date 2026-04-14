@@ -4,7 +4,7 @@ import { useAdminTransactionAnalytics } from '@/hooks/useAdminTransactionAnalyti
 
 const TotalBalanceCard = () => {
   const { data } = useAdminTransactionAnalytics();
-  const totalVolume = data?.totalVolume || 0;
+  const totalVolume = data?.totalRevenue || 0;
   const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalVolume);
 
   return (
