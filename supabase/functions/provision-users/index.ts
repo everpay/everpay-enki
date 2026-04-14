@@ -44,6 +44,64 @@ Deno.serve(async (req) => {
 
   const action = body.action || "provision";
 
+  // Action: provision-admin — create/reset specific admin users
+  if (action === "provision-admin") {
+    const adminUsers = body.users || [];
+    const adminResults: any[] = [];
+
+    for (const u of adminUsers) {
+      const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      const existing = existingUsers?.users?.find((eu: any) => eu.email === u.email);
+
+      let userId: string;
+      if (existing) {
+        userId = existing.id;
+        // Reset password
+        const { error: updateErr } = await admin.auth.admin.updateUserById(userId, {
+          password: u.password,
+          email_confirm: true,
+        });
+        adminResults.push({ email: u.email, action: "password_reset", userId, error: updateErr?.message });
+      } else {
+        const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+          email: u.email,
+          password: u.password,
+          email_confirm: true,
+          user_metadata: { display_name: u.display_name || u.email },
+        });
+        if (createError) { adminResults.push({ email: u.email, error: createError.message }); continue; }
+        userId = newUser.user.id;
+        adminResults.push({ email: u.email, action: "created", userId });
+      }
+
+      // Ensure profile
+      await admin.from("profiles").upsert({ user_id: userId, display_name: u.display_name || u.email }, { onConflict: "user_id" });
+
+      // Assign role
+      const role = u.role || "admin";
+      await admin.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
+
+      // Also ensure merchant record for admin users
+      const { data: existingMerchant } = await admin.from("merchants").select("id").eq("user_id", userId).maybeSingle();
+      if (!existingMerchant) {
+        await admin.from("merchants").insert({ user_id: userId, name: u.merchant_name || u.display_name || "Admin" });
+      }
+
+      // Audit log
+      await admin.from("audit_logs").insert({
+        user_id: userId,
+        action: "admin_provisioned",
+        entity_type: "user",
+        entity_id: userId,
+        metadata: { role, provisioned_by: "provision-users-edge-fn" },
+      });
+    }
+
+    return new Response(JSON.stringify({ results: adminResults }, null, 2), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // Action: provision-routes-only — add routes to an existing merchant by email
   if (action === "provision-routes") {
     let merchantId = body.merchant_id || "";
@@ -90,7 +148,7 @@ Deno.serve(async (req) => {
 
   const users = [
     { email: "richard@rcfitnessflorida.com", password: "RCFitness2026!", displayName: "Richard - RC Fitness", merchantName: "RC Fitness Florida" },
-    { email: "admin@mzzpay.io", password: "MzzPay2026!", displayName: "MzzPay Admin", merchantName: "MzzPay" },
+    { email: "admin@mzzpay.io", password: "MathanA1984!", displayName: "MzzPay Admin", merchantName: "MzzPay" },
   ];
 
   const results = [];
