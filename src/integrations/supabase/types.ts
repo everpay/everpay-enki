@@ -2438,6 +2438,7 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          phone: string | null
           region: string | null
           risk_score: number | null
           status: string | null
@@ -2452,6 +2453,7 @@ export type Database = {
           email?: string | null
           id?: string
           name: string
+          phone?: string | null
           region?: string | null
           risk_score?: number | null
           status?: string | null
@@ -2466,6 +2468,7 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          phone?: string | null
           region?: string | null
           risk_score?: number | null
           status?: string | null
