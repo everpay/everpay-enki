@@ -72,7 +72,7 @@ serve(async (req) => {
     }
 
     // Also try to fetch from external DB if configured
-    const externalUrl = 'https://dhobjuetzkvnkdoqeavy.supabase.co'
+    const externalUrl = Deno.env.get('EXTERNAL_SUPABASE_URL') || 'https://dhobjuetzkvnkdoqeavy.supabase.co'
     const externalServiceKey = Deno.env.get('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY')
     
     let externalMerchants: any[] = []
