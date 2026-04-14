@@ -61,15 +61,15 @@ export default function AdminMerchants() {
       try {
         const { data: merchantData } = await supabase
           .from('merchants')
-          .select('id, name, user_id, email, phone, created_at')
+          .select('id, name, user_id, created_at')
           .order('created_at', { ascending: false });
 
         setMerchants((merchantData || []).map(m => ({
           id: m.id,
           name: m.name,
           user_id: m.user_id,
-          email: (m as any).email || '',
-          phone: (m as any).phone || '',
+          email: '',
+          phone: '',
           created_at: m.created_at,
           status: 'pending',
           onboarding_status: 'pending',
