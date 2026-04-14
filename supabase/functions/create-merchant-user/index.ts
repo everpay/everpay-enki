@@ -21,30 +21,30 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    })
-
-    const { data: { user: callerUser }, error: userError } = await userClient.auth.getUser()
-    if (userError || !callerUser) {
+    // Decode caller from JWT (from external DB)
+    const token = authHeader.replace('Bearer ', '')
+    let callerId: string | null = null
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      callerId = payload.sub
+    } catch {
       return new Response(
-        JSON.stringify({ error: 'Invalid or expired token' }),
+        JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
 
+    // Verify admin role on local DB
     const { data: callerRoles } = await supabaseAdmin
       .from('user_roles')
       .select('role')
-      .eq('user_id', callerUser.id)
+      .eq('user_id', callerId)
 
     const isAuthorized = callerRoles?.some(r => r.role === 'super_admin' || r.role === 'admin')
     if (!isAuthorized) {
@@ -54,28 +54,43 @@ serve(async (req) => {
       )
     }
 
-    const { business_name, contact_name, email, phone, website } = await req.json()
+    const body = await req.json()
+    const {
+      business_name, contact_name, email, phone, website,
+      business_type, business_category, business_description,
+      tax_id, employee_count, annual_revenue,
+      address, payment_setup
+    } = body
 
     if (!business_name || !contact_name || !email || !phone) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
+        JSON.stringify({ error: 'Missing required fields: business_name, contact_name, email, phone' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Create user on the external DB if service key available, otherwise local
+    const externalServiceKey = Deno.env.get('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY')
+    const externalUrl = 'https://dhobjuetzkvnkdoqeavy.supabase.co'
+    
+    const targetClient = externalServiceKey
+      ? createClient(externalUrl, externalServiceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+      : supabaseAdmin
 
     const tempPassword = `Merchant${crypto.randomUUID().slice(0, 8)}!`
     const nameParts = contact_name.trim().split(' ')
     const firstName = nameParts[0]
     const lastName = nameParts.slice(1).join(' ') || ''
 
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: authData, error: authError } = await targetClient.auth.admin.createUser({
       email,
       password: tempPassword,
       email_confirm: true,
       user_metadata: {
         first_name: firstName,
         last_name: lastName,
-        created_by: callerUser.id,
+        display_name: contact_name,
+        created_by: callerId,
       }
     })
 
@@ -88,31 +103,94 @@ serve(async (req) => {
 
     const userId = authData.user.id
 
-    // Assign merchant role
+    // Assign merchant role on both local and target DBs
     await supabaseAdmin.from('user_roles').insert({ user_id: userId, role: 'merchant' })
+    if (externalServiceKey) {
+      await targetClient.from('user_roles').insert({ user_id: userId, role: 'merchant' }).catch(() => {})
+    }
 
-    // Create merchant record
-    await supabaseAdmin.from('merchants').insert({
+    // Create merchant record on local DB
+    const { data: merchantRecord } = await supabaseAdmin.from('merchants').insert({
       name: business_name,
       email,
       phone,
       user_id: userId,
-    })
+    }).select('id').single()
+
+    // Create merchant_profile with onboarding data
+    if (merchantRecord) {
+      await supabaseAdmin.from('merchant_profiles').insert({
+        merchant_id: merchantRecord.id,
+        onboarding_status: 'pending',
+        business_type: business_type || null,
+        business_category: business_category || null,
+        business_description: business_description || null,
+        website: website || null,
+        tax_id: tax_id || null,
+        employee_count: employee_count || null,
+        annual_revenue: annual_revenue || null,
+        address: address ? JSON.stringify(address) : null,
+        payment_setup: payment_setup ? JSON.stringify(payment_setup) : null,
+      }).catch(e => console.error('Profile insert error:', e))
+    }
+
+    // Also create on external DB if available
+    if (externalServiceKey) {
+      await targetClient.from('merchants').insert({
+        name: business_name,
+        email,
+        phone,
+        user_id: userId,
+      }).catch(() => {})
+    }
 
     // Audit log
     await supabaseAdmin.from('audit_logs').insert({
-      user_id: callerUser.id,
+      user_id: callerId!,
       action: 'merchant_user_created',
       entity_type: 'merchant',
       entity_id: userId,
-      metadata: { business_name, email }
+      metadata: { business_name, email, business_type, business_category }
     })
+
+    // Send onboarding email
+    try {
+      await supabaseAdmin.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'merchant-onboarding',
+          recipientEmail: email,
+          idempotencyKey: `merchant-onboarding-${userId}`,
+          templateData: {
+            merchantName: business_name,
+            email,
+            dashboardUrl: 'https://enki.everpayinc.com',
+          },
+        },
+      })
+    } catch (emailErr) {
+      console.error('Onboarding email failed:', emailErr)
+      // Don't fail the entire operation if email fails
+    }
+
+    // Send password reset so merchant can claim their account
+    try {
+      await targetClient.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: {
+          redirectTo: 'https://enki.everpayinc.com/reset-password',
+        }
+      })
+    } catch (resetErr) {
+      console.error('Password reset link generation failed:', resetErr)
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         userId,
-        message: 'Merchant created successfully'
+        merchantId: merchantRecord?.id,
+        message: 'Merchant created successfully. Onboarding invitation sent.'
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
