@@ -1,24 +1,21 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Building, Mail, Phone, Globe, User } from "lucide-react";
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { OnboardingLayout } from './merchant-onboarding/OnboardingLayout';
+import { BusinessInfoStep, type BusinessInfoData } from './merchant-onboarding/BusinessInfoStep';
+import { BusinessAddressStep, type BusinessAddressData } from './merchant-onboarding/BusinessAddressStep';
+import { PaymentSetupStep, type PaymentSetupData } from './merchant-onboarding/PaymentSetupStep';
+import { ReviewSubmitStep } from './merchant-onboarding/ReviewSubmitStep';
 
-const merchantFormSchema = z.object({
-  business_name: z.string().trim().min(2).max(100),
-  contact_name: z.string().trim().min(2).max(100),
-  email: z.string().trim().email().max(255),
-  phone: z.string().trim().min(6).max(20),
-  website: z.string().trim().url().optional().or(z.literal("")),
-});
-
-type MerchantFormValues = z.infer<typeof merchantFormSchema>;
+const TOTAL_STEPS = 4;
+const stepTitles = ['Business Information', 'Business Address', 'Payment Setup', 'Review & Create'];
+const stepDescriptions = [
+  'Enter the merchant\'s business details and contact information',
+  'Where is the business located?',
+  'What payment methods and volumes do they need?',
+  'Review all details and create the merchant account',
+];
 
 interface MerchantFormProps {
   open: boolean;
@@ -27,63 +24,111 @@ interface MerchantFormProps {
 }
 
 export default function MerchantForm({ open, onOpenChange, onSuccess }: MerchantFormProps) {
-  const [loading, setLoading] = useState(false);
-  const form = useForm<MerchantFormValues>({
-    resolver: zodResolver(merchantFormSchema),
-    defaultValues: { business_name: "", contact_name: "", email: "", phone: "", website: "" },
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<{
+    businessInfo: BusinessInfoData | null;
+    businessAddress: BusinessAddressData | null;
+    paymentSetup: PaymentSetupData | null;
+  }>({
+    businessInfo: null,
+    businessAddress: null,
+    paymentSetup: null,
   });
 
-  const onSubmit = async (data: MerchantFormValues) => {
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      setCurrentStep(1);
+      setFormData({ businessInfo: null, businessAddress: null, paymentSetup: null });
+    }
+    onOpenChange(isOpen);
+  };
+
+  const handleBusinessInfoNext = (data: BusinessInfoData) => {
+    setFormData(prev => ({ ...prev, businessInfo: data }));
+    setCurrentStep(2);
+  };
+
+  const handleAddressNext = (data: BusinessAddressData) => {
+    setFormData(prev => ({ ...prev, businessAddress: data }));
+    setCurrentStep(3);
+  };
+
+  const handlePaymentNext = (data: PaymentSetupData) => {
+    setFormData(prev => ({ ...prev, paymentSetup: data }));
+    setCurrentStep(4);
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.businessInfo) return;
     try {
-      setLoading(true);
+      setIsSubmitting(true);
       const { data: result, error } = await supabase.functions.invoke('create-merchant-user', {
-        body: { business_name: data.business_name, contact_name: data.contact_name, email: data.email, phone: data.phone, website: data.website || null },
+        body: {
+          business_name: formData.businessInfo.businessName,
+          contact_name: formData.businessInfo.contactName,
+          email: formData.businessInfo.email,
+          phone: formData.businessInfo.phone,
+          website: formData.businessInfo.website || null,
+          business_type: formData.businessInfo.businessType,
+          business_category: formData.businessInfo.businessCategory,
+          business_description: formData.businessInfo.businessDescription,
+          tax_id: formData.businessInfo.taxId,
+          employee_count: formData.businessInfo.employeeCount,
+          annual_revenue: formData.businessInfo.annualRevenue,
+          address: formData.businessAddress,
+          payment_setup: formData.paymentSetup,
+        },
       });
       if (error) throw new Error(error.message);
       if (result?.error) throw new Error(result.error);
-      toast({ title: "Merchant Added", description: `${data.business_name} has been added. An invitation will be sent to ${data.email}.` });
-      form.reset();
-      onOpenChange(false);
+
+      toast({
+        title: 'Merchant Created',
+        description: `${formData.businessInfo.businessName} has been created. An onboarding invitation has been sent to ${formData.businessInfo.email}.`,
+      });
+      handleClose(false);
       onSuccess?.();
     } catch (error) {
-      toast({ variant: "destructive", title: "Failed to Add Merchant", description: error instanceof Error ? error.message : "An unexpected error occurred" });
+      toast({
+        variant: 'destructive',
+        title: 'Failed to Create Merchant',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+      });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return <BusinessInfoStep onNext={handleBusinessInfoNext} initialData={formData.businessInfo || undefined} />;
+      case 2:
+        return <BusinessAddressStep onNext={handleAddressNext} onBack={() => setCurrentStep(1)} initialData={formData.businessAddress || undefined} />;
+      case 3:
+        return <PaymentSetupStep onNext={handlePaymentNext} onBack={() => setCurrentStep(2)} initialData={formData.paymentSetup || undefined} />;
+      case 4:
+        return <ReviewSubmitStep data={formData} onSubmit={handleSubmit} onBack={() => setCurrentStep(3)} isSubmitting={isSubmitting} />;
+      default:
+        return null;
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader><DialogTitle className="text-xl font-semibold">Add New Merchant</DialogTitle></DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-            {[
-              { name: "business_name" as const, label: "Business Name", icon: Building, placeholder: "Business name" },
-              { name: "contact_name" as const, label: "Contact Person", icon: User, placeholder: "Contact person name" },
-              { name: "email" as const, label: "Contact Email", icon: Mail, placeholder: "Email address" },
-              { name: "phone" as const, label: "Contact Phone", icon: Phone, placeholder: "Phone number" },
-              { name: "website" as const, label: "Website (optional)", icon: Globe, placeholder: "https://example.com" },
-            ].map(f => (
-              <FormField key={f.name} control={form.control} name={f.name} render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{f.label}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <f.icon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder={f.placeholder} className="pl-9" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            ))}
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
-              <Button type="submit" disabled={loading}>{loading ? "Adding..." : "Add Merchant"}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold">Add New Merchant</DialogTitle>
+        </DialogHeader>
+        <OnboardingLayout
+          currentStep={currentStep}
+          totalSteps={TOTAL_STEPS}
+          title={stepTitles[currentStep - 1]}
+          description={stepDescriptions[currentStep - 1]}
+        >
+          {renderStep()}
+        </OnboardingLayout>
       </DialogContent>
     </Dialog>
   );
