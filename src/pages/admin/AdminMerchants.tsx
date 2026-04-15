@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { externalProxy } from '@/hooks/useExternalData';
 import MerchantForm from '@/components/admin/MerchantForm';
 import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone } from 'lucide-react';
 
@@ -40,44 +40,17 @@ export default function AdminMerchants() {
   const fetchMerchants = async () => {
     try {
       setLoading(true);
-
-      // Use edge function to bypass RLS and get all merchants
-      const { data: result, error } = await supabase.functions.invoke('list-merchants');
-
-      if (error) throw error;
-      if (result?.error) throw new Error(result.error);
-
-      const merchantList = (result?.merchants || []).map((m: any) => ({
+      const result = await externalProxy({ action: 'list_merchants_full' });
+      const merchantList = (result.data || []).map((m: any) => ({
         ...m,
         status: m.profile?.onboarding_status === 'approved' ? 'active' : 'pending',
         onboarding_status: m.profile?.onboarding_status || 'pending',
-        source: m.source || 'local',
+        source: 'platform',
       }));
-
       setMerchants(merchantList);
     } catch (error) {
       console.error('Failed to fetch merchants:', error);
-      // Fallback to direct query
-      try {
-        const { data: merchantData } = await supabase
-          .from('merchants')
-          .select('id, name, user_id, created_at')
-          .order('created_at', { ascending: false });
-
-        setMerchants((merchantData || []).map(m => ({
-          id: m.id,
-          name: m.name,
-          user_id: m.user_id,
-          email: '',
-          phone: '',
-          created_at: m.created_at,
-          status: 'pending',
-          onboarding_status: 'pending',
-          source: 'direct',
-        })));
-      } catch {
-        toast({ title: 'Error', description: 'Failed to load merchants', variant: 'destructive' });
-      }
+      toast({ title: 'Error', description: 'Failed to load merchants', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

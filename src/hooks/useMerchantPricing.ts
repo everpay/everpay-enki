@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { extSelect, extUpsert } from "@/hooks/useExternalData";
 
 export function useMerchantPricing(merchantId?: string) {
   const queryClient = useQueryClient();
@@ -7,11 +7,12 @@ export function useMerchantPricing(merchantId?: string) {
   const query = useQuery({
     queryKey: ["merchant-pricing", merchantId],
     queryFn: async () => {
-      let q = supabase.from("merchant_pricing").select("*, merchants(name)").order("created_at", { ascending: false });
-      if (merchantId) q = q.eq("merchant_id", merchantId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data;
+      const filters = merchantId ? { merchant_id: merchantId } : undefined;
+      const rows = await extSelect("merchant_pricing", { filters, order: { column: "created_at", ascending: false } });
+      // Enrich with merchant names
+      const merchants = await extSelect("merchants", { select: "id, name" });
+      const nameMap = new Map(merchants.map((m: any) => [m.id, m.name]));
+      return rows.map((r: any) => ({ ...r, merchants: { name: nameMap.get(r.merchant_id) || r.merchant_id?.slice(0, 8) } }));
     },
   });
 
@@ -27,8 +28,7 @@ export function useMerchantPricing(merchantId?: string) {
       sponsor_fee_pct: number;
       active: boolean;
     }) => {
-      const { error } = await supabase.from("merchant_pricing").upsert(pricing, { onConflict: "merchant_id,currency" });
-      if (error) throw error;
+      await extUpsert("merchant_pricing", pricing, "merchant_id,currency");
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["merchant-pricing"] }),
   });
