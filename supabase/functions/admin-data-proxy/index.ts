@@ -25,6 +25,19 @@ function createServerClient(url: string, key: string, token?: string) {
   });
 }
 
+async function hasWorkingExternalAdmin(extAdmin: any | null) {
+  if (!extAdmin) return false;
+
+  const { error } = await extAdmin.auth.admin.listUsers({ page: 1, perPage: 1 });
+
+  if (error) {
+    console.error("admin-data-proxy: external admin client unavailable", error.message);
+    return false;
+  }
+
+  return true;
+}
+
 async function getExternalAuthEmailMap(extAdmin: any | null) {
   const emailMap = new Map<string, string | null>();
 
@@ -44,7 +57,6 @@ async function getExternalAuthEmailMap(extAdmin: any | null) {
   return emailMap;
 }
 
-// Allowed tables for read/write via this proxy
 const ALLOWED_TABLES = [
   "profiles",
   "user_roles",
@@ -98,6 +110,8 @@ Deno.serve(async (req) => {
   const extUser = createServerClient(extUrl, extAnonKey, token);
   const extAdmin = extServiceKey ? createServerClient(extUrl, extServiceKey) : null;
   const localAdmin = createServerClient(localUrl, localServiceKey);
+  const canUseExtAdmin = await hasWorkingExternalAdmin(extAdmin);
+  const externalReadClient = canUseExtAdmin && extAdmin ? extAdmin : extUser;
 
   const {
     data: authData,
@@ -148,11 +162,12 @@ Deno.serve(async (req) => {
   if (!action) return jsonResponse({ error: "action required" }, 400);
 
   if (action === "list_users") {
-    const adminClient = extAdmin || extUser;
     const [profilesRes, rolesRes, emailMap] = await Promise.all([
-      adminClient.from("profiles").select("*").order("created_at", { ascending: false }),
-      adminClient.from("user_roles").select("user_id, role"),
-      getExternalAuthEmailMap(extAdmin),
+      externalReadClient.from("profiles").select("*").order("created_at", { ascending: false }),
+      externalReadClient.from("user_roles").select("user_id, role"),
+      canUseExtAdmin && extAdmin
+        ? getExternalAuthEmailMap(extAdmin)
+        : Promise.resolve(new Map<string, string | null>()),
     ]);
 
     if (profilesRes.error) return jsonResponse({ error: profilesRes.error.message }, 500);
@@ -172,15 +187,16 @@ Deno.serve(async (req) => {
       role: (roleMap.get(p.user_id) || ["user"])[0],
     }));
 
-    return jsonResponse({ data: users });
+    return jsonResponse({ data: users, degraded: !canUseExtAdmin });
   }
 
   if (action === "list_merchants_full") {
-    const adminClient = extAdmin || extUser;
     const [merchantsRes, profilesRes, emailMap] = await Promise.all([
-      adminClient.from("merchants").select("*").order("created_at", { ascending: false }),
-      adminClient.from("merchant_profiles").select("*"),
-      getExternalAuthEmailMap(extAdmin),
+      externalReadClient.from("merchants").select("*").order("created_at", { ascending: false }),
+      externalReadClient.from("merchant_profiles").select("*"),
+      canUseExtAdmin && extAdmin
+        ? getExternalAuthEmailMap(extAdmin)
+        : Promise.resolve(new Map<string, string | null>()),
     ]);
 
     if (merchantsRes.error) return jsonResponse({ error: merchantsRes.error.message }, 500);
@@ -198,7 +214,7 @@ Deno.serve(async (req) => {
       onboarding_status: profileMap.get(m.id)?.onboarding_status || "pending",
     }));
 
-    return jsonResponse({ data: merchants });
+    return jsonResponse({ data: merchants, degraded: !canUseExtAdmin });
   }
 
   if (action === "update_user_role") {
@@ -234,7 +250,7 @@ Deno.serve(async (req) => {
     const { error: profileDeleteError } = await extUser.from("profiles").delete().eq("user_id", user_id);
     if (profileDeleteError) return jsonResponse({ error: profileDeleteError.message }, 500);
 
-    if (!extAdmin) {
+    if (!canUseExtAdmin || !extAdmin) {
       return jsonResponse({ error: "External auth admin access is unavailable" }, 503);
     }
 
@@ -251,12 +267,9 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: `Invalid or disallowed table: ${table}` }, 400);
   }
 
-  // Use service-role client for admin reads to bypass RLS
-  const adminClient = extAdmin || extUser;
-
   try {
     if (action === "select") {
-      let query = adminClient.from(table).select(select || "*");
+      let query = externalReadClient.from(table).select(select || "*");
       if (filters) {
         for (const [col, val] of Object.entries(filters)) {
           query = query.eq(col, val as any);
@@ -268,19 +281,19 @@ Deno.serve(async (req) => {
       if (rowLimit) query = query.limit(rowLimit);
       const { data: result, error } = await query;
       if (error) return jsonResponse({ error: error.message }, 500);
-      return jsonResponse({ data: result });
+      return jsonResponse({ data: result, degraded: !canUseExtAdmin });
     }
 
     if (action === "insert") {
       if (!data) return jsonResponse({ error: "data required" }, 400);
-      const { data: result, error } = await adminClient.from(table).insert(data).select();
+      const { data: result, error } = await extUser.from(table).insert(data).select();
       if (error) return jsonResponse({ error: error.message }, 500);
       return jsonResponse({ data: result });
     }
 
     if (action === "update") {
       if (!id || !data) return jsonResponse({ error: "id and data required" }, 400);
-      const { data: result, error } = await adminClient.from(table).update(data).eq("id", id).select();
+      const { data: result, error } = await extUser.from(table).update(data).eq("id", id).select();
       if (error) return jsonResponse({ error: error.message }, 500);
       return jsonResponse({ data: result });
     }
@@ -288,14 +301,14 @@ Deno.serve(async (req) => {
     if (action === "upsert") {
       if (!data) return jsonResponse({ error: "data required" }, 400);
       const onConflict = body.on_conflict || "id";
-      const { data: result, error } = await adminClient.from(table).upsert(data, { onConflict }).select();
+      const { data: result, error } = await extUser.from(table).upsert(data, { onConflict }).select();
       if (error) return jsonResponse({ error: error.message }, 500);
       return jsonResponse({ data: result });
     }
 
     if (action === "delete") {
       if (!id) return jsonResponse({ error: "id required" }, 400);
-      const { error } = await adminClient.from(table).delete().eq("id", id);
+      const { error } = await extUser.from(table).delete().eq("id", id);
       if (error) return jsonResponse({ error: error.message }, 500);
       return jsonResponse({ ok: true });
     }
