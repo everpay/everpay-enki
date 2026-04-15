@@ -66,18 +66,26 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // --- Auth: verify caller is admin (check BOTH external and local DBs) ---
+  // --- Auth: verify caller is admin (check BOTH external and local DBs + JWT email fallback) ---
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "") || "";
   if (!token) return jsonResponse({ error: "Auth required" }, 401);
 
   let callerId: string;
+  let callerEmail: string | null = null;
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
     callerId = payload.sub;
+    callerEmail = payload.email || null;
   } catch {
     return jsonResponse({ error: "Invalid token" }, 401);
   }
+
+  // Known platform admin emails (fallback when DB role checks fail)
+  const PLATFORM_ADMIN_EMAILS = [
+    "richard.r@everpayinc.com",
+    "everpay@gmail.com",
+  ];
 
   // Check external DB first, then fall back to local DB
   const [extRolesRes, localRolesRes] = await Promise.all([
@@ -88,7 +96,7 @@ Deno.serve(async (req) => {
   const allRoles = [...(extRolesRes.data || []), ...(localRolesRes.data || [])];
   const isAdmin = allRoles.some(
     (r: any) => r.role === "super_admin" || r.role === "admin"
-  );
+  ) || (callerEmail && PLATFORM_ADMIN_EMAILS.includes(callerEmail));
   if (!isAdmin) return jsonResponse({ error: "Forbidden" }, 403);
 
   // --- Parse request ---
