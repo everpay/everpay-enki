@@ -31,6 +31,13 @@ const ALLOWED_TABLES = [
   "invoices",
   "refunds",
   "audit_logs",
+  "fee_breakdowns",
+  "processors",
+  "processor_strategy",
+  "processor_fee_profiles",
+  "platform_fee_markups",
+  "routing_attempt_logs",
+  "reseller_splits",
 ];
 
 Deno.serve(async (req) => {

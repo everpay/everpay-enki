@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { extSelect, extUpsert } from "@/hooks/useExternalData";
 
 export function useResellerSplits(resellerId?: string) {
   const queryClient = useQueryClient();
@@ -7,18 +7,18 @@ export function useResellerSplits(resellerId?: string) {
   const query = useQuery({
     queryKey: ["reseller-splits", resellerId],
     queryFn: async () => {
-      let q = supabase.from("reseller_splits").select("*, merchants(name)").order("created_at", { ascending: false });
-      if (resellerId) q = q.eq("reseller_id", resellerId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data;
+      const filters = resellerId ? { reseller_id: resellerId } : undefined;
+      const splits = await extSelect("reseller_splits", { filters, order: { column: "created_at", ascending: false } });
+      // Enrich with merchant names
+      const merchants = await extSelect("merchants", { select: "id, name" });
+      const nameMap = new Map(merchants.map((m: any) => [m.id, m.name]));
+      return splits.map((s: any) => ({ ...s, merchants: { name: nameMap.get(s.merchant_id) || s.merchant_id?.slice(0, 8) } }));
     },
   });
 
   const upsert = useMutation({
     mutationFn: async (split: { reseller_id: string; merchant_id: string; revenue_share_pct: number; active: boolean }) => {
-      const { error } = await supabase.from("reseller_splits").upsert(split, { onConflict: "reseller_id,merchant_id" });
-      if (error) throw error;
+      await extUpsert("reseller_splits", split, "reseller_id,merchant_id");
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["reseller-splits"] }),
   });
