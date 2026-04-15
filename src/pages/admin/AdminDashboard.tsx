@@ -160,8 +160,38 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
           <TabsContent value="integrations" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <LipadStatusPanel />
+              {[
+                { name: 'ShieldHub', region: 'US/Global', type: 'Card Processing', status: 'connected' },
+                { name: 'Mondo', region: 'EU/UK', type: 'Open Banking & Cards', status: 'connected' },
+                { name: 'Paygate10', region: 'IN/PK/BR/MX/CO', type: 'Emerging Markets', status: 'connected' },
+                { name: 'Matrix Partners', region: 'EU', type: 'Gaming/Casino', status: 'connected' },
+                { name: 'Elektropay', region: 'Global', type: 'Crypto Gateway', status: 'connected' },
+                { name: 'Moneto', region: 'Canada', type: 'Digital Wallet', status: 'connected' },
+                { name: 'Makapay', region: 'Bangladesh', type: 'Mobile Money', status: 'connected' },
+                { name: 'OFA Pay', region: 'APAC', type: 'APMs', status: 'connected' },
+                { name: 'PacoPay', region: 'LATAM', type: 'Card Processing', status: 'connected' },
+                { name: 'DC Bank', region: 'Canada', type: 'Domestic Processing', status: 'connected' },
+                { name: 'Prometeo', region: 'LATAM', type: 'Open Banking', status: 'connected' },
+                { name: 'VGS Vault', region: 'Global', type: 'Tokenization', status: 'connected' },
+                { name: 'Chargeflow', region: 'Global', type: 'Dispute Automation', status: 'connected' },
+                { name: 'Tapix', region: 'Global', type: 'Data Enrichment', status: 'connected' },
+                { name: 'Active Merchant', region: 'Global', type: '130+ Gateways', status: 'connected' },
+              ].map(int => (
+                <Card key={int.name}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-semibold">{int.name}</span>
+                      <Badge variant="default" className="text-xs">{int.status}</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div><p className="text-muted-foreground">Type</p><p className="font-medium">{int.type}</p></div>
+                      <div><p className="text-muted-foreground">Region</p><p className="font-medium">{int.region}</p></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
         </Tabs>
