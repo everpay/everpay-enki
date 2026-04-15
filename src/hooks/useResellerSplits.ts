@@ -7,12 +7,16 @@ export function useResellerSplits(resellerId?: string) {
   const query = useQuery({
     queryKey: ["reseller-splits", resellerId],
     queryFn: async () => {
-      const filters = resellerId ? { reseller_id: resellerId } : undefined;
-      const splits = await extSelect("reseller_splits", { filters, order: { column: "created_at", ascending: false } });
-      // Enrich with merchant names
-      const merchants = await extSelect("merchants", { select: "id, name" });
-      const nameMap = new Map(merchants.map((m: any) => [m.id, m.name]));
-      return splits.map((s: any) => ({ ...s, merchants: { name: nameMap.get(s.merchant_id) || s.merchant_id?.slice(0, 8) } }));
+      try {
+        const filters = resellerId ? { reseller_id: resellerId } : undefined;
+        const splits = await extSelect("reseller_splits", { filters, order: { column: "created_at", ascending: false } });
+        const merchants = await extSelect("merchants", { select: "id, name" });
+        const nameMap = new Map(merchants.map((m: any) => [m.id, m.name]));
+        return splits.map((s: any) => ({ ...s, merchants: { name: nameMap.get(s.merchant_id) || s.merchant_id?.slice(0, 8) } }));
+      } catch {
+        // Table may not exist on external DB yet
+        return [];
+      }
     },
   });
 
