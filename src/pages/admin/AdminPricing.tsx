@@ -76,7 +76,7 @@ export default function AdminPricing() {
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => setForm({ merchant_id: "", model_type: "percentage", percentage_fee: 2.9, fixed_fee: 0.3, currency: "USD", sponsor_fee_pct: 0, tiers: "", active: true })}>
+              <Button onClick={() => setForm({ merchant_id: "", model_type: "percentage", percentage_fee: 2.9, fixed_fee: 0.3, currency: "USD", tiers: "", active: true })}>
                 <Plus className="h-4 w-4 mr-1" /> Add Pricing
               </Button>
             </DialogTrigger>
@@ -109,9 +109,8 @@ export default function AdminPricing() {
                   <div><Label>% Fee</Label><Input type="number" step="0.01" value={form.percentage_fee} onChange={e => setForm(f => ({ ...f, percentage_fee: Number(e.target.value) }))} /></div>
                   <div><Label>Fixed Fee ($)</Label><Input type="number" step="0.01" value={form.fixed_fee} onChange={e => setForm(f => ({ ...f, fixed_fee: Number(e.target.value) }))} /></div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <div><Label>Currency</Label><Input value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase() }))} /></div>
-                  <div><Label>Sponsor Fee %</Label><Input type="number" step="0.01" value={form.sponsor_fee_pct} onChange={e => setForm(f => ({ ...f, sponsor_fee_pct: Number(e.target.value) }))} /></div>
                 </div>
                 {form.model_type === "tiered" && (
                   <div><Label>Tiers (JSON)</Label><Textarea rows={4} value={form.tiers} onChange={e => setForm(f => ({ ...f, tiers: e.target.value }))} placeholder='[{"min":0,"max":100,"percentage":3.5,"fixed":0.30}]' /></div>
