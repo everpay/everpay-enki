@@ -38,6 +38,12 @@ const ALLOWED_TABLES = [
   "platform_fee_markups",
   "routing_attempt_logs",
   "reseller_splits",
+  "elektropay_payments",
+  "elektropay_settings",
+  "elektropay_wallets",
+  "orders",
+  "payment_intents",
+  "settlement_batches",
 ];
 
 Deno.serve(async (req) => {
