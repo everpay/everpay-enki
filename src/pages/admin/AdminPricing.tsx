@@ -32,7 +32,6 @@ export default function AdminPricing() {
     percentage_fee: 2.9,
     fixed_fee: 0.3,
     currency: "USD",
-    sponsor_fee_pct: 0,
     tiers: "",
     active: true,
   });
@@ -49,7 +48,7 @@ export default function AdminPricing() {
       try { parsedTiers = JSON.parse(form.tiers); } catch { toast.error("Invalid tiers JSON"); return; }
     }
     upsert.mutate(
-      { ...form, percentage_fee: Number(form.percentage_fee), fixed_fee: Number(form.fixed_fee), sponsor_fee_pct: Number(form.sponsor_fee_pct), tiers: parsedTiers },
+      { ...form, percentage_fee: Number(form.percentage_fee), fixed_fee: Number(form.fixed_fee), tiers: parsedTiers },
       { onSuccess: () => { setOpen(false); toast.success("Pricing saved"); } }
     );
   };
@@ -61,7 +60,6 @@ export default function AdminPricing() {
       percentage_fee: row.percentage_fee,
       fixed_fee: row.fixed_fee,
       currency: row.currency,
-      sponsor_fee_pct: row.sponsor_fee_pct,
       tiers: row.tiers ? JSON.stringify(row.tiers, null, 2) : "",
       active: row.active,
     });

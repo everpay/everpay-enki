@@ -25,11 +25,13 @@ export function useMerchantPricing(merchantId?: string) {
       fixed_fee: number;
       currency: string;
       tiers?: any;
-      sponsor_fee_pct: number;
       active: boolean;
     }) => {
-      await extUpsert("merchant_pricing", pricing, "merchant_id,currency");
+      const { ...rest } = pricing;
+      await extUpsert("merchant_pricing", rest, "merchant_id,currency");
     },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["merchant-pricing"] }),
+  });
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["merchant-pricing"] }),
   });
 
