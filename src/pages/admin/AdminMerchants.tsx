@@ -57,8 +57,11 @@ export default function AdminMerchants() {
   };
 
   const filteredMerchants = merchants.filter(m => {
-    const matchesSearch = m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = m.name?.toLowerCase().includes(term) ||
+      m.email?.toLowerCase().includes(term) ||
+      m.id?.toLowerCase().includes(term) ||
+      m.user_id?.toLowerCase().includes(term);
     const matchesStatus = statusFilter === 'all' || m.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -122,7 +125,7 @@ export default function AdminMerchants() {
             <div className="flex items-center space-x-2 mb-4">
               <div className="relative flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search by name or email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8" />
+                <Input placeholder="Search by name, email, merchant ID, or user ID..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-8" />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
