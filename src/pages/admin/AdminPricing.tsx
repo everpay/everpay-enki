@@ -32,7 +32,6 @@ export default function AdminPricing() {
     percentage_fee: 2.9,
     fixed_fee: 0.3,
     currency: "USD",
-    sponsor_fee_pct: 0,
     tiers: "",
     active: true,
   });
@@ -49,7 +48,7 @@ export default function AdminPricing() {
       try { parsedTiers = JSON.parse(form.tiers); } catch { toast.error("Invalid tiers JSON"); return; }
     }
     upsert.mutate(
-      { ...form, percentage_fee: Number(form.percentage_fee), fixed_fee: Number(form.fixed_fee), sponsor_fee_pct: Number(form.sponsor_fee_pct), tiers: parsedTiers },
+      { ...form, percentage_fee: Number(form.percentage_fee), fixed_fee: Number(form.fixed_fee), tiers: parsedTiers },
       { onSuccess: () => { setOpen(false); toast.success("Pricing saved"); } }
     );
   };
@@ -61,7 +60,6 @@ export default function AdminPricing() {
       percentage_fee: row.percentage_fee,
       fixed_fee: row.fixed_fee,
       currency: row.currency,
-      sponsor_fee_pct: row.sponsor_fee_pct,
       tiers: row.tiers ? JSON.stringify(row.tiers, null, 2) : "",
       active: row.active,
     });
@@ -78,7 +76,7 @@ export default function AdminPricing() {
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => setForm({ merchant_id: "", model_type: "percentage", percentage_fee: 2.9, fixed_fee: 0.3, currency: "USD", sponsor_fee_pct: 0, tiers: "", active: true })}>
+              <Button onClick={() => setForm({ merchant_id: "", model_type: "percentage", percentage_fee: 2.9, fixed_fee: 0.3, currency: "USD", tiers: "", active: true })}>
                 <Plus className="h-4 w-4 mr-1" /> Add Pricing
               </Button>
             </DialogTrigger>
@@ -111,9 +109,8 @@ export default function AdminPricing() {
                   <div><Label>% Fee</Label><Input type="number" step="0.01" value={form.percentage_fee} onChange={e => setForm(f => ({ ...f, percentage_fee: Number(e.target.value) }))} /></div>
                   <div><Label>Fixed Fee ($)</Label><Input type="number" step="0.01" value={form.fixed_fee} onChange={e => setForm(f => ({ ...f, fixed_fee: Number(e.target.value) }))} /></div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <div><Label>Currency</Label><Input value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase() }))} /></div>
-                  <div><Label>Sponsor Fee %</Label><Input type="number" step="0.01" value={form.sponsor_fee_pct} onChange={e => setForm(f => ({ ...f, sponsor_fee_pct: Number(e.target.value) }))} /></div>
                 </div>
                 {form.model_type === "tiered" && (
                   <div><Label>Tiers (JSON)</Label><Textarea rows={4} value={form.tiers} onChange={e => setForm(f => ({ ...f, tiers: e.target.value }))} placeholder='[{"min":0,"max":100,"percentage":3.5,"fixed":0.30}]' /></div>
@@ -137,7 +134,7 @@ export default function AdminPricing() {
                     <TableHead>% Fee</TableHead>
                     <TableHead>Fixed</TableHead>
                     <TableHead>Currency</TableHead>
-                    <TableHead>Sponsor %</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
@@ -150,7 +147,6 @@ export default function AdminPricing() {
                       <TableCell>{row.percentage_fee}%</TableCell>
                       <TableCell>${row.fixed_fee}</TableCell>
                       <TableCell>{row.currency}</TableCell>
-                      <TableCell>{row.sponsor_fee_pct}%</TableCell>
                       <TableCell><Badge variant={row.active ? "default" : "secondary"}>{row.active ? "Active" : "Inactive"}</Badge></TableCell>
                       <TableCell><Button variant="ghost" size="icon" onClick={() => editRow(row)}><Pencil className="h-4 w-4" /></Button></TableCell>
                     </TableRow>

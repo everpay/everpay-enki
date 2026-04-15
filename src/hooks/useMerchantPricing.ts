@@ -9,7 +9,6 @@ export function useMerchantPricing(merchantId?: string) {
     queryFn: async () => {
       const filters = merchantId ? { merchant_id: merchantId } : undefined;
       const rows = await extSelect("merchant_pricing", { filters, order: { column: "created_at", ascending: false } });
-      // Enrich with merchant names
       const merchants = await extSelect("merchants", { select: "id, name" });
       const nameMap = new Map(merchants.map((m: any) => [m.id, m.name]));
       return rows.map((r: any) => ({ ...r, merchants: { name: nameMap.get(r.merchant_id) || r.merchant_id?.slice(0, 8) } }));
@@ -25,7 +24,6 @@ export function useMerchantPricing(merchantId?: string) {
       fixed_fee: number;
       currency: string;
       tiers?: any;
-      sponsor_fee_pct: number;
       active: boolean;
     }) => {
       await extUpsert("merchant_pricing", pricing, "merchant_id,currency");
