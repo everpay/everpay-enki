@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { extSelect, externalProxy } from '@/hooks/useExternalData';
 
 interface SystemStats {
   totalUsers: number;
@@ -21,37 +21,35 @@ export function useAdminDashboardData() {
   return useQuery({
     queryKey: ['admin-dashboard-data'],
     queryFn: async (): Promise<SystemStats> => {
-      const [profilesRes, merchantsRes, txnsRes, refundsRes, disputesRes, cryptoRes] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('merchants').select('id', { count: 'exact', head: true }),
-        supabase.from('transactions').select('id, amount, status').limit(1000),
-        supabase.from('refunds').select('id, amount, status').limit(1000),
-        supabase.from('disputes').select('id, amount, status').limit(1000),
-        supabase.from('elektropay_payments' as any).select('commission_amount, flat_fee, total_fees, status').limit(1000),
+      const [usersRes, merchantsRes, txns, refunds, disputes, cryptoPayments] = await Promise.all([
+        externalProxy({ action: 'list_users' }),
+        externalProxy({ action: 'list_merchants_full' }),
+        extSelect('transactions', { select: 'id, amount, status', limit: 5000 }),
+        extSelect('refunds', { select: 'id, amount, status', limit: 5000 }),
+        extSelect('disputes', { select: 'id, amount, status', limit: 5000 }),
+        extSelect('elektropay_payments', { select: 'commission_amount, flat_fee, total_fees, status', limit: 5000 }),
       ]);
 
-      const txns = txnsRes.data || [];
-      const refunds = refundsRes.data || [];
-      const disputes = disputesRes.data || [];
-      const cryptoPayments = (cryptoRes.data || []) as any[];
+      const users = usersRes.data || [];
+      const merchants = merchantsRes.data || [];
 
-      const completedTxns = txns.filter(t => t.status === 'completed');
-      const totalVolume = completedTxns.reduce((s, t) => s + Number(t.amount), 0);
-      const refundAmount = refunds.reduce((s, r) => s + Number(r.amount), 0);
-      const disputeAmount = disputes.reduce((s, d) => s + Number(d.amount), 0);
+      const completedTxns = txns.filter((t: any) => t.status === 'completed');
+      const totalVolume = completedTxns.reduce((s: number, t: any) => s + Number(t.amount), 0);
+      const refundAmount = refunds.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      const disputeAmount = disputes.reduce((s: number, d: any) => s + Number(d.amount), 0);
 
-      const cryptoCommissionRevenue = cryptoPayments.reduce((s, p) => s + Number(p.commission_amount || 0), 0);
-      const cryptoFlatFeeRevenue = cryptoPayments.reduce((s, p) => s + Number(p.flat_fee || 0), 0);
-      const cryptoTotalFees = cryptoPayments.reduce((s, p) => s + Number(p.total_fees || 0), 0);
+      const cryptoCommissionRevenue = cryptoPayments.reduce((s: number, p: any) => s + Number(p.commission_amount || 0), 0);
+      const cryptoFlatFeeRevenue = cryptoPayments.reduce((s: number, p: any) => s + Number(p.flat_fee || 0), 0);
+      const cryptoTotalFees = cryptoPayments.reduce((s: number, p: any) => s + Number(p.total_fees || 0), 0);
 
       return {
-        totalUsers: profilesRes.count || 0,
-        totalMerchants: merchantsRes.count || 0,
+        totalUsers: users.length,
+        totalMerchants: merchants.length,
         totalTransactions: txns.length,
         totalVolume,
         totalRefunds: refunds.length,
         totalDisputes: disputes.length,
-        totalChargebacks: disputes.filter(d => d.status === 'chargeback' || d.status === 'open').length,
+        totalChargebacks: disputes.filter((d: any) => d.status === 'chargeback' || d.status === 'open').length,
         refundAmount,
         disputeAmount,
         cryptoCommissionRevenue,
