@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Globe, Trash2, Loader2, ArrowUpDown } from 'lucide-react';
 import { CountrySelect } from '@/components/CountrySelect';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { extSelect, extInsert, extUpdate, extDelete } from '@/hooks/useExternalData';
 import { toast } from 'sonner';
 
 const PROCESSORS = ['shieldhub', 'mondo', 'moneto', 'paygate10', 'ofa', 'makapay', 'lipad', 'payok', 'matrix', 'dcbank'];
@@ -30,27 +30,26 @@ export default function AdminPspRouting() {
   const { data: merchants } = useQuery({
     queryKey: ['admin-merchants-list'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('merchants').select('id, name').order('name');
-      if (error) throw error;
-      return data;
+      return await extSelect('merchants', { select: 'id, name', order: { column: 'name', ascending: true } });
     },
   });
 
   const { data: routes, isLoading } = useQuery({
     queryKey: ['admin-psp-routes', filterMerchant],
     queryFn: async () => {
-      let query = supabase.from('psp_routes').select('*, merchants(name)').order('priority', { ascending: true });
-      if (filterMerchant !== 'all') query = query.eq('merchant_id', filterMerchant);
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      const filters = filterMerchant !== 'all' ? { merchant_id: filterMerchant } : undefined;
+      const routes = await extSelect('psp_routes', { filters, order: { column: 'priority', ascending: true } });
+      // Enrich with merchant names
+      const allMerchants = await extSelect('merchants', { select: 'id, name' });
+      const nameMap = new Map(allMerchants.map((m: any) => [m.id, m.name]));
+      return routes.map((r: any) => ({ ...r, merchants: { name: nameMap.get(r.merchant_id) || 'Unknown' } }));
     },
   });
 
   const handleAdd = async () => {
     if (!selectedMerchant || !processor) { toast.error('Merchant and processor required'); return; }
     try {
-      const { error } = await supabase.from('psp_routes').insert({
+      await extInsert('psp_routes', {
         merchant_id: selectedMerchant,
         country: country || null,
         card_brand: cardBrand || null,
@@ -58,7 +57,6 @@ export default function AdminPspRouting() {
         processor,
         priority: parseInt(priority) || 0,
       });
-      if (error) throw error;
       toast.success('Route added');
       setShowAdd(false);
       setCountry(''); setCardBrand(''); setRiskLevel(''); setProcessor('shieldhub'); setPriority('0');
@@ -67,15 +65,18 @@ export default function AdminPspRouting() {
   };
 
   const handleToggle = async (id: string, active: boolean) => {
-    const { error } = await supabase.from('psp_routes').update({ active, updated_at: new Date().toISOString() }).eq('id', id);
-    if (error) toast.error('Failed to update');
-    else queryClient.invalidateQueries({ queryKey: ['admin-psp-routes'] });
+    try {
+      await extUpdate('psp_routes', id, { active, updated_at: new Date().toISOString() });
+      queryClient.invalidateQueries({ queryKey: ['admin-psp-routes'] });
+    } catch { toast.error('Failed to update'); }
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('psp_routes').delete().eq('id', id);
-    if (error) toast.error('Failed to delete');
-    else { toast.success('Deleted'); queryClient.invalidateQueries({ queryKey: ['admin-psp-routes'] }); }
+    try {
+      await extDelete('psp_routes', id);
+      toast.success('Deleted');
+      queryClient.invalidateQueries({ queryKey: ['admin-psp-routes'] });
+    } catch { toast.error('Failed to delete'); }
   };
 
   return (
