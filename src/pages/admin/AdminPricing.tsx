@@ -134,7 +134,7 @@ export default function AdminPricing() {
                     <TableHead>% Fee</TableHead>
                     <TableHead>Fixed</TableHead>
                     <TableHead>Currency</TableHead>
-                    <TableHead>Sponsor %</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
@@ -147,7 +147,6 @@ export default function AdminPricing() {
                       <TableCell>{row.percentage_fee}%</TableCell>
                       <TableCell>${row.fixed_fee}</TableCell>
                       <TableCell>{row.currency}</TableCell>
-                      <TableCell>{row.sponsor_fee_pct}%</TableCell>
                       <TableCell><Badge variant={row.active ? "default" : "secondary"}>{row.active ? "Active" : "Inactive"}</Badge></TableCell>
                       <TableCell><Button variant="ghost" size="icon" onClick={() => editRow(row)}><Pencil className="h-4 w-4" /></Button></TableCell>
                     </TableRow>
