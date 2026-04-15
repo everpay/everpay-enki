@@ -21,7 +21,7 @@ export function useAdminDashboardData() {
   return useQuery({
     queryKey: ['admin-dashboard-data'],
     queryFn: async (): Promise<SystemStats> => {
-      const [usersRes, merchantsRes, txns, refunds, disputes, cryptoPayments] = await Promise.all([
+      const [usersRes, merchantsRes, txnsRes, refundsRes, disputesRes, cryptoPaymentsRes] = await Promise.allSettled([
         externalProxy({ action: 'list_users' }),
         externalProxy({ action: 'list_merchants_full' }),
         extSelect('transactions', { select: 'id, amount, status', limit: 5000 }),
@@ -30,8 +30,12 @@ export function useAdminDashboardData() {
         extSelect('elektropay_payments', { select: 'commission_amount, flat_fee, total_fees, status', limit: 5000 }),
       ]);
 
-      const users = usersRes.data || [];
-      const merchants = merchantsRes.data || [];
+      const users = usersRes.status === 'fulfilled' ? (usersRes.value.data || []) : [];
+      const merchants = merchantsRes.status === 'fulfilled' ? (merchantsRes.value.data || []) : [];
+      const txns = txnsRes.status === 'fulfilled' ? txnsRes.value : [];
+      const refunds = refundsRes.status === 'fulfilled' ? refundsRes.value : [];
+      const disputes = disputesRes.status === 'fulfilled' ? disputesRes.value : [];
+      const cryptoPayments = cryptoPaymentsRes.status === 'fulfilled' ? cryptoPaymentsRes.value : [];
 
       const completedTxns = txns.filter((t: any) => t.status === 'completed');
       const totalVolume = completedTxns.reduce((s: number, t: any) => s + Number(t.amount), 0);
