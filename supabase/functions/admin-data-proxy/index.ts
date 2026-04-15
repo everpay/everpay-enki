@@ -249,9 +249,12 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: `Invalid or disallowed table: ${table}` }, 400);
   }
 
+  // Use service-role client for admin reads to bypass RLS
+  const adminClient = extAdmin || extUser;
+
   try {
     if (action === "select") {
-      let query = extUser.from(table).select(select || "*");
+      let query = adminClient.from(table).select(select || "*");
       if (filters) {
         for (const [col, val] of Object.entries(filters)) {
           query = query.eq(col, val as any);
@@ -268,14 +271,14 @@ Deno.serve(async (req) => {
 
     if (action === "insert") {
       if (!data) return jsonResponse({ error: "data required" }, 400);
-      const { data: result, error } = await extUser.from(table).insert(data).select();
+      const { data: result, error } = await adminClient.from(table).insert(data).select();
       if (error) return jsonResponse({ error: error.message }, 500);
       return jsonResponse({ data: result });
     }
 
     if (action === "update") {
       if (!id || !data) return jsonResponse({ error: "id and data required" }, 400);
-      const { data: result, error } = await extUser.from(table).update(data).eq("id", id).select();
+      const { data: result, error } = await adminClient.from(table).update(data).eq("id", id).select();
       if (error) return jsonResponse({ error: error.message }, 500);
       return jsonResponse({ data: result });
     }
@@ -283,14 +286,14 @@ Deno.serve(async (req) => {
     if (action === "upsert") {
       if (!data) return jsonResponse({ error: "data required" }, 400);
       const onConflict = body.on_conflict || "id";
-      const { data: result, error } = await extUser.from(table).upsert(data, { onConflict }).select();
+      const { data: result, error } = await adminClient.from(table).upsert(data, { onConflict }).select();
       if (error) return jsonResponse({ error: error.message }, 500);
       return jsonResponse({ data: result });
     }
 
     if (action === "delete") {
       if (!id) return jsonResponse({ error: "id required" }, 400);
-      const { error } = await extUser.from(table).delete().eq("id", id);
+      const { error } = await adminClient.from(table).delete().eq("id", id);
       if (error) return jsonResponse({ error: error.message }, 500);
       return jsonResponse({ ok: true });
     }
