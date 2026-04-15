@@ -24,7 +24,7 @@ export function useRevenueAnalytics() {
       const byMerchant = new Map<string, { name: string; volume: number; fees: number; everpay: number; count: number }>();
       for (const f of fees || []) {
         const mid = f.merchant_id;
-        const existing = byMerchant.get(mid) || { name: nameMap.get(mid) || "Unknown", volume: 0, fees: 0, everpay: 0, count: 0 };
+        const existing = byMerchant.get(mid) || { name: (nameMap.get(mid) as string) || "Unknown", volume: 0, fees: 0, everpay: 0, count: 0 };
         existing.volume += Number(f.transaction_amount);
         existing.fees += Number(f.total_fee);
         existing.everpay += Number(f.everpay_fee);
