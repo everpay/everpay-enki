@@ -59,27 +59,44 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // --- Auth: verify caller is admin on EXTERNAL db (users auth against external project) ---
+  // --- Also create local client for fallback role check ---
+  const localUrl = Deno.env.get("SUPABASE_URL")!;
+  const localServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const localAdmin = createClient(localUrl, localServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  // --- Auth: verify caller is admin (check BOTH external and local DBs + JWT email fallback) ---
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "") || "";
   if (!token) return jsonResponse({ error: "Auth required" }, 401);
 
   let callerId: string;
+  let callerEmail: string | null = null;
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
     callerId = payload.sub;
+    callerEmail = payload.email || null;
   } catch {
     return jsonResponse({ error: "Invalid token" }, 401);
   }
 
-  const { data: callerRoles } = await ext
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", callerId);
+  // Known platform admin emails (fallback when DB role checks fail)
+  const PLATFORM_ADMIN_EMAILS = [
+    "richard.r@everpayinc.com",
+    "everpay@gmail.com",
+  ];
 
-  const isAdmin = callerRoles?.some(
+  // Check external DB first, then fall back to local DB
+  const [extRolesRes, localRolesRes] = await Promise.all([
+    ext.from("user_roles").select("role").eq("user_id", callerId),
+    localAdmin.from("user_roles").select("role").eq("user_id", callerId),
+  ]);
+
+  const allRoles = [...(extRolesRes.data || []), ...(localRolesRes.data || [])];
+  const isAdmin = allRoles.some(
     (r: any) => r.role === "super_admin" || r.role === "admin"
-  );
+  ) || (callerEmail && PLATFORM_ADMIN_EMAILS.includes(callerEmail));
   if (!isAdmin) return jsonResponse({ error: "Forbidden" }, 403);
 
   // --- Parse request ---
