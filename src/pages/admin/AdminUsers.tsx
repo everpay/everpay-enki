@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,14 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { externalProxy } from '@/hooks/useExternalData';
 import { Search, MoreHorizontal, Trash2, Power, PowerOff } from 'lucide-react';
 
 interface User {
   id: string;
   user_id: string;
   display_name?: string;
+  email?: string;
   created_at: string;
   role?: string;
   status?: string;
@@ -42,16 +43,11 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const [profilesRes, rolesRes] = await Promise.all([
-        supabase.from('profiles').select('id, user_id, display_name, created_at, status').order('created_at', { ascending: false }),
-        supabase.from('user_roles').select('user_id, role'),
-      ]);
-      if (profilesRes.error) throw profilesRes.error;
-      const roleMap = new Map(rolesRes.data?.map(r => [r.user_id, r.role]) || []);
-      setUsers((profilesRes.data || []).map((p: any) => ({
-        ...p,
-        role: roleMap.get(p.user_id) || 'user',
-        status: p.status || 'active',
+      const result = await externalProxy({ action: 'list_users' });
+      setUsers((result.data || []).map((u: any) => ({
+        ...u,
+        role: u.role || 'user',
+        status: u.status || 'active',
       })));
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to load users', variant: 'destructive' });
@@ -62,9 +58,7 @@ export default function AdminUsers() {
 
   const handleRoleUpdate = async (userId: string, newRole: string) => {
     try {
-      await supabase.from('user_roles').delete().eq('user_id', userId);
-      const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: newRole as any });
-      if (error) throw error;
+      await externalProxy({ action: 'update_user_role', user_id: userId, new_role: newRole });
       setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, role: newRole } : u));
       toast({ title: 'Success', description: 'User role updated' });
     } catch (error) {
@@ -75,8 +69,7 @@ export default function AdminUsers() {
   const handleToggleStatus = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'deactivated' : 'active';
     try {
-      const { error } = await supabase.from('profiles').update({ status: newStatus } as any).eq('user_id', userId);
-      if (error) throw error;
+      await externalProxy({ action: 'toggle_user_status', user_id: userId, status: newStatus });
       setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, status: newStatus } : u));
       toast({ title: 'Success', description: `User ${newStatus === 'active' ? 'activated' : 'deactivated'}` });
     } catch (error) {
@@ -86,10 +79,7 @@ export default function AdminUsers() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      // Remove role and profile (auth user remains but profile is deleted)
-      await supabase.from('user_roles').delete().eq('user_id', userId);
-      const { error } = await supabase.from('profiles').delete().eq('user_id', userId);
-      if (error) throw error;
+      await externalProxy({ action: 'delete_user', user_id: userId });
       setUsers(prev => prev.filter(u => u.user_id !== userId));
       toast({ title: 'Success', description: 'User removed' });
     } catch (error) {
@@ -98,7 +88,7 @@ export default function AdminUsers() {
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesSearch = (u.display_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || u.user_id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (u.display_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || u.user_id.toLowerCase().includes(searchTerm.toLowerCase()) || (u.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -150,6 +140,7 @@ export default function AdminUsers() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
                       <TableHead>User ID</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
@@ -162,6 +153,7 @@ export default function AdminUsers() {
                     {filteredUsers.map(u => (
                       <TableRow key={u.id} className={u.status === 'deactivated' ? 'opacity-60' : ''}>
                         <TableCell className="font-medium">{u.display_name || 'N/A'}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{u.email || '—'}</TableCell>
                         <TableCell className="text-muted-foreground font-mono text-xs">{u.user_id.slice(0, 12)}...</TableCell>
                         <TableCell><Badge variant={getRoleBadgeVariant(u.role || 'user')}>{u.role || 'user'}</Badge></TableCell>
                         <TableCell>
