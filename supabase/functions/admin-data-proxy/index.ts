@@ -148,9 +148,10 @@ Deno.serve(async (req) => {
   if (!action) return jsonResponse({ error: "action required" }, 400);
 
   if (action === "list_users") {
+    const adminClient = extAdmin || extUser;
     const [profilesRes, rolesRes, emailMap] = await Promise.all([
-      extUser.from("profiles").select("*").order("created_at", { ascending: false }),
-      extUser.from("user_roles").select("user_id, role"),
+      adminClient.from("profiles").select("*").order("created_at", { ascending: false }),
+      adminClient.from("user_roles").select("user_id, role"),
       getExternalAuthEmailMap(extAdmin),
     ]);
 
@@ -175,9 +176,10 @@ Deno.serve(async (req) => {
   }
 
   if (action === "list_merchants_full") {
+    const adminClient = extAdmin || extUser;
     const [merchantsRes, profilesRes, emailMap] = await Promise.all([
-      extUser.from("merchants").select("*").order("created_at", { ascending: false }),
-      extUser.from("merchant_profiles").select("*"),
+      adminClient.from("merchants").select("*").order("created_at", { ascending: false }),
+      adminClient.from("merchant_profiles").select("*"),
       getExternalAuthEmailMap(extAdmin),
     ]);
 
