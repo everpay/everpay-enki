@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useMerchantPricing } from "@/hooks/useMerchantPricing";
+import { useQuery } from "@tanstack/react-query";
+import { extSelect } from "@/hooks/useExternalData";
 import { toast } from "sonner";
 import { DollarSign, Plus, Pencil } from "lucide-react";
 
@@ -35,8 +37,13 @@ export default function AdminPricing() {
     active: true,
   });
 
+  const { data: merchants } = useQuery({
+    queryKey: ["admin-merchants-for-pricing"],
+    queryFn: () => extSelect("merchants", { select: "id, name", order: { column: "name", ascending: true } }),
+  });
+
   const handleSave = () => {
-    if (!form.merchant_id) { toast.error("Merchant ID required"); return; }
+    if (!form.merchant_id) { toast.error("Merchant required"); return; }
     let parsedTiers = null;
     if (form.model_type === "tiered" && form.tiers) {
       try { parsedTiers = JSON.parse(form.tiers); } catch { toast.error("Invalid tiers JSON"); return; }
@@ -78,7 +85,17 @@ export default function AdminPricing() {
             <DialogContent className="max-w-lg">
               <DialogHeader><DialogTitle>Pricing Configuration</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <div><Label>Merchant ID</Label><Input value={form.merchant_id} onChange={e => setForm(f => ({ ...f, merchant_id: e.target.value }))} placeholder="UUID" /></div>
+                <div>
+                  <Label>Merchant</Label>
+                  <Select value={form.merchant_id} onValueChange={v => setForm(f => ({ ...f, merchant_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Select merchant" /></SelectTrigger>
+                    <SelectContent>
+                      {(merchants || []).map((m: any) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div><Label>Model Type</Label>
                   <Select value={form.model_type} onValueChange={v => setForm(f => ({ ...f, model_type: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
