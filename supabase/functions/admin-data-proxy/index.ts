@@ -49,13 +49,17 @@ const ALLOWED_TABLES = [
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // --- Auth: verify caller is admin on LOCAL db ---
-  const localUrl = Deno.env.get("SUPABASE_URL")!;
-  const localServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const localAdmin = createClient(localUrl, localServiceKey, {
+  // --- Connect to EXTERNAL Everpay Platform OS DB ---
+  const extUrl = Deno.env.get("EXTERNAL_SUPABASE_URL");
+  const extKey = Deno.env.get("EXTERNAL_SUPABASE_SERVICE_ROLE_KEY");
+  if (!extUrl || !extKey) {
+    return jsonResponse({ error: "External database not configured" }, 500);
+  }
+  const ext = createClient(extUrl, extKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // --- Auth: verify caller is admin on EXTERNAL db (users auth against external project) ---
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "") || "";
   if (!token) return jsonResponse({ error: "Auth required" }, 401);
@@ -68,7 +72,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Invalid token" }, 401);
   }
 
-  const { data: callerRoles } = await localAdmin
+  const { data: callerRoles } = await ext
     .from("user_roles")
     .select("role")
     .eq("user_id", callerId);
@@ -77,16 +81,6 @@ Deno.serve(async (req) => {
     (r: any) => r.role === "super_admin" || r.role === "admin"
   );
   if (!isAdmin) return jsonResponse({ error: "Forbidden" }, 403);
-
-  // --- Connect to EXTERNAL Everpay Platform OS DB ---
-  const extUrl = Deno.env.get("EXTERNAL_SUPABASE_URL");
-  const extKey = Deno.env.get("EXTERNAL_SUPABASE_SERVICE_ROLE_KEY");
-  if (!extUrl || !extKey) {
-    return jsonResponse({ error: "External database not configured" }, 500);
-  }
-  const ext = createClient(extUrl, extKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
 
   // --- Parse request ---
   let body: any;
