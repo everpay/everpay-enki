@@ -25,14 +25,17 @@ export function useAdminTransactionAnalytics() {
       const sixMonthsAgo = subMonths(now, 6);
       const thirtyDaysAgo = subDays(now, 30);
 
-      const [allTxns, refunds, disputes, usersRes] = await Promise.all([
+      const [allTxnsRes, refundsRes, disputesRes, usersRes] = await Promise.allSettled([
         extSelect('transactions', { select: 'id, amount, status, created_at', order: { column: 'created_at', ascending: true }, limit: 5000 }),
         extSelect('refunds', { select: 'id, amount, status, created_at', limit: 5000 }),
         extSelect('disputes', { select: 'id, amount, status, created_at', limit: 5000 }),
         externalProxy({ action: 'list_users' }),
       ]);
 
-      const users = usersRes.data || [];
+      const allTxns = allTxnsRes.status === 'fulfilled' ? allTxnsRes.value : [];
+      const refunds = refundsRes.status === 'fulfilled' ? refundsRes.value : [];
+      const disputes = disputesRes.status === 'fulfilled' ? disputesRes.value : [];
+      const users = usersRes.status === 'fulfilled' ? (usersRes.value.data || []) : [];
       const txns = allTxns.filter((t: any) => t.status === 'completed');
 
       const months = eachMonthOfInterval({ start: sixMonthsAgo, end: now });
