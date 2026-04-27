@@ -88,6 +88,20 @@ const ALLOWED_TABLES = [
   "orders",
   "payment_intents",
   "settlement_batches",
+  // MzzPay merge — crypto suite
+  "crypto_wallets",
+  "crypto_assets",
+  "crypto_stores",
+  "crypto_commissions",
+  "crypto_transactions",
+  "elektropay_webhook_events",
+  // MzzPay merge — surcharging / banking
+  "surcharge_settings",
+  "bank_accounts_safe",
+  "wallets",
+  "settlement_runs",
+  "payouts",
+  "billing_periods",
 ];
 
 Deno.serve(async (req) => {
