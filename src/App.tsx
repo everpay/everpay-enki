@@ -46,6 +46,15 @@ import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminBilling from "./pages/admin/AdminBilling";
 
 import AdminTransactionMonitoring from "./pages/admin/AdminTransactionMonitoring";
+import AdminCryptoWallets from "./pages/admin/AdminCryptoWallets";
+import AdminCryptoStores from "./pages/admin/AdminCryptoStores";
+import AdminCryptoCommissions from "./pages/admin/AdminCryptoCommissions";
+import AdminCryptoWebhookEvents from "./pages/admin/AdminCryptoWebhookEvents";
+import AdminCryptoAuditLog from "./pages/admin/AdminCryptoAuditLog";
+import AdminBanking from "./pages/admin/AdminBanking";
+import AdminSurcharging from "./pages/admin/AdminSurcharging";
+import AdminCurrencyManagement from "./pages/admin/AdminCurrencyManagement";
+import AdminDisputeDetail from "./pages/admin/AdminDisputeDetail";
 
 const queryClient = new QueryClient();
 
@@ -129,6 +138,19 @@ const AppRoutes = () => {
     <Route path="/enki/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
     <Route path="/enki/billing" element={<AdminRoute><AdminBilling /></AdminRoute>} />
     <Route path="/enki/transaction-monitoring" element={<AdminRoute><AdminTransactionMonitoring /></AdminRoute>} />
+
+    {/* Crypto admin suite */}
+    <Route path="/enki/crypto/wallets" element={<AdminRoute><AdminCryptoWallets /></AdminRoute>} />
+    <Route path="/enki/crypto/stores" element={<AdminRoute><AdminCryptoStores /></AdminRoute>} />
+    <Route path="/enki/crypto/commissions" element={<AdminRoute><AdminCryptoCommissions /></AdminRoute>} />
+    <Route path="/enki/crypto/webhooks" element={<AdminRoute><AdminCryptoWebhookEvents /></AdminRoute>} />
+    <Route path="/enki/crypto/audit" element={<AdminRoute><AdminCryptoAuditLog /></AdminRoute>} />
+
+    {/* Operations */}
+    <Route path="/enki/banking" element={<AdminRoute><AdminBanking /></AdminRoute>} />
+    <Route path="/enki/surcharging" element={<AdminRoute><AdminSurcharging /></AdminRoute>} />
+    <Route path="/enki/currencies" element={<AdminRoute><AdminCurrencyManagement /></AdminRoute>} />
+    <Route path="/enki/disputes/:id" element={<AdminRoute><AdminDisputeDetail /></AdminRoute>} />
 
     {/* Catch-all */}
     <Route path="*" element={<NotFound />} />

@@ -189,6 +189,19 @@ const adminSections: NavSection[] = [
       { to: "/enki/notifications", icon: Bell, label: "Notifications" },
       { to: "/enki/reserves", icon: Landmark, label: "Reserves" },
       { to: "/enki/regulatory", icon: FileBarChart, label: "Regulatory Export" },
+      { to: "/enki/banking", icon: Landmark, label: "Banking" },
+      { to: "/enki/surcharging", icon: DollarSign, label: "Surcharging" },
+      { to: "/enki/currencies", icon: Globe, label: "Currencies" },
+    ],
+  },
+  {
+    title: "Crypto",
+    items: [
+      { to: "/enki/crypto/wallets", icon: Wallet, label: "Wallets" },
+      { to: "/enki/crypto/stores", icon: Store, label: "Stores" },
+      { to: "/enki/crypto/commissions", icon: DollarSign, label: "Commissions" },
+      { to: "/enki/crypto/webhooks", icon: Bell, label: "Webhook Events" },
+      { to: "/enki/crypto/audit", icon: Eye, label: "Audit Log" },
     ],
   },
 ];
