@@ -18,8 +18,10 @@ interface ProxyRequest {
   data?: any;
   id?: string;
   select?: string;
-  order?: { column: string; ascending?: boolean };
+  order?: { column: string; ascending?: boolean } | { column: string; ascending?: boolean }[];
   limit?: number;
+  offset?: number;
+  count?: boolean;
   on_conflict?: string;
   // For special actions
   user_id?: string;
@@ -42,13 +44,39 @@ export async function externalProxy(body: ProxyRequest) {
 }
 
 // Convenience helpers
-export async function extSelect(table: string, options?: { select?: string; filters?: Record<string, any>; order?: { column: string; ascending?: boolean }; limit?: number }) {
+export async function extSelect(table: string, options?: { select?: string; filters?: Record<string, any>; order?: { column: string; ascending?: boolean } | { column: string; ascending?: boolean }[]; limit?: number }) {
   const res = await externalProxy({
     action: "select",
     table,
     ...options,
   });
   return res.data || [];
+}
+
+export async function extSelectPaged<T = any>(
+  table: string,
+  options: {
+    select?: string;
+    filters?: Record<string, any>;
+    order?: { column: string; ascending?: boolean } | { column: string; ascending?: boolean }[];
+    page?: number;
+    pageSize?: number;
+  }
+): Promise<{ data: T[]; count: number }> {
+  const page = Math.max(1, options.page || 1);
+  const pageSize = Math.max(1, Math.min(500, options.pageSize || 25));
+  const offset = (page - 1) * pageSize;
+  const res = await externalProxy({
+    action: "select",
+    table,
+    select: options.select,
+    filters: options.filters,
+    order: options.order,
+    limit: pageSize,
+    offset,
+    count: true,
+  });
+  return { data: (res.data || []) as T[], count: Number(res.count || 0) };
 }
 
 export async function extInsert(table: string, data: any) {
