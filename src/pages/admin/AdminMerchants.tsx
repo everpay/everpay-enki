@@ -11,6 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { externalProxy } from '@/hooks/useExternalData';
 import MerchantForm from '@/components/admin/MerchantForm';
 import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone } from 'lucide-react';
+import { NewSinceBadge } from '@/components/admin/NewSinceBadge';
+import { SyncNowButton } from '@/components/admin/SyncNowButton';
+import { useNewSinceLastVisit } from '@/hooks/useNewSinceLastVisit';
 
 interface MerchantRow {
   id: string;
@@ -34,8 +37,17 @@ export default function AdminMerchants() {
   const [openAddMerchant, setOpenAddMerchant] = useState(false);
   const [selectedMerchant, setSelectedMerchant] = useState<MerchantRow | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const { countNew, markVisited } = useNewSinceLastVisit('admin-merchants');
+  const newCount = countNew(merchants);
 
   useEffect(() => { fetchMerchants(); }, []);
+
+  useEffect(() => {
+    if (!loading && merchants.length) {
+      const t = setTimeout(() => markVisited(), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [loading, merchants.length, markVisited]);
 
   const fetchMerchants = async () => {
     try {
@@ -88,12 +100,18 @@ export default function AdminMerchants() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Merchants</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">Merchants</h1>
+              <NewSinceBadge count={newCount} label="new merchants" />
+            </div>
             <p className="text-muted-foreground">Manage merchant accounts, onboarding, and access</p>
           </div>
-          <Button onClick={() => setOpenAddMerchant(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />Add Merchant
-          </Button>
+          <div className="flex items-center gap-2">
+            <SyncNowButton onSynced={fetchMerchants} />
+            <Button onClick={() => setOpenAddMerchant(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />Add Merchant
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">

@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Building, Check, Clock, AlertCircle, Link2, ArrowUpDown, Eye } from "lucide-react";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { extSelectPaged } from "@/hooks/useExternalData";
 import { useAccessControl } from "@/hooks/useAccessControl";
@@ -32,11 +34,19 @@ export default function AdminBankAccounts() {
   const [sortCol, setSortCol] = useState<SortCol>("created_at");
   const [sortAsc, setSortAsc] = useState(false);
   const [drawer, setDrawer] = useState<any | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filters = search.trim()
+    ? {
+        or: `bank_name.ilike.%${search}%,country.ilike.%${search}%,currency.ilike.%${search}%,merchant_id.ilike.%${search}%,status.ilike.%${search}%`,
+      }
+    : undefined;
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["admin-bank-accounts-all", page, pageSize, sortCol, sortAsc],
+    queryKey: ["admin-bank-accounts-all", page, pageSize, sortCol, sortAsc, search],
     queryFn: () => extSelectPaged("bank_accounts", {
       page, pageSize,
+      filters,
       order: { column: sortCol, ascending: sortAsc },
     }),
   });
@@ -69,6 +79,16 @@ export default function AdminBankAccounts() {
             <Building className="h-6 w-6 text-primary" /> Bank Accounts (All Merchants)
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Connected bank accounts used for payouts and settlements.</p>
+        </div>
+
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search bank, country, currency, merchant…"
+            className="pl-10"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          />
         </div>
 
         {isLoading ? (

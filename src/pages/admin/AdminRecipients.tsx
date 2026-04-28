@@ -26,7 +26,11 @@ export default function AdminRecipients() {
   const [sortAsc, setSortAsc] = useState(false);
   const [drawer, setDrawer] = useState<any | null>(null);
 
-  const filters = search ? { name: { ilike: `%${search}%` } } : undefined;
+  const filters = search.trim()
+    ? {
+        or: `name.ilike.%${search}%,email.ilike.%${search}%,country.ilike.%${search}%,account_type.ilike.%${search}%,merchant_id.ilike.%${search}%`,
+      }
+    : undefined;
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-recipients", page, pageSize, sortCol, sortAsc, search],
@@ -68,7 +72,7 @@ export default function AdminRecipients() {
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name…"
+            placeholder="Search name, email, country, type, merchant…"
             className="pl-10"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}

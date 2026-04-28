@@ -31,7 +31,9 @@ export default function AdminRequestTraces() {
 
   const filters: Record<string, any> = {};
   if (endpointFilter !== "all") filters.endpoint = endpointFilter;
-  if (search) filters.request_id = { ilike: `%${search}%` };
+  if (search.trim()) {
+    filters.or = `request_id.ilike.%${search}%,idempotency_key.ilike.%${search}%,endpoint.ilike.%${search}%,provider.ilike.%${search}%`;
+  }
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-api-traces", endpointFilter, search, page, pageSize, sortCol, sortAsc],
@@ -76,7 +78,7 @@ export default function AdminRequestTraces() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search request id…"
+              placeholder="Search id, idempotency, endpoint, provider…"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="w-[260px] pl-9"
