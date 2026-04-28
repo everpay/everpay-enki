@@ -113,6 +113,15 @@ const ALLOWED_TABLES = [
   "plaid_items",
   "everpay_webhooks",
   "rolling_reserves",
+  // MzzPay merge — routing analytics, processor matrix, reports
+  "provider_events",
+  "routing_decisions",
+  "payment_attempts",
+  "merchant_processor_overrides",
+  "business_profiles",
+  "payment_processors",
+  "settlements",
+  "chargeflow_disputes",
 ];
 
 Deno.serve(async (req) => {
