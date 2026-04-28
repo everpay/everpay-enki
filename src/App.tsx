@@ -55,6 +55,14 @@ import AdminBanking from "./pages/admin/AdminBanking";
 import AdminSurcharging from "./pages/admin/AdminSurcharging";
 import AdminCurrencyManagement from "./pages/admin/AdminCurrencyManagement";
 import AdminDisputeDetail from "./pages/admin/AdminDisputeDetail";
+import AdminTreasury360 from "./pages/admin/AdminTreasury360";
+import AdminPlaidReconciliation from "./pages/admin/AdminPlaidReconciliation";
+import AdminIntegrationHealth from "./pages/admin/AdminIntegrationHealth";
+import AdminBankAccounts from "./pages/admin/AdminBankAccounts";
+import AdminRecipients from "./pages/admin/AdminRecipients";
+import AdminRequestTraces from "./pages/admin/AdminRequestTraces";
+import AdminLedger from "./pages/admin/AdminLedger";
+import AdminKycVerifications from "./pages/admin/AdminKycVerifications";
 
 const queryClient = new QueryClient();
 
@@ -151,6 +159,16 @@ const AppRoutes = () => {
     <Route path="/enki/surcharging" element={<AdminRoute><AdminSurcharging /></AdminRoute>} />
     <Route path="/enki/currencies" element={<AdminRoute><AdminCurrencyManagement /></AdminRoute>} />
     <Route path="/enki/disputes/:id" element={<AdminRoute><AdminDisputeDetail /></AdminRoute>} />
+
+    {/* Treasury 360° + observability + verifications */}
+    <Route path="/enki/treasury-360" element={<AdminRoute><AdminTreasury360 /></AdminRoute>} />
+    <Route path="/enki/bank-accounts" element={<AdminRoute><AdminBankAccounts /></AdminRoute>} />
+    <Route path="/enki/recipients" element={<AdminRoute><AdminRecipients /></AdminRoute>} />
+    <Route path="/enki/ledger" element={<AdminRoute><AdminLedger /></AdminRoute>} />
+    <Route path="/enki/plaid-reconciliation" element={<AdminRoute><AdminPlaidReconciliation /></AdminRoute>} />
+    <Route path="/enki/integration-health" element={<AdminRoute><AdminIntegrationHealth /></AdminRoute>} />
+    <Route path="/enki/request-traces" element={<AdminRoute><AdminRequestTraces /></AdminRoute>} />
+    <Route path="/enki/kyc-verifications" element={<AdminRoute><AdminKycVerifications /></AdminRoute>} />
 
     {/* Catch-all */}
     <Route path="*" element={<NotFound />} />

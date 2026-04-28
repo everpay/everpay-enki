@@ -102,6 +102,17 @@ const ALLOWED_TABLES = [
   "settlement_runs",
   "payouts",
   "billing_periods",
+  // Everpay OS port — treasury 360 / banking / KYC / observability
+  "bank_accounts",
+  "ledger_entries",
+  "liquidity_pools",
+  "fx_rates",
+  "recipients",
+  "api_request_traces",
+  "kyc_verifications",
+  "plaid_items",
+  "everpay_webhooks",
+  "rolling_reserves",
 ];
 
 Deno.serve(async (req) => {
