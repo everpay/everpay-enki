@@ -1,11 +1,17 @@
+import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building, Check, Clock, AlertCircle, Link2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Building, Check, Clock, AlertCircle, Link2, ArrowUpDown, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { extSelect } from "@/hooks/useExternalData";
+import { extSelectPaged } from "@/hooks/useExternalData";
 import { useAccessControl } from "@/hooks/useAccessControl";
 import Unauthorized from "@/components/admin/Unauthorized";
+import { TablePagination } from "@/components/TablePagination";
+import { TableSkeleton, TableEmpty, TableError } from "@/components/TableStates";
+import { JsonDrawer } from "@/components/admin/JsonDrawer";
 
 function statusBadge(status: string | null) {
   switch (status) {
@@ -16,69 +22,120 @@ function statusBadge(status: string | null) {
   }
 }
 
+const SORT_COLUMNS = ["created_at", "bank_name", "country", "currency", "status"] as const;
+type SortCol = typeof SORT_COLUMNS[number];
+
 export default function AdminBankAccounts() {
   const { isAdmin, isSuperAdmin, isLoading: roleLoading } = useAccessControl();
-  const { data: accounts = [], isLoading } = useQuery({
-    queryKey: ["admin-bank-accounts-all"],
-    queryFn: () => extSelect("bank_accounts", { order: { column: "created_at", ascending: false }, limit: 500 }),
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [sortCol, setSortCol] = useState<SortCol>("created_at");
+  const [sortAsc, setSortAsc] = useState(false);
+  const [drawer, setDrawer] = useState<any | null>(null);
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["admin-bank-accounts-all", page, pageSize, sortCol, sortAsc],
+    queryFn: () => extSelectPaged("bank_accounts", {
+      page, pageSize,
+      order: { column: sortCol, ascending: sortAsc },
+    }),
   });
 
   if (roleLoading) return <AppLayout><div className="p-6">Loading…</div></AppLayout>;
   if (!isAdmin && !isSuperAdmin) return <Unauthorized />;
 
+  const rows = (data?.data || []) as any[];
+  const total = data?.count || 0;
+
+  const toggleSort = (col: SortCol) => {
+    if (sortCol === col) setSortAsc((v) => !v);
+    else { setSortCol(col); setSortAsc(false); }
+    setPage(1);
+  };
+
+  const SortHead = ({ col, label }: { col: SortCol; label: string }) => (
+    <TableHead>
+      <button onClick={() => toggleSort(col)} className="inline-flex items-center gap-1 hover:text-foreground">
+        {label} <ArrowUpDown className={`h-3 w-3 ${sortCol === col ? "text-primary" : "text-muted-foreground/60"}`} />
+      </button>
+    </TableHead>
+  );
+
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-bold">Bank Accounts (All Merchants)</h1>
-          <p className="text-muted-foreground text-sm">Connected bank accounts used for payouts and settlements across the platform.</p>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Building className="h-6 w-6 text-primary" /> Bank Accounts (All Merchants)
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">Connected bank accounts used for payouts and settlements.</p>
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
-        ) : accounts.length === 0 ? (
+          <TableSkeleton rows={pageSize} cols={6} />
+        ) : isError ? (
+          <TableError onRetry={() => refetch()} />
+        ) : rows.length === 0 ? (
+          <TableEmpty title="No bank accounts" description="No merchants have linked a bank account yet." icon={<Building className="h-5 w-5" />} />
+        ) : (
           <Card>
-            <CardContent className="flex flex-col items-center py-12 text-center">
-              <Building className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold">No bank accounts</h3>
-              <p className="text-muted-foreground text-sm">No merchants have linked a bank account yet.</p>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortHead col="bank_name" label="Bank" />
+                    <TableHead>Merchant</TableHead>
+                    <SortHead col="country" label="Country" />
+                    <SortHead col="currency" label="Currency" />
+                    <SortHead col="status" label="Status" />
+                    <SortHead col="created_at" label="Created" />
+                    <TableHead className="w-[60px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((a) => (
+                    <TableRow key={a.id}>
+                      <TableCell>
+                        <div className="font-medium">{a.bank_name || "Bank Account"}</div>
+                        {a.provider === "plaid" && (
+                          <Badge variant="outline" className="text-[10px] gap-1 mt-1"><Link2 className="h-3 w-3" />Plaid</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{a.merchant_id?.slice(0, 8) || "—"}</TableCell>
+                      <TableCell>{a.country || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">{a.currency || "—"}</TableCell>
+                      <TableCell>{statusBadge(a.status)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{a.created_at ? new Date(a.created_at).toLocaleDateString() : "—"}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDrawer(a)} aria-label="View JSON">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid gap-3">
-            {accounts.map((a: any) => (
-              <Card key={a.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        {a.bank_name || "Bank Account"}
-                        {a.provider === "plaid" && (
-                          <Badge variant="outline" className="text-xs gap-1"><Link2 className="h-3 w-3" />Plaid</Badge>
-                        )}
-                      </CardTitle>
-                      <CardDescription className="font-mono text-xs">
-                        Merchant {a.merchant_id?.slice(0, 8)}
-                        {a.country && <span className="ml-2">{a.country}</span>}
-                        {a.currency && <span className="ml-1">· {a.currency}</span>}
-                      </CardDescription>
-                    </div>
-                    {statusBadge(a.status)}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    {a.account_number && <div><p className="text-muted-foreground">Account</p><p className="font-mono">{a.account_number}</p></div>}
-                    {a.iban && <div><p className="text-muted-foreground">IBAN</p><p className="font-mono">{a.iban}</p></div>}
-                    {a.sort_code && <div><p className="text-muted-foreground">Sort/BSB</p><p className="font-mono">{a.sort_code}</p></div>}
-                    {a.external_account_id && <div><p className="text-muted-foreground">External ID</p><p className="font-mono truncate">{a.external_account_id}</p></div>}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         )}
+
+        <TablePagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
+          isLoading={isLoading}
+        />
       </div>
+
+      <JsonDrawer
+        open={!!drawer}
+        onOpenChange={(o) => !o && setDrawer(null)}
+        title="Bank account"
+        description={drawer?.id}
+        data={drawer}
+      />
     </AppLayout>
   );
 }
