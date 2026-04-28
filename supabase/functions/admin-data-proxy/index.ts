@@ -341,11 +341,9 @@ Deno.serve(async (req) => {
       } else if (rowLimit) {
         query = query.limit(rowLimit);
       }
-      const { data: result, error } = await query;
-      // count is attached on the query response
-      const totalCount = (query as any)?.count ?? null;
+      const { data: result, error, count: totalCount } = await query;
       if (error) return jsonResponse({ error: error.message }, 500);
-      return jsonResponse({ data: result, count: totalCount, degraded: !canUseExtAdmin });
+      return jsonResponse({ data: result, count: totalCount ?? null, degraded: !canUseExtAdmin });
     }
 
     if (action === "insert") {
