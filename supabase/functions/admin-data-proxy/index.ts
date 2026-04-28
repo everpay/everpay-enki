@@ -191,7 +191,18 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Invalid JSON" }, 400);
   }
 
-  const { action, table, filters, data, id, select, order, limit: rowLimit } = body;
+  const {
+    action,
+    table,
+    filters,
+    data,
+    id,
+    select,
+    order,
+    limit: rowLimit,
+    offset,
+    count: wantCount,
+  } = body;
 
   if (!action) return jsonResponse({ error: "action required" }, 400);
 
@@ -303,19 +314,38 @@ Deno.serve(async (req) => {
 
   try {
     if (action === "select") {
-      let query = externalReadClient.from(table).select(select || "*");
+      const selectOptions: any = {};
+      if (wantCount) selectOptions.count = "exact";
+      let query = externalReadClient.from(table).select(select || "*", selectOptions);
       if (filters) {
         for (const [col, val] of Object.entries(filters)) {
-          query = query.eq(col, val as any);
+          if (val === null) {
+            query = query.is(col, null);
+          } else if (Array.isArray(val)) {
+            query = query.in(col, val as any[]);
+          } else if (typeof val === "object" && val !== null && "ilike" in (val as any)) {
+            query = query.ilike(col, (val as any).ilike);
+          } else {
+            query = query.eq(col, val as any);
+          }
         }
       }
       if (order) {
-        query = query.order(order.column || "created_at", { ascending: order.ascending ?? false });
+        const cols = Array.isArray(order) ? order : [order];
+        for (const o of cols) {
+          query = query.order(o.column || "created_at", { ascending: o.ascending ?? false, nullsFirst: false });
+        }
       }
-      if (rowLimit) query = query.limit(rowLimit);
+      if (typeof offset === "number" && typeof rowLimit === "number") {
+        query = query.range(offset, offset + rowLimit - 1);
+      } else if (rowLimit) {
+        query = query.limit(rowLimit);
+      }
       const { data: result, error } = await query;
+      // count is attached on the query response
+      const totalCount = (query as any)?.count ?? null;
       if (error) return jsonResponse({ error: error.message }, 500);
-      return jsonResponse({ data: result, degraded: !canUseExtAdmin });
+      return jsonResponse({ data: result, count: totalCount, degraded: !canUseExtAdmin });
     }
 
     if (action === "insert") {
