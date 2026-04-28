@@ -195,6 +195,29 @@ const adminSections: NavSection[] = [
     ],
   },
   {
+    title: "Treasury 360°",
+    items: [
+      { to: "/enki/treasury-360", icon: Landmark, label: "Liquidity Overview" },
+      { to: "/enki/bank-accounts", icon: Landmark, label: "Bank Accounts" },
+      { to: "/enki/recipients", icon: Users, label: "Payout Recipients" },
+      { to: "/enki/ledger", icon: BookOpen, label: "Ledger" },
+    ],
+  },
+  {
+    title: "Compliance & Verifications",
+    items: [
+      { to: "/enki/kyc-verifications", icon: Shield, label: "KYC / KYB" },
+    ],
+  },
+  {
+    title: "Observability",
+    items: [
+      { to: "/enki/integration-health", icon: Activity, label: "Integration Health" },
+      { to: "/enki/request-traces", icon: Eye, label: "Request Traces" },
+      { to: "/enki/plaid-reconciliation", icon: RefreshCw, label: "Plaid Reconciliation" },
+    ],
+  },
+  {
     title: "Crypto",
     items: [
       { to: "/enki/crypto/wallets", icon: Wallet, label: "Wallets" },
