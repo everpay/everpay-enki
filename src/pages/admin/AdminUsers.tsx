@@ -11,6 +11,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useToast } from '@/hooks/use-toast';
 import { externalProxy } from '@/hooks/useExternalData';
 import { Search, MoreHorizontal, Trash2, Power, PowerOff } from 'lucide-react';
+import { NewSinceBadge } from '@/components/admin/NewSinceBadge';
+import { SyncNowButton } from '@/components/admin/SyncNowButton';
+import { useNewSinceLastVisit } from '@/hooks/useNewSinceLastVisit';
 
 interface User {
   id: string;
@@ -37,8 +40,18 @@ export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const { countNew, markVisited } = useNewSinceLastVisit('admin-users');
+  const newCount = countNew(users);
 
   useEffect(() => { fetchUsers(); }, []);
+
+  // Mark visited once data has rendered, so the badge resets next visit.
+  useEffect(() => {
+    if (!loading && users.length) {
+      const t = setTimeout(() => markVisited(), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [loading, users.length, markVisited]);
 
   const fetchUsers = async () => {
     try {
@@ -109,9 +122,13 @@ export default function AdminUsers() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+              <NewSinceBadge count={newCount} label="new signups" />
+            </div>
             <p className="text-muted-foreground">Manage user accounts, roles, and permissions</p>
           </div>
+          <SyncNowButton onSynced={fetchUsers} />
         </div>
         <Card>
           <CardHeader>
