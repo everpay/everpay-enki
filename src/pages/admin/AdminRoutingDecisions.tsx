@@ -7,7 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { extSelect } from "@/hooks/useExternalData";
 import { formatRelativeTime } from "@/lib/format";
-import { ArrowRight, Search, Activity } from "lucide-react";
+import { ArrowRight, Search, Activity, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { downloadCsv } from "@/lib/csv";
 
 interface DecisionRow {
   id: string;
@@ -91,8 +93,30 @@ export default function AdminRoutingDecisions() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Decisions ({decisions.length})</CardTitle>
-            <CardDescription>Server-side routing chosen at payment time. Persisted for compliance & audit.</CardDescription>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <CardTitle>Decisions ({decisions.length})</CardTitle>
+                <CardDescription>Server-side routing chosen at payment time. Persisted for compliance & audit.</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => downloadCsv(
+                  `routing-decisions-${new Date().toISOString().slice(0,10)}.csv`,
+                  ["Created At", "Decision ID", "Transaction ID", "Merchant ID", "Selected Provider", "Fallback Chain", "Reason", "Rule ID", "Currency", "Amount", "Country", "EU/EEA", "OFAC", "Inputs JSON"],
+                  filtered.map((d) => [
+                    d.created_at, d.id, d.transaction_id ?? "", d.merchant_id ?? "",
+                    d.selected_provider, (d.fallback_chain || []).join(" → "),
+                    d.decision_reason, d.rule_matched_id ?? "",
+                    d.inputs?.currency ?? "", d.inputs?.amount ?? "", d.inputs?.country ?? "",
+                    d.inputs?.eu_eea ? "yes" : "no", d.inputs?.ofac ? "yes" : "no",
+                    d.inputs ?? {},
+                  ])
+                )}
+              >
+                <Download className="mr-2 h-4 w-4" />Export CSV
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="mb-4 flex flex-wrap gap-2">
