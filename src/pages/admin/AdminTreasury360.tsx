@@ -8,6 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Landmark, Wallet, ArrowUpRight, DollarSign, Bitcoin, Activity } from "lucide-react";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  PieChart, Pie, Cell, Legend, LineChart, Line,
+} from "recharts";
+import { useMemo } from "react";
 
 const fmt = (n: number, c = "USD") => {
   try {
@@ -75,6 +80,42 @@ export default function AdminTreasury360() {
   const totalLiquidity = liquidityByCurrency.reduce((s, [, v]) => s + v, 0);
   const totalCryptoAssets = cryptoBalances.length;
 
+  // ── Chart data ─────────────────────────────────────
+  const balanceMix = useMemo(() => ([
+    { name: "Fiat", value: Math.round(totalFiat) },
+    { name: "Liquidity Pools", value: Math.round(totalLiquidity) },
+    { name: "Reserves", value: Math.round(totalReserves) },
+    { name: "Crypto Wallets", value: (cryptoWallets.data || []).length },
+  ].filter((d) => d.value > 0)), [totalFiat, totalLiquidity, totalReserves, cryptoWallets.data]);
+
+  const fxByPair = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of (((/** @type any */ ({}) as any), ([] as any[]))).concat([])) map.set("", 0);
+    return Array.from(map.entries()).map(([pair, rate]) => ({ pair, rate }));
+  }, []);
+
+  const settlementOverTime = useMemo(() => {
+    const buckets = new Map<string, { date: string; settled: number; failed: number; pending: number }>();
+    for (const s of (settlements.data || []) as any[]) {
+      const date = String(s.created_at || "").slice(0, 10) || "—";
+      const b = buckets.get(date) || { date, settled: 0, failed: 0, pending: 0 };
+      const amount = Number(s.amount || 0);
+      const status = (s.status || "pending").toLowerCase();
+      if (status === "settled" || status === "paid") b.settled += amount;
+      else if (status === "failed") b.failed += amount;
+      else b.pending += amount;
+      buckets.set(date, b);
+    }
+    return Array.from(buckets.values()).sort((a, b) => a.date.localeCompare(b.date));
+  }, [settlements.data]);
+
+  const fxRatesData = useMemo(() => {
+    // Try to surface fx_rates via accounts payload if loaded; fallback empty
+    return fxByPair;
+  }, [fxByPair]);
+
+  const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2, 200 70% 50%))", "hsl(var(--chart-3, 30 80% 55%))", "hsl(var(--chart-4, 280 60% 60%))"];
+
   return (
     <AppLayout>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
@@ -86,6 +127,75 @@ export default function AdminTreasury360() {
             Unified view of liquidity, fiat & crypto balances, settlements, payouts, reserves, and merchant wallets.
           </p>
         </div>
+      </div>
+
+      {/* Charts strip */}
+      <div className="grid lg:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardHeader><CardTitle className="text-base">Fiat vs Crypto vs Reserves</CardTitle></CardHeader>
+          <CardContent>
+            {balanceMix.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No balances to display.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={balanceMix} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={2}>
+                    {balanceMix.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Settlements over time</CardTitle>
+            <CardDescription>By status, daily totals</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {settlementOverTime.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No settlement history yet.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={settlementOverTime}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="date" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <Tooltip formatter={(v: any) => fmt(Number(v))} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="settled" stackId="a" fill="hsl(var(--primary))" />
+                  <Bar dataKey="pending" stackId="a" fill="hsl(45 90% 55%)" />
+                  <Bar dataKey="failed" stackId="a" fill="hsl(0 75% 55%)" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Liquidity by currency</CardTitle>
+            <CardDescription>FX exposure across pools</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {liquidityByCurrency.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No liquidity allocations.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={liquidityByCurrency.map(([c, v]) => ({ currency: c, balance: v }))}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="currency" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <Tooltip formatter={(v: any, _n, p: any) => fmt(Number(v), p?.payload?.currency)} />
+                  <Bar dataKey="balance" fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Top KPIs */}
