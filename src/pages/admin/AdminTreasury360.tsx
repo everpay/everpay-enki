@@ -88,12 +88,6 @@ export default function AdminTreasury360() {
     { name: "Crypto Wallets", value: (cryptoWallets.data || []).length },
   ].filter((d) => d.value > 0)), [totalFiat, totalLiquidity, totalReserves, cryptoWallets.data]);
 
-  const fxByPair = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const r of (((/** @type any */ ({}) as any), ([] as any[]))).concat([])) map.set("", 0);
-    return Array.from(map.entries()).map(([pair, rate]) => ({ pair, rate }));
-  }, []);
-
   const settlementOverTime = useMemo(() => {
     const buckets = new Map<string, { date: string; settled: number; failed: number; pending: number }>();
     for (const s of (settlements.data || []) as any[]) {
@@ -108,11 +102,6 @@ export default function AdminTreasury360() {
     }
     return Array.from(buckets.values()).sort((a, b) => a.date.localeCompare(b.date));
   }, [settlements.data]);
-
-  const fxRatesData = useMemo(() => {
-    // Try to surface fx_rates via accounts payload if loaded; fallback empty
-    return fxByPair;
-  }, [fxByPair]);
 
   const PIE_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2, 200 70% 50%))", "hsl(var(--chart-3, 30 80% 55%))", "hsl(var(--chart-4, 280 60% 60%))"];
 
