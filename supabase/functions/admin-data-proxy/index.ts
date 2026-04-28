@@ -319,7 +319,10 @@ Deno.serve(async (req) => {
       let query = externalReadClient.from(table).select(select || "*", selectOptions);
       if (filters) {
         for (const [col, val] of Object.entries(filters)) {
-          if (val === null) {
+          if (col === "or" && typeof val === "string") {
+            // PostgREST OR filter, e.g. "name.ilike.%foo%,email.ilike.%foo%"
+            query = query.or(val);
+          } else if (val === null) {
             query = query.is(col, null);
           } else if (Array.isArray(val)) {
             query = query.in(col, val as any[]);
