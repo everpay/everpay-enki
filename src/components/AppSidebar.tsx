@@ -164,6 +164,7 @@ const adminSections: NavSection[] = [
     title: "Routing & Controls",
     items: [
       { to: "/enki/routing", icon: Globe, label: "PSP Routing" },
+      { to: "/enki/routing-decisions", icon: Eye, label: "Routing Decisions" },
       { to: "/enki/3ds", icon: Shield, label: "3DS Controls" },
       { to: "/enki/cascading", icon: ArrowLeftRight, label: "Cascading" },
       { to: "/enki/processors", icon: Globe, label: "Processor Info" },
@@ -193,6 +194,10 @@ const adminSections: NavSection[] = [
       { to: "/enki/banking", icon: Landmark, label: "Banking" },
       { to: "/enki/surcharging", icon: DollarSign, label: "Surcharging" },
       { to: "/enki/currencies", icon: Globe, label: "Currencies" },
+      { to: "/enki/reconciliation", icon: FileBarChart, label: "Reconciliation" },
+      { to: "/enki/resellers", icon: Handshake, label: "Resellers" },
+      { to: "/enki/audit-trail", icon: Shield, label: "Audit Trail" },
+      { to: "/enki/reports", icon: FileText, label: "Reports" },
     ],
   },
   {

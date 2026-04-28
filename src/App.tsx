@@ -63,6 +63,11 @@ import AdminRecipients from "./pages/admin/AdminRecipients";
 import AdminRequestTraces from "./pages/admin/AdminRequestTraces";
 import AdminLedger from "./pages/admin/AdminLedger";
 import AdminKycVerifications from "./pages/admin/AdminKycVerifications";
+import AdminRoutingDecisions from "./pages/admin/AdminRoutingDecisions";
+import AdminAuditTrail from "./pages/admin/AdminAuditTrail";
+import AdminResellers from "./pages/admin/AdminResellers";
+import AdminReconciliation from "./pages/admin/AdminReconciliation";
+import AdminReports from "./pages/admin/AdminReports";
 
 const queryClient = new QueryClient();
 
@@ -169,6 +174,13 @@ const AppRoutes = () => {
     <Route path="/enki/integration-health" element={<AdminRoute><AdminIntegrationHealth /></AdminRoute>} />
     <Route path="/enki/request-traces" element={<AdminRoute><AdminRequestTraces /></AdminRoute>} />
     <Route path="/enki/kyc-verifications" element={<AdminRoute><AdminKycVerifications /></AdminRoute>} />
+
+    {/* Routing analytics, audit, reseller ops, reports */}
+    <Route path="/enki/routing-decisions" element={<AdminRoute><AdminRoutingDecisions /></AdminRoute>} />
+    <Route path="/enki/audit-trail" element={<AdminRoute><AdminAuditTrail /></AdminRoute>} />
+    <Route path="/enki/resellers" element={<AdminRoute><AdminResellers /></AdminRoute>} />
+    <Route path="/enki/reconciliation" element={<AdminRoute><AdminReconciliation /></AdminRoute>} />
+    <Route path="/enki/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
 
     {/* Catch-all */}
     <Route path="*" element={<NotFound />} />

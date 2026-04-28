@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useQuery } from "@tanstack/react-query";
 import { extSelect } from "@/hooks/useExternalData";
 import { AlertTriangle, CheckCircle2, Download, RefreshCw, Scale, XCircle } from "lucide-react";
+import { downloadCsv } from "@/lib/csv";
 
 const fmt = (n: number, c = "USD") => new Intl.NumberFormat("en-US", { style: "currency", currency: c }).format(n);
 
@@ -50,12 +51,15 @@ export default function AdminReconciliation() {
     : <Badge variant="secondary"><AlertTriangle className="mr-1 h-3 w-3" />Pending</Badge>;
 
   const exportCsv = () => {
-    const csv = "Date,Merchant,Provider,Gross,Settled,Variance,Status,Transactions\n" +
-      (rows as any[]).map((r) => `${r.date},${r.merchant},${r.provider},${r.gross.toFixed(2)},${r.settled.toFixed(2)},${r.variance.toFixed(2)},${r.status},${r.count}`).join("\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = `reconciliation-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+    downloadCsv(
+      `reconciliation-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Date", "Merchant ID", "Provider", "Currency", "Gross", "Settled", "Variance", "Status", "Transactions"],
+      (rows as any[]).map((r) => [
+        r.date, r.merchant, r.provider, r.currency,
+        Number(r.gross).toFixed(2), Number(r.settled).toFixed(2),
+        Number(r.variance).toFixed(2), r.status, r.count,
+      ])
+    );
   };
 
   return (

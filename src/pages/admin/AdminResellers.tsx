@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { extSelect } from "@/hooks/useExternalData";
-import { RefreshCw, Search, TrendingUp, Users, WalletCards } from "lucide-react";
+import { Download, RefreshCw, Search, TrendingUp, Users, WalletCards } from "lucide-react";
+import { downloadCsv } from "@/lib/csv";
 
 type ResellerRow = {
   id: string;
@@ -102,7 +103,19 @@ export default function AdminResellers() {
             <h1 className="text-2xl font-bold tracking-tight">Resellers</h1>
             <p className="text-sm text-muted-foreground mt-1">Track reseller merchants, volume, and outstanding commissions</p>
           </div>
-          <Button variant="outline" onClick={fetchResellers}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={fetchResellers}><RefreshCw className="mr-2 h-4 w-4" />Refresh</Button>
+            <Button
+              variant="outline"
+              onClick={() => downloadCsv(
+                `resellers-${new Date().toISOString().slice(0,10)}.csv`,
+                ["Reseller ID", "Name", "Email", "Status", "Merchants", "Transactions", "Volume (USD)", "Commission Owed (USD)"],
+                rows.map((r) => [r.id, r.name, r.email, r.status, r.merchantCount, r.transactions, r.volume.toFixed(2), r.commissionOwed.toFixed(2)])
+              )}
+            >
+              <Download className="mr-2 h-4 w-4" />Export CSV
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">

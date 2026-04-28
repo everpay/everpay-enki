@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { extSelect } from "@/hooks/useExternalData";
 import { Download, FileText, Search, Shield, Clock } from "lucide-react";
 import { format } from "date-fns";
+import { downloadCsv } from "@/lib/csv";
 
 const getActionVariant = (action: string): "default" | "secondary" | "destructive" | "outline" => {
   const n = action.toLowerCase();
@@ -38,16 +39,15 @@ export default function AdminAuditTrail() {
   }, [logs, filter, query]);
 
   const exportCsv = () => {
-    const csv = "Timestamp,Action,Entity,Entity ID,User ID,Merchant ID,Metadata\n" +
+    downloadCsv(
+      `audit-trail-${format(new Date(), "yyyy-MM-dd")}.csv`,
+      ["Timestamp", "Action", "Entity Type", "Entity ID", "User ID", "Merchant ID", "Metadata"],
       filtered.map((log: any) => [
         log.created_at, log.action, log.entity_type || "", log.entity_id || "",
         log.user_id || "", log.merchant_id || "",
-        `"${JSON.stringify(log.metadata || log.audit_metadata || {}).replace(/"/g, '""')}"`,
-      ].join(",")).join("\n");
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-    a.download = `audit-trail-${format(new Date(), "yyyy-MM-dd")}.csv`;
-    a.click();
+        log.metadata || log.audit_metadata || {},
+      ])
+    );
   };
 
   return (
