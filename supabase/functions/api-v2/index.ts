@@ -1177,6 +1177,25 @@ Deno.serve(async (req) => {
         const body = await req.json();
         if (!body.amount || !body.currency) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'amount and currency are required' } }, reqId);
 
+        // PayWatcher BASE/USDC payout — preferred low-cost crypto rail
+        const network = String(body.network || body.chain || '').toUpperCase();
+        const cur = String(body.currency || '').toUpperCase();
+        if (body.method === 'crypto' && (cur === 'USDC' && (network === 'BASE' || !network))
+            || body.provider === 'paywatcher') {
+          const { data: pw, error: pwErr } = await supabase.functions.invoke('paywatcher-payments', {
+            body: { action: 'create_payment', amount: body.amount, currency: 'USDC', merchant_id: merchantId, metadata: { destination: body.destination, recipient: body.recipient } },
+            headers: authHeader ? { Authorization: authHeader } : {},
+          });
+          if (pwErr) return json(500, { error: { type: 'api_error', code: 'payout_failed', message: 'PayWatcher payout failed' } }, reqId);
+          const { data: payout } = await supabase.from('payouts').insert({
+            merchant_id: merchantId, amount: body.amount, currency: 'USDC',
+            destination: body.destination || 'crypto', status: 'pending',
+          }).select().single();
+          const result = { object: 'payout', method: 'crypto', provider: 'paywatcher', network: 'BASE', payout, paywatcher: pw };
+          await storeIdempotency(result);
+          return json(201, result, reqId);
+        }
+
         // Support card payouts via PacoPay
         if (body.method === 'card' && body.card) {
           const { data, error } = await supabase.functions.invoke('pacopay-process', {
@@ -1238,6 +1257,22 @@ Deno.serve(async (req) => {
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
         return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payouts'), reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // RATES / UPSELL
+    // ═══════════════════════════════════════
+    if (resource === 'rates') {
+      if (method === 'GET') {
+        // Pull live PayWatcher rates and merge with provider sheet
+        const { data } = await supabase.functions.invoke('paywatcher-payments', { body: { action: 'rates' } });
+        const rails = (data?.rails || []).map((r: any) => ({
+          ...r,
+          markup_pct: r.cost > 0 ? Number((((r.charge - r.cost) / r.cost) * 100).toFixed(0)) : null,
+          margin_bps: r.cost > 0 ? Math.round(((r.charge - r.cost) / r.charge) * 10000) : null,
+        }));
+        return json(200, { object: 'list', data: rails, asset: 'USDC' }, reqId);
       }
     }
 
