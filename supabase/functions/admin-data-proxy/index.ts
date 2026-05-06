@@ -5,8 +5,63 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ---------------------------------------------------------------------------
+// Secret hygiene helpers
+// ---------------------------------------------------------------------------
+// PLATFORM_OS_ADMIN_TOKEN must NEVER appear in logs or HTTP responses.
+// Every log line and every error message goes through `redact()` first, and
+// every response goes through `jsonResponse()` which scrubs error strings.
+function getSecretValues(): string[] {
+  const names = [
+    "PLATFORM_OS_ADMIN_TOKEN",
+    "EXTERNAL_SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "EXTERNAL_SUPABASE_ANON_KEY",
+  ];
+  return names
+    .map((n) => Deno.env.get(n) || "")
+    .filter((v) => v && v.length >= 12);
+}
+function redact(input: unknown): string {
+  let s = typeof input === "string" ? input : (() => {
+    try { return JSON.stringify(input); } catch { return String(input); }
+  })();
+  for (const v of getSecretValues()) {
+    if (!v) continue;
+    // global, case-sensitive replace
+    s = s.split(v).join("***REDACTED***");
+  }
+  // Strip any "Bearer xxx" header that may have been logged
+  s = s.replace(/Bearer\s+[A-Za-z0-9._\-]{8,}/g, "Bearer ***REDACTED***");
+  return s;
+}
+function logInfo(...args: unknown[]) {
+  console.log(args.map(redact).join(" "));
+}
+function logError(...args: unknown[]) {
+  console.error(args.map(redact).join(" "));
+}
+function tokenFingerprint(token: string): string {
+  // Non-reversible 8-char fingerprint so admins can confirm rotation
+  // without ever exposing the token itself.
+  let h = 0;
+  for (let i = 0; i < token.length; i++) {
+    h = (Math.imul(31, h) + token.charCodeAt(i)) | 0;
+  }
+  return ("00000000" + (h >>> 0).toString(16)).slice(-8);
+}
+function validatePlatformToken(): { ok: true; fingerprint: string } | { ok: false; reason: string } {
+  const t = Deno.env.get("PLATFORM_OS_ADMIN_TOKEN") || "";
+  if (!t) return { ok: false, reason: "missing" };
+  if (t.length < 16) return { ok: false, reason: "too_short" };
+  if (/\s/.test(t)) return { ok: false, reason: "contains_whitespace" };
+  return { ok: true, fingerprint: tokenFingerprint(t) };
+}
+
 function jsonResponse(data: any, status = 200) {
-  return new Response(JSON.stringify(data), {
+  // Scrub any secret leaked into an error/message string before responding.
+  const safe = JSON.parse(redact(JSON.stringify(data ?? {})));
+  return new Response(JSON.stringify(safe), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -25,13 +80,16 @@ function createServerClient(url: string, key: string, token?: string) {
   });
 }
 
-// Platform OS Gateway fallback — used when EXTERNAL_SUPABASE_SERVICE_ROLE_KEY
-// is not available. The gateway lives in the Everpay Platform OS project and
-// brokers a small set of admin operations behind a rotatable token.
+// Platform OS Gateway — primary path for all admin reads.
+// EXTERNAL_SUPABASE_SERVICE_ROLE_KEY is no longer required: rotating
+// PLATFORM_OS_ADMIN_TOKEN at the secret level is enough to revoke access,
+// and no redeploy is needed because Deno.env is read per-invocation.
 async function gatewayCall(op: string, params: Record<string, any> = {}) {
   const url = Deno.env.get("EVERPAY_OS_GATEWAY_URL");
-  const token = Deno.env.get("PLATFORM_OS_ADMIN_TOKEN");
-  if (!url || !token) return { ok: false, error: "gateway_not_configured" } as const;
+  const validation = validatePlatformToken();
+  if (!url) return { ok: false, error: "gateway_not_configured" } as const;
+  if (!validation.ok) return { ok: false, error: `gateway_token_${validation.reason}` } as const;
+  const token = Deno.env.get("PLATFORM_OS_ADMIN_TOKEN")!;
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -43,12 +101,43 @@ async function gatewayCall(op: string, params: Record<string, any> = {}) {
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok || json?.error) {
-      return { ok: false, error: json?.error || `gateway_${res.status}` } as const;
+      const err = String(json?.error || `gateway_${res.status}`);
+      logError("gateway op failed", op, err);
+      return { ok: false, error: err, status: res.status } as const;
     }
     return { ok: true, data: json?.data ?? json } as const;
   } catch (err: any) {
-    return { ok: false, error: err?.message || "gateway_error" } as const;
+    logError("gateway op threw", op, err?.message);
+    return { ok: false, error: "gateway_error" } as const;
   }
+}
+
+// Map a generic select against the gateway. Returns null if the gateway does
+// not implement the op (so caller can fall back).
+async function gatewaySelect(table: string, opts: {
+  select?: string; filters?: any; order?: any; limit?: number; offset?: number; count?: boolean;
+}) {
+  const candidates = [
+    `${table}.list`,
+    `db.select`,
+  ];
+  for (const op of candidates) {
+    const params = op === "db.select"
+      ? { table, ...opts }
+      : { ...opts };
+    const res = await gatewayCall(op, params);
+    if (res.ok) {
+      const data = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+      const count = res.data?.count ?? (Array.isArray(res.data) ? res.data.length : null);
+      return { ok: true as const, data, count, source: op };
+    }
+    const err = String((res as any).error || "");
+    // Stop on auth/rate errors; only continue to next candidate on "not found"-style errors
+    if (!/unsupported|not[_ ]found|unknown[_ ]op|404/i.test(err)) {
+      return { ok: false as const, error: err };
+    }
+  }
+  return { ok: false as const, error: "gateway_op_unsupported" };
 }
 
 async function hasWorkingExternalAdmin(extAdmin: any | null) {
