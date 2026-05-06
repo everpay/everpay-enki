@@ -143,10 +143,19 @@ serve(async (req) => {
     if (paymentData.successUrl) txMeta.success_url = paymentData.successUrl;
     if (paymentData.cancelUrl) txMeta.cancel_url = paymentData.cancelUrl;
 
-    // Idempotency check
+    // Idempotency check + reservation (atomic via PK insert)
     if (idempotencyKey) {
-      const { data: ek } = await supabase.from('idempotency_keys').select('response').eq('key', idempotencyKey).eq('merchant_id', merchantId).single();
+      const { data: ek } = await supabase.from('idempotency_keys').select('response,status').eq('key', idempotencyKey).maybeSingle();
       if (ek?.response) return new Response(JSON.stringify(ek.response), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (ek?.status === 'pending') {
+        return new Response(JSON.stringify({ error: 'duplicate_request_in_flight' }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const { error: rErr } = await supabase.from('idempotency_keys').insert({
+        key: idempotencyKey, scope: 'payment', provider: null, merchant_id: merchantId, status: 'pending',
+      } as never);
+      if (rErr && (rErr as any).code === '23505') {
+        return new Response(JSON.stringify({ error: 'duplicate_request_in_flight' }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
     }
 
     // Surcharge
@@ -267,7 +276,9 @@ serve(async (req) => {
 
     // STEP 7 — Response
     const responsePayload = { success: internalStatus === 'completed', payment_intent: { id: intent.id, status: intentStatus }, transaction, attempt: attempt ? { id: attempt.id, latency_ms: latencyMs } : null, providerResponse, surchargeAmount };
-    if (idempotencyKey) await supabase.from('idempotency_keys').insert({ merchant_id: merchantId, key: idempotencyKey, response: responsePayload });
+    if (idempotencyKey) await supabase.from('idempotency_keys')
+      .update({ response: responsePayload, status: 'completed', completed_at: new Date().toISOString() } as never)
+      .eq('key', idempotencyKey);
 
     // STEP 8 — Webhooks
     const eventType = internalStatus === 'completed' ? 'payment.completed' : internalStatus === 'failed' ? 'payment.failed' : 'payment.created';
