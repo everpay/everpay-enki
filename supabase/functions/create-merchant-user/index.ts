@@ -6,6 +6,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const GATEWAY = Deno.env.get("EVERPAY_OS_GATEWAY_URL") || ""
+const GATEWAY_TOKEN = Deno.env.get("PLATFORM_OS_ADMIN_TOKEN") || ""
+async function gw(op: string, params: Record<string, unknown> = {}) {
+  if (!GATEWAY || !GATEWAY_TOKEN) return { skipped: true }
+  const r = await fetch(GATEWAY, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${GATEWAY_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ op, params, actor: "create-merchant-user" }),
+  })
+  if (!r.ok) throw new Error(`gateway ${r.status}`)
+  return await r.json()
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -69,13 +82,10 @@ serve(async (req) => {
       )
     }
 
-    // Create user on the external DB if service key available, otherwise local
-    const externalServiceKey = Deno.env.get('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY')
-    const externalUrl = Deno.env.get('EXTERNAL_SUPABASE_URL') || 'https://dhobjuetzkvnkdoqeavy.supabase.co'
-    
-    const targetClient = externalServiceKey
-      ? createClient(externalUrl, externalServiceKey, { auth: { autoRefreshToken: false, persistSession: false } })
-      : supabaseAdmin
+    // Creation now happens against the local Admin OS DB. Mirroring to the
+    // external Everpay OS project is performed via the platform admin gateway
+    // (no direct service-role exposure).
+    const targetClient = supabaseAdmin
 
     const tempPassword = `Merchant${crypto.randomUUID().slice(0, 8)}!`
     const nameParts = contact_name.trim().split(' ')
@@ -103,11 +113,8 @@ serve(async (req) => {
 
     const userId = authData.user.id
 
-    // Assign merchant role on both local and target DBs
+    // Assign merchant role on local DB
     await supabaseAdmin.from('user_roles').insert({ user_id: userId, role: 'merchant' })
-    if (externalServiceKey) {
-      await targetClient.from('user_roles').insert({ user_id: userId, role: 'merchant' }).catch(() => {})
-    }
 
     // Create merchant record on local DB
     const { data: merchantRecord } = await supabaseAdmin.from('merchants').insert({
@@ -134,14 +141,14 @@ serve(async (req) => {
       }).catch(e => console.error('Profile insert error:', e))
     }
 
-    // Also create on external DB if available
-    if (externalServiceKey) {
-      await targetClient.from('merchants').insert({
-        name: business_name,
-        email,
-        phone,
-        user_id: userId,
-      }).catch(() => {})
+    // Mirror merchant row to the external Everpay OS project via the gateway
+    try {
+      await gw("db.insert", {
+        table: "merchants",
+        data: { user_id: userId, name: business_name, email, phone },
+      })
+    } catch (mirrorErr) {
+      console.error("Gateway mirror failed:", mirrorErr)
     }
 
     // Audit log
