@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { externalProxy } from '@/hooks/useExternalData';
 import MerchantForm from '@/components/admin/MerchantForm';
-import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone } from 'lucide-react';
+import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone, Pencil, Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import { NewSinceBadge } from '@/components/admin/NewSinceBadge';
 import { SyncNowButton } from '@/components/admin/SyncNowButton';
 import { useNewSinceLastVisit } from '@/hooks/useNewSinceLastVisit';
@@ -37,6 +38,9 @@ export default function AdminMerchants() {
   const [openAddMerchant, setOpenAddMerchant] = useState(false);
   const [selectedMerchant, setSelectedMerchant] = useState<MerchantRow | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<{ name: string; email: string; phone: string; status: string }>({ name: '', email: '', phone: '', status: 'pending' });
+  const [savingEdit, setSavingEdit] = useState(false);
   const { countNew, markVisited } = useNewSinceLastVisit('admin-merchants');
   const newCount = countNew(merchants);
 
@@ -66,6 +70,29 @@ export default function AdminMerchants() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openEdit = (m: MerchantRow) => {
+    setSelectedMerchant(m);
+    setEditForm({ name: m.name || '', email: m.email || '', phone: m.phone || '', status: m.status || 'pending' });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!selectedMerchant) return;
+    setSavingEdit(true);
+    try {
+      await externalProxy({
+        action: 'update_merchant',
+        merchant_id: selectedMerchant.id,
+        patch: { name: editForm.name, email: editForm.email || null, phone: editForm.phone || null, status: editForm.status },
+      });
+      toast({ title: 'Merchant updated' });
+      setEditOpen(false);
+      await fetchMerchants();
+    } catch (e: any) {
+      toast({ title: 'Update failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+    } finally { setSavingEdit(false); }
   };
 
   const filteredMerchants = merchants.filter(m => {
