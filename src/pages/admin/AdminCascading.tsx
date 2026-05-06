@@ -288,7 +288,7 @@ export default function AdminCascading() {
                 <CardContent className="text-sm text-muted-foreground space-y-3">
                   <p>Failed transactions can be manually retried via API or dashboard:</p>
                   <ul className="list-disc pl-5 space-y-1">
-                    <li><strong>API endpoint</strong> — <code className="text-xs bg-muted px-1 py-0.5 rounded">/v2/payments/cascade/retry</code></li>
+                    <li><strong>API endpoint</strong> — <code className="text-xs bg-muted px-1 py-0.5 rounded">/v1/payments/cascade/retry</code></li>
                     <li><strong>Max retries</strong> — configurable per merchant (default: 3)</li>
                     <li><strong>Backoff</strong> — exponential backoff between retries</li>
                     <li><strong>Force processor</strong> — override routing to specific processor</li>

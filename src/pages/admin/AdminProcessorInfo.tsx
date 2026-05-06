@@ -57,9 +57,9 @@ const processors: ProcessorConfig[] = [
     rollingReserve: '10% held for 180 days',
     icon: <Shield className="h-5 w-5 text-primary" />,
     endpoints: [
-      { method: 'POST', path: '/api/v2/payments', desc: 'Process card payment', status: 'live' },
-      { method: 'POST', path: '/api/v2/payments/3ds', desc: '3DS authentication', status: 'live' },
-      { method: 'GET', path: '/api/v2/payments/:id', desc: 'Query payment status', status: 'live' },
+      { method: 'POST', path: '/api/v1/payments', desc: 'Process card payment', status: 'live' },
+      { method: 'POST', path: '/api/v1/payments/3ds', desc: '3DS authentication', status: 'live' },
+      { method: 'GET', path: '/api/v1/payments/:id', desc: 'Query payment status', status: 'live' },
     ],
     fees: [
       { id: 'sh-mdr', method: 'Card MDR (2DS & 3DS)', fee: '6.50%', markupType: 'percentage', markupValue: 0 },
