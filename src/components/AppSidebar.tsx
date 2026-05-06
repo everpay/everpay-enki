@@ -213,6 +213,7 @@ const adminSections: NavSection[] = [
     title: "Compliance & Verifications",
     items: [
       { to: "/enki/kyc-verifications", icon: Shield, label: "KYC / KYB" },
+      { to: "/enki/kyb-review", icon: Shield, label: "KYB Review Queue" },
     ],
   },
   {

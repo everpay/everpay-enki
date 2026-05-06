@@ -63,6 +63,7 @@ import AdminRecipients from "./pages/admin/AdminRecipients";
 import AdminRequestTraces from "./pages/admin/AdminRequestTraces";
 import AdminLedger from "./pages/admin/AdminLedger";
 import AdminKycVerifications from "./pages/admin/AdminKycVerifications";
+import AdminKybReviewQueue from "./pages/admin/AdminKybReviewQueue";
 import AdminRoutingDecisions from "./pages/admin/AdminRoutingDecisions";
 import AdminAuditTrail from "./pages/admin/AdminAuditTrail";
 import AdminResellers from "./pages/admin/AdminResellers";
@@ -174,6 +175,7 @@ const AppRoutes = () => {
     <Route path="/enki/integration-health" element={<AdminRoute><AdminIntegrationHealth /></AdminRoute>} />
     <Route path="/enki/request-traces" element={<AdminRoute><AdminRequestTraces /></AdminRoute>} />
     <Route path="/enki/kyc-verifications" element={<AdminRoute><AdminKycVerifications /></AdminRoute>} />
+    <Route path="/enki/kyb-review" element={<AdminRoute><AdminKybReviewQueue /></AdminRoute>} />
 
     {/* Routing analytics, audit, reseller ops, reports */}
     <Route path="/enki/routing-decisions" element={<AdminRoute><AdminRoutingDecisions /></AdminRoute>} />
