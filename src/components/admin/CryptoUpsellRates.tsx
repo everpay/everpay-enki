@@ -27,16 +27,24 @@ export function CryptoUpsellRates() {
 
   const load = async () => {
     setLoading(true); setError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke("paywatcher-payments", {
-        body: { action: "rates", markup_pct: extraMarkupPct },
-      });
-      if (error) throw new Error(error.message);
-      if (!data?.rails) throw new Error("No rates returned");
-      setRails(data.rails);
-    } catch (e: any) {
-      setError(e.message || "Failed to load rates");
-    } finally { setLoading(false); }
+    let lastErr: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const { data, error } = await supabase.functions.invoke("paywatcher-payments", {
+          body: { action: "rates", markup_pct: extraMarkupPct },
+        });
+        if (error) throw new Error(error.message);
+        if (!data?.rails) throw new Error("No rates returned");
+        setRails(data.rails);
+        setLoading(false);
+        return;
+      } catch (e: any) {
+        lastErr = e;
+        if (attempt < 3) await new Promise(r => setTimeout(r, 400 * attempt));
+      }
+    }
+    setError(`Rates failed: ${lastErr?.message || "PayWatcher /v1 unreachable"}`);
+    setLoading(false);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
