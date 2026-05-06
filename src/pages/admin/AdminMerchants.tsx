@@ -214,9 +214,14 @@ export default function AdminMerchants() {
                           {new Date(m.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => { setSelectedMerchant(m); setDetailOpen(true); }}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => { setSelectedMerchant(m); setDetailOpen(true); }} aria-label="View">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(m)} aria-label="Edit">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
