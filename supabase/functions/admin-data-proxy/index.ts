@@ -25,6 +25,32 @@ function createServerClient(url: string, key: string, token?: string) {
   });
 }
 
+// Platform OS Gateway fallback — used when EXTERNAL_SUPABASE_SERVICE_ROLE_KEY
+// is not available. The gateway lives in the Everpay Platform OS project and
+// brokers a small set of admin operations behind a rotatable token.
+async function gatewayCall(op: string, params: Record<string, any> = {}) {
+  const url = Deno.env.get("EVERPAY_OS_GATEWAY_URL");
+  const token = Deno.env.get("PLATFORM_OS_ADMIN_TOKEN");
+  if (!url || !token) return { ok: false, error: "gateway_not_configured" } as const;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ op, params, actor: "enki-admin-proxy" }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json?.error) {
+      return { ok: false, error: json?.error || `gateway_${res.status}` } as const;
+    }
+    return { ok: true, data: json?.data ?? json } as const;
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "gateway_error" } as const;
+  }
+}
+
 async function hasWorkingExternalAdmin(extAdmin: any | null) {
   if (!extAdmin) return false;
 
@@ -236,6 +262,22 @@ Deno.serve(async (req) => {
   }
 
   if (action === "list_merchants_full") {
+    // If we can't use the external service role, try the Platform OS gateway first
+    if (!canUseExtAdmin) {
+      const gw = await gatewayCall("merchants.list", { limit: 1000 });
+      if (gw.ok) {
+        const list = Array.isArray(gw.data) ? gw.data : [];
+        const merchants = list.map((m: any) => ({
+          ...m,
+          email: m.email || null,
+          profile: null,
+          status: m.verification_status === "approved" ? "active" : "pending",
+          onboarding_status: m.verification_status || "pending",
+        }));
+        return jsonResponse({ data: merchants, degraded: true, source: "gateway" });
+      }
+    }
+
     const [merchantsRes, profilesRes, emailMap] = await Promise.all([
       externalReadClient.from("merchants").select("*").order("created_at", { ascending: false }),
       externalReadClient.from("merchant_profiles").select("*"),
@@ -314,6 +356,14 @@ Deno.serve(async (req) => {
 
   try {
     if (action === "select") {
+      // Gateway fallback for merchants table when external service role is degraded
+      if (table === "merchants" && !canUseExtAdmin) {
+        const gw = await gatewayCall("merchants.list", { limit: rowLimit || 100 });
+        if (gw.ok) {
+          const list = Array.isArray(gw.data) ? gw.data : [];
+          return jsonResponse({ data: list, count: list.length, degraded: true, source: "gateway" });
+        }
+      }
       const selectOptions: any = {};
       if (wantCount) selectOptions.count = "exact";
       let query = externalReadClient.from(table).select(select || "*", selectOptions);
