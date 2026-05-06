@@ -1891,6 +1891,45 @@ export type Database = {
           },
         ]
       }
+      kyb_review_notifications: {
+        Row: {
+          created_at: string
+          doc_id: string
+          doc_type: string | null
+          file_name: string | null
+          id: string
+          merchant_id: string | null
+          metadata: Json
+          read_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          doc_id: string
+          doc_type?: string | null
+          file_name?: string | null
+          id?: string
+          merchant_id?: string | null
+          metadata?: Json
+          read_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          doc_id?: string
+          doc_type?: string | null
+          file_name?: string | null
+          id?: string
+          merchant_id?: string | null
+          metadata?: Json
+          read_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ledger_accounts: {
         Row: {
           account_type: string
