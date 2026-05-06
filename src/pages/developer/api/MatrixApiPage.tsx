@@ -308,7 +308,7 @@ r = requests.post('https://api.matrixpaysolution.com/v1/customer/token',
     />
 
     <ApiEndpoint
-      method="POST" path="/v2/subscription/plan/create" title="Create Subscription Plan"
+      method="POST" path="/v1/subscription/plan/create" title="Create Subscription Plan"
       description="Create a fixed billing plan with pricing, billing period, and retry logic."
       params={[
         { name: "name", type: "string", required: true, desc: "Plan name" },
@@ -320,7 +320,7 @@ r = requests.post('https://api.matrixpaysolution.com/v1/customer/token',
       code={{
         curl: `curl -X POST -u pk_xxx:sk_xxx \\
   -d '{"name":"Monthly Pro","billing_period":{"kind":"MONTHS","value":1},"retries":[{"kind":"N_DAY","value":3}],"prices":[{"currency":"USD","value":999}],"default_price_currency":"USD"}' \\
-  https://api.matrixpaysolution.com/v2/subscription/plan/create`,
+  https://api.matrixpaysolution.com/v1/subscription/plan/create`,
         node: `const { data } = await supabase.functions.invoke('matrix-process', {
   body: { action: 'plan_create', name: 'Monthly Pro',
     billing_period: { kind: 'MONTHS', value: 1 },
@@ -328,7 +328,7 @@ r = requests.post('https://api.matrixpaysolution.com/v1/customer/token',
     prices: [{ currency: 'USD', value: 999 }],
     default_price_currency: 'USD' }
 });`,
-        python: `r = requests.post('.../v2/subscription/plan/create',
+        python: `r = requests.post('.../v1/subscription/plan/create',
   auth=('pk','sk'),
   json={"name":"Monthly Pro",
         "billing_period":{"kind":"MONTHS","value":1},

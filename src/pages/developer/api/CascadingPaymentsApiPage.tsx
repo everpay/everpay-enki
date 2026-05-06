@@ -80,7 +80,7 @@ const CascadingPaymentsApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/payments/cascade"
+        path="/v1/payments/cascade"
         title="Create Cascading Payment"
         description="Submit a payment with automatic cascading enabled. Everpay routes through connected processors, excluding failed gateways on each retry."
         params={[
@@ -98,7 +98,7 @@ const CascadingPaymentsApiPage = () => {
           { name: "duplicate_check", type: "boolean", required: false, desc: "Set false for cascade retries" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/payments/cascade \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/payments/cascade \\
   -H "Authorization: Bearer sk_live_your_key" \\
   -H "Content-Type: application/json" \\
   -H "X-Idempotency-Key: cascade_order_12345" \\
@@ -172,7 +172,7 @@ const CascadingPaymentsApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/payments/cascade/retry"
+        path="/v1/payments/cascade/retry"
         title="Manual Cascade Retry"
         description="Manually retry a failed payment on the next available gateway. Use when you want explicit control over the cascade flow instead of automatic retries."
         params={[
@@ -181,7 +181,7 @@ const CascadingPaymentsApiPage = () => {
           { name: "duplicate_check", type: "boolean", required: false, desc: "Must be false for retries" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/payments/cascade/retry \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/payments/cascade/retry \\
   -H "Authorization: Bearer sk_live_your_key" \\
   -d '{
     "payment_intent_id": "pi_failed_abc",
@@ -212,14 +212,14 @@ const CascadingPaymentsApiPage = () => {
 
       <ApiEndpoint
         method="GET"
-        path="/v2/payments/:id/cascade-history"
+        path="/v1/payments/:id/cascade-history"
         title="Get Cascade History"
         description="Retrieve the full cascade attempt history for a payment, including all gateway attempts, response codes, and latency."
         params={[
           { name: "id", type: "string", required: true, desc: "Payment intent ID" },
         ]}
         code={{
-          curl: `curl https://api.everpayinc.com/v2/payments/pi_xyz789/cascade-history \\
+          curl: `curl https://api.everpayinc.com/v1/payments/pi_xyz789/cascade-history \\
   -H "Authorization: Bearer sk_live_your_key"`,
           node: `const history = await everpay.payments.cascadeHistory('pi_xyz789');`,
           python: `history = everpay.Payments.cascade_history("pi_xyz789")`,

@@ -18,7 +18,7 @@ const steps = [
     title: "Create a payment",
     desc: "Charge a customer using the Payments API.",
     code: {
-      curl: `curl -X POST https://api.everpayinc.com/v2/payments \\\n  -H "Authorization: Bearer $EVERPAY_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "amount": 5000,\n    "currency": "usd",\n    "payment_method": "pm_card_visa",\n    "description": "Order #1234"\n  }'`,
+      curl: `curl -X POST https://api.everpayinc.com/v1/payments \\\n  -H "Authorization: Bearer $EVERPAY_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "amount": 5000,\n    "currency": "usd",\n    "payment_method": "pm_card_visa",\n    "description": "Order #1234"\n  }'`,
       node: `const payment = await everpay.payments.create({\n  amount: 5000,\n  currency: 'usd',\n  payment_method: 'pm_card_visa',\n  description: 'Order #1234',\n});\n\nconsole.log(payment.id); // pay_abc123`,
       python: `payment = everpay.Payment.create(\n  amount=5000,\n  currency="usd",\n  payment_method="pm_card_visa",\n  description="Order #1234",\n)\n\nprint(payment.id)  # pay_abc123`,
     },

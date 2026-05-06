@@ -102,7 +102,7 @@ const SavedCardsApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/saved-cards/tokenize"
+        path="/v1/saved-cards/tokenize"
         title="Create Initial Tokenization"
         description="Submit an initial payment or authorization with contract flags to tokenize the card. Supports zero-amount authorization if the acquirer allows it."
         params={[
@@ -116,7 +116,7 @@ const SavedCardsApiPage = () => {
           { name: "notification_url", type: "string", required: false, desc: "Webhook URL for async updates" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/saved-cards/tokenize \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/saved-cards/tokenize \\
   -H "Authorization: Bearer sk_live_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -182,7 +182,7 @@ const SavedCardsApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/saved-cards/charge"
+        path="/v1/saved-cards/charge"
         title="Charge a Saved Card"
         description="Use a previously obtained card token to create a new payment. No card re-entry or 3DS challenge required for merchant-initiated transactions."
         params={[
@@ -194,7 +194,7 @@ const SavedCardsApiPage = () => {
           { name: "recurring_type", type: "string", required: false, desc: "subsequent (default) or initial" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/saved-cards/charge \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/saved-cards/charge \\
   -H "Authorization: Bearer sk_live_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -233,14 +233,14 @@ const SavedCardsApiPage = () => {
 
       <ApiEndpoint
         method="GET"
-        path="/v2/saved-cards/:customer_id"
+        path="/v1/saved-cards/:customer_id"
         title="List Saved Cards"
         description="Retrieve all saved card tokens for a customer."
         params={[
           { name: "customer_id", type: "string", required: true, desc: "Customer ID" },
         ]}
         code={{
-          curl: `curl https://api.everpayinc.com/v2/saved-cards/cus_xyz789 \\
+          curl: `curl https://api.everpayinc.com/v1/saved-cards/cus_xyz789 \\
   -H "Authorization: Bearer sk_live_your_key"`,
           node: `const cards = await everpay.savedCards.list('cus_xyz789');`,
           python: `cards = everpay.SavedCards.list("cus_xyz789")`,
@@ -265,14 +265,14 @@ const SavedCardsApiPage = () => {
 
       <ApiEndpoint
         method="DELETE"
-        path="/v2/saved-cards/:token"
+        path="/v1/saved-cards/:token"
         title="Delete a Saved Card"
         description="Remove a saved card token. The token will be invalidated and cannot be used for future charges."
         params={[
           { name: "token", type: "string", required: true, desc: "Card token to delete" },
         ]}
         code={{
-          curl: `curl -X DELETE https://api.everpayinc.com/v2/saved-cards/2a4ef31c-bdc9-450b-a979-d533a19341ac \\
+          curl: `curl -X DELETE https://api.everpayinc.com/v1/saved-cards/2a4ef31c-bdc9-450b-a979-d533a19341ac \\
   -H "Authorization: Bearer sk_live_your_key"`,
           node: `await everpay.savedCards.delete('2a4ef31c-bdc9-450b-a979-d533a19341ac');`,
           python: `everpay.SavedCards.delete("2a4ef31c-bdc9-450b-a979-d533a19341ac")`,

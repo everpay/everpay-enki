@@ -29,7 +29,7 @@ const PaymentMethodsApiPage = () => (
       </CardContent>
     </Card>
 
-    <ApiEndpoint method="POST" path="/v2/payment-methods" title="Attach a Payment Method"
+    <ApiEndpoint method="POST" path="/v1/payment-methods" title="Attach a Payment Method"
       description="Attach a tokenized payment method to a customer. Card data must be tokenized via VGS or PCI-compliant vault."
       params={[
         { name: "customer_id", type: "string", required: true, desc: "Customer to attach to" },
@@ -41,7 +41,7 @@ const PaymentMethodsApiPage = () => (
         { name: "is_default", type: "boolean", required: false, desc: "Set as default (default false)" },
       ]}
       code={{
-        curl: `curl -X POST https://api.everpayinc.com/v2/payment-methods \\
+        curl: `curl -X POST https://api.everpayinc.com/v1/payment-methods \\
   -H "Authorization: Bearer sk_test_your_key" \\
   -d '{
     "customer_id": "cus_abc123",
@@ -73,14 +73,14 @@ const PaymentMethodsApiPage = () => (
 }`}
     />
 
-    <ApiEndpoint method="GET" path="/v2/payment-methods" title="List Payment Methods"
+    <ApiEndpoint method="GET" path="/v1/payment-methods" title="List Payment Methods"
       description="Retrieve payment methods, optionally filtered by customer."
       params={[
         { name: "customer", type: "string", required: false, desc: "Filter by customer ID" },
         { name: "limit", type: "integer", required: false, desc: "Results per page (default 25, max 100)" },
       ]}
       code={{
-        curl: `curl "https://api.everpayinc.com/v2/payment-methods?customer=cus_abc123" \\
+        curl: `curl "https://api.everpayinc.com/v1/payment-methods?customer=cus_abc123" \\
   -H "Authorization: Bearer sk_test_your_key"`,
         node: `const methods = await everpay.paymentMethods.list({ customer: 'cus_abc123' });`,
         python: `methods = everpay.PaymentMethod.list(customer="cus_abc123")`,
@@ -90,14 +90,14 @@ const PaymentMethodsApiPage = () => (
   "data": [...],
   "has_more": false,
   "total_count": 3,
-  "url": "/v2/payment-methods"
+  "url": "/v1/payment-methods"
 }`}
     />
 
-    <ApiEndpoint method="DELETE" path="/v2/payment-methods/:id" title="Detach a Payment Method"
+    <ApiEndpoint method="DELETE" path="/v1/payment-methods/:id" title="Detach a Payment Method"
       description="Detach a payment method from its customer. The method can no longer be used for payments."
       code={{
-        curl: `curl -X DELETE https://api.everpayinc.com/v2/payment-methods/pm_abc123 \\
+        curl: `curl -X DELETE https://api.everpayinc.com/v1/payment-methods/pm_abc123 \\
   -H "Authorization: Bearer sk_test_your_key"`,
         node: `await everpay.paymentMethods.detach('pm_abc123');`,
         python: `everpay.PaymentMethod.detach("pm_abc123")`,

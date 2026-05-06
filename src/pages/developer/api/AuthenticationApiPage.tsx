@@ -23,7 +23,7 @@ const AuthenticationApiPage = () => {
           <p className="text-sm text-muted-foreground">Include your API key in the <code className="text-xs bg-muted px-1.5 py-0.5 rounded">Authorization</code> header or <code className="text-xs bg-muted px-1.5 py-0.5 rounded">X-Everpay-Api-Key</code> header of every request.</p>
           <CodeBlock
             code={{
-              curl: `curl https://api.everpayinc.com/v2/payments \\\n  -H "Authorization: Bearer sk_test_your_api_key"\n\n# Or use the API key header:\ncurl https://api.everpayinc.com/v2/payments \\\n  -H "X-Everpay-Api-Key: sk_test_your_api_key"`,
+              curl: `curl https://api.everpayinc.com/v1/payments \\\n  -H "Authorization: Bearer sk_test_your_api_key"\n\n# Or use the API key header:\ncurl https://api.everpayinc.com/v1/payments \\\n  -H "X-Everpay-Api-Key: sk_test_your_api_key"`,
               node: `const Everpay = require('@everpay/node');\nconst everpay = new Everpay('sk_test_your_api_key');\n\n// All subsequent calls are authenticated\nconst payments = await everpay.payments.list();`,
               python: `import everpay\neverpay.api_key = "sk_test_your_api_key"\n\n# All subsequent calls are authenticated\npayments = everpay.Payment.list()`,
             }}

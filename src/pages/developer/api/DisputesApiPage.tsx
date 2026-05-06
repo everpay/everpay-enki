@@ -58,7 +58,7 @@ const DisputesApiPage = () => {
 
       <ApiEndpoint
         method="GET"
-        path="/v2/disputes"
+        path="/v1/disputes"
         title="List Disputes"
         description="Retrieve a paginated list of disputes for the authenticated merchant."
         params={[
@@ -68,7 +68,7 @@ const DisputesApiPage = () => {
           { name: "reason", type: "string", required: false, desc: "Filter: fraudulent, duplicate, product_not_received, etc." },
         ]}
         code={{
-          curl: `curl https://api.everpayinc.com/v2/disputes?status=needs_response \\
+          curl: `curl https://api.everpayinc.com/v1/disputes?status=needs_response \\
   -H "Authorization: Bearer sk_test_your_key"`,
           node: `const disputes = await everpay.disputes.list({
   status: 'needs_response',
@@ -89,14 +89,14 @@ const DisputesApiPage = () => {
 
       <ApiEndpoint
         method="GET"
-        path="/v2/disputes/:id"
+        path="/v1/disputes/:id"
         title="Retrieve a Dispute"
         description="Retrieve the full details of a specific dispute including evidence status and deadlines."
         params={[
           { name: "id", type: "string", required: true, desc: "The dispute ID" },
         ]}
         code={{
-          curl: `curl https://api.everpayinc.com/v2/disputes/dsp_abc123 \\
+          curl: `curl https://api.everpayinc.com/v1/disputes/dsp_abc123 \\
   -H "Authorization: Bearer sk_test_your_key"`,
           node: `const dispute = await everpay.disputes.retrieve('dsp_abc123');`,
           python: `dispute = everpay.Dispute.retrieve("dsp_abc123")`,
@@ -114,7 +114,7 @@ const DisputesApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/disputes/:id/evidence"
+        path="/v1/disputes/:id/evidence"
         title="Submit Evidence"
         description="Upload evidence to respond to a dispute. Accepts file uploads and text evidence. Evidence must be submitted before the evidence_due_date."
         params={[
@@ -126,7 +126,7 @@ const DisputesApiPage = () => {
           { name: "submit", type: "boolean", required: false, desc: "Set true to finalize submission. Cannot be undone." },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/disputes/dsp_abc123/evidence \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/disputes/dsp_abc123/evidence \\
   -H "Authorization: Bearer sk_test_your_key" \\
   -F "receipt=@receipt.pdf" \\
   -F "uncategorized_text=Customer received item on March 15" \\
@@ -154,14 +154,14 @@ const DisputesApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/disputes/:id/accept"
+        path="/v1/disputes/:id/accept"
         title="Accept a Dispute"
         description="Accept (concede) a dispute. The disputed amount will be deducted from your balance. This action cannot be undone."
         params={[
           { name: "id", type: "string", required: true, desc: "The dispute ID to accept" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/disputes/dsp_abc123/accept \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/disputes/dsp_abc123/accept \\
   -H "Authorization: Bearer sk_test_your_key"`,
           node: `const result = await everpay.disputes.accept('dsp_abc123');`,
           python: `result = everpay.Dispute.accept("dsp_abc123")`,

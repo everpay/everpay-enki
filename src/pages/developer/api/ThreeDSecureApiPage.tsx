@@ -165,7 +165,7 @@ const ThreeDSecureApiPage = () => {
       {/* Initiate 3DS */}
       <ApiEndpoint
         method="POST"
-        path="/v2/payments/3d-secure/authenticate"
+        path="/v1/payments/3d-secure/authenticate"
         title="Initiate 3DS Authentication"
         description="Trigger 3D Secure authentication for a payment intent. Returns a redirect URL if challenge is required. For 3DS 2.0, include browser data for frictionless flow."
         params={[
@@ -182,7 +182,7 @@ const ThreeDSecureApiPage = () => {
           { name: "browser.time_zone", type: "number", required: false, desc: "Timezone offset in minutes" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/payments/3d-secure/authenticate \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/payments/3d-secure/authenticate \\
   -H "Authorization: Bearer sk_live_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -239,7 +239,7 @@ const ThreeDSecureApiPage = () => {
       {/* Confirm 3DS */}
       <ApiEndpoint
         method="POST"
-        path="/v2/payments/3d-secure/confirm"
+        path="/v1/payments/3d-secure/confirm"
         title="Confirm 3DS Authentication"
         description="Confirm payment after the customer completes 3DS authentication. Called from the return_url callback."
         params={[
@@ -247,7 +247,7 @@ const ThreeDSecureApiPage = () => {
           { name: "authentication_id", type: "string", required: true, desc: "The 3DS authentication ID" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/payments/3d-secure/confirm \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/payments/3d-secure/confirm \\
   -H "Authorization: Bearer sk_live_your_key" \\
   -d '{
     "payment_intent_id": "pi_xyz789",
@@ -284,14 +284,14 @@ const ThreeDSecureApiPage = () => {
       {/* Retrieve 3DS */}
       <ApiEndpoint
         method="GET"
-        path="/v2/payments/3d-secure/:id"
+        path="/v1/payments/3d-secure/:id"
         title="Retrieve 3DS Authentication"
         description="Retrieve the status and details of a 3DS authentication attempt."
         params={[
           { name: "id", type: "string", required: true, desc: "The 3DS authentication ID" },
         ]}
         code={{
-          curl: `curl https://api.everpayinc.com/v2/payments/3d-secure/3ds_auth_abc123 \\
+          curl: `curl https://api.everpayinc.com/v1/payments/3d-secure/3ds_auth_abc123 \\
   -H "Authorization: Bearer sk_live_your_key"`,
           node: `const auth = await everpay.threeDSecure.retrieve('3ds_auth_abc123');`,
           python: `auth = everpay.ThreeDSecure.retrieve("3ds_auth_abc123")`,

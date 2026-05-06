@@ -10,7 +10,7 @@
 
 export const EVERPAY_CONFIG = {
   API_BASE_URL: 'https://api.everpayinc.com',
-  API_V2_URL: 'https://api.everpayinc.com/v2',
+  API_V2_URL: 'https://api.everpayinc.com/v1',
   CHECKOUT_URL: 'https://checkout.everpayinc.com',
   PAY_URL: 'https://pay.everpayinc.com',
   VERSION: 'v2',

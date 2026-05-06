@@ -72,7 +72,7 @@ const OverviewPage = () => {
         </CardHeader>
         <CardContent>
           <div className="code-block px-4 py-3 text-sm">
-            https://api.everpayinc.com/v2
+            https://api.everpayinc.com/v1
           </div>
           <p className="text-sm text-muted-foreground mt-3">
             All API requests must include your API key in the <code className="text-xs bg-muted px-1.5 py-0.5 rounded">Authorization</code> header.
