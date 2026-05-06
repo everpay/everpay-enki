@@ -46,6 +46,18 @@ Deno.serve(async (req) => {
 
   const eventType: string = evt.type ?? evt.event ?? "unknown";
   const providerRef: string | null = evt.data?.id ?? evt.id ?? null;
+  const eventId: string = evt.id ?? evt.event_id ?? `${eventType}:${providerRef}:${evt.created_at ?? ""}`;
+
+  // Replay protection — unique (provider,event_id)
+  const { error: dupErr } = await supabase
+    .from("webhook_events")
+    .insert({ provider: "paywatcher", event_id: eventId, event_type: eventType, payload: evt } as never);
+  if (dupErr) {
+    // 23505 unique violation → already processed
+    return new Response(JSON.stringify({ received: true, duplicate: true }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   // Map PayWatcher events → canonical transaction status
   let txStatus: string | null = null;
