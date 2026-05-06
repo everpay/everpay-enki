@@ -37,15 +37,19 @@ serve(async (req) => {
     const signature = req.headers.get('x-lipad-signature');
     const webhookSecret = Deno.env.get('LIPAD_WEBHOOK_SECRET');
 
-    if (webhookSecret && signature) {
-      const valid = await verifySignature(rawBody, signature, webhookSecret);
-      if (!valid) {
-        console.error('Invalid Lipad webhook signature');
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    // Fail-closed signature verification.
+    if (!webhookSecret) {
+      console.error('LIPAD_WEBHOOK_SECRET not configured — refusing webhook');
+      return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const valid = await verifySignature(rawBody, signature, webhookSecret);
+    if (!valid) {
+      console.error('Invalid Lipad webhook signature');
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const payload = JSON.parse(rawBody);
