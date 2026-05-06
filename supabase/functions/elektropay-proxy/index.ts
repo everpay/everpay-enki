@@ -32,13 +32,34 @@ serve(async (req) => {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const apiKey = Deno.env.get('ELEKTROPAY_API_KEY');
     const apiSecret = Deno.env.get('ELEKTROPAY_API_SECRET');
-    if (!apiKey || !apiSecret) throw new Error('Elektropay credentials not configured');
+    if (!apiKey || !apiSecret) {
+      // Don't 500 — the dashboard polls this on render. Return a structured warning
+      // so the UI can render "configure provider" instead of a red error.
+      return new Response(
+        JSON.stringify({ ok: false, configured: false, balances: [], warning: 'elektropay_credentials_missing' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
 
     const body = await req.json();
     const { action, ...params } = body;
-    const basicAuth = btoa(`${apiKey}:${apiSecret}`);
-    const headers = { 'Authorization': `Basic ${basicAuth}`, 'Content-Type': 'application/json' };
+    // Elektropay v3 expects API-Key + API-Secret headers (not Basic). Send both for
+    // forward compatibility so the upstream stops returning 401 + HTML.
+    const headers: Record<string, string> = {
+      'API-Key': apiKey,
+      'API-Secret': apiSecret,
+      'Authorization': `Basic ${btoa(`${apiKey}:${apiSecret}`)}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
     const url = resolveUrl(params.country, params.endpoint_override);
+
+    const safeJson = async (res: Response) => {
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) return await res.json().catch(() => ({}));
+      const text = await res.text().catch(() => '');
+      return { non_json_upstream: true, status: res.status, body_preview: text.slice(0, 200) };
+    };
 
     let result: any;
     switch (action) {
