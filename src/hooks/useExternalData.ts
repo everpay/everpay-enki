@@ -97,3 +97,23 @@ export async function extUpsert(table: string, data: any, onConflict?: string) {
 export async function extDelete(table: string, id: string) {
   await externalProxy({ action: "delete", table, id });
 }
+
+// ---------------------------------------------------------------------------
+// Platform OS gateway token status — used by the Admin “Token rotation”
+// panel. Returns a non-reversible fingerprint so admins can confirm that the
+// rotated value took effect WITHOUT ever seeing the secret itself.
+// ---------------------------------------------------------------------------
+export interface PlatformTokenStatus {
+  token_configured: boolean;
+  token_fingerprint: string | null;
+  token_reason: string | null;
+  gateway_url_configured: boolean;
+  gateway_reachable: boolean;
+  gateway_error: string | null;
+  external_service_role_configured: boolean;
+}
+
+export async function getPlatformTokenStatus(): Promise<PlatformTokenStatus> {
+  const res = await externalProxy({ action: "token_status" });
+  return res.data as PlatformTokenStatus;
+}
