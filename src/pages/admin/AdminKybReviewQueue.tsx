@@ -86,14 +86,26 @@ function ReviewCard({
             .eq('merchant_id', row.merchant_id)
             .maybeSingle();
           const country = (prof?.country || '').toUpperCase();
+          await localSupabase.from('event_logs').insert({
+            event_type: 'kyb.document.approved',
+            source_service: 'admin-kyb-queue',
+            payload: { doc_id: row.id, merchant_id: row.merchant_id, country, doc_type: row.doc_type },
+          }).then(() => {}, () => {});
           if (country && !['US', 'CA'].includes(country)) {
             const { data: provRes } = await localSupabase.functions.invoke('elektropay-proxy', {
               body: { action: 'auto_provision_wallet', merchant_id: row.merchant_id, country },
             });
             if (provRes?.address_id) toast.success('USDT.TRC20 wallet auto-provisioned');
+            else if (provRes?.skipped) toast.info('Wallet provisioning skipped (US/CA merchant)');
+            else toast.warning('Wallet provisioning attempt logged — check provider events');
           }
         } catch (e: any) {
           console.warn('auto_provision_wallet skipped', e?.message);
+          await localSupabase.from('event_logs').insert({
+            event_type: 'wallet.auto_provision.exception',
+            source_service: 'admin-kyb-queue',
+            payload: { merchant_id: row.merchant_id, error: e?.message },
+          }).then(() => {}, () => {});
         }
       }
       onChanged();

@@ -138,6 +138,17 @@ serve(async (req) => {
         const country = (params.country || '').toUpperCase();
         if (['US', 'CA'].includes(country)) {
           result = { skipped: true, reason: 'us_or_canada_excluded' };
+          if (params.merchant_id) {
+            await supabase.from('provider_events').insert({
+              provider: 'elektropay', event_type: 'wallet.provision.skipped',
+              merchant_id: params.merchant_id,
+              payload: { reason: 'us_or_canada_excluded', country },
+            }).then(() => {}, () => {});
+            await supabase.from('event_logs').insert({
+              event_type: 'wallet.auto_provision.skipped', source_service: 'elektropay-proxy',
+              payload: { merchant_id: params.merchant_id, country },
+            }).then(() => {}, () => {});
+          }
           break;
         }
         const payload = {
@@ -157,9 +168,25 @@ serve(async (req) => {
             asset_id: 'USDT.TRC20',
             currency: 'USDT',
             crypto_network: 'TRON',
+            wallet_address: data.address || data.wallet_address || null,
+            address_id: data.address_id,
             elektropay_account_id: data.address_id,
             elektropay_store_id: params.store_id || null,
           }, { onConflict: 'merchant_id,asset_id' });
+        }
+        if (params.merchant_id) {
+          const success = res.ok && !!data.address_id;
+          await supabase.from('provider_events').insert({
+            provider: 'elektropay',
+            event_type: success ? 'wallet.provision.success' : 'wallet.provision.failed',
+            merchant_id: params.merchant_id,
+            payload: { country, asset_id: 'USDT.TRC20', address_id: data.address_id || null, status: res.status, upstream: data },
+          }).then(() => {}, () => {});
+          await supabase.from('event_logs').insert({
+            event_type: success ? 'wallet.auto_provision.success' : 'wallet.auto_provision.failed',
+            source_service: 'elektropay-proxy',
+            payload: { merchant_id: params.merchant_id, country, address_id: data.address_id || null, error: success ? null : data },
+          }).then(() => {}, () => {});
         }
         result = { ...data, withdraw_only: true, ok: res.ok };
         break;

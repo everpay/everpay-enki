@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CountrySelect } from '@/components/CountrySelect';
 import { BUSINESS_TYPES, INDUSTRY_CATEGORIES, getIndustryGroups, getMccByIndustry } from '@/data/business-categories';
+import { WalletProvisioningPanel } from './WalletProvisioningPanel';
 
 function useMerchantProfile() {
   return useQuery({
@@ -308,6 +309,7 @@ export function BusinessVerificationSection() {
               ))}
             </CardContent>
           </Card>
+          <WalletProvisioningPanel merchantId={merchantId} />
         </div>
       </div>
     </div>
