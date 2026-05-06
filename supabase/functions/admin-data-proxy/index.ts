@@ -25,6 +25,32 @@ function createServerClient(url: string, key: string, token?: string) {
   });
 }
 
+// Platform OS Gateway fallback — used when EXTERNAL_SUPABASE_SERVICE_ROLE_KEY
+// is not available. The gateway lives in the Everpay Platform OS project and
+// brokers a small set of admin operations behind a rotatable token.
+async function gatewayCall(op: string, params: Record<string, any> = {}) {
+  const url = Deno.env.get("EVERPAY_OS_GATEWAY_URL");
+  const token = Deno.env.get("PLATFORM_OS_ADMIN_TOKEN");
+  if (!url || !token) return { ok: false, error: "gateway_not_configured" } as const;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ op, params, actor: "enki-admin-proxy" }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json?.error) {
+      return { ok: false, error: json?.error || `gateway_${res.status}` } as const;
+    }
+    return { ok: true, data: json?.data ?? json } as const;
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "gateway_error" } as const;
+  }
+}
+
 async function hasWorkingExternalAdmin(extAdmin: any | null) {
   if (!extAdmin) return false;
 
