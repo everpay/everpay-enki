@@ -19,6 +19,7 @@ const PROVIDERS: Array<{ id: string; name: string; fn: string; currencies: strin
   { id: "circle",      name: "Circle",           fn: "circle-transfer",     currencies: "USDC, USD",rails: "Blockchain / Wire" },
   { id: "walletsuite", name: "Walletster",       fn: "walletsuite-wallets", currencies: "Multi",    rails: "Wallet ledger" },
   { id: "elektropay",  name: "Elektropay",       fn: "elektropay-proxy",    currencies: "Crypto + fiat", rails: "USDT / USDC / multi-chain" },
+  { id: "paywatcher",  name: "PayWatcher (BASE)", fn: "paywatcher-payments", currencies: "USDC on BASE", rails: "BASE L2 / USDC — $0.05 cost → $0.50 charge" },
 ];
 
 function ProviderRow({ p }: { p: (typeof PROVIDERS)[number] }) {
