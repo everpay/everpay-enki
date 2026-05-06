@@ -10,6 +10,41 @@ import { useTapixCache, getEnrichmentSummary } from '@/hooks/useTapixEnrichment'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { METHOD_LOGOS, getMethodLogo } from '@/lib/payment-method-logos';
 
+function getProviderBadgeStyle(provider: string): string {
+  const p = (provider || '').toLowerCase();
+  if (p.includes('facilita')) return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+  if (p === 'mondo') return 'bg-indigo-100 text-indigo-700 border-indigo-300';
+  if (p === 'shieldhub') return 'bg-blue-100 text-blue-700 border-blue-300';
+  if (p === 'paygate10') return 'bg-amber-100 text-amber-700 border-amber-300';
+  if (p === 'makapay') return 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-300';
+  if (p === 'elektropay') return 'bg-teal-100 text-teal-700 border-teal-300';
+  if (p === 'lipad') return 'bg-rose-100 text-rose-700 border-rose-300';
+  return 'bg-muted text-muted-foreground border-border';
+}
+
+function ProviderRoutingBadge({ tx }: { tx: Transaction }) {
+  const meta = (tx as any).metadata || {};
+  const provider = tx.provider || 'unknown';
+  const fellBack = meta.routing_fallback === true || meta.fallback_provider || meta.cascaded_from;
+  const cls = getProviderBadgeStyle(provider);
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant="outline" className={`text-[10px] gap-1 ${cls}`}>
+          <span className="capitalize">{provider}</span>
+          {fellBack && <span className="rounded-sm bg-amber-200 px-1 text-amber-800">fallback</span>}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[260px] text-xs">
+        <div>Routed via <b>{provider}</b></div>
+        {meta.cascaded_from && <div>Cascaded from {meta.cascaded_from}</div>}
+        {meta.fallback_provider && <div>Fallback: {meta.fallback_provider}</div>}
+        {meta.routing_decision_id && <div className="font-mono text-[10px]">decision: {String(meta.routing_decision_id).slice(0, 8)}…</div>}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 const BRAND_LOGOS = METHOD_LOGOS;
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -102,6 +137,7 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                 <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Method</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</th>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Provider</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cards & APM IDs</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Customer IP</th>
                 <th className="px-3 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Created</th>
@@ -158,6 +194,9 @@ export function TransactionTable({ transactions, compact = false }: TransactionT
                     <td className="px-3 py-2.5">
                       <span className="text-xs text-muted-foreground capitalize">{txType}</span>
                     </td>
+
+                    {/* Provider routing */}
+                    <td className="px-3 py-2.5"><ProviderRoutingBadge tx={tx} /></td>
 
                     {/* Cards & APM IDs - show card number with country flag */}
                     <td className="px-3 py-2.5">
