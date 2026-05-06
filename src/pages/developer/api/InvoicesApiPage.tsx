@@ -19,7 +19,7 @@ const InvoicesApiPage = () => {
         </CardContent>
       </Card>
 
-      <ApiEndpoint method="POST" path="/v2/invoices" title="Create an Invoice" description="Create a new invoice for a customer."
+      <ApiEndpoint method="POST" path="/v1/invoices" title="Create an Invoice" description="Create a new invoice for a customer."
         params={[
           { name: "customer_id", type: "string", required: true, desc: "Customer to invoice" },
           { name: "currency", type: "string", required: true, desc: "Three-letter ISO currency code" },
@@ -27,20 +27,20 @@ const InvoicesApiPage = () => {
           { name: "due_date", type: "string", required: false, desc: "Payment due date (ISO 8601)" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/invoices \\\n  -H "Authorization: Bearer sk_test_your_key" \\\n  -d '{"customer_id": "cus_abc123", "currency": "usd", "line_items": [{"description": "Pro Plan", "amount": 4999, "quantity": 1}]}'`,
+          curl: `curl -X POST https://api.everpayinc.com/v1/invoices \\\n  -H "Authorization: Bearer sk_test_your_key" \\\n  -d '{"customer_id": "cus_abc123", "currency": "usd", "line_items": [{"description": "Pro Plan", "amount": 4999, "quantity": 1}]}'`,
           node: `const invoice = await everpay.invoices.create({ customer_id: 'cus_abc123', currency: 'usd', line_items: [{ description: 'Pro Plan', amount: 4999, quantity: 1 }] });`,
           python: `invoice = everpay.Invoice.create(customer_id="cus_abc123", currency="usd", line_items=[{"description": "Pro Plan", "amount": 4999, "quantity": 1}])`,
         }}
         response={`{\n  "id": "inv_abc123",\n  "number": "INV-2026-001",\n  "status": "draft",\n  "total": 4999,\n  "created_at": "2026-03-09T12:00:00Z"\n}`}
       />
 
-      <ApiEndpoint method="GET" path="/v2/invoices" title="List Invoices" description="Retrieve a paginated list of invoices."
+      <ApiEndpoint method="GET" path="/v1/invoices" title="List Invoices" description="Retrieve a paginated list of invoices."
         params={[
           { name: "limit", type: "integer", required: false, desc: "Results per page" },
           { name: "status", type: "string", required: false, desc: "draft, open, paid, void" },
         ]}
         code={{
-          curl: `curl "https://api.everpayinc.com/v2/invoices?status=open" \\\n  -H "Authorization: Bearer sk_test_your_key"`,
+          curl: `curl "https://api.everpayinc.com/v1/invoices?status=open" \\\n  -H "Authorization: Bearer sk_test_your_key"`,
           node: `const invoices = await everpay.invoices.list({ status: 'open' });`,
           python: `invoices = everpay.Invoice.list(status="open")`,
         }}

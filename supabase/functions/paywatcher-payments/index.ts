@@ -44,11 +44,13 @@ Deno.serve(async (req) => {
 
     if (action === "create_payment") {
       const { amount, currency = "USDC", merchant_id, metadata } = body;
-      if (!amount) return json({ error: "amount required" }, 400);
+      const amt = Number(amount);
+      if (!amount || isNaN(amt) || amt <= 0 || amt > 1_000_000) return json({ error: "valid amount required (0 < amount <= 1,000,000)" }, 400);
+      if (typeof currency !== "string" || !/^[A-Z]{3,5}$/.test(currency)) return json({ error: "invalid currency" }, 400);
       const r = await fetch(`${API_BASE}/payments`, {
         method: "POST", headers,
         body: JSON.stringify({
-          amount: String(amount), currency,
+          amount: String(amt), currency,
           metadata: { ...metadata, merchant_id, idempotency_key: idempotencyKey },
         }),
       });
@@ -56,6 +58,7 @@ Deno.serve(async (req) => {
       // upsell pricing surfaced to caller
       return json({
         ...data,
+        idempotency_key: idempotencyKey,
         pricing: { network_cost_usdc: COST_USDC, fee_usdc: CHARGE_USDC, deposit_address: DEPOSIT_ADDRESS },
       }, r.status);
     }
@@ -72,16 +75,19 @@ Deno.serve(async (req) => {
     }
 
     if (action === "rates") {
-      // upsell sheet for all providers (BASE/USDC focus)
-      return json({
-        rails: [
-          { provider: "paywatcher", network: "BASE", asset: "USDC", cost: 0.05, charge: 0.50, margin_usdc: 0.45 },
-          { provider: "circle",     network: "BASE/ETH", asset: "USDC", cost: 0.25, charge: 1.00, margin_usdc: 0.75 },
-          { provider: "elektropay", network: "MULTI",   asset: "USDT/USDC", cost: 0.20, charge: 1.00, margin_usdc: 0.80 },
-          { provider: "walletsuite",network: "MULTI",   asset: "USDC",      cost: 0.10, charge: 0.75, margin_usdc: 0.65 },
-          { provider: "rebelfi",    network: "SOLANA",  asset: "USDC",      cost: 0.01, charge: 0.40, margin_usdc: 0.39 },
-        ],
-      });
+      const markup = Number(body.markup_pct);
+      const validMarkup = !isNaN(markup) && markup >= 0 && markup <= 50 ? markup : 0;
+      const rails = [
+        { provider: "paywatcher", network: "BASE",      asset: "USDC",      cost: 0.05, charge: 0.50, margin_usdc: 0.45 },
+        { provider: "circle",     network: "BASE/ETH",  asset: "USDC",      cost: 0.25, charge: 1.00, margin_usdc: 0.75 },
+        { provider: "elektropay", network: "MULTI",     asset: "USDT/USDC", cost: 0.20, charge: 1.00, margin_usdc: 0.80 },
+        { provider: "walletsuite",network: "MULTI",     asset: "USDC",      cost: 0.10, charge: 0.75, margin_usdc: 0.65 },
+        { provider: "rebelfi",    network: "SOLANA",    asset: "USDC",      cost: 0.01, charge: 0.40, margin_usdc: 0.39 },
+        { provider: "delos",      network: "FIAT",      asset: "USD/EUR",   cost: 0.30, charge: 1.50, margin_usdc: 1.20 },
+        { provider: "brighty",    network: "FIAT/SEPA", asset: "EUR",       cost: 0.15, charge: 1.00, margin_usdc: 0.85 },
+        { provider: "unit",       network: "ACH/RTP",   asset: "USD",       cost: 0.20, charge: 1.00, margin_usdc: 0.80 },
+      ].map(r => ({ ...r, adj_charge: +(r.charge * (1 + validMarkup / 100)).toFixed(4) }));
+      return json({ rails, markup_pct: validMarkup });
     }
 
     return json({ error: `unknown action: ${action}` }, 400);

@@ -28,7 +28,7 @@ const PlansApiPage = () => (
       </CardContent>
     </Card>
 
-    <ApiEndpoint method="POST" path="/v2/plans" title="Create a Plan"
+    <ApiEndpoint method="POST" path="/v1/plans" title="Create a Plan"
       description="Create a new subscription plan."
       params={[
         { name: "name", type: "string", required: true, desc: "Plan name" },
@@ -39,7 +39,7 @@ const PlansApiPage = () => (
         { name: "active", type: "boolean", required: false, desc: "Whether plan is active (default true)" },
       ]}
       code={{
-        curl: `curl -X POST https://api.everpayinc.com/v2/plans \\
+        curl: `curl -X POST https://api.everpayinc.com/v1/plans \\
   -H "Authorization: Bearer sk_test_your_key" \\
   -d '{
     "name": "Pro Monthly",
@@ -70,14 +70,14 @@ const PlansApiPage = () => (
 }`}
     />
 
-    <ApiEndpoint method="GET" path="/v2/plans" title="List Plans"
+    <ApiEndpoint method="GET" path="/v1/plans" title="List Plans"
       description="Retrieve all subscription plans."
       params={[
         { name: "limit", type: "integer", required: false, desc: "Results per page (default 25, max 100)" },
         { name: "active", type: "boolean", required: false, desc: "Filter by active status" },
       ]}
       code={{
-        curl: `curl "https://api.everpayinc.com/v2/plans" \\
+        curl: `curl "https://api.everpayinc.com/v1/plans" \\
   -H "Authorization: Bearer sk_test_your_key"`,
         node: `const plans = await everpay.plans.list();`,
         python: `plans = everpay.Plan.list()`,
@@ -87,11 +87,11 @@ const PlansApiPage = () => (
   "data": [...],
   "has_more": false,
   "total_count": 5,
-  "url": "/v2/plans"
+  "url": "/v1/plans"
 }`}
     />
 
-    <ApiEndpoint method="PATCH" path="/v2/plans/:id" title="Update a Plan"
+    <ApiEndpoint method="PATCH" path="/v1/plans/:id" title="Update a Plan"
       description="Update an existing plan. Amount changes only apply to future subscriptions."
       params={[
         { name: "name", type: "string", required: false, desc: "Updated plan name" },
@@ -99,7 +99,7 @@ const PlansApiPage = () => (
         { name: "trial_days", type: "integer", required: false, desc: "Updated trial period" },
       ]}
       code={{
-        curl: `curl -X PATCH https://api.everpayinc.com/v2/plans/plan_abc123 \\
+        curl: `curl -X PATCH https://api.everpayinc.com/v1/plans/plan_abc123 \\
   -H "Authorization: Bearer sk_test_your_key" \\
   -d '{"active": false}'`,
         node: `await everpay.plans.update('plan_abc123', { active: false });`,

@@ -12,6 +12,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CryptoUpsellRates } from "@/components/admin/CryptoUpsellRates";
+import { ProviderPricingBreakdown } from "@/components/admin/ProviderPricingBreakdown";
 import { PayoutTimeline } from "@/components/admin/PayoutTimeline";
 
 const PROVIDERS: Array<{ id: string; name: string; fn: string; currencies: string; rails: string }> = [
@@ -164,7 +165,13 @@ export default function AdminBanking() {
         </TabsContent>
 
         <TabsContent value="rates">
-          <CryptoUpsellRates />
+          <div className="space-y-4">
+            <CryptoUpsellRates />
+            <div>
+              <h3 className="text-sm font-semibold mb-2">Per-provider pricing breakdown</h3>
+              <ProviderPricingBreakdown amount={100} markupPct={2.5} providers={["paywatcher","elektropay","delos","brighty","unit","circle"]} />
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </AppLayout>

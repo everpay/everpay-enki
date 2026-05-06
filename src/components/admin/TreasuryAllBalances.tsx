@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Wallet, Coins, Landmark } from "lucide-react";
+import { Loader2, RefreshCw, Wallet, Coins, Landmark, ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { formatDistanceToNow } from "date-fns";
 
 type Balance = {
   provider: string;
@@ -56,6 +59,10 @@ function parseBalance(provider: string, data: any): Balance[] {
 export function TreasuryAllBalances() {
   const [rows, setRows] = useState<Balance[]>([]);
   const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [openCurrency, setOpenCurrency] = useState<string | null>(null);
+  const [, force] = useState(0);
+  const rawProviderResp = useRef<Record<string, any>>({});
 
   const refresh = async () => {
     setLoading(true);
@@ -63,6 +70,7 @@ export function TreasuryAllBalances() {
     await Promise.all(PROVIDERS.map(async (p) => {
       try {
         const { data, error } = await supabase.functions.invoke(p.fn, { body: { action: "balances" } });
+        rawProviderResp.current[p.id] = error ? { error: error.message } : data;
         if (error || data?.error) {
           all.push({ provider: p.id, label: p.label, currency: "—", amount: 0, type: p.type, error: error?.message || data?.error });
           return;
@@ -90,10 +98,20 @@ export function TreasuryAllBalances() {
       }
     }
     setRows(all);
+    setLastUpdated(new Date());
     setLoading(false);
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    const interval = setInterval(refresh, 30_000); // auto-refresh 30s
+    const tick = setInterval(() => force((n) => n + 1), 15_000); // re-render "x ago"
+    const channel = supabase
+      .channel("treasury-ledger-changes")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "ledger_entries" }, () => refresh())
+      .subscribe();
+    return () => { clearInterval(interval); clearInterval(tick); supabase.removeChannel(channel); };
+  }, []);
 
   const grouped = rows.reduce((acc, r) => {
     acc[r.currency] = (acc[r.currency] || 0) + r.amount;
@@ -105,7 +123,10 @@ export function TreasuryAllBalances() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" /> All balances</h2>
-          <p className="text-xs text-muted-foreground">Live aggregated across Delos, Unit, Circle, Walletster, Elektropay, PayWatcher + internal ledger.</p>
+          <p className="text-xs text-muted-foreground">
+            Live aggregated across Delos, Unit, Circle, Walletster, Elektropay, PayWatcher + internal ledger.
+            {lastUpdated && <> · Updated {formatDistanceToNow(lastUpdated, { addSuffix: true })}</>}
+          </p>
         </div>
         <Button size="sm" variant="outline" onClick={refresh} disabled={loading}>
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
@@ -114,13 +135,40 @@ export function TreasuryAllBalances() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {Object.entries(grouped).map(([cur, amt]) => (
-          <Card key={cur} className="p-4 rounded-2xl">
-            <div className="text-xs uppercase text-muted-foreground">{cur}</div>
-            <div className="mt-1 text-2xl font-semibold font-mono">{amt.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-            <div className="text-[11px] text-muted-foreground mt-1">Sum across all rails</div>
-          </Card>
+        {loading && rows.length === 0 && Array.from({ length: 4 }).map((_, i) => (
+          <Card key={`sk-${i}`} className="p-4 rounded-2xl"><Skeleton className="h-3 w-12" /><Skeleton className="h-7 w-24 mt-2" /><Skeleton className="h-3 w-20 mt-2" /></Card>
         ))}
+        {Object.entries(grouped).map(([cur, amt]) => {
+          const breakdown = rows.filter(r => r.currency === cur);
+          const open = openCurrency === cur;
+          return (
+            <Collapsible key={cur} open={open} onOpenChange={(o) => setOpenCurrency(o ? cur : null)} asChild>
+              <Card className="p-4 rounded-2xl cursor-pointer hover:border-primary/40 transition">
+                <CollapsibleTrigger className="w-full text-left">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs uppercase text-muted-foreground">{cur}</div>
+                    {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  </div>
+                  <div className="mt-1 text-2xl font-semibold font-mono">{amt.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                  <div className="text-[11px] text-muted-foreground mt-1">{breakdown.length} provider{breakdown.length === 1 ? "" : "s"}</div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3 space-y-1.5 border-t border-border pt-3">
+                  {breakdown.map((b, i) => (
+                    <div key={`${b.provider}-${i}`} className="flex items-center justify-between text-xs">
+                      <span className="capitalize text-muted-foreground">{b.provider}{b.network ? ` · ${b.network}` : ""}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); console.info(`[treasury] ${b.provider} raw response`, rawProviderResp.current[b.provider]); }}
+                        className="font-mono hover:underline"
+                        title="Click to log raw provider response">
+                        {b.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                      </button>
+                    </div>
+                  ))}
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          );
+        })}
         {Object.keys(grouped).length === 0 && !loading && (
           <Card className="p-4 rounded-2xl col-span-full text-center text-sm text-muted-foreground">No balances available — connect provider API keys.</Card>
         )}

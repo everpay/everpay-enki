@@ -75,7 +75,7 @@ const BankRedirectsApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/bank-redirects"
+        path="/v1/bank-redirects"
         title="Create a Bank Redirect Payment"
         description="Initiate a payment via bank redirect. Returns a redirect_url to send the customer to their bank for authorization."
         params={[
@@ -89,7 +89,7 @@ const BankRedirectsApiPage = () => {
           { name: "metadata", type: "object", required: false, desc: "Additional metadata" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/bank-redirects \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/bank-redirects \\
   -H "Authorization: Bearer sk_test_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -128,14 +128,14 @@ const BankRedirectsApiPage = () => {
 
       <ApiEndpoint
         method="GET"
-        path="/v2/bank-redirects/:id"
+        path="/v1/bank-redirects/:id"
         title="Retrieve a Bank Redirect"
         description="Check the status of a bank redirect payment after the customer returns from their bank."
         params={[
           { name: "id", type: "string", required: true, desc: "The bank redirect ID" },
         ]}
         code={{
-          curl: `curl https://api.everpayinc.com/v2/bank-redirects/br_abc123 \\
+          curl: `curl https://api.everpayinc.com/v1/bank-redirects/br_abc123 \\
   -H "Authorization: Bearer sk_test_your_key"`,
           node: `const redirect = await everpay.bankRedirects.retrieve('br_abc123');`,
           python: `redirect = everpay.BankRedirect.retrieve("br_abc123")`,
@@ -153,7 +153,7 @@ const BankRedirectsApiPage = () => {
 
       <ApiEndpoint
         method="GET"
-        path="/v2/bank-redirects/:method/banks"
+        path="/v1/bank-redirects/:method/banks"
         title="List Available Banks"
         description="Retrieve a list of available banks for a specific redirect method (e.g., iDEAL issuers)."
         params={[
@@ -161,7 +161,7 @@ const BankRedirectsApiPage = () => {
           { name: "country", type: "string", required: false, desc: "ISO country code to filter banks" },
         ]}
         code={{
-          curl: `curl https://api.everpayinc.com/v2/bank-redirects/ideal/banks \\
+          curl: `curl https://api.everpayinc.com/v1/bank-redirects/ideal/banks \\
   -H "Authorization: Bearer sk_test_your_key"`,
           node: `const banks = await everpay.bankRedirects.listBanks('ideal');`,
           python: `banks = everpay.BankRedirect.list_banks("ideal")`,

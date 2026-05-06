@@ -114,7 +114,7 @@ const sections = [
   { id: 'rate-limits', label: 'Rate Limits', icon: BarChart3 },
 ];
 
-const BASE_URL = 'https://api.everpayinc.com/v2';
+const BASE_URL = 'https://api.everpayinc.com/v1';
 
 // ============= DOCS PAGE =============
 export default function Docs() {

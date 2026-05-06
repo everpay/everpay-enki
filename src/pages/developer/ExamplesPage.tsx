@@ -7,7 +7,7 @@ const examples = [
     title: "Create a Payment Intent",
     desc: "Authorize and capture a payment in one call.",
     code: {
-      curl: `curl -X POST https://api.everpayinc.com/v2/payments \\\n  -H "Authorization: Bearer sk_test_key" \\\n  -d '{"amount": 2999, "currency": "eur", "payment_method": "pm_card_visa", "capture": true}'`,
+      curl: `curl -X POST https://api.everpayinc.com/v1/payments \\\n  -H "Authorization: Bearer sk_test_key" \\\n  -d '{"amount": 2999, "currency": "eur", "payment_method": "pm_card_visa", "capture": true}'`,
       node: `const payment = await everpay.payments.create({ amount: 2999, currency: 'eur', payment_method: 'pm_card_visa', capture: true });\nconsole.log('Payment ID:', payment.id);`,
       python: `payment = everpay.Payment.create(amount=2999, currency="eur", payment_method="pm_card_visa", capture=True)\nprint("Payment ID:", payment.id)`,
     },
@@ -16,7 +16,7 @@ const examples = [
     title: "Issue a Partial Refund",
     desc: "Refund part of a completed payment.",
     code: {
-      curl: `curl -X POST https://api.everpayinc.com/v2/payments/pay_abc123/refund \\\n  -H "Authorization: Bearer sk_test_key" \\\n  -d '{"amount": 1500, "reason": "requested_by_customer"}'`,
+      curl: `curl -X POST https://api.everpayinc.com/v1/payments/pay_abc123/refund \\\n  -H "Authorization: Bearer sk_test_key" \\\n  -d '{"amount": 1500, "reason": "requested_by_customer"}'`,
       node: `const refund = await everpay.payments.refund('pay_abc123', { amount: 1500, reason: 'requested_by_customer' });`,
       python: `refund = everpay.Payment.refund("pay_abc123", amount=1500, reason="requested_by_customer")`,
     },

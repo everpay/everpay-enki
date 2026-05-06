@@ -67,7 +67,7 @@ const BankDebitsApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/bank-debits"
+        path="/v1/bank-debits"
         title="Create a Bank Debit"
         description="Initiate a debit from a customer's bank account. Requires a verified bank account (via Plaid or manual micro-deposits) and an active mandate."
         params={[
@@ -80,7 +80,7 @@ const BankDebitsApiPage = () => {
           { name: "metadata", type: "object", required: false, desc: "Additional key-value metadata" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/bank-debits \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/bank-debits \\
   -H "Authorization: Bearer sk_test_your_key" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -117,7 +117,7 @@ const BankDebitsApiPage = () => {
 
       <ApiEndpoint
         method="POST"
-        path="/v2/bank-debits/verify"
+        path="/v1/bank-debits/verify"
         title="Verify Bank Account (Plaid)"
         description="Verify a customer's bank account using Plaid Link. Returns a Plaid link token to launch the verification flow in the frontend."
         params={[
@@ -125,7 +125,7 @@ const BankDebitsApiPage = () => {
           { name: "country", type: "string", required: false, desc: "Bank country code (default: US)" },
         ]}
         code={{
-          curl: `curl -X POST https://api.everpayinc.com/v2/bank-debits/verify \\
+          curl: `curl -X POST https://api.everpayinc.com/v1/bank-debits/verify \\
   -H "Authorization: Bearer sk_test_your_key" \\
   -d '{"customer_id": "cus_abc"}'`,
           node: `const link = await everpay.bankDebits.verify({
@@ -142,7 +142,7 @@ const BankDebitsApiPage = () => {
 
       <ApiEndpoint
         method="GET"
-        path="/v2/bank-debits"
+        path="/v1/bank-debits"
         title="List Bank Debits"
         description="Retrieve a paginated list of bank debit transactions."
         params={[
@@ -151,7 +151,7 @@ const BankDebitsApiPage = () => {
           { name: "method", type: "string", required: false, desc: "Filter: ach_debit, sepa_debit, bacs_debit, pix" },
         ]}
         code={{
-          curl: `curl https://api.everpayinc.com/v2/bank-debits?status=succeeded \\
+          curl: `curl https://api.everpayinc.com/v1/bank-debits?status=succeeded \\
   -H "Authorization: Bearer sk_test_your_key"`,
           node: `const debits = await everpay.bankDebits.list({ status: 'succeeded' });`,
           python: `debits = everpay.BankDebit.list(status="succeeded")`,

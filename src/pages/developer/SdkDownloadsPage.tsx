@@ -46,7 +46,7 @@ const SdkDownloadsPage = () => (
         <CardDescription>Drop-in payment form for web applications.</CardDescription>
       </CardHeader>
       <CardContent>
-        <CodeBlock code={`<!-- Add to your HTML -->\n<script src="https://js.everpayinc.com/v2/checkout.js"></script>\n\n<script>\n  const checkout = Everpay.checkout({\n    publishableKey: 'pk_test_your_key',\n    amount: 5000,\n    currency: 'usd',\n    onSuccess: (result) => console.log('Payment:', result.payment_id),\n  });\n  checkout.mount('#payment-form');\n</script>`} language="curl" />
+        <CodeBlock code={`<!-- Add to your HTML -->\n<script src="https://js.everpayinc.com/v1/checkout.js"></script>\n\n<script>\n  const checkout = Everpay.checkout({\n    publishableKey: 'pk_test_your_key',\n    amount: 5000,\n    currency: 'usd',\n    onSuccess: (result) => console.log('Payment:', result.payment_id),\n  });\n  checkout.mount('#payment-form');\n</script>`} language="curl" />
       </CardContent>
     </Card>
   </div>

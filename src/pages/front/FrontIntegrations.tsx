@@ -77,7 +77,7 @@ export default function FrontIntegrations() {
               <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
             </div>
             <p className="text-white/40">// The Everpay Payments API</p>
-            <p><span className="text-primary">POST</span> /v2/payments</p>
+            <p><span className="text-primary">POST</span> /v1/payments</p>
             <p className="mt-2 text-white/40">Authorization: Bearer sk_live_...</p>
             <p>Content-Type: <span className="text-primary">application/json</span></p>
             <p className="mt-2">{"{"}</p>
