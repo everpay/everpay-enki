@@ -37,7 +37,7 @@ export default function AdminRecipients() {
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin-recipients", page, pageSize, sortCol, sortAsc, search],
-    queryFn: () => extSelectPaged("recipients", {
+    queryFn: () => extSelectPaged("recipients_intl", {
       page, pageSize,
       filters,
       order: { column: sortCol, ascending: sortAsc },
