@@ -5,7 +5,58 @@ import { useAccessControl } from "@/hooks/useAccessControl";
 import Unauthorized from "@/components/admin/Unauthorized";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Landmark } from "lucide-react";
+import { Landmark, Plug, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+const PROVIDERS: Array<{ id: string; name: string; fn: string; currencies: string; rails: string }> = [
+  { id: "delos",       name: "Delos Financial", fn: "delos-banking",       currencies: "USD, EUR", rails: "Wire / SEPA" },
+  { id: "brighty",     name: "Brighty App",      fn: "brighty-banking",     currencies: "EUR, multi", rails: "SEPA Instant / IBAN" },
+  { id: "unit",        name: "Unit",             fn: "unit-rtp",            currencies: "USD",      rails: "RTP / FedNow / ACH" },
+  { id: "circle",      name: "Circle",           fn: "circle-transfer",     currencies: "USDC, USD",rails: "Blockchain / Wire" },
+  { id: "walletsuite", name: "Walletster",       fn: "walletsuite-wallets", currencies: "Multi",    rails: "Wallet ledger" },
+  { id: "elektropay",  name: "Elektropay",       fn: "elektropay-proxy",    currencies: "Crypto + fiat", rails: "USDT / USDC / multi-chain" },
+];
+
+function ProviderRow({ p }: { p: (typeof PROVIDERS)[number] }) {
+  const [state, setState] = useState<"idle" | "loading" | "ok" | "err">("idle");
+  const [msg, setMsg] = useState<string>("");
+  const test = async () => {
+    setState("loading"); setMsg("");
+    try {
+      const { data, error } = await supabase.functions.invoke(p.fn, { body: { action: "ping" } });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setState("ok"); setMsg(`HTTP ${data?.status ?? 200}`);
+      toast.success(`${p.name} reachable`);
+    } catch (e: any) {
+      setState("err"); setMsg(e.message || "Failed");
+      toast.error(`${p.name}: ${e.message}`);
+    }
+  };
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{p.name}</TableCell>
+      <TableCell className="text-xs text-muted-foreground">{p.currencies}</TableCell>
+      <TableCell className="text-xs text-muted-foreground">{p.rails}</TableCell>
+      <TableCell className="font-mono text-xs">{p.fn}</TableCell>
+      <TableCell>
+        {state === "ok" ? <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Connected</Badge>
+          : state === "err" ? <Badge variant="destructive" className="gap-1"><XCircle className="h-3 w-3" />{msg.slice(0, 40)}</Badge>
+          : <Badge variant="secondary">Not tested</Badge>}
+      </TableCell>
+      <TableCell className="text-right">
+        <Button variant="outline" size="sm" onClick={test} disabled={state === "loading"}>
+          {state === "loading" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plug className="h-3.5 w-3.5" />}
+          <span className="ml-1.5">Test</span>
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export default function AdminBanking() {
   const { isAdmin, isSuperAdmin, isLoading } = useAccessControl();
@@ -25,10 +76,18 @@ export default function AdminBanking() {
     <AppLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Landmark className="h-5 w-5" /> Banking</h1>
-        <p className="mt-1 text-sm text-muted-foreground">All merchant bank accounts (PII-safe view) and recent payouts.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Bank accounts, payouts, and connected USD/EUR/crypto provider rails.</p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card mb-6">
+      <Tabs defaultValue="accounts" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="accounts">Accounts</TabsTrigger>
+          <TabsTrigger value="payouts">Payouts</TabsTrigger>
+          <TabsTrigger value="providers">Providers</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="accounts">
+      <div className="rounded-xl border border-border bg-card">
         <div className="p-4 border-b border-border font-medium">Bank accounts</div>
         <Table>
           <TableHeader><TableRow>
@@ -51,7 +110,9 @@ export default function AdminBanking() {
           </TableBody>
         </Table>
       </div>
+        </TabsContent>
 
+        <TabsContent value="payouts">
       <div className="rounded-xl border border-border bg-card">
         <div className="p-4 border-b border-border font-medium">Recent payouts</div>
         <Table>
@@ -74,6 +135,29 @@ export default function AdminBanking() {
           </TableBody>
         </Table>
       </div>
+        </TabsContent>
+
+        <TabsContent value="providers">
+          <div className="rounded-xl border border-border bg-card">
+            <div className="p-4 border-b border-border font-medium flex items-center gap-2">
+              <Plug className="h-4 w-4" /> Connected provider rails
+            </div>
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Provider</TableHead><TableHead>Currencies</TableHead><TableHead>Rails</TableHead>
+                <TableHead>Edge function</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {PROVIDERS.map((p) => <ProviderRow key={p.id} p={p} />)}
+              </TableBody>
+            </Table>
+            <div className="p-4 text-xs text-muted-foreground border-t">
+              Add the provider's API key in Lovable Cloud secrets, then click <strong>Test</strong> to verify the connection.
+              Required secrets: <code>DELOS_API_KEY</code>, <code>BRIGHTY_API_KEY</code>, <code>UNIT_API_KEY</code>, <code>CIRCLE_API_KEY</code>, <code>WALLETSUITE_API_KEY</code>. Elektropay already configured.
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </AppLayout>
   );
 }
