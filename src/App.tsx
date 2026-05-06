@@ -69,6 +69,7 @@ import AdminAuditTrail from "./pages/admin/AdminAuditTrail";
 import AdminResellers from "./pages/admin/AdminResellers";
 import AdminReconciliation from "./pages/admin/AdminReconciliation";
 import AdminReports from "./pages/admin/AdminReports";
+import AdminUserReconciliation from "./pages/admin/AdminUserReconciliation";
 
 const queryClient = new QueryClient();
 
@@ -182,6 +183,7 @@ const AppRoutes = () => {
     <Route path="/enki/audit-trail" element={<AdminRoute><AdminAuditTrail /></AdminRoute>} />
     <Route path="/enki/resellers" element={<AdminRoute><AdminResellers /></AdminRoute>} />
     <Route path="/enki/reconciliation" element={<AdminRoute><AdminReconciliation /></AdminRoute>} />
+    <Route path="/enki/user-reconciliation" element={<AdminRoute><AdminUserReconciliation /></AdminRoute>} />
     <Route path="/enki/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
 
     {/* Catch-all */}
