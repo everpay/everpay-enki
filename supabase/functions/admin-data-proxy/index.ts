@@ -289,6 +289,80 @@ Deno.serve(async (req) => {
       catch { await localAdmin.from("audit_logs").insert(auditRow); }
       return jr({ ok: true, summary });
     }
+    if (action === "backfill_provider_events") {
+      // body: { merchant_id, currency?, since?, limit? }
+      if (!body.merchant_id) return jr({ error: "merchant_id required" }, 400);
+      const currency = body.currency ? String(body.currency).toUpperCase() : null;
+      const limit = Math.min(Math.max(Number(body.limit) || 500, 1), 2000);
+      const since = body.since ? String(body.since) : null;
+
+      const filters: Record<string, any> = { merchant_id: body.merchant_id };
+      if (currency) filters.currency = currency;
+
+      let fetched: any[] = [];
+      try {
+        const r = await gw<{ data: any[] }>("db.select", {
+          table: "provider_events",
+          filters,
+          order: { column: "created_at", ascending: false },
+          limit,
+        });
+        fetched = r.data || [];
+      } catch (e) {
+        return jr({ error: "gateway fetch failed", detail: (e as Error).message }, 502);
+      }
+      if (since) {
+        const t = new Date(since).getTime();
+        fetched = fetched.filter((row) => new Date(row.created_at || 0).getTime() >= t);
+      }
+
+      // De-duplicate against local rows by id
+      const ids = fetched.map((r) => r.id).filter(Boolean);
+      let existingIds = new Set<string>();
+      if (ids.length) {
+        const { data: existing } = await localAdmin
+          .from("provider_events").select("id").in("id", ids);
+        existingIds = new Set((existing || []).map((r: any) => r.id));
+      }
+      const toInsert = fetched.filter((r) => r.id && !existingIds.has(r.id));
+      let inserted = 0;
+      if (toInsert.length) {
+        const { error, data: ins } = await localAdmin
+          .from("provider_events")
+          .upsert(toInsert, { onConflict: "id", ignoreDuplicates: true })
+          .select("id");
+        if (error) return jr({ error: `insert failed: ${error.message}` }, 500);
+        inserted = (ins || []).length;
+      }
+
+      // Idempotent audit entry: dedupe by metadata.dedupe_key
+      const dedupeKey = `provider_events_backfill:${body.merchant_id}:${currency || "ALL"}:${since || "all"}:${new Date().toISOString().slice(0, 16)}`;
+      const { data: existingAudit } = await localAdmin
+        .from("audit_logs").select("id")
+        .eq("entity_type", "merchant").eq("entity_id", body.merchant_id)
+        .contains("metadata", { dedupe_key: dedupeKey })
+        .limit(1);
+      if (!existingAudit || existingAudit.length === 0) {
+        const auditRow = {
+          user_id: callerId,
+          action: "merchant.backfill_provider_events",
+          entity_type: "merchant",
+          entity_id: body.merchant_id,
+          metadata: {
+            dedupe_key: dedupeKey,
+            currency, since, limit,
+            fetched: fetched.length,
+            inserted,
+            skipped_duplicates: fetched.length - inserted,
+            by: callerEmail,
+            at: new Date().toISOString(),
+          },
+        };
+        try { await gw("db.insert", { table: "audit_logs", data: auditRow }, callerEmail || "platform-os"); }
+        catch { await localAdmin.from("audit_logs").insert(auditRow); }
+      }
+      return jr({ ok: true, fetched: fetched.length, inserted, skipped_duplicates: fetched.length - inserted, dedupe_key: dedupeKey });
+    }
     if (action === "update_user_role") {
       await gw("users.update_role", { user_id: body.user_id, new_role: body.new_role }, callerEmail || "platform-os");
       return jr({ ok: true });
