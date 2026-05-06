@@ -4,7 +4,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Rail = {
   provider: string;
@@ -20,18 +22,32 @@ export function CryptoUpsellRates() {
   const [rails, setRails] = useState<Rail[]>([]);
   const [buyAmount, setBuyAmount] = useState<number>(100);
   const [extraMarkupPct, setExtraMarkupPct] = useState<number>(2.5);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.functions.invoke("paywatcher-payments", { body: { action: "rates" } });
-      setRails(data?.rails || []);
-    })();
-  }, []);
+  const load = async () => {
+    setLoading(true); setError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("paywatcher-payments", {
+        body: { action: "rates", markup_pct: extraMarkupPct },
+      });
+      if (error) throw new Error(error.message);
+      if (!data?.rails) throw new Error("No rates returned");
+      setRails(data.rails);
+    } catch (e: any) {
+      setError(e.message || "Failed to load rates");
+    } finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
   return (
     <div className="rounded-xl border border-border bg-card">
-      <div className="p-4 border-b border-border flex items-center gap-2 font-medium">
-        <TrendingUp className="h-4 w-4 text-primary" /> Crypto buy rates &amp; markup
+      <div className="p-4 border-b border-border flex items-center justify-between font-medium">
+        <span className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" /> Crypto buy rates &amp; markup</span>
+        <Button size="sm" variant="ghost" onClick={load} disabled={loading} aria-label="Refresh rates">
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+        </Button>
       </div>
       <div className="p-4 grid gap-3 sm:grid-cols-2">
         <div>
@@ -55,6 +71,13 @@ export function CryptoUpsellRates() {
           </TableRow>
         </TableHeader>
         <TableBody>
+          {loading && rails.length === 0 && Array.from({ length: 4 }).map((_, i) => (
+            <TableRow key={`sk-${i}`}>
+              {Array.from({ length: 6 }).map((__, j) => (
+                <TableCell key={j}><Skeleton className="h-4 w-20" /></TableCell>
+              ))}
+            </TableRow>
+          ))}
           {rails.map((r) => {
             const adjusted = buyAmount * (1 + extraMarkupPct / 100) + r.charge;
             const totalMargin = (adjusted - buyAmount - r.cost).toFixed(4);
@@ -69,8 +92,13 @@ export function CryptoUpsellRates() {
               </TableRow>
             );
           })}
-          {rails.length === 0 && (
-            <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-6">Loading rates…</TableCell></TableRow>
+          {error && !loading && (
+            <TableRow><TableCell colSpan={6} className="text-center text-xs text-destructive py-6">
+              <AlertCircle className="inline h-3.5 w-3.5 mr-1" />{error} — <button className="underline" onClick={load}>Retry</button>
+            </TableCell></TableRow>
+          )}
+          {!loading && !error && rails.length === 0 && (
+            <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-6">No rates available.</TableCell></TableRow>
           )}
         </TableBody>
       </Table>
