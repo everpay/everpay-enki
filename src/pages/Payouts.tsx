@@ -46,7 +46,7 @@ interface PayoutRecord {
 
 function getPayoutProviderBadgeStyle(p: string): string {
   const k = (p || '').toLowerCase();
-  if (k.includes('facilita')) return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+  if (k.includes('smartfast')) return 'bg-emerald-100 text-emerald-700 border-emerald-300';
   if (k === 'mondo') return 'bg-indigo-100 text-indigo-700 border-indigo-300';
   if (k === 'brighty') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
   if (k === 'moneto') return 'bg-sky-100 text-sky-700 border-sky-300';
