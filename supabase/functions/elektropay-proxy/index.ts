@@ -136,19 +136,22 @@ serve(async (req) => {
       case 'auto_provision_wallet': {
         // Auto-open a USDT wallet for international (non-US/non-CA) merchants.
         const country = (params.country || '').toUpperCase();
+        const attempt_id: string = params.attempt_id || crypto.randomUUID();
+        const baseEvt = { merchant_id: params.merchant_id, attempt_id, country };
         if (['US', 'CA'].includes(country)) {
           result = { skipped: true, reason: 'us_or_canada_excluded' };
           if (params.merchant_id) {
             await supabase.from('provider_events').insert({
               provider: 'elektropay', event_type: 'wallet.provision.skipped',
               merchant_id: params.merchant_id,
-              payload: { reason: 'us_or_canada_excluded', country },
+              payload: { ...baseEvt, reason: 'us_or_canada_excluded' },
             }).then(() => {}, () => {});
             await supabase.from('event_logs').insert({
               event_type: 'wallet.auto_provision.skipped', source_service: 'elektropay-proxy',
-              payload: { merchant_id: params.merchant_id, country },
+              payload: baseEvt,
             }).then(() => {}, () => {});
           }
+          result.attempt_id = attempt_id;
           break;
         }
         const payload = {
@@ -180,15 +183,15 @@ serve(async (req) => {
             provider: 'elektropay',
             event_type: success ? 'wallet.provision.success' : 'wallet.provision.failed',
             merchant_id: params.merchant_id,
-            payload: { country, asset_id: 'USDT.TRC20', address_id: data.address_id || null, status: res.status, upstream: data },
+            payload: { ...baseEvt, asset_id: 'USDT.TRC20', address_id: data.address_id || null, status: res.status, upstream: data },
           }).then(() => {}, () => {});
           await supabase.from('event_logs').insert({
             event_type: success ? 'wallet.auto_provision.success' : 'wallet.auto_provision.failed',
             source_service: 'elektropay-proxy',
-            payload: { merchant_id: params.merchant_id, country, address_id: data.address_id || null, error: success ? null : data },
+            payload: { ...baseEvt, address_id: data.address_id || null, error: success ? null : data },
           }).then(() => {}, () => {});
         }
-        result = { ...data, withdraw_only: true, ok: res.ok };
+        result = { ...data, withdraw_only: true, ok: res.ok, attempt_id };
         break;
       }
       case 'create_payment':

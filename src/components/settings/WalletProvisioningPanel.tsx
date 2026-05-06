@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Wallet, CheckCircle2, AlertCircle, Clock, Copy } from 'lucide-react';
+import { Wallet, CheckCircle2, AlertCircle, Clock, Copy, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -27,14 +27,39 @@ export function WalletProvisioningPanel({ merchantId }: Props) {
     queryKey: ['wallet-provision-events', merchantId],
     enabled: !!merchantId,
     queryFn: async () => {
+      const [pe, el] = await Promise.all([
+        supabase
+          .from('provider_events')
+          .select('event_type, payload, created_at')
+          .eq('merchant_id', merchantId)
+          .like('event_type', 'wallet.provision.%')
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('event_logs')
+          .select('event_type, payload, created_at')
+          .or('event_type.like.kyb.%,event_type.like.wallet.auto_provision.%')
+          .order('created_at', { ascending: false })
+          .limit(50),
+      ]);
+      const elFiltered = (el.data || []).filter((r: any) => r.payload?.merchant_id === merchantId);
+      return [...(pe.data || []), ...elFiltered]
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 12);
+    },
+    refetchInterval: 15000,
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ['merchant-profile-kyb', merchantId],
+    enabled: !!merchantId,
+    queryFn: async () => {
       const { data } = await supabase
-        .from('provider_events')
-        .select('event_type, payload, created_at')
+        .from('merchant_profiles')
+        .select('onboarding_status, kyb_verified_at, country')
         .eq('merchant_id', merchantId)
-        .like('event_type', 'wallet.provision.%')
-        .order('created_at', { ascending: false })
-        .limit(8);
-      return data || [];
+        .maybeSingle();
+      return data;
     },
     refetchInterval: 15000,
   });
@@ -44,9 +69,28 @@ export function WalletProvisioningPanel({ merchantId }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Wallet className="h-5 w-5" />Wallet provisioning</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Wallet className="h-5 w-5" />KYB & wallet provisioning</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="rounded-lg border p-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+          <div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1"><ShieldCheck className="h-3 w-3" />KYB status</div>
+            <Badge variant={profile?.onboarding_status === 'approved' ? 'default' : 'secondary'} className="mt-1">
+              {profile?.onboarding_status || 'unknown'}
+            </Badge>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Verified at</div>
+            <div className="font-mono text-xs mt-1">{profile?.kyb_verified_at ? new Date(profile.kyb_verified_at).toLocaleString() : '—'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Wallet provisioning</div>
+            <Badge variant={wallets.length ? 'default' : 'secondary'} className="mt-1">
+              {wallets.length ? `${wallets.length} active` : 'pending'}
+            </Badge>
+          </div>
+        </div>
+
         {wallets.length === 0 && (
           <p className="text-sm text-muted-foreground">No wallets provisioned yet. A USDT.TRC20 wallet is auto-created after KYB approval (non-US/CA).</p>
         )}
@@ -70,22 +114,22 @@ export function WalletProvisioningPanel({ merchantId }: Props) {
 
         {events.length > 0 && (
           <div className="pt-2 border-t">
-            <div className="text-xs font-medium text-muted-foreground mb-2">Recent activity</div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">Activity feed</div>
             <ul className="space-y-1.5">
               {events.map((e: any, i: number) => {
-                const ok = e.event_type === 'wallet.provision.success';
-                const skipped = e.event_type === 'wallet.provision.skipped';
+                const t = e.event_type as string;
+                const ok = t.endsWith('.success') || t === 'kyb.document.approved';
+                const skipped = t.endsWith('.skipped');
                 const Icon = ok ? CheckCircle2 : skipped ? Clock : AlertCircle;
                 const cls = ok ? 'text-success' : skipped ? 'text-muted-foreground' : 'text-destructive';
+                const err = e.payload?.upstream?.message || e.payload?.error?.message || (typeof e.payload?.error === 'string' ? e.payload.error : null);
                 return (
                   <li key={i} className="flex items-start gap-2 text-xs">
                     <Icon className={`h-3.5 w-3.5 mt-0.5 ${cls}`} />
                     <div className="flex-1 min-w-0">
-                      <div className={cls}>{e.event_type.replace('wallet.provision.', '')}</div>
+                      <div className={cls}>{t}</div>
                       <div className="text-muted-foreground">{new Date(e.created_at).toLocaleString()}</div>
-                      {e.payload?.upstream?.message && (
-                        <div className="text-destructive text-[11px]">{String(e.payload.upstream.message)}</div>
-                      )}
+                      {err && <div className="text-destructive text-[11px] break-all">{String(err)}</div>}
                     </div>
                   </li>
                 );
