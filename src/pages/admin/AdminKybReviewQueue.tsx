@@ -22,6 +22,7 @@ import {
   extSelect, decideKybDocuments, getKybSignedUrl,
 } from '@/hooks/useExternalData';
 import { createClient } from '@supabase/supabase-js';
+import { supabase as localSupabase } from '@/integrations/supabase/client';
 import { useAccessControl } from '@/hooks/useAccessControl';
 import Unauthorized from '@/components/admin/Unauthorized';
 
