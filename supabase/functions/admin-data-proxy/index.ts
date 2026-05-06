@@ -321,7 +321,41 @@ Deno.serve(async (req) => {
 
   if (!action) return jsonResponse({ error: "action required" }, 400);
 
+  // ---------------------------------------------------------------------
+  // Token rotation workflow: lets the admin UI verify the current
+  // PLATFORM_OS_ADMIN_TOKEN is configured, well-formed and accepted by the
+  // gateway WITHOUT ever returning the token itself. After rotating the
+  // secret, refresh the admin page — there is no redeploy step.
+  // ---------------------------------------------------------------------
+  if (action === "token_status") {
+    const v = validatePlatformToken();
+    const gatewayUrlConfigured = !!Deno.env.get("EVERPAY_OS_GATEWAY_URL");
+    let gatewayReachable = false;
+    let gatewayError: string | null = null;
+    if (v.ok && gatewayUrlConfigured) {
+      const ping = await gatewayCall("ping", {});
+      gatewayReachable = ping.ok;
+      if (!ping.ok) gatewayError = (ping as any).error || "unknown";
+    }
+    return jsonResponse({
+      data: {
+        token_configured: v.ok,
+        token_fingerprint: v.ok ? v.fingerprint : null,
+        token_reason: v.ok ? null : v.reason,
+        gateway_url_configured: gatewayUrlConfigured,
+        gateway_reachable: gatewayReachable,
+        gateway_error: gatewayError,
+        external_service_role_configured: !!Deno.env.get("EXTERNAL_SUPABASE_SERVICE_ROLE_KEY"),
+      },
+    });
+  }
+
   if (action === "list_users") {
+    // Prefer the gateway when it can serve users.
+    const gw = await gatewaySelect("users", { limit: 1000 });
+    if (gw.ok) {
+      return jsonResponse({ data: gw.data, degraded: !canUseExtAdmin, source: "gateway" });
+    }
     const [profilesRes, rolesRes, emailMap] = await Promise.all([
       externalReadClient.from("profiles").select("*").order("created_at", { ascending: false }),
       externalReadClient.from("user_roles").select("user_id, role"),
@@ -351,20 +385,19 @@ Deno.serve(async (req) => {
   }
 
   if (action === "list_merchants_full") {
-    // If we can't use the external service role, try the Platform OS gateway first
-    if (!canUseExtAdmin) {
-      const gw = await gatewayCall("merchants.list", { limit: 1000 });
-      if (gw.ok) {
-        const list = Array.isArray(gw.data) ? gw.data : [];
-        const merchants = list.map((m: any) => ({
-          ...m,
-          email: m.email || null,
-          profile: null,
-          status: m.verification_status === "approved" ? "active" : "pending",
-          onboarding_status: m.verification_status || "pending",
-        }));
-        return jsonResponse({ data: merchants, degraded: true, source: "gateway" });
-      }
+    // Always try the Platform OS gateway first — this is now the primary
+    // path so admin reads no longer require EXTERNAL_SUPABASE_SERVICE_ROLE_KEY.
+    const gw = await gatewayCall("merchants.list", { limit: 1000 });
+    if (gw.ok) {
+      const list = Array.isArray(gw.data) ? gw.data : [];
+      const merchants = list.map((m: any) => ({
+        ...m,
+        email: m.email || null,
+        profile: null,
+        status: m.verification_status === "approved" ? "active" : "pending",
+        onboarding_status: m.verification_status || "pending",
+      }));
+      return jsonResponse({ data: merchants, degraded: !canUseExtAdmin, source: "gateway" });
     }
 
     const [merchantsRes, profilesRes, emailMap] = await Promise.all([
@@ -445,13 +478,19 @@ Deno.serve(async (req) => {
 
   try {
     if (action === "select") {
-      // Gateway fallback for merchants table when external service role is degraded
-      if (table === "merchants" && !canUseExtAdmin) {
-        const gw = await gatewayCall("merchants.list", { limit: rowLimit || 100 });
-        if (gw.ok) {
-          const list = Array.isArray(gw.data) ? gw.data : [];
-          return jsonResponse({ data: list, count: list.length, degraded: true, source: "gateway" });
-        }
+      // Route ALL admin reads through the gateway first. The PostgREST path
+      // remains as a fallback only — the goal is to remove the dependency on
+      // EXTERNAL_SUPABASE_SERVICE_ROLE_KEY for read-side admin traffic.
+      const gw = await gatewaySelect(table, {
+        select, filters, order, limit: rowLimit, offset, count: wantCount,
+      });
+      if (gw.ok) {
+        return jsonResponse({
+          data: gw.data,
+          count: gw.count ?? (Array.isArray(gw.data) ? gw.data.length : null),
+          degraded: !canUseExtAdmin,
+          source: gw.source,
+        });
       }
       const selectOptions: any = {};
       if (wantCount) selectOptions.count = "exact";
@@ -484,7 +523,10 @@ Deno.serve(async (req) => {
         query = query.limit(rowLimit);
       }
       const { data: result, error, count: totalCount } = await query;
-      if (error) return jsonResponse({ error: error.message }, 500);
+      if (error) {
+        logError("select fallback failed", table, error.message);
+        return jsonResponse({ error: error.message }, 500);
+      }
       return jsonResponse({ data: result, count: totalCount ?? null, degraded: !canUseExtAdmin });
     }
 
