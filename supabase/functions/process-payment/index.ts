@@ -408,3 +408,34 @@ async function processMakapay(data: PaymentRequest) {
     return simulatePayment('makapay', data);
 }
 }
+
+// ─── PayWatcher (BASE / USDC) ───
+async function processPaywatcher(data: PaymentRequest, supabase: any, merchantId: string) {
+  const apiKey = Deno.env.get('PAYWATCHER_API_KEY');
+  if (!apiKey) return simulatePayment('paywatcher', data);
+  const idem = data.idempotencyKey || `pw_${crypto.randomUUID()}`;
+  try {
+    const r = await fetch('https://api.masem.at/v1/payments', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json', 'Idempotency-Key': idem },
+      body: JSON.stringify({
+        amount: String(data.amount),
+        currency: 'USDC',
+        metadata: { merchant_id: merchantId, source: data.source || 'api', order_id: data.orderId || null, idempotency_key: idem },
+      }),
+    });
+    const j = await r.json();
+    if (!r.ok) return { id: j.id || `pw_err_${Date.now()}`, status: 'Failed', message: j.error || 'PayWatcher rejected', provider: 'paywatcher' };
+    const status = j.status === 'confirmed' ? 'Approved' : j.status === 'failed' ? 'Failed' : 'pending';
+    return {
+      id: j.id, transaction_reference: j.id, status, message: j.status,
+      provider: 'paywatcher', deposit_address: j.deposit_address || '0xCFac1fAD4dEEFFd863FBc26f7211Ace15F12219b',
+      network: 'BASE', currency: 'USDC', amount: String(data.amount),
+      pricing: { network_cost_usdc: 0.05, fee_usdc: 0.50 },
+      raw: j,
+    };
+  } catch (err) {
+    console.error('PayWatcher error:', err);
+    return simulatePayment('paywatcher', data);
+  }
+}
