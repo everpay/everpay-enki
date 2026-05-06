@@ -141,16 +141,20 @@ serve(async (req) => {
     const signature = req.headers.get('x-everpay-signature');
     const webhookSecret = Deno.env.get('EVERPAY_WEBHOOK_SECRET');
 
-    // Verify HMAC if secret is configured
-    if (webhookSecret) {
-      const valid = await verifySignature(rawBody, signature, webhookSecret);
-      if (!valid) {
-        console.error('Invalid webhook signature');
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    // Fail-closed: refuse to process webhooks unless a secret is configured AND
+    // the signature verifies. Missing secret = misconfiguration = HTTP 500.
+    if (!webhookSecret) {
+      console.error('EVERPAY_WEBHOOK_SECRET not configured — refusing webhook');
+      return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const valid = await verifySignature(rawBody, signature, webhookSecret);
+    if (!valid) {
+      console.error('Invalid webhook signature');
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const payload = JSON.parse(rawBody);
