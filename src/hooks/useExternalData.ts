@@ -117,3 +117,21 @@ export async function getPlatformTokenStatus(): Promise<PlatformTokenStatus> {
   const res = await externalProxy({ action: "token_status" });
   return res.data as PlatformTokenStatus;
 }
+
+// ---------------------------------------------------------------------------
+// KYB document helpers
+// ---------------------------------------------------------------------------
+export async function getKybSignedUrl(file_path: string, expires_in = 300): Promise<string> {
+  const res = await externalProxy({ action: "kyb_signed_url", filters: undefined, ...({ file_path, expires_in } as any) });
+  return (res?.signed_url || "") as string;
+}
+
+export interface KybDecision {
+  id: string;
+  status: "approved" | "rejected";
+  notes?: string | null;
+}
+export async function decideKybDocuments(decisions: KybDecision[]) {
+  const res = await externalProxy({ action: "kyb_decide", filters: undefined, ...({ decisions } as any) });
+  return (res?.results || []) as Array<{ id: string; ok: boolean; error?: string }>;
+}
