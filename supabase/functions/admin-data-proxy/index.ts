@@ -561,6 +561,7 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ error: `Unknown action: ${action}` }, 400);
   } catch (err: any) {
-    return jsonResponse({ error: err.message || "Internal error" }, 500);
+    logError("admin-data-proxy unhandled", err?.message);
+    return jsonResponse({ error: "Internal error" }, 500);
   }
 });
