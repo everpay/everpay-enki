@@ -33,12 +33,70 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  const eventType: string = evt.type ?? evt.event ?? "unknown";
+  const providerRef: string | null = evt.data?.id ?? evt.id ?? null;
+
+  // Map PayWatcher events → canonical transaction status
+  let txStatus: string | null = null;
+  if (eventType === "payment.confirmed") txStatus = "completed";
+  else if (eventType === "payment.failed") txStatus = "failed";
+  else if (eventType === "payment.expired") txStatus = "failed";
+
+  let merchantId: string | null = null;
+  let txnId: string | null = null;
+  if (providerRef) {
+    const { data: tx } = await supabase
+      .from("transactions")
+      .select("id, merchant_id")
+      .eq("provider_ref", String(providerRef))
+      .maybeSingle();
+    if (tx) { merchantId = tx.merchant_id; txnId = tx.id; }
+
+    if (txStatus && tx) {
+      await supabase
+        .from("transactions")
+        .update({ status: txStatus, updated_at: new Date().toISOString() })
+        .eq("id", tx.id);
+
+      // Mirror to payment_intents via metadata link if present
+      const intentStatus = txStatus === "completed" ? "succeeded" : "failed";
+      await supabase.from("payment_intents")
+        .update({ status: intentStatus })
+        .eq("processor_id", "paywatcher")
+        .eq("merchant_id", merchantId);
+    }
+
+    // Append provider event for the timeline
+    if (tx) {
+      await supabase.from("provider_events").insert({
+        merchant_id: merchantId,
+        transaction_id: txnId,
+        provider: "paywatcher",
+        event_type: eventType,
+        payload: evt,
+      } as never).catch(() => null);
+    }
+
+    // Fan out canonical webhook to merchant subscribers
+    if (merchantId && txStatus) {
+      const fanoutEvent = txStatus === "completed" ? "payment.completed" : "payment.failed";
+      supabase.functions.invoke("api-v2-webhooks", {
+        body: {
+          merchant_id: merchantId,
+          event_type: fanoutEvent,
+          payload: { payment_id: txnId, provider: "paywatcher", provider_ref: providerRef, status: txStatus, raw: evt.data ?? evt },
+        },
+      }).catch((e) => console.error("paywatcher fanout error:", e));
+    }
+  }
+
   await supabase.from("everpay_webhooks").insert({
     provider: "paywatcher",
-    event_type: evt.type ?? evt.event ?? "unknown",
-    transaction_id: evt.data?.id ?? evt.id ?? null,
+    event_type: eventType,
+    transaction_id: providerRef,
     status: evt.data?.status ?? evt.status ?? null,
     payload: evt,
+    processed: !!txStatus,
   } as never).catch(() => null);
 
   return new Response(JSON.stringify({ received: true }), {

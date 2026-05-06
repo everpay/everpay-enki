@@ -42,9 +42,14 @@ const countryProviderMap: Record<string, string> = {
 };
 
 function resolveProvider(data: PaymentRequest): string {
+  // Crypto-native rails: prefer PayWatcher (BASE) for USDC, low cost
+  const cur = (data.currency || '').toUpperCase();
+  const network = ((data as any).network || (data as any).chain || '').toString().toUpperCase();
+  if (cur === 'USDC' || network === 'BASE' || (data.paymentMethod || '').toLowerCase() === 'paywatcher') {
+    return 'paywatcher';
+  }
   const c = data.billingDetails?.country || '';
   if (c && countryProviderMap[c]) return countryProviderMap[c];
-  const cur = data.currency;
   if (['EUR', 'GBP'].includes(cur)) return 'mondo';
   if (cur === 'BRL' || cur === 'COP') return 'paygate10';
   if (['INR', 'NGN', 'EGP', 'ZAR', 'KES', 'ARS', 'PKR'].includes(cur)) return 'paygate10';
@@ -220,6 +225,7 @@ serve(async (req) => {
       case 'mondo': providerResponse = await processMondo(paymentData); break;
       case 'shieldhub': providerResponse = await processShieldHub(paymentData, req); break;
       case 'makapay': providerResponse = await processMakapay(paymentData); break;
+      case 'paywatcher': providerResponse = await processPaywatcher(paymentData, supabase, merchantId); break;
       default: providerResponse = simulatePayment(provider, paymentData); break;
     }
     const latencyMs = Date.now() - t0;
@@ -401,4 +407,35 @@ async function processMakapay(data: PaymentRequest) {
     console.error('MakaPay error:', err);
     return simulatePayment('makapay', data);
 }
+}
+
+// ─── PayWatcher (BASE / USDC) ───
+async function processPaywatcher(data: PaymentRequest, supabase: any, merchantId: string) {
+  const apiKey = Deno.env.get('PAYWATCHER_API_KEY');
+  if (!apiKey) return simulatePayment('paywatcher', data);
+  const idem = data.idempotencyKey || `pw_${crypto.randomUUID()}`;
+  try {
+    const r = await fetch('https://api.masem.at/v1/payments', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json', 'Idempotency-Key': idem },
+      body: JSON.stringify({
+        amount: String(data.amount),
+        currency: 'USDC',
+        metadata: { merchant_id: merchantId, source: data.source || 'api', order_id: data.orderId || null, idempotency_key: idem },
+      }),
+    });
+    const j = await r.json();
+    if (!r.ok) return { id: j.id || `pw_err_${Date.now()}`, status: 'Failed', message: j.error || 'PayWatcher rejected', provider: 'paywatcher' };
+    const status = j.status === 'confirmed' ? 'Approved' : j.status === 'failed' ? 'Failed' : 'pending';
+    return {
+      id: j.id, transaction_reference: j.id, status, message: j.status,
+      provider: 'paywatcher', deposit_address: j.deposit_address || '0xCFac1fAD4dEEFFd863FBc26f7211Ace15F12219b',
+      network: 'BASE', currency: 'USDC', amount: String(data.amount),
+      pricing: { network_cost_usdc: 0.05, fee_usdc: 0.50 },
+      raw: j,
+    };
+  } catch (err) {
+    console.error('PayWatcher error:', err);
+    return simulatePayment('paywatcher', data);
+  }
 }
