@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CryptoUpsellRates } from "@/components/admin/CryptoUpsellRates";
+import { PayoutTimeline } from "@/components/admin/PayoutTimeline";
 
 const PROVIDERS: Array<{ id: string; name: string; fn: string; currencies: string; rails: string }> = [
   { id: "delos",       name: "Delos Financial", fn: "delos-banking",       currencies: "USD, EUR", rails: "Wire / SEPA" },
@@ -85,6 +87,7 @@ export default function AdminBanking() {
           <TabsTrigger value="accounts">Accounts</TabsTrigger>
           <TabsTrigger value="payouts">Payouts</TabsTrigger>
           <TabsTrigger value="providers">Providers</TabsTrigger>
+          <TabsTrigger value="rates">Buy rates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="accounts">
@@ -119,11 +122,11 @@ export default function AdminBanking() {
         <Table>
           <TableHeader><TableRow>
             <TableHead>When</TableHead><TableHead>Merchant</TableHead><TableHead className="text-right">Amount</TableHead>
-            <TableHead>Currency</TableHead><TableHead>Status</TableHead>
+            <TableHead>Currency</TableHead><TableHead>Status</TableHead><TableHead>Timeline</TableHead>
           </TableRow></TableHeader>
           <TableBody>
             {(payouts.data || []).length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No payouts</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No payouts</TableCell></TableRow>
             ) : (payouts.data || []).map((p: any) => (
               <TableRow key={p.id}>
                 <TableCell className="text-xs">{p.created_at ? new Date(p.created_at).toLocaleString() : "—"}</TableCell>
@@ -131,6 +134,7 @@ export default function AdminBanking() {
                 <TableCell className="text-right font-medium">{Number(p.amount || 0).toFixed(2)}</TableCell>
                 <TableCell>{p.currency || "—"}</TableCell>
                 <TableCell><Badge variant={p.status === "paid" ? "default" : p.status === "failed" ? "destructive" : "secondary"}>{p.status || "pending"}</Badge></TableCell>
+                <TableCell><PayoutTimeline payoutId={p.id} transactionId={p.transaction_id} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -157,6 +161,10 @@ export default function AdminBanking() {
               Required secrets: <code>DELOS_API_KEY</code>, <code>BRIGHTY_API_KEY</code>, <code>UNIT_API_KEY</code>, <code>CIRCLE_API_KEY</code>, <code>WALLETSUITE_API_KEY</code>. Elektropay already configured.
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="rates">
+          <CryptoUpsellRates />
         </TabsContent>
       </Tabs>
     </AppLayout>
