@@ -91,6 +91,75 @@ Deno.serve(async (req) => {
       return jr({ ok: true });
     }
 
+    // ---- KYB-specific helpers --------------------------------------------
+    if (action === "kyb_signed_url") {
+      // body: { file_path, expires_in?: number }
+      if (!body.file_path) return jr({ error: "file_path required" }, 400);
+      const expires = Math.min(Math.max(Number(body.expires_in) || 300, 30), 3600);
+      const r = await gw<{ signed_url: string; expires_in: number }>(
+        "kyb.signed_url",
+        { file_path: body.file_path, expires_in: expires },
+        callerEmail || "platform-os",
+      );
+      return jr({ signed_url: r.signed_url, expires_in: r.expires_in });
+    }
+
+    if (action === "kyb_decide") {
+      // body: { decisions: [{ id, status: 'approved'|'rejected', notes }] }
+      const decisions: any[] = Array.isArray(body.decisions) ? body.decisions : [];
+      if (!decisions.length) return jr({ error: "decisions required" }, 400);
+      const reviewer = callerEmail || callerId || "platform-os";
+      const reviewedAt = new Date().toISOString();
+      const results: any[] = [];
+      for (const d of decisions) {
+        if (!d?.id || !["approved", "rejected"].includes(d.status)) {
+          results.push({ id: d?.id, ok: false, error: "invalid_decision" });
+          continue;
+        }
+        try {
+          await gw("db.update", {
+            table: "kyb_documents",
+            id: d.id,
+            data: {
+              status: d.status,
+              review_notes: d.notes || null,
+              reviewed_at: reviewedAt,
+              reviewed_by: callerId,
+            },
+          }, reviewer);
+
+          // Audit log written into the merchant project (source of truth).
+          await gw("db.insert", {
+            table: "audit_logs",
+            data: {
+              user_id: callerId,
+              action: `kyb.${d.status}`,
+              entity_type: "kyb_document",
+              entity_id: d.id,
+              metadata: {
+                reviewer_email: callerEmail,
+                reviewer_id: callerId,
+                reviewed_at: reviewedAt,
+                notes: d.notes || null,
+              },
+            },
+          }, reviewer).catch((e) => console.error("audit insert failed", (e as Error).message));
+
+          // Mark local notification as read (best-effort).
+          await localAdmin
+            .from("kyb_review_notifications")
+            .update({ status: d.status, read_at: reviewedAt })
+            .eq("doc_id", d.id);
+
+          results.push({ id: d.id, ok: true });
+        } catch (e: any) {
+          results.push({ id: d.id, ok: false, error: e?.message || "update_failed" });
+        }
+      }
+      return jr({ results });
+    }
+    // ----------------------------------------------------------------------
+
     if (!table || !ALLOWED_TABLES.has(table)) return jr({ error: `Invalid or disallowed table: ${table}` }, 400);
 
     if (action === "select") {
