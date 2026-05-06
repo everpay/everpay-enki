@@ -21,18 +21,14 @@ Deno.serve(async (req) => {
   const token = authHeader.replace("Bearer ", "");
   if (!token) return jr({ error: "Auth required" }, 401);
 
-  let callerId: string | null = null;
-  let callerEmail: string | null = null;
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    callerId = payload.sub ?? null;
-    callerEmail = payload.email ?? null;
-  } catch { return jr({ error: "Invalid token" }, 401); }
-  if (!callerId) return jr({ error: "Invalid token" }, 401);
+  // Cryptographically verify JWT — no email whitelist trust.
+  const { data: claimsData, error: claimsErr } = await localAdmin.auth.getClaims(token);
+  if (claimsErr || !claimsData?.claims?.sub) return jr({ error: "Invalid token" }, 401);
+  const callerId: string = claimsData.claims.sub as string;
+  const callerEmail: string | null = (claimsData.claims.email as string) ?? null;
 
-  const PLATFORM_ADMIN_EMAILS = ["richard.r@everpayinc.com", "everpay@gmail.com"];
-  let isAdmin = (callerEmail && PLATFORM_ADMIN_EMAILS.includes(callerEmail)) || false;
-  if (!isAdmin) {
+  let isAdmin = false;
+  {
     const lr = await localAdmin.from("user_roles").select("role").eq("user_id", callerId);
     isAdmin = (lr.data || []).some((r: any) => r.role === "admin" || r.role === "super_admin");
   }
