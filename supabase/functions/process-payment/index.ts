@@ -206,11 +206,10 @@ serve(async (req) => {
       if (r.risk_level) { const rl = riskScore > 70 ? 'high' : riskScore > 40 ? 'medium' : 'low'; if (r.risk_level !== rl) return false; }
       return true;
     });
-    if (matchedPsp) { provider = matchedPsp.processor; }
+    if (explicitPaywatcher) {
+      provider = 'paywatcher';
+    } else if (matchedPsp) { provider = matchedPsp.processor; }
     else {
-      if (explicitPaywatcher) {
-        provider = 'paywatcher';
-      } else {
       const { data: rr } = await supabase.from('routing_rules').select('target_provider, currency_match, amount_min, amount_max').eq('merchant_id', merchantId).eq('active', true).order('priority', { ascending: false }).limit(10);
       const mr = rr?.find((r: any) => {
         if (r.currency_match?.length && !r.currency_match.includes(currency)) return false;
@@ -219,7 +218,6 @@ serve(async (req) => {
         return true;
       });
       provider = mr ? mr.target_provider : resolveProvider(paymentData);
-      }
     }
 
     // STEP 2C — 3DS decision
