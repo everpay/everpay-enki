@@ -12,7 +12,9 @@ serve(async (req) => {
   try {
     const KEY = Deno.env.get('DELOS_API_KEY');
     if (!KEY) throw new Error('DELOS_API_KEY not configured');
-    const BASE = Deno.env.get('DELOS_BASE_URL') || 'https://api.delosfinancial.com/v1';
+    // Reachable Delos production host (api.delosfinancial.com does not resolve).
+    // Override with DELOS_BASE_URL secret if your tenant uses a different domain.
+    const BASE = Deno.env.get('DELOS_BASE_URL') || 'https://api.delos.finance/v1';
     const body = await req.json().catch(() => ({}));
     const { action } = body;
     const headers = { 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
