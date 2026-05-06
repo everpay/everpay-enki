@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, User, ArrowUpDown, Eye } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { extSelectPaged } from "@/hooks/useExternalData";
 import { useAccessControl } from "@/hooks/useAccessControl";
@@ -13,6 +14,7 @@ import Unauthorized from "@/components/admin/Unauthorized";
 import { TablePagination } from "@/components/TablePagination";
 import { TableSkeleton, TableEmpty, TableError } from "@/components/TableStates";
 import { JsonDrawer } from "@/components/admin/JsonDrawer";
+import { RecipientWizard } from "@/components/admin/RecipientWizard";
 
 const SORT_COLUMNS = ["created_at", "name", "email", "country", "account_type"] as const;
 type SortCol = typeof SORT_COLUMNS[number];
@@ -25,6 +27,7 @@ export default function AdminRecipients() {
   const [sortCol, setSortCol] = useState<SortCol>("created_at");
   const [sortAsc, setSortAsc] = useState(false);
   const [drawer, setDrawer] = useState<any | null>(null);
+  const [wizard, setWizard] = useState(false);
 
   const filters = search.trim()
     ? {
@@ -64,9 +67,12 @@ export default function AdminRecipients() {
   return (
     <AppLayout>
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">Payout Recipients</h1>
-          <p className="text-muted-foreground text-sm">All recipients/beneficiaries registered for payouts across merchants.</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Payout Recipients</h1>
+            <p className="text-muted-foreground text-sm">Multi-rail beneficiaries (ACH, Wire, SEPA, SWIFT, FasterPayments, BSB, IFSC, CLABE, USDT).</p>
+          </div>
+          <Button onClick={() => setWizard(true)}><Plus className="h-4 w-4 mr-1.5" /> New recipient</Button>
         </div>
 
         <div className="relative max-w-md">
@@ -139,6 +145,7 @@ export default function AdminRecipients() {
         description={drawer?.id}
         data={drawer}
       />
+      <RecipientWizard open={wizard} onOpenChange={setWizard} onSaved={() => refetch()} />
     </AppLayout>
   );
 }
