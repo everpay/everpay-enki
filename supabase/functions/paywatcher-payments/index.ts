@@ -1,4 +1,7 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-idempotency-key',
+};
 
 const API_BASE = "https://api.masem.at/v1";
 const DEPOSIT_ADDRESS = "0xCFac1fAD4dEEFFd863FBc26f7211Ace15F12219b";
