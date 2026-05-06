@@ -12,7 +12,7 @@ import { METHOD_LOGOS, getMethodLogo } from '@/lib/payment-method-logos';
 
 function getProviderBadgeStyle(provider: string): string {
   const p = (provider || '').toLowerCase();
-  if (p.includes('facilita')) return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+  if (p.includes('smartfast')) return 'bg-emerald-100 text-emerald-700 border-emerald-300';
   if (p === 'mondo') return 'bg-indigo-100 text-indigo-700 border-indigo-300';
   if (p === 'shieldhub') return 'bg-blue-100 text-blue-700 border-blue-300';
   if (p === 'paygate10') return 'bg-amber-100 text-amber-700 border-amber-300';

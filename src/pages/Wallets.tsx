@@ -1,5 +1,6 @@
 import { AppLayout } from '@/components/AppLayout';
 import { useAccounts } from '@/hooks/useAccounts';
+import { useProviderEvents } from '@/hooks/useProviderEvents';
 import { formatCurrency } from '@/lib/format';
 import { Wallet, TrendingUp, Clock, CreditCard, ExternalLink, Banknote, Bitcoin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CryptoWalletDashboard } from '@/components/CryptoWalletDashboard';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const currencyFlags: Record<string, string> = {
   USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', BRL: '🇧🇷', MXN: '🇲🇽', COP: '🇨🇴', CAD: '🇨🇦',
@@ -24,7 +26,33 @@ const currencyNames: Record<string, string> = {
 
 export default function Wallets() {
   const { data: accounts = [], isLoading } = useAccounts();
+  const { data: providerEvents = [] } = useProviderEvents();
   const navigate = useNavigate();
+
+  // Latest provider_event per currency → routing/status badge
+  const latestByCurrency = new Map<string, { provider: string; status: string; fallbackFrom?: string; at: string }>();
+  for (const ev of providerEvents) {
+    const p: any = (ev as any).payload || {};
+    const cur = (p.currency || p.asset_id || '').toString().toUpperCase();
+    if (!cur || latestByCurrency.has(cur)) continue;
+    const status = (ev.event_type || '').split('.').pop() || 'event';
+    latestByCurrency.set(cur, {
+      provider: ev.provider || 'unknown',
+      status,
+      fallbackFrom: p.fallback_from || p.cascaded_from,
+      at: ev.created_at,
+    });
+  }
+
+  const badgeStyle = (p: string) => {
+    const k = (p || '').toLowerCase();
+    if (k.includes('smartfast')) return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+    if (k === 'mondo') return 'bg-indigo-100 text-indigo-700 border-indigo-300';
+    if (k === 'brighty') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    if (k === 'moneto') return 'bg-sky-100 text-sky-700 border-sky-300';
+    if (k === 'elektropay') return 'bg-teal-100 text-teal-700 border-teal-300';
+    return 'bg-muted text-muted-foreground border-border';
+  };
 
   const totalBalance = accounts.reduce((sum, acc) => {
     // Convert to USD for total (simplified)
@@ -119,9 +147,29 @@ export default function Wallets() {
                     <p className="text-xs text-muted-foreground">{currencyNames[account.currency] || 'Currency'}</p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  Moneto
-                </Badge>
+                {(() => {
+                  const r = latestByCurrency.get(account.currency);
+                  if (!r) return <Badge variant="secondary" className="text-xs">Moneto</Badge>;
+                  return (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="outline" className={`text-[10px] gap-1 ${badgeStyle(r.provider)}`}>
+                            <span className="capitalize">{r.provider}</span>
+                            <span className="opacity-70">· {r.status}</span>
+                            {r.fallbackFrom && <span className="rounded-sm bg-amber-200 px-1 text-amber-800">fallback</span>}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-xs">
+                          <div>Routed via <b>{r.provider}</b></div>
+                          <div>Last event: {r.status}</div>
+                          {r.fallbackFrom && <div>Fallback from {r.fallbackFrom}</div>}
+                          <div className="opacity-70">{new Date(r.at).toLocaleString()}</div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                })()}
               </div>
 
               <div className="space-y-3">
