@@ -66,18 +66,20 @@ serve(async (req) => {
       case 'ping':
       case 'get_assets': {
         const res = await fetch(`${url}/assets`, { headers });
-        result = await res.json();
+        result = await safeJson(res);
         if (action === 'ping') result = { ok: res.ok, status: res.status };
         break;
       }
+      case 'balances':
       case 'get_accounts': {
         const res = await fetch(`${url}/accounts`, { headers });
-        result = await res.json();
+        const data = await safeJson(res);
+        result = { balances: data.accounts || data.balances || [], raw: data, ok: res.ok };
         break;
       }
       case 'sync_balances': {
         const res = await fetch(`${url}/accounts`, { headers });
-        const accountsData = await res.json();
+        const accountsData = await safeJson(res);
         if (params.merchant_id && accountsData.accounts) {
           for (const acct of accountsData.accounts) {
             await supabase.from('elektropay_wallets').upsert({
