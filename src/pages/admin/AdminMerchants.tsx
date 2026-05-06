@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { externalProxy } from '@/hooks/useExternalData';
 import MerchantForm from '@/components/admin/MerchantForm';
-import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone } from 'lucide-react';
+import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone, Pencil, Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import { NewSinceBadge } from '@/components/admin/NewSinceBadge';
 import { SyncNowButton } from '@/components/admin/SyncNowButton';
 import { useNewSinceLastVisit } from '@/hooks/useNewSinceLastVisit';
@@ -37,6 +38,9 @@ export default function AdminMerchants() {
   const [openAddMerchant, setOpenAddMerchant] = useState(false);
   const [selectedMerchant, setSelectedMerchant] = useState<MerchantRow | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<{ name: string; email: string; phone: string; status: string }>({ name: '', email: '', phone: '', status: 'pending' });
+  const [savingEdit, setSavingEdit] = useState(false);
   const { countNew, markVisited } = useNewSinceLastVisit('admin-merchants');
   const newCount = countNew(merchants);
 
@@ -66,6 +70,29 @@ export default function AdminMerchants() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openEdit = (m: MerchantRow) => {
+    setSelectedMerchant(m);
+    setEditForm({ name: m.name || '', email: m.email || '', phone: m.phone || '', status: m.status || 'pending' });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!selectedMerchant) return;
+    setSavingEdit(true);
+    try {
+      await externalProxy({
+        action: 'update_merchant',
+        merchant_id: selectedMerchant.id,
+        patch: { name: editForm.name, email: editForm.email || null, phone: editForm.phone || null, status: editForm.status },
+      });
+      toast({ title: 'Merchant updated' });
+      setEditOpen(false);
+      await fetchMerchants();
+    } catch (e: any) {
+      toast({ title: 'Update failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+    } finally { setSavingEdit(false); }
   };
 
   const filteredMerchants = merchants.filter(m => {
@@ -187,9 +214,14 @@ export default function AdminMerchants() {
                           {new Date(m.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => { setSelectedMerchant(m); setDetailOpen(true); }}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => { setSelectedMerchant(m); setDetailOpen(true); }} aria-label="View">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(m)} aria-label="Edit">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -233,6 +265,35 @@ export default function AdminMerchants() {
       </Dialog>
 
       <MerchantForm open={openAddMerchant} onOpenChange={setOpenAddMerchant} onSuccess={fetchMerchants} />
+
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader><DialogTitle>Edit Merchant</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label className="text-xs">Name</Label><Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="h-12" /></div>
+            <div><Label className="text-xs">Email</Label><Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="h-12" /></div>
+            <div><Label className="text-xs">Phone</Label><Input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} className="h-12" /></div>
+            <div>
+              <Label className="text-xs">Status</Label>
+              <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
+                <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button onClick={saveEdit} disabled={savingEdit}>
+                {savingEdit && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

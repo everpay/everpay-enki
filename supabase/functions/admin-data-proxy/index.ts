@@ -78,6 +78,26 @@ Deno.serve(async (req) => {
       const r = await gw<{ data: any[] }>("merchants.list_full");
       return jr({ data: r.data, degraded: false });
     }
+    if (action === "update_merchant") {
+      // body: { merchant_id, patch: { name?, email?, phone?, status?, region?, currency? } }
+      if (!body.merchant_id || !body.patch) return jr({ error: "merchant_id + patch required" }, 400);
+      // Try gateway first; fall back to direct upsert into local merchants for parity.
+      try {
+        const r = await gw<{ ok: boolean; merchant?: any }>(
+          "merchants.update",
+          { merchant_id: body.merchant_id, patch: body.patch },
+          callerEmail || "platform-os",
+        );
+        return jr({ ok: true, merchant: r.merchant });
+      } catch (e) {
+        const { error } = await localAdmin
+          .from("merchants")
+          .update(body.patch)
+          .eq("id", body.merchant_id);
+        if (error) return jr({ error: error.message, gateway_error: (e as Error).message }, 502);
+        return jr({ ok: true, fallback: "local" });
+      }
+    }
     if (action === "update_user_role") {
       await gw("users.update_role", { user_id: body.user_id, new_role: body.new_role }, callerEmail || "platform-os");
       return jr({ ok: true });
