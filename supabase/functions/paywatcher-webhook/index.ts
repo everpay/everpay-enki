@@ -14,13 +14,24 @@ Deno.serve(async (req) => {
   const raw = await req.text();
 
   if (secret) {
+    if (!sig) {
+      return new Response(JSON.stringify({ error: "missing signature header" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const key = await crypto.subtle.importKey(
       "raw", new TextEncoder().encode(secret),
       { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
     );
     const macBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(raw));
     const mac = Array.from(new Uint8Array(macBuf)).map(b => b.toString(16).padStart(2, "0")).join("");
-    if (mac !== sig.replace(/^sha256=/, "")) {
+    const provided = sig.replace(/^sha256=/, "").toLowerCase();
+    // Constant-time comparison
+    let diff = mac.length ^ provided.length;
+    for (let i = 0; i < Math.max(mac.length, provided.length); i++) {
+      diff |= (mac.charCodeAt(i) || 0) ^ (provided.charCodeAt(i) || 0);
+    }
+    if (diff !== 0) {
       return new Response(JSON.stringify({ error: "invalid signature" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
