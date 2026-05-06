@@ -41,7 +41,12 @@ export async function externalProxy(body: ProxyRequest) {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (error) throw new Error(error.message || "Proxy call failed");
-  if (data?.error) throw new Error(data.error);
+  if (data?.error) {
+    const err: any = new Error(data.error);
+    if (data.field_errors) err.field_errors = data.field_errors;
+    err.data = data;
+    throw err;
+  }
   return data;
 }
 

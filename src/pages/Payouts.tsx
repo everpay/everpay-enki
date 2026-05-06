@@ -40,6 +40,27 @@ interface PayoutRecord {
   bank_name: string;
   account_last4: string;
   created_at: string;
+  provider?: string;
+  fallback_from?: string;
+}
+
+function getPayoutProviderBadgeStyle(p: string): string {
+  const k = (p || '').toLowerCase();
+  if (k.includes('facilita')) return 'bg-emerald-100 text-emerald-700 border-emerald-300';
+  if (k === 'mondo') return 'bg-indigo-100 text-indigo-700 border-indigo-300';
+  if (k === 'brighty') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+  if (k === 'moneto') return 'bg-sky-100 text-sky-700 border-sky-300';
+  return 'bg-muted text-muted-foreground border-border';
+}
+
+function PayoutProviderBadge({ provider, fallbackFrom }: { provider?: string; fallbackFrom?: string }) {
+  const p = provider || 'moneto';
+  return (
+    <Badge variant="outline" className={`text-[10px] gap-1 ${getPayoutProviderBadgeStyle(p)}`}>
+      <span className="capitalize">{p}</span>
+      {fallbackFrom && <span className="rounded-sm bg-amber-200 px-1 text-amber-800">fallback from {fallbackFrom}</span>}
+    </Badge>
+  );
 }
 
 // Mock recent payouts for demo
@@ -543,6 +564,7 @@ export default function Payouts() {
                 </div>
                 <div className="text-right">
                   {getStatusBadge(payout.status)}
+                  <div className="mt-1 flex justify-end"><PayoutProviderBadge provider={payout.provider} fallbackFrom={payout.fallback_from} /></div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {formatDate(payout.created_at)}
                   </p>
