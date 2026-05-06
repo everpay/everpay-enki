@@ -192,7 +192,14 @@ serve(async (req) => {
 
     // STEP 2B — Route payment
     let provider: string;
-    const { data: pspRoutes } = await supabase.from('psp_routes').select('*').eq('merchant_id', merchantId).order('priority', { ascending: true });
+    // Hard override: explicit PayWatcher request or USDC/BASE → always route to PayWatcher.
+    const explicitPaywatcher =
+      (paymentData.paymentMethod || '').toLowerCase() === 'paywatcher' ||
+      currency === 'USDC' ||
+      ((paymentData as any).network || '').toUpperCase() === 'BASE';
+    const { data: pspRoutes } = explicitPaywatcher
+      ? { data: [] as any[] }
+      : await supabase.from('psp_routes').select('*').eq('merchant_id', merchantId).order('priority', { ascending: true });
     const matchedPsp = pspRoutes?.find((r: any) => {
       if (r.country && r.country !== billingCountry) return false;
       if (r.card_brand && r.card_brand !== txMeta.card_brand) return false;
