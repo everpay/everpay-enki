@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { externalProxy } from '@/hooks/useExternalData';
 import MerchantForm from '@/components/admin/MerchantForm';
-import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone, Pencil, Loader2 } from 'lucide-react';
+import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone, Pencil, Loader2, Send, RefreshCw, Link2, History } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { NewSinceBadge } from '@/components/admin/NewSinceBadge';
 import { SyncNowButton } from '@/components/admin/SyncNowButton';
@@ -41,6 +41,13 @@ export default function AdminMerchants() {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<{ name: string; email: string; phone: string; status: string }>({ name: '', email: '', phone: '', status: 'pending' });
   const [savingEdit, setSavingEdit] = useState(false);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [auditLog, setAuditLog] = useState<any[]>([]);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
+  const [reconcileQuery, setReconcileQuery] = useState('');
+  const [reconcileLoading, setReconcileLoading] = useState(false);
+  const [reconcileResults, setReconcileResults] = useState<any[]>([]);
+  const [linkTarget, setLinkTarget] = useState<{ merchant_id?: string; user_id?: string } | null>(null);
   const { countNew, markVisited } = useNewSinceLastVisit('admin-merchants');
   const newCount = countNew(merchants);
 
@@ -75,24 +82,88 @@ export default function AdminMerchants() {
   const openEdit = (m: MerchantRow) => {
     setSelectedMerchant(m);
     setEditForm({ name: m.name || '', email: m.email || '', phone: m.phone || '', status: m.status || 'pending' });
+    setEditErrors({});
     setEditOpen(true);
   };
 
   const saveEdit = async () => {
     if (!selectedMerchant) return;
     setSavingEdit(true);
+    setEditErrors({});
     try {
-      await externalProxy({
+      const res = await externalProxy({
         action: 'update_merchant',
         merchant_id: selectedMerchant.id,
         patch: { name: editForm.name, email: editForm.email || null, phone: editForm.phone || null, status: editForm.status },
       });
+      if (res?.field_errors) {
+        setEditErrors(res.field_errors);
+        toast({ title: 'Validation failed', description: res.error || 'Please fix the highlighted fields', variant: 'destructive' });
+        return;
+      }
       toast({ title: 'Merchant updated' });
       setEditOpen(false);
       await fetchMerchants();
     } catch (e: any) {
+      const fe = e?.field_errors || e?.data?.field_errors;
+      if (fe) setEditErrors(fe);
       toast({ title: 'Update failed', description: e?.message || 'Unknown error', variant: 'destructive' });
     } finally { setSavingEdit(false); }
+  };
+
+  const loadAuditLog = async (merchant_id: string) => {
+    try {
+      const r = await externalProxy({ action: 'merchant_audit_log', merchant_id });
+      setAuditLog(r.data || []);
+    } catch { setAuditLog([]); }
+  };
+
+  const openDetail = async (m: MerchantRow) => {
+    setSelectedMerchant(m);
+    setDetailOpen(true);
+    setAuditLog([]);
+    loadAuditLog(m.id);
+  };
+
+  const runReconcileSearch = async () => {
+    if (reconcileQuery.trim().length < 2) return;
+    setReconcileLoading(true);
+    try {
+      const r = await externalProxy({ action: 'search_user_reconciliation', q: reconcileQuery.trim() });
+      setReconcileResults(r.data || []);
+    } catch (e: any) {
+      toast({ title: 'Search failed', description: e?.message, variant: 'destructive' });
+    } finally { setReconcileLoading(false); }
+  };
+
+  const linkUserToMerchant = async (merchant_id: string, user_id: string) => {
+    try {
+      await externalProxy({ action: 'link_merchant_user', merchant_id, user_id });
+      toast({ title: 'Linked', description: 'User linked to merchant' });
+      await fetchMerchants();
+      await runReconcileSearch();
+    } catch (e: any) {
+      toast({ title: 'Link failed', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const resendInvite = async (email: string, merchant_id?: string) => {
+    try {
+      await externalProxy({ action: 'resend_invite', email, merchant_id });
+      toast({ title: 'Invite sent', description: email });
+    } catch (e: any) {
+      toast({ title: 'Invite failed', description: e?.message, variant: 'destructive' });
+    }
+  };
+
+  const syncMerchant = async (merchant_id: string) => {
+    try {
+      const r = await externalProxy({ action: 'sync_merchant_records', merchant_id });
+      const s = r.summary || {};
+      toast({ title: 'Sync complete', description: `Transactions: ${s.transactions || 0}, Provider events: ${s.provider_events || 0}` });
+    } catch (e: any) {
+      toast({ title: 'Sync failed', description: e?.message, variant: 'destructive' });
+    }
   };
 
   const filteredMerchants = merchants.filter(m => {
@@ -135,6 +206,9 @@ export default function AdminMerchants() {
           </div>
           <div className="flex items-center gap-2">
             <SyncNowButton onSynced={fetchMerchants} />
+            <Button variant="outline" onClick={() => setReconcileOpen(true)}>
+              <Search className="mr-2 h-4 w-4" />Reconcile
+            </Button>
             <Button onClick={() => setOpenAddMerchant(true)}>
               <UserPlus className="mr-2 h-4 w-4" />Add Merchant
             </Button>
@@ -215,11 +289,19 @@ export default function AdminMerchants() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => { setSelectedMerchant(m); setDetailOpen(true); }} aria-label="View">
+                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => openDetail(m)} aria-label="View">
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(m)} aria-label="Edit">
                               <Pencil className="h-4 w-4" />
+                            </Button>
+                            {m.email && (
+                              <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => resendInvite(m.email!, m.id)} aria-label="Resend invite" title="Resend invite">
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => syncMerchant(m.id)} aria-label="Sync records" title="Sync records">
+                              <RefreshCw className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -238,7 +320,7 @@ export default function AdminMerchants() {
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Merchant Details</DialogTitle></DialogHeader>
           {selectedMerchant && (
             <div className="space-y-4">
@@ -259,6 +341,36 @@ export default function AdminMerchants() {
                   <Globe className="h-3 w-3 mr-1" /> Platform OS
                 </Badge>
               )}
+              <div className="border-t pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2"><History className="h-4 w-4" /> Audit log</h3>
+                  <Button size="sm" variant="ghost" onClick={() => loadAuditLog(selectedMerchant.id)}>Refresh</Button>
+                </div>
+                {auditLog.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No audit entries.</p>
+                ) : (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {auditLog.map((a: any) => (
+                      <div key={a.id} className="rounded border bg-muted/20 p-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="font-medium">{a.action}</span>
+                          <span className="text-muted-foreground">{new Date(a.created_at).toLocaleString()}</span>
+                        </div>
+                        <div className="text-muted-foreground">By: {a.metadata?.reviewer_email || a.metadata?.by || a.user_id || '—'}</div>
+                        {a.metadata?.diff && (
+                          <div className="mt-1 space-y-0.5">
+                            {Object.entries(a.metadata.diff).map(([k, v]: any) => (
+                              <div key={k} className="font-mono text-[11px]">
+                                {k}: <span className="text-red-600">{String(v.old ?? '∅')}</span> → <span className="text-emerald-600">{String(v.new ?? '∅')}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
@@ -271,9 +383,20 @@ export default function AdminMerchants() {
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader><DialogTitle>Edit Merchant</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label className="text-xs">Name</Label><Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="h-12" /></div>
-            <div><Label className="text-xs">Email</Label><Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="h-12" /></div>
-            <div><Label className="text-xs">Phone</Label><Input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} className="h-12" /></div>
+            <div>
+              <Label className="text-xs">Name</Label>
+              <Input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="h-12" aria-invalid={!!editErrors.name} />
+              {editErrors.name && <p className="text-xs text-destructive mt-1">{editErrors.name}</p>}
+            </div>
+            <div>
+              <Label className="text-xs">Email</Label>
+              <Input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} className="h-12" aria-invalid={!!editErrors.email} />
+              {editErrors.email && <p className="text-xs text-destructive mt-1">{editErrors.email}</p>}
+            </div>
+            <div>
+              <Label className="text-xs">Phone</Label>
+              <Input value={editForm.phone} onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} className="h-12" />
+            </div>
             <div>
               <Label className="text-xs">Status</Label>
               <Select value={editForm.status} onValueChange={v => setEditForm(f => ({ ...f, status: v }))}>
@@ -284,12 +407,70 @@ export default function AdminMerchants() {
                   <SelectItem value="suspended">Suspended</SelectItem>
                 </SelectContent>
               </Select>
+              {editErrors.status && <p className="text-xs text-destructive mt-1">{editErrors.status}</p>}
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
               <Button onClick={saveEdit} disabled={savingEdit}>
                 {savingEdit && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save changes
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reconcile dialog */}
+      <Dialog open={reconcileOpen} onOpenChange={setReconcileOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Find & link missing merchant users</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input placeholder="Search by email or name (e.g. globeandgo18@gmail.com)" value={reconcileQuery} onChange={e => setReconcileQuery(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') runReconcileSearch(); }} className="h-11" />
+              <Button onClick={runReconcileSearch} disabled={reconcileLoading || reconcileQuery.trim().length < 2}>
+                {reconcileLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
+            </div>
+            {reconcileResults.length === 0 && !reconcileLoading && (
+              <p className="text-xs text-muted-foreground">No results yet. Search across local + production environments.</p>
+            )}
+            <div className="space-y-2">
+              {reconcileResults.map((r: any, i: number) => (
+                <div key={i} className="rounded-md border p-3 text-sm flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{r.name || r.email || r.user_id}</span>
+                      <Badge variant="outline" className="text-[10px]">{r.source}</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{r.email}</div>
+                    {r.id && <div className="text-[11px] font-mono text-muted-foreground">merchant_id: {r.id}</div>}
+                    {r.user_id && <div className="text-[11px] font-mono text-muted-foreground">user_id: {r.user_id}</div>}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {r.source === 'auth_user' && (
+                      <>
+                        <Select onValueChange={(mid) => linkUserToMerchant(mid, r.user_id)}>
+                          <SelectTrigger className="h-8 text-xs w-[180px]"><SelectValue placeholder="Link to merchant…" /></SelectTrigger>
+                          <SelectContent>
+                            {merchants.map(m => (
+                              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    )}
+                    {r.email && (
+                      <Button size="sm" variant="outline" onClick={() => resendInvite(r.email, r.id)}>
+                        <Send className="h-3 w-3 mr-1" /> Invite
+                      </Button>
+                    )}
+                    {r.id && (
+                      <Button size="sm" variant="outline" onClick={() => syncMerchant(r.id)}>
+                        <RefreshCw className="h-3 w-3 mr-1" /> Sync
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </DialogContent>
