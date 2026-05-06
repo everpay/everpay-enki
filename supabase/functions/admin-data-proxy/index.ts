@@ -79,24 +79,215 @@ Deno.serve(async (req) => {
       return jr({ data: r.data, degraded: false });
     }
     if (action === "update_merchant") {
-      // body: { merchant_id, patch: { name?, email?, phone?, status?, region?, currency? } }
+      // body: { merchant_id, patch: { name?, email?, phone?, status? } }
       if (!body.merchant_id || !body.patch) return jr({ error: "merchant_id + patch required" }, 400);
-      // Try gateway first; fall back to direct upsert into local merchants for parity.
+      const patch = body.patch || {};
+      const fieldErrors: Record<string, string> = {};
+      const ALLOWED_STATUSES = ["active", "pending", "suspended"];
+      if (patch.email != null && patch.email !== "") {
+        const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(patch.email));
+        if (!emailOk) fieldErrors.email = "Invalid email format";
+      }
+      if (patch.status && !ALLOWED_STATUSES.includes(patch.status)) {
+        fieldErrors.status = `Status must be one of ${ALLOWED_STATUSES.join(", ")}`;
+      }
+      if (patch.name != null && String(patch.name).trim().length < 2) {
+        fieldErrors.name = "Name must be at least 2 characters";
+      }
+      // Email uniqueness check (best-effort, local first)
+      if (!fieldErrors.email && patch.email) {
+        const { data: dup } = await localAdmin
+          .from("merchants")
+          .select("id")
+          .eq("email", patch.email)
+          .neq("id", body.merchant_id)
+          .maybeSingle();
+        if (dup) fieldErrors.email = "Email already in use by another merchant";
+      }
+      if (Object.keys(fieldErrors).length) {
+        return jr({ error: "Validation failed", field_errors: fieldErrors }, 422);
+      }
+      // Snapshot existing for audit
+      let before: any = null;
+      try {
+        const ext = await gw<{ data: any[] }>("db.select", { table: "merchants", filters: { id: body.merchant_id } });
+        before = (ext.data || [])[0] || null;
+      } catch {}
+      if (!before) {
+        const { data } = await localAdmin.from("merchants").select("*").eq("id", body.merchant_id).maybeSingle();
+        before = data || null;
+      }
+      // Allowed status transitions (no transition from suspended -> active without explicit reactivation flag)
+      if (patch.status && before?.status === "suspended" && patch.status === "active" && !body.reactivate) {
+        return jr({ error: "Suspended merchants must be explicitly reactivated", field_errors: { status: "Pass reactivate:true to reactivate" } }, 409);
+      }
+      let updated: any = null;
+      let fallback = false;
       try {
         const r = await gw<{ ok: boolean; merchant?: any }>(
           "merchants.update",
-          { merchant_id: body.merchant_id, patch: body.patch },
+          { merchant_id: body.merchant_id, patch },
           callerEmail || "platform-os",
         );
-        return jr({ ok: true, merchant: r.merchant });
+        updated = r.merchant;
       } catch (e) {
-        const { error } = await localAdmin
-          .from("merchants")
-          .update(body.patch)
-          .eq("id", body.merchant_id);
+        const { data, error } = await localAdmin.from("merchants").update(patch).eq("id", body.merchant_id).select().maybeSingle();
         if (error) return jr({ error: error.message, gateway_error: (e as Error).message }, 502);
-        return jr({ ok: true, fallback: "local" });
+        updated = data; fallback = true;
       }
+      // Compute diff
+      const diff: Record<string, { old: any; new: any }> = {};
+      for (const k of Object.keys(patch)) {
+        if (before?.[k] !== patch[k]) diff[k] = { old: before?.[k] ?? null, new: patch[k] };
+      }
+      // Audit log (gateway, fall back to local)
+      const auditRow = {
+        user_id: callerId,
+        action: "merchant.update",
+        entity_type: "merchant",
+        entity_id: body.merchant_id,
+        metadata: { reviewer_email: callerEmail, diff, fallback, at: new Date().toISOString() },
+      };
+      try { await gw("db.insert", { table: "audit_logs", data: auditRow }, callerEmail || "platform-os"); }
+      catch { await localAdmin.from("audit_logs").insert(auditRow); }
+      return jr({ ok: true, merchant: updated, diff, fallback });
+    }
+    if (action === "merchant_audit_log") {
+      if (!body.merchant_id) return jr({ error: "merchant_id required" }, 400);
+      let rows: any[] = [];
+      try {
+        const r = await gw<{ data: any[] }>("db.select", {
+          table: "audit_logs",
+          filters: { entity_type: "merchant", entity_id: body.merchant_id },
+          order: { column: "created_at", ascending: false },
+          limit: 100,
+        });
+        rows = r.data || [];
+      } catch {
+        const { data } = await localAdmin.from("audit_logs").select("*")
+          .eq("entity_type", "merchant").eq("entity_id", body.merchant_id)
+          .order("created_at", { ascending: false }).limit(100);
+        rows = data || [];
+      }
+      return jr({ data: rows });
+    }
+    if (action === "search_user_reconciliation") {
+      // body: { q } – search auth.users + merchants + merchant_profiles by email/name across local + gateway
+      const q = String(body.q || "").trim();
+      if (q.length < 2) return jr({ error: "q must be at least 2 chars" }, 400);
+      const results: any[] = [];
+      // Local
+      try {
+        const { data: locUsers } = await localAdmin
+          .from("merchants")
+          .select("id,name,user_id,email,phone,created_at")
+          .or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+          .limit(50);
+        (locUsers || []).forEach((m: any) => results.push({ ...m, source: "local" }));
+      } catch {}
+      // Gateway
+      try {
+        const r = await gw<{ data: any[] }>("merchants.search", { q });
+        (r.data || []).forEach((m: any) => results.push({ ...m, source: "platform" }));
+      } catch {
+        try {
+          const r2 = await gw<{ data: any[] }>("db.select", {
+            table: "merchants",
+            filters: {},
+            ilike: { name: `%${q}%` },
+            limit: 50,
+          });
+          (r2.data || []).forEach((m: any) => results.push({ ...m, source: "platform" }));
+        } catch {}
+      }
+      // Auth users (local)
+      try {
+        const { data: au } = await localAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const matched = (au?.users || []).filter((u: any) =>
+          (u.email || "").toLowerCase().includes(q.toLowerCase()) ||
+          ((u.user_metadata?.display_name || "") + "").toLowerCase().includes(q.toLowerCase())
+        );
+        matched.forEach((u: any) => results.push({
+          source: "auth_user", user_id: u.id, email: u.email,
+          name: u.user_metadata?.display_name, created_at: u.created_at,
+        }));
+      } catch {}
+      return jr({ data: results });
+    }
+    if (action === "link_merchant_user") {
+      // body: { merchant_id, user_id }
+      if (!body.merchant_id || !body.user_id) return jr({ error: "merchant_id + user_id required" }, 400);
+      try {
+        await gw("merchants.update", { merchant_id: body.merchant_id, patch: { user_id: body.user_id } }, callerEmail || "platform-os");
+      } catch {
+        await localAdmin.from("merchants").update({ user_id: body.user_id }).eq("id", body.merchant_id);
+      }
+      const auditRow = {
+        user_id: callerId, action: "merchant.link_user",
+        entity_type: "merchant", entity_id: body.merchant_id,
+        metadata: { linked_user_id: body.user_id, by: callerEmail, at: new Date().toISOString() },
+      };
+      try { await gw("db.insert", { table: "audit_logs", data: auditRow }, callerEmail || "platform-os"); }
+      catch { await localAdmin.from("audit_logs").insert(auditRow); }
+      return jr({ ok: true });
+    }
+    if (action === "resend_invite") {
+      // body: { email, merchant_id? }
+      if (!body.email) return jr({ error: "email required" }, 400);
+      const redirectTo = `${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".lovable.app") || ""}/onboarding`;
+      let result: any = null; let usedAdminInvite = false;
+      try {
+        const { data, error } = await localAdmin.auth.admin.inviteUserByEmail(body.email, { redirectTo });
+        if (error) throw error;
+        result = data; usedAdminInvite = true;
+      } catch (e) {
+        // Fall back to a magic-link style trigger via gateway
+        try { await gw("users.invite", { email: body.email, merchant_id: body.merchant_id }, callerEmail || "platform-os"); }
+        catch (e2) { return jr({ error: (e as Error).message, gateway_error: (e2 as Error).message }, 502); }
+      }
+      const auditRow = {
+        user_id: callerId, action: "merchant.invite_resent",
+        entity_type: "merchant", entity_id: body.merchant_id || body.email,
+        metadata: { email: body.email, by: callerEmail, used_admin_invite: usedAdminInvite, at: new Date().toISOString() },
+      };
+      try { await gw("db.insert", { table: "audit_logs", data: auditRow }, callerEmail || "platform-os"); }
+      catch { await localAdmin.from("audit_logs").insert(auditRow); }
+      return jr({ ok: true, invited: !!result });
+    }
+    if (action === "sync_merchant_records") {
+      // body: { merchant_id }
+      if (!body.merchant_id) return jr({ error: "merchant_id required" }, 400);
+      const summary: Record<string, number> = { transactions: 0, provider_events: 0 };
+      // Transactions
+      try {
+        const txr = await gw<{ data: any[] }>("db.select", {
+          table: "transactions", filters: { merchant_id: body.merchant_id }, limit: 1000,
+        });
+        const rows = txr.data || [];
+        if (rows.length) {
+          const { error } = await localAdmin.from("transactions").upsert(rows, { onConflict: "id" });
+          if (!error) summary.transactions = rows.length;
+        }
+      } catch (e) { console.error("tx sync failed", (e as Error).message); }
+      // Provider events
+      try {
+        const per = await gw<{ data: any[] }>("db.select", {
+          table: "provider_events", filters: { merchant_id: body.merchant_id }, limit: 1000,
+        });
+        const rows = per.data || [];
+        if (rows.length) {
+          const { error } = await localAdmin.from("provider_events").upsert(rows, { onConflict: "id" });
+          if (!error) summary.provider_events = rows.length;
+        }
+      } catch (e) { console.error("provider_events sync failed", (e as Error).message); }
+      const auditRow = {
+        user_id: callerId, action: "merchant.sync_records",
+        entity_type: "merchant", entity_id: body.merchant_id,
+        metadata: { ...summary, by: callerEmail, at: new Date().toISOString() },
+      };
+      try { await gw("db.insert", { table: "audit_logs", data: auditRow }, callerEmail || "platform-os"); }
+      catch { await localAdmin.from("audit_logs").insert(auditRow); }
+      return jr({ ok: true, summary });
     }
     if (action === "update_user_role") {
       await gw("users.update_role", { user_id: body.user_id, new_role: body.new_role }, callerEmail || "platform-os");
