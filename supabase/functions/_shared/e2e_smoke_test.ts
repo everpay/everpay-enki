@@ -38,7 +38,8 @@ Deno.test("balances endpoints respond (delos/brighty/elektropay)", async () => {
 Deno.test("brighty payout writes ledger + transaction idempotently", async () => {
   const merchantId = await pickMerchant();
   const ref = `e2e-brighty-${crypto.randomUUID().slice(0, 8)}`;
-  for (let i = 0; i < 2; i++) {
+  // Re-submit the same payout 3x to assert provider_ref deduplication.
+  for (let i = 0; i < 3; i++) {
     await call("brighty-banking", {
       action: "payout",
       merchant_id: merchantId,
@@ -46,7 +47,11 @@ Deno.test("brighty payout writes ledger + transaction idempotently", async () =>
     });
   }
   const { data: txs } = await supa.from("transactions").select("id").eq("provider", "brighty").eq("provider_ref", ref);
-  assert((txs?.length ?? 0) <= 1, "duplicate transaction created on retry");
+  assertEquals(txs?.length ?? 0, 1, "duplicate brighty transaction created on retry");
+  if (txs?.[0]?.id) {
+    const { data: entries } = await supa.from("ledger_entries").select("id").eq("transaction_id", txs[0].id);
+    assertEquals(entries?.length ?? 0, 1, "duplicate ledger_entries created on retry");
+  }
 });
 
 Deno.test("elektropay payout writes ledger + transaction idempotently", async () => {
