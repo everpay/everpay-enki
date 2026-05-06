@@ -3,6 +3,7 @@
 // ledger + transaction rows on successful payouts so the dashboard reflects activity.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { recordProviderLedger } from "../_shared/ledger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,32 +57,29 @@ serve(async (req) => {
           { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
       }
-      // Write transaction + ledger entry
+      // Idempotent ledger + transaction write keyed on provider_ref.
       const amount = Number(body.payload?.amount || 0);
       const currency = (body.payload?.currency || 'EUR').toUpperCase();
-      const txId = data.id || data.payout_id || crypto.randomUUID();
+      const providerRef = String(data.id || data.payout_id || body.payload?.idempotency_key || crypto.randomUUID());
+      let dedup = { transactionId: '', deduped: false };
       try {
-        await supabase.from('transactions').insert({
-          merchant_id: body.merchant_id,
+        dedup = await recordProviderLedger(supabase, {
+          merchantId: body.merchant_id,
           provider: 'brighty',
-          provider_ref: txId,
-          amount, currency,
+          providerRef,
+          amount,
+          currency,
           status: data.status || 'processing',
           type: 'payout',
-        });
-        await supabase.from('ledger_entries').insert({
-          merchant_id: body.merchant_id,
-          provider: 'brighty',
-          reference: txId,
-          currency, amount,
-          direction: 'debit',
+          entryType: 'debit',
           description: body.payload?.description || 'Brighty payout',
+          metadata: { upstream: data },
         });
       } catch (e) {
         console.warn('brighty ledger write failed', e);
       }
       return new Response(
-        JSON.stringify({ ...data, transaction_id: txId }),
+        JSON.stringify({ ...data, transaction_id: dedup.transactionId || providerRef, deduped: dedup.deduped }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }

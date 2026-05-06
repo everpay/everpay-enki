@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { recordProviderLedger } from "../_shared/ledger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -98,6 +99,128 @@ serve(async (req) => {
           }
         }
         result = accountsData;
+        break;
+      }
+      case 'create_store': {
+        // POST /store — register a store for a merchant, per Elektropay v3.3 docs.
+        const res = await fetch(`${url}/store`, {
+          method: 'POST', headers, body: JSON.stringify(params.payload || {}),
+        });
+        result = { ...(await safeJson(res)), ok: res.ok, status: res.status };
+        break;
+      }
+      case 'create_wallet':
+      case 'dedicate': {
+        // POST /dedicate — assign a dedicated crypto address (wallet) for a customer.
+        const payload = params.payload || {};
+        const res = await fetch(`${url}/dedicate`, {
+          method: 'POST', headers, body: JSON.stringify(payload),
+        });
+        const data = await safeJson(res);
+        // Persist to elektropay_wallets so the merchant dashboard reflects it
+        try {
+          if (params.merchant_id && data.address_id) {
+            await supabase.from('elektropay_wallets').upsert({
+              merchant_id: params.merchant_id,
+              asset_id: payload.asset_id || 'USDT.TRC20',
+              currency: (payload.asset_id || 'USDT').split('.')[0],
+              crypto_network: payload.crypto_network || 'TRON',
+              elektropay_account_id: data.address_id,
+              elektropay_store_id: payload.store_id || null,
+            }, { onConflict: 'merchant_id,asset_id' });
+          }
+        } catch (e) { console.warn('elektropay wallet upsert failed', e); }
+        result = { ...data, ok: res.ok };
+        break;
+      }
+      case 'auto_provision_wallet': {
+        // Auto-open a USDT wallet for international (non-US/non-CA) merchants.
+        const country = (params.country || '').toUpperCase();
+        if (['US', 'CA'].includes(country)) {
+          result = { skipped: true, reason: 'us_or_canada_excluded' };
+          break;
+        }
+        const payload = {
+          asset_id: 'USDT.TRC20',
+          crypto_network: 'TRON',
+          dedicate_type: 'USES',
+          store_id: params.store_id,
+          custom: { merchant_id: params.merchant_id, withdraw_only: true },
+        };
+        const res = await fetch(`${url}/dedicate`, {
+          method: 'POST', headers, body: JSON.stringify(payload),
+        });
+        const data = await safeJson(res);
+        if (params.merchant_id && data.address_id) {
+          await supabase.from('elektropay_wallets').upsert({
+            merchant_id: params.merchant_id,
+            asset_id: 'USDT.TRC20',
+            currency: 'USDT',
+            crypto_network: 'TRON',
+            elektropay_account_id: data.address_id,
+            elektropay_store_id: params.store_id || null,
+          }, { onConflict: 'merchant_id,asset_id' });
+        }
+        result = { ...data, withdraw_only: true, ok: res.ok };
+        break;
+      }
+      case 'create_payment':
+      case 'deposit': {
+        // POST /payment — create a deposit payment. Returns PAYMENT_URL for the user.
+        const res = await fetch(`${url}/payment`, {
+          method: 'POST', headers, body: JSON.stringify(params.payload || {}),
+        });
+        const data = await safeJson(res);
+        if (res.ok && params.merchant_id && data.payment_id) {
+          try {
+            await recordProviderLedger(supabase, {
+              merchantId: params.merchant_id,
+              provider: 'elektropay',
+              providerRef: String(data.payment_id),
+              amount: Number(params.payload?.amount || 0),
+              currency: (params.payload?.asset_id || 'USDT').split('.')[0],
+              status: 'pending',
+              type: 'deposit',
+              entryType: 'credit',
+              metadata: { upstream: data },
+            });
+          } catch (e) { console.warn('elektropay deposit ledger failed', e); }
+        }
+        result = { ...data, ok: res.ok };
+        break;
+      }
+      case 'withdraw':
+      case 'payout': {
+        // POST /withdraw — payout from store balance to external address.
+        const res = await fetch(`${url}/withdraw`, {
+          method: 'POST', headers, body: JSON.stringify(params.payload || {}),
+        });
+        const data = await safeJson(res);
+        if (res.ok && params.merchant_id && data.withdraw_id) {
+          try {
+            await recordProviderLedger(supabase, {
+              merchantId: params.merchant_id,
+              provider: 'elektropay',
+              providerRef: String(data.withdraw_id),
+              amount: Number(params.payload?.amount || data.amount || 0),
+              currency: (params.payload?.asset_id || data.asset_id || 'USDT').split('.')[0],
+              status: data.status || 'processing',
+              type: 'payout',
+              entryType: 'debit',
+              metadata: { upstream: data },
+            });
+          } catch (e) { console.warn('elektropay payout ledger failed', e); }
+        }
+        result = { ...data, ok: res.ok };
+        break;
+      }
+      case 'transfer': {
+        // POST /transfer — move balance between two stores.
+        const res = await fetch(`${url}/transfer`, {
+          method: 'POST', headers, body: JSON.stringify(params.payload || {}),
+        });
+        const data = await safeJson(res);
+        result = { ...data, ok: res.ok };
         break;
       }
       default:

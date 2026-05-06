@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Wallet, Coins, Landmark, ChevronRight, ChevronDown } from "lucide-react";
+import { Loader2, RefreshCw, Wallet, Coins, Landmark, ChevronRight, ChevronDown, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 
 type Balance = {
@@ -62,6 +63,9 @@ export function TreasuryAllBalances() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [openCurrency, setOpenCurrency] = useState<string | null>(null);
   const [, force] = useState(0);
+  const [drillProvider, setDrillProvider] = useState<{ provider: string; currency: string } | null>(null);
+  const [drillData, setDrillData] = useState<{ raw: any; txs: any[]; entries: any[] } | null>(null);
+  const [drillLoading, setDrillLoading] = useState(false);
   const rawProviderResp = useRef<Record<string, any>>({});
 
   const refresh = async () => {
@@ -83,15 +87,17 @@ export function TreasuryAllBalances() {
       }
     }));
 
-    // Add internal ledger balance
+    // Add internal ledger balance — schema uses entry_type (debit/credit) and signed amount.
     const { data: ledgerRows } = await supabase
-      .from("ledger_entries" as any).select("currency, amount, direction").limit(10000);
+      .from("ledger_entries" as any).select("currency, amount, entry_type").limit(10000);
     if (ledgerRows) {
       const sums = new Map<string, number>();
       for (const r of ledgerRows as any[]) {
         const cur = (r.currency || "USD").toUpperCase();
-        const sign = r.direction === "credit" ? 1 : -1;
-        sums.set(cur, (sums.get(cur) || 0) + sign * Number(r.amount || 0));
+        // amount is already signed in our writer; fall back to entry_type sign for legacy rows.
+        const v = Number(r.amount || 0);
+        const signed = v !== 0 ? v : (r.entry_type === "credit" ? 1 : -1);
+        sums.set(cur, (sums.get(cur) || 0) + signed);
       }
       for (const [cur, amt] of sums) {
         all.push({ provider: "ledger", label: "Internal ledger", currency: cur, amount: amt, type: "ledger" });
@@ -157,10 +163,22 @@ export function TreasuryAllBalances() {
                     <div key={`${b.provider}-${i}`} className="flex items-center justify-between text-xs">
                       <span className="capitalize text-muted-foreground">{b.provider}{b.network ? ` · ${b.network}` : ""}</span>
                       <button
-                        onClick={(e) => { e.stopPropagation(); console.info(`[treasury] ${b.provider} raw response`, rawProviderResp.current[b.provider]); }}
-                        className="font-mono hover:underline"
-                        title="Click to log raw provider response">
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setDrillProvider({ provider: b.provider, currency: b.currency });
+                          setDrillLoading(true);
+                          const raw = rawProviderResp.current[b.provider];
+                          const [txRes, leRes] = await Promise.all([
+                            supabase.from("transactions").select("id, provider, provider_ref, amount, currency, status, created_at").eq("provider", b.provider).eq("currency", b.currency).order("created_at", { ascending: false }).limit(50),
+                            supabase.from("ledger_entries" as any).select("id, transaction_id, entry_type, amount, currency, created_at").eq("currency", b.currency).order("created_at", { ascending: false }).limit(50),
+                          ]);
+                          setDrillData({ raw, txs: txRes.data || [], entries: (leRes.data as any[]) || [] });
+                          setDrillLoading(false);
+                        }}
+                        className="font-mono hover:underline inline-flex items-center gap-1"
+                        title="Open raw provider response + matched transactions/ledger entries">
                         {b.amount.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                        <ExternalLink className="h-3 w-3 opacity-60" />
                       </button>
                     </div>
                   ))}
@@ -198,6 +216,46 @@ export function TreasuryAllBalances() {
           </div>
         ))}
       </div>
+
+      <Dialog open={!!drillProvider} onOpenChange={(o) => { if (!o) { setDrillProvider(null); setDrillData(null); } }}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="capitalize">{drillProvider?.provider} · {drillProvider?.currency} drill-down</DialogTitle>
+          </DialogHeader>
+          {drillLoading ? <Skeleton className="h-40 w-full" /> : (
+            <div className="space-y-4 text-xs">
+              <div>
+                <div className="font-medium mb-1">Raw provider balance response</div>
+                <pre className="bg-muted/40 rounded-lg p-3 overflow-auto max-h-60">{JSON.stringify(drillData?.raw, null, 2)}</pre>
+              </div>
+              <div>
+                <div className="font-medium mb-1">Recent transactions ({drillData?.txs.length || 0})</div>
+                <div className="rounded-lg border border-border divide-y divide-border max-h-60 overflow-auto">
+                  {(drillData?.txs || []).map((t) => (
+                    <div key={t.id} className="px-3 py-2 flex items-center justify-between">
+                      <span className="font-mono">{t.provider_ref || t.id.slice(0,8)}</span>
+                      <span><Badge variant="outline" className="mr-2">{t.status}</Badge>{Number(t.amount).toLocaleString()} {t.currency}</span>
+                    </div>
+                  ))}
+                  {(drillData?.txs || []).length === 0 && <div className="px-3 py-4 text-muted-foreground text-center">No transactions</div>}
+                </div>
+              </div>
+              <div>
+                <div className="font-medium mb-1">Ledger entries ({drillData?.entries.length || 0})</div>
+                <div className="rounded-lg border border-border divide-y divide-border max-h-60 overflow-auto">
+                  {(drillData?.entries || []).map((e: any) => (
+                    <div key={e.id} className="px-3 py-2 flex items-center justify-between">
+                      <span className="font-mono">{e.entry_type}</span>
+                      <span>{Number(e.amount).toLocaleString()} {e.currency}</span>
+                    </div>
+                  ))}
+                  {(drillData?.entries || []).length === 0 && <div className="px-3 py-4 text-muted-foreground text-center">No ledger entries</div>}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
