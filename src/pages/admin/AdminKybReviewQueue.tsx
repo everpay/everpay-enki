@@ -77,6 +77,25 @@ function ReviewCard({
       const r = res[0];
       if (!r?.ok) throw new Error(r?.error || 'Failed');
       toast.success(`Document ${status}`);
+      if (status === 'approved' && row.merchant_id) {
+        // Fire-and-forget USDT.TRC20 wallet provisioning for non-US/CA merchants.
+        try {
+          const { data: prof } = await localSupabase
+            .from('merchant_profiles')
+            .select('country')
+            .eq('merchant_id', row.merchant_id)
+            .maybeSingle();
+          const country = (prof?.country || '').toUpperCase();
+          if (country && !['US', 'CA'].includes(country)) {
+            const { data: provRes } = await localSupabase.functions.invoke('elektropay-proxy', {
+              body: { action: 'auto_provision_wallet', merchant_id: row.merchant_id, country },
+            });
+            if (provRes?.address_id) toast.success('USDT.TRC20 wallet auto-provisioned');
+          }
+        } catch (e: any) {
+          console.warn('auto_provision_wallet skipped', e?.message);
+        }
+      }
       onChanged();
     } catch (e: any) {
       toast.error(e?.message || 'Failed to update');
