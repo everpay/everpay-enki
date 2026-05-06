@@ -3289,6 +3289,42 @@ export type Database = {
           },
         ]
       }
+      provider_onboardings: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          external_id: string | null
+          id: string
+          merchant_id: string
+          metadata: Json | null
+          provider: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          merchant_id: string
+          metadata?: Json | null
+          provider: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          merchant_id?: string
+          metadata?: Json | null
+          provider?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       psp_routes: {
         Row: {
           active: boolean | null
@@ -3335,6 +3371,111 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recipients_intl: {
+        Row: {
+          account_number: string | null
+          account_type: string | null
+          address_line1: string | null
+          address_line2: string | null
+          bank_name: string | null
+          branch_code: string | null
+          bsb_code: string | null
+          city: string | null
+          clabe: string | null
+          country: string
+          created_at: string
+          currency: string
+          email: string | null
+          full_name: string
+          iban: string | null
+          id: string
+          ifsc_code: string | null
+          intermediary_bank: string | null
+          merchant_id: string | null
+          metadata: Json | null
+          phone: string | null
+          postal_code: string | null
+          rail: string
+          recipient_type: string
+          routing_number: string | null
+          sort_code: string | null
+          state: string | null
+          status: string
+          swift_bic: string | null
+          updated_at: string
+          wallet_address: string | null
+          wallet_network: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          account_type?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          bank_name?: string | null
+          branch_code?: string | null
+          bsb_code?: string | null
+          city?: string | null
+          clabe?: string | null
+          country: string
+          created_at?: string
+          currency: string
+          email?: string | null
+          full_name: string
+          iban?: string | null
+          id?: string
+          ifsc_code?: string | null
+          intermediary_bank?: string | null
+          merchant_id?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          postal_code?: string | null
+          rail: string
+          recipient_type: string
+          routing_number?: string | null
+          sort_code?: string | null
+          state?: string | null
+          status?: string
+          swift_bic?: string | null
+          updated_at?: string
+          wallet_address?: string | null
+          wallet_network?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          account_type?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          bank_name?: string | null
+          branch_code?: string | null
+          bsb_code?: string | null
+          city?: string | null
+          clabe?: string | null
+          country?: string
+          created_at?: string
+          currency?: string
+          email?: string | null
+          full_name?: string
+          iban?: string | null
+          id?: string
+          ifsc_code?: string | null
+          intermediary_bank?: string | null
+          merchant_id?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          postal_code?: string | null
+          rail?: string
+          recipient_type?: string
+          routing_number?: string | null
+          sort_code?: string | null
+          state?: string | null
+          status?: string
+          swift_bic?: string | null
+          updated_at?: string
+          wallet_address?: string | null
+          wallet_network?: string | null
+        }
+        Relationships: []
       }
       reconciliation_reports: {
         Row: {
@@ -4552,6 +4693,66 @@ export type Database = {
           },
         ]
       }
+      treasury_bank_accounts: {
+        Row: {
+          account_holder: string | null
+          account_number: string | null
+          bank_name: string | null
+          country: string | null
+          created_at: string
+          currency: string
+          iban: string | null
+          id: string
+          label: string
+          metadata: Json | null
+          provider: string | null
+          purpose: string
+          routing_number: string | null
+          sort_code: string | null
+          status: string
+          swift_bic: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_holder?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string
+          iban?: string | null
+          id?: string
+          label: string
+          metadata?: Json | null
+          provider?: string | null
+          purpose: string
+          routing_number?: string | null
+          sort_code?: string | null
+          status?: string
+          swift_bic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_holder?: string | null
+          account_number?: string | null
+          bank_name?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string
+          iban?: string | null
+          id?: string
+          label?: string
+          metadata?: Json | null
+          provider?: string | null
+          purpose?: string
+          routing_number?: string | null
+          sort_code?: string | null
+          status?: string
+          swift_bic?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       treasury_movements: {
         Row: {
           amount: number
@@ -4635,6 +4836,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      treasury_wallets: {
+        Row: {
+          address: string | null
+          asset: string
+          available: number | null
+          balance: number | null
+          created_at: string
+          external_wallet_id: string | null
+          id: string
+          label: string
+          metadata: Json | null
+          network: string | null
+          provider: string
+          updated_at: string
+          yield_apr: number | null
+          yield_provider: string | null
+        }
+        Insert: {
+          address?: string | null
+          asset: string
+          available?: number | null
+          balance?: number | null
+          created_at?: string
+          external_wallet_id?: string | null
+          id?: string
+          label: string
+          metadata?: Json | null
+          network?: string | null
+          provider: string
+          updated_at?: string
+          yield_apr?: number | null
+          yield_provider?: string | null
+        }
+        Update: {
+          address?: string | null
+          asset?: string
+          available?: number | null
+          balance?: number | null
+          created_at?: string
+          external_wallet_id?: string | null
+          id?: string
+          label?: string
+          metadata?: Json | null
+          network?: string | null
+          provider?: string
+          updated_at?: string
+          yield_apr?: number | null
+          yield_provider?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
