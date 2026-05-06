@@ -42,9 +42,14 @@ const countryProviderMap: Record<string, string> = {
 };
 
 function resolveProvider(data: PaymentRequest): string {
+  // Crypto-native rails: prefer PayWatcher (BASE) for USDC, low cost
+  const cur = (data.currency || '').toUpperCase();
+  const network = ((data as any).network || (data as any).chain || '').toString().toUpperCase();
+  if (cur === 'USDC' || network === 'BASE' || (data.paymentMethod || '').toLowerCase() === 'paywatcher') {
+    return 'paywatcher';
+  }
   const c = data.billingDetails?.country || '';
   if (c && countryProviderMap[c]) return countryProviderMap[c];
-  const cur = data.currency;
   if (['EUR', 'GBP'].includes(cur)) return 'mondo';
   if (cur === 'BRL' || cur === 'COP') return 'paygate10';
   if (['INR', 'NGN', 'EGP', 'ZAR', 'KES', 'ARS', 'PKR'].includes(cur)) return 'paygate10';
@@ -220,6 +225,7 @@ serve(async (req) => {
       case 'mondo': providerResponse = await processMondo(paymentData); break;
       case 'shieldhub': providerResponse = await processShieldHub(paymentData, req); break;
       case 'makapay': providerResponse = await processMakapay(paymentData); break;
+      case 'paywatcher': providerResponse = await processPaywatcher(paymentData, supabase, merchantId); break;
       default: providerResponse = simulatePayment(provider, paymentData); break;
     }
     const latencyMs = Date.now() - t0;
