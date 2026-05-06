@@ -262,6 +262,22 @@ Deno.serve(async (req) => {
   }
 
   if (action === "list_merchants_full") {
+    // If we can't use the external service role, try the Platform OS gateway first
+    if (!canUseExtAdmin) {
+      const gw = await gatewayCall("merchants.list", { limit: 1000 });
+      if (gw.ok) {
+        const list = Array.isArray(gw.data) ? gw.data : [];
+        const merchants = list.map((m: any) => ({
+          ...m,
+          email: m.email || null,
+          profile: null,
+          status: m.verification_status === "approved" ? "active" : "pending",
+          onboarding_status: m.verification_status || "pending",
+        }));
+        return jsonResponse({ data: merchants, degraded: true, source: "gateway" });
+      }
+    }
+
     const [merchantsRes, profilesRes, emailMap] = await Promise.all([
       externalReadClient.from("merchants").select("*").order("created_at", { ascending: false }),
       externalReadClient.from("merchant_profiles").select("*"),
@@ -340,6 +356,14 @@ Deno.serve(async (req) => {
 
   try {
     if (action === "select") {
+      // Gateway fallback for merchants table when external service role is degraded
+      if (table === "merchants" && !canUseExtAdmin) {
+        const gw = await gatewayCall("merchants.list", { limit: rowLimit || 100 });
+        if (gw.ok) {
+          const list = Array.isArray(gw.data) ? gw.data : [];
+          return jsonResponse({ data: list, count: list.length, degraded: true, source: "gateway" });
+        }
+      }
       const selectOptions: any = {};
       if (wantCount) selectOptions.count = "exact";
       let query = externalReadClient.from(table).select(select || "*", selectOptions);
