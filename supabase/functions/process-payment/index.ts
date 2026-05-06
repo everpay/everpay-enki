@@ -110,21 +110,52 @@ serve(async (req) => {
       throw new Error('Amount mismatch — possible tampering detected');
     }
 
-    // Resolve merchant
+    // Resolve merchant — REQUIRE authenticated session. Anonymous callers cannot
+    // initiate payments against arbitrary merchants.
     let merchantId: string | null = null;
     const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-      if (user) {
-        const { data: m } = await supabase.from('merchants').select('id').eq('user_id', user.id).single();
-        if (m) merchantId = m.id;
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const { data: userData, error: userErr } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const authedUser = userData.user;
+    const { data: m } = await supabase.from('merchants').select('id').eq('user_id', authedUser.id).single();
+    if (m) merchantId = m.id;
+    // Allow override only when the requested merchant belongs to the same user.
+    if ((paymentData as any).merchantId) {
+      const requested = String((paymentData as any).merchantId);
+      const { data: ownedMatch } = await supabase
+        .from('merchants').select('id').eq('id', requested).eq('user_id', authedUser.id).maybeSingle();
+      if (ownedMatch) merchantId = ownedMatch.id;
+      else if (!merchantId) {
+        return new Response(JSON.stringify({ error: 'Forbidden: merchant does not belong to caller' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
     }
-    if (!merchantId && (paymentData as any).merchantId) {
-      const { data: gm } = await supabase.from('merchants').select('id').eq('id', (paymentData as any).merchantId).single();
-      if (gm) merchantId = gm.id;
+    if (!merchantId) throw new Error('Merchant not found for caller');
+
+    // PCI: only accept VGS-tokenized card data. Reject raw PAN/CVV submissions.
+    if (cardDetails) {
+      const rawNum = (cardDetails.number || '').replace(/\s/g, '');
+      const isVgsAlias = /^tok(_|live_|sand_)/i.test(rawNum) || /^[A-Z0-9]{2,4}_[A-Za-z0-9]{6,}$/.test(rawNum);
+      const looksLikePan = /^\d{12,19}$/.test(rawNum);
+      if (!isVgsAlias || looksLikePan) {
+        return new Response(JSON.stringify({
+          error: 'Card data must be tokenized via VGS. Raw PANs are not accepted.',
+        }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // CVV must never be persisted/forwarded by this function — drop it server-side.
+      // VGS Proxy attaches the live CVV in transit only.
+      (cardDetails as any).cvc = undefined;
     }
-    if (!merchantId) throw new Error('Merchant not found');
 
     // Transaction metadata
     const txMeta: Record<string, any> = {};
