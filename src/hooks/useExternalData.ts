@@ -27,6 +27,8 @@ interface ProxyRequest {
   user_id?: string;
   new_role?: string;
   status?: string;
+  // Free-form extras for kyb_signed_url, kyb_decide, etc.
+  [key: string]: any;
 }
 
 export async function externalProxy(body: ProxyRequest) {
@@ -122,7 +124,7 @@ export async function getPlatformTokenStatus(): Promise<PlatformTokenStatus> {
 // KYB document helpers
 // ---------------------------------------------------------------------------
 export async function getKybSignedUrl(file_path: string, expires_in = 300): Promise<string> {
-  const res = await externalProxy({ action: "kyb_signed_url", filters: undefined, ...({ file_path, expires_in } as any) });
+  const res = await externalProxy({ action: "kyb_signed_url", file_path, expires_in });
   return (res?.signed_url || "") as string;
 }
 
@@ -132,6 +134,6 @@ export interface KybDecision {
   notes?: string | null;
 }
 export async function decideKybDocuments(decisions: KybDecision[]) {
-  const res = await externalProxy({ action: "kyb_decide", filters: undefined, ...({ decisions } as any) });
+  const res = await externalProxy({ action: "kyb_decide", decisions });
   return (res?.results || []) as Array<{ id: string; ok: boolean; error?: string }>;
 }
