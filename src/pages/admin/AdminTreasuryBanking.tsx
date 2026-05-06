@@ -13,6 +13,7 @@ import { Landmark, Plus, Droplet, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAccessControl } from "@/hooks/useAccessControl";
 import Unauthorized from "@/components/admin/Unauthorized";
+import { TreasuryAllBalances } from "@/components/admin/TreasuryAllBalances";
 
 const PURPOSES = ["common","sweep","operating","merchant_fund","reserve","fees","payout","custody","other"];
 
@@ -128,6 +129,10 @@ export default function AdminTreasuryBanking() {
           <h1 className="text-2xl font-bold flex items-center gap-2"><Landmark className="h-6 w-6 text-primary" /> Treasury Banking</h1>
           <p className="text-sm text-muted-foreground">Labelled super-admin accounts (Common, Sweep, Operating, Merchant Fund) and liquidity pools.</p>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <TreasuryAllBalances />
       </div>
 
       <div className="rounded-xl border border-border bg-card mb-6">
