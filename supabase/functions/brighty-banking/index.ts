@@ -20,7 +20,7 @@ serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
-    const BASE = Deno.env.get('BRIGHTY_BASE_URL') || 'https://api.brighty.app/v1';
+    const BASE = Deno.env.get('BRIGHTY_BASE_URL') || 'https://api.brighty.app/business/v1';
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -47,9 +47,29 @@ serve(async (req) => {
     }
 
     if (action === 'payout') {
-      const res = await fetch(`${BASE}/payouts`, {
-        method: 'POST', headers, body: JSON.stringify(body.payload || {}),
-      });
+      // Brighty Business API: POST /payouts/:id/transfers/{external|internal}
+      // Caller passes { payout_id, transfer_type: 'external'|'internal', payload, createdAt? }
+      const payload = body.payload || {};
+      const transferType = body.transfer_type === 'internal' ? 'internal' : 'external';
+      const payoutId = body.payout_id || payload.payout_id;
+      if (!payoutId) {
+        return new Response(
+          JSON.stringify({ error: 'payout_id required for Brighty transfer' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      const idemKey = body.idempotency_key || payload.idempotency_key || crypto.randomUUID();
+      const qs = transferType === 'external' && (body.createdAt || payload.createdAt)
+        ? `?createdAt=${encodeURIComponent(body.createdAt || payload.createdAt)}`
+        : '';
+      const res = await fetch(
+        `${BASE}/payouts/${encodeURIComponent(payoutId)}/transfers/${transferType}${qs}`,
+        {
+          method: 'POST',
+          headers: { ...headers, 'Idempotency-Key': idemKey },
+          body: JSON.stringify(payload),
+        },
+      );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         return new Response(
@@ -58,9 +78,9 @@ serve(async (req) => {
         );
       }
       // Idempotent ledger + transaction write keyed on provider_ref.
-      const amount = Number(body.payload?.amount || 0);
-      const currency = (body.payload?.currency || 'EUR').toUpperCase();
-      const providerRef = String(data.id || data.payout_id || body.payload?.idempotency_key || crypto.randomUUID());
+      const amount = Number(payload.amount?.amount || payload.amount || 0);
+      const currency = (payload.amount?.currency || payload.currency || 'EUR').toUpperCase();
+      const providerRef = String(data.id || data.transferId || idemKey);
       let dedup = { transactionId: '', deduped: false };
       try {
         dedup = await recordProviderLedger(supabase, {
@@ -72,8 +92,8 @@ serve(async (req) => {
           status: data.status || 'processing',
           type: 'payout',
           entryType: 'debit',
-          description: body.payload?.description || 'Brighty payout',
-          metadata: { upstream: data },
+          description: payload.comment || payload.reference || `Brighty ${transferType} transfer`,
+          metadata: { upstream: data, transfer_type: transferType, payout_id: payoutId },
         });
       } catch (e) {
         console.warn('brighty ledger write failed', e);
