@@ -9,9 +9,13 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const webhookSecret = req.headers.get('x-webhook-secret');
     const expectedSecret = Deno.env.get('CIRCLE_WEBHOOK_SECRET');
-    if (expectedSecret && webhookSecret !== expectedSecret) {
+    if (!expectedSecret) {
+      console.error('CIRCLE_WEBHOOK_SECRET not configured');
+      return new Response(JSON.stringify({ error: 'Server misconfiguration' }), { status: 500, headers: corsHeaders });
+    }
+    const webhookSecret = req.headers.get('x-webhook-secret');
+    if (webhookSecret !== expectedSecret) {
       return new Response(JSON.stringify({ error: 'Invalid webhook secret' }), { status: 401, headers: corsHeaders });
     }
     const body = await req.json();
