@@ -32,12 +32,24 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
+    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const callerUserId = userData.user.id;
 
     const { gateway_credential_id } = await req.json();
     if (!gateway_credential_id) {
@@ -60,6 +72,17 @@ serve(async (req) => {
     if (credErr || !cred) {
       return new Response(JSON.stringify({ error: 'Gateway credentials not found' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const [{ data: merchantRow }, { data: roleRows }] = await Promise.all([
+      supabase.from('merchants').select('id').eq('user_id', callerUserId).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', callerUserId),
+    ]);
+    const isAdmin = (roleRows || []).some((r: any) => r.role === 'admin' || r.role === 'super_admin');
+    if (!isAdmin && (!merchantRow || merchantRow.id !== cred.merchant_id)) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 

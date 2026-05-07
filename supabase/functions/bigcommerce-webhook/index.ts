@@ -22,15 +22,19 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verify webhook secret (optional but recommended)
+    // Fail-closed: webhook secret MUST be configured.
     const webhookSecret = Deno.env.get('BIGCOMMERCE_WEBHOOK_SECRET');
-    if (webhookSecret) {
-      const token = req.headers.get('x-webhook-secret');
-      if (token !== webhookSecret) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    if (!webhookSecret) {
+      console.error('BIGCOMMERCE_WEBHOOK_SECRET not configured');
+      return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const token = req.headers.get('x-webhook-secret');
+    if (token !== webhookSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const body = await req.json();
