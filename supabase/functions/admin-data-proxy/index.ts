@@ -25,6 +25,12 @@ const ALLOWED_TABLES = new Set([
   "security_alerts",
 ]);
 
+// Tables that exist ONLY on the local Enki DB (not on Platform OS gateway).
+// All CRUD goes straight to localAdmin instead of the gateway.
+const LOCAL_ONLY_TABLES = new Set<string>([
+  "security_alerts",
+]);
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -445,6 +451,25 @@ Deno.serve(async (req) => {
     if (!table || !ALLOWED_TABLES.has(table)) return jr({ error: `Invalid or disallowed table: ${table}` }, 400);
 
     if (action === "select") {
+      if (LOCAL_ONLY_TABLES.has(table)) {
+        let q: any = localAdmin.from(table).select(select || "*", count ? { count: "exact" } : undefined);
+        if (filters && typeof filters === "object") {
+          for (const [k, v] of Object.entries(filters)) {
+            if (Array.isArray(v)) q = q.in(k, v);
+            else if (v === null) q = q.is(k, null);
+            else q = q.eq(k, v);
+          }
+        }
+        if (order) {
+          const orders = Array.isArray(order) ? order : [order];
+          for (const o of orders) q = q.order(o.column, { ascending: o.ascending !== false });
+        }
+        if (typeof limit === "number") q = q.limit(limit);
+        if (typeof offset === "number" && typeof limit === "number") q = q.range(offset, offset + limit - 1);
+        const { data: rows, count: cnt, error: lerr } = await q;
+        if (lerr) return jr({ error: lerr.message }, 500);
+        return jr({ data: rows || [], count: cnt ?? null });
+      }
       try {
         const r = await gw<{ data: any[]; count: number | null }>("db.select", {
           table, select, filters, order, limit, offset, count,
@@ -475,11 +500,21 @@ Deno.serve(async (req) => {
     }
     if (action === "insert") {
       if (!data) return jr({ error: "data required" }, 400);
+      if (LOCAL_ONLY_TABLES.has(table)) {
+        const { data: rows, error } = await localAdmin.from(table).insert(data).select();
+        if (error) return jr({ error: error.message }, 500);
+        return jr({ data: rows || [] });
+      }
       const r = await gw<{ data: any[] }>("db.insert", { table, data }, callerEmail || "platform-os");
       return jr({ data: r.data });
     }
     if (action === "update") {
       if (!id || !data) return jr({ error: "id and data required" }, 400);
+      if (LOCAL_ONLY_TABLES.has(table)) {
+        const { data: rows, error } = await localAdmin.from(table).update(data).eq("id", id).select();
+        if (error) return jr({ error: error.message }, 500);
+        return jr({ data: rows || [] });
+      }
       const r = await gw<{ data: any[] }>("db.update", { table, id, data }, callerEmail || "platform-os");
       return jr({ data: r.data });
     }
