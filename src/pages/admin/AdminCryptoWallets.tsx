@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import {
-  useCryptoWallets, useCryptoAssets, useFreezeWallet, useCloseWallet, CryptoWallet,
+  useCryptoWallets, useCryptoAssets, useFreezeWallet, useCloseWallet, useSyncElektropay, CryptoWallet,
 } from "@/hooks/useCryptoWallets";
 import { useAccessControl } from "@/hooks/useAccessControl";
 import Unauthorized from "@/components/admin/Unauthorized";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowDownToLine, ArrowUpFromLine, Snowflake, X, Search, Wallet } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Snowflake, X, Search, Wallet, RefreshCw } from "lucide-react";
 import { WalletActionDialog } from "@/components/crypto/WalletActionDialog";
 
 export default function AdminCryptoWallets() {
@@ -20,6 +20,7 @@ export default function AdminCryptoWallets() {
   const { data: assets = [] } = useCryptoAssets();
   const freeze = useFreezeWallet();
   const close = useCloseWallet();
+  const sync = useSyncElektropay();
   const [filter, setFilter] = useState("");
   const [merchant, setMerchant] = useState("all");
   const [asset, setAsset] = useState("all");
@@ -43,9 +44,19 @@ export default function AdminCryptoWallets() {
 
   return (
     <AppLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Crypto Wallets</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Manage all merchant crypto wallets, balances, and operations.</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Crypto Wallets</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage all merchant crypto wallets, balances, and operations.</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => sync.mutate({ merchant_id: merchant !== "all" ? merchant : undefined })}
+          disabled={sync.isPending}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${sync.isPending ? "animate-spin" : ""}`} />
+          {sync.isPending ? "Syncing..." : "Sync from Elektropay"}
+        </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <Stat label="Total wallets" value={wallets.length} icon={<Wallet className="h-4 w-4" />} />
