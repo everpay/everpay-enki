@@ -33,6 +33,7 @@ import {
   TrendingUp,
   Receipt,
   Activity,
+  Sparkles,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
