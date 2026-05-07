@@ -71,18 +71,26 @@ export function useCryptoWallets(merchantId?: string) {
   return useQuery({
     queryKey: ["crypto-wallets", merchantId],
     queryFn: async () => {
-      // Real source of truth is elektropay_wallets (synced from Elektropay API).
-      const rows = await extSelect("elektropay_wallets", {
-        filters: merchantId ? { merchant_id: merchantId } : undefined,
-        order: { column: "created_at", ascending: false },
-      });
+      // Live: hit Elektropay /accounts via proxy. Source of truth = the gateway
+      // itself, not our cached supabase table (which can be stale or empty).
+      let rows: any[] = [];
+      try {
+        const data = await callElektropay("list_wallets", merchantId ? { merchant_id: merchantId } : {});
+        rows = data?.wallets || [];
+      } catch (e) {
+        console.warn("list_wallets failed, falling back to local cache", e);
+        rows = await extSelect("elektropay_wallets", {
+          filters: merchantId ? { merchant_id: merchantId } : undefined,
+          order: { column: "created_at", ascending: false },
+        });
+      }
       return (rows || []).map((w: any): CryptoWallet => ({
         id: w.id,
         store_id: w.elektropay_store_id || "",
-        merchant_id: w.merchant_id,
+        merchant_id: w.merchant_id || merchantId || "",
         asset_id: w.asset_id,
-        address: w.wallet_address ?? null,
-        network: w.crypto_network ?? null,
+        address: w.wallet_address ?? w.address ?? null,
+        network: w.crypto_network_name ?? w.crypto_network ?? null,
         balance: Number(w.balance ?? 0),
         on_hold: Number(w.on_hold ?? 0),
         available: Number(w.available ?? 0),
@@ -91,9 +99,9 @@ export function useCryptoWallets(merchantId?: string) {
         is_active: (w.status ?? "active") === "active",
         status: (w.status ?? "active") as CryptoWallet["status"],
         is_user_added: false,
-        metadata: {},
-        created_at: w.created_at,
-        updated_at: w.updated_at,
+        metadata: { account_type: w.account_type, missing: w._missing },
+        created_at: w.created_at || new Date().toISOString(),
+        updated_at: w.updated_at || new Date().toISOString(),
       }));
     },
   });
@@ -132,20 +140,36 @@ export function useCryptoStores(merchantId?: string) {
   return useQuery({
     queryKey: ["crypto-stores", merchantId],
     queryFn: async () => {
-      // crypto_stores table is platform-only; derive from elektropay_settings.
-      const rows = await extSelect("elektropay_settings", {
-        filters: merchantId ? { merchant_id: merchantId } : undefined,
-      });
-      return (rows || []).map((s: any): CryptoStore => ({
-        id: s.id,
-        merchant_id: s.merchant_id,
-        name: `Store ${String(s.merchant_id).slice(0, 6)}`,
-        base_currency: "USD",
-        is_active: !!s.enabled,
-        is_test: false,
-        created_at: s.created_at,
-        elektropay_store_id: s.elektropay_store_id,
-      }));
+      // Live fetch from Elektropay /stores via proxy.
+      try {
+        const data = await callElektropay("list_stores", {});
+        const stores: any[] = Array.isArray(data?.stores) ? data.stores : [];
+        return stores.map((s: any): CryptoStore => ({
+          id: s.store_id || s.id,
+          merchant_id: s.merchant_id || s.custom?.merchant_id || "",
+          name: s.name || s.store_name || `Store ${String(s.store_id || "").slice(0, 6)}`,
+          base_currency: s.base_currency || "USD",
+          is_active: s.status ? s.status === "active" : true,
+          is_test: !!s.is_test,
+          created_at: s.created_at || new Date().toISOString(),
+          elektropay_store_id: s.store_id || null,
+        }));
+      } catch (e) {
+        console.warn("list_stores failed, falling back to elektropay_settings", e);
+        const rows = await extSelect("elektropay_settings", {
+          filters: merchantId ? { merchant_id: merchantId } : undefined,
+        });
+        return (rows || []).map((s: any): CryptoStore => ({
+          id: s.id,
+          merchant_id: s.merchant_id,
+          name: `Store ${String(s.merchant_id).slice(0, 6)}`,
+          base_currency: "USD",
+          is_active: !!s.enabled,
+          is_test: false,
+          created_at: s.created_at,
+          elektropay_store_id: s.elektropay_store_id,
+        }));
+      }
     },
   });
 }
