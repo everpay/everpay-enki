@@ -44,11 +44,11 @@ Deno.serve(async (req) => {
   const token = authHeader.replace("Bearer ", "");
   if (!token) return jr({ error: "Auth required" }, 401);
 
-  // Cryptographically verify the JWT instead of trusting decoded claims.
-  const { data: claimsData, error: claimsErr } = await localAdmin.auth.getClaims(token);
-  if (claimsErr || !claimsData?.claims?.sub) return jr({ error: "Invalid token" }, 401);
-  const callerId: string = claimsData.claims.sub as string;
-  const callerEmail: string | null = (claimsData.claims.email as string) ?? null;
+  // Cryptographically verify the JWT via the auth server.
+  const { data: userData, error: userErr } = await localAdmin.auth.getUser(token);
+  if (userErr || !userData?.user?.id) return jr({ error: "Invalid token" }, 401);
+  const callerId: string = userData.user.id;
+  const callerEmail: string | null = userData.user.email ?? null;
 
   // Authorization is determined exclusively by the user_roles table — no email whitelist.
   let isAdmin = false;
