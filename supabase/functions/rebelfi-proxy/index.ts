@@ -12,6 +12,16 @@ const REBELFI_BASE = REBELFI_API_KEY.startsWith("rfk_sandbox_")
   ? "https://sandbox-api.rebelfi.io/v1"
   : "https://api.rebelfi.io/v1";
 
+// Always respond 200 so supabase.functions.invoke does not collapse upstream
+// errors into the generic "Failed to send a request to the Edge Function".
+// Callers should inspect body.ok / body.error / body.statusCode.
+function jsonOk(payload: unknown, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 async function rfFetch(path: string, init: RequestInit = {}) {
   const url = `${REBELFI_BASE}${path.startsWith("/") ? path : `/${path}`}`;
   const res = await fetch(url, {
@@ -32,18 +42,13 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     if (!REBELFI_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "REBELFI_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return jsonOk({ ok: false, error: "REBELFI_API_KEY not configured" });
     }
 
     // --- Auth: admin/super_admin only ---
     const authHeader = req.headers.get("Authorization") || req.headers.get("authorization");
     if (!authHeader?.toLowerCase().startsWith("bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: false, error: "Unauthorized" });
     }
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -56,9 +61,7 @@ serve(async (req) => {
     );
     const { data: userData, error: userErr } = await userClient.auth.getUser();
     if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: false, error: "Unauthorized" });
     }
     const { data: roleRows } = await supabase
       .from("user_roles").select("role").eq("user_id", userData.user.id);
@@ -66,9 +69,7 @@ serve(async (req) => {
       (r: any) => r.role === "admin" || r.role === "super_admin",
     );
     if (!isAdmin) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: false, error: "Forbidden — admin role required" });
     }
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
@@ -78,9 +79,7 @@ serve(async (req) => {
     if (action === "raw") {
       const { path, method = "GET", payload, query } = body;
       if (!path || typeof path !== "string") {
-        return new Response(JSON.stringify({ error: "path required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonOk({ ok: false, error: "path required" });
       }
       const qs = query && typeof query === "object"
         ? "?" + new URLSearchParams(query as Record<string, string>).toString()
@@ -89,40 +88,30 @@ serve(async (req) => {
         method,
         body: payload ? JSON.stringify(payload) : undefined,
       });
-      return new Response(JSON.stringify(r.body), {
-        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: r.ok, status: r.status, data: r.body });
     }
 
     if (action === "venues") {
       const qs = new URLSearchParams(body.query || {}).toString();
       const r = await rfFetch(`/venues${qs ? `?${qs}` : ""}`);
-      return new Response(JSON.stringify(r.body), {
-        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: r.ok, status: r.status, data: r.body });
     }
 
     if (action === "wallets") {
       const r = await rfFetch(`/wallets`);
-      return new Response(JSON.stringify(r.body), {
-        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: r.ok, status: r.status, data: r.body });
     }
 
     if (action === "allocations") {
       const qs = new URLSearchParams(body.query || {}).toString();
       const r = await rfFetch(`/allocations${qs ? `?${qs}` : ""}`);
-      return new Response(JSON.stringify(r.body), {
-        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: r.ok, status: r.status, data: r.body });
     }
 
     if (action === "operations") {
       const qs = new URLSearchParams(body.query || {}).toString();
       const r = await rfFetch(`/operations${qs ? `?${qs}` : ""}`);
-      return new Response(JSON.stringify(r.body), {
-        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: r.ok, status: r.status, data: r.body });
     }
 
     if (action === "register_wallet") {
@@ -133,13 +122,14 @@ serve(async (req) => {
         label: body.label || undefined,
       };
       if (!payload.walletAddress || !payload.blockchain) {
-        return new Response(JSON.stringify({ error: "walletAddress and blockchain required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonOk({ ok: false, error: "walletAddress and blockchain required" });
       }
       const r = await rfFetch(`/wallets`, { method: "POST", body: JSON.stringify(payload) });
-      return new Response(JSON.stringify(r.body), {
-        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return jsonOk({
+        ok: r.ok,
+        status: r.status,
+        data: r.ok ? r.body : null,
+        error: r.ok ? undefined : (r.body?.message || r.body?.error || `RebelFi returned ${r.status}`),
       });
     }
 
@@ -152,26 +142,23 @@ serve(async (req) => {
         tokenAddress: body.tokenAddress || undefined,
       };
       if (!payload.walletAddress || !payload.strategyId || !payload.amount) {
-        return new Response(JSON.stringify({ error: "walletAddress, strategyId, amount required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonOk({ ok: false, error: "walletAddress, strategyId, amount required" });
       }
       const r = await rfFetch(endpoint, { method: "POST", body: JSON.stringify(payload) });
-      return new Response(JSON.stringify(r.body), {
-        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return jsonOk({
+        ok: r.ok,
+        status: r.status,
+        data: r.ok ? r.body : null,
+        error: r.ok ? undefined : (r.body?.message || r.body?.error || `RebelFi returned ${r.status}`),
       });
     }
 
     if (action === "get_operation") {
       if (!body.operationId) {
-        return new Response(JSON.stringify({ error: "operationId required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return jsonOk({ ok: false, error: "operationId required" });
       }
       const r = await rfFetch(`/operations/${body.operationId}`);
-      return new Response(JSON.stringify(r.body), {
-        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonOk({ ok: r.ok, status: r.status, data: r.body });
     }
 
     // Default: aggregate summary for Treasury 360°
@@ -228,8 +215,6 @@ serve(async (req) => {
       },
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message || String(e) }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonOk({ ok: false, error: e?.message || String(e) });
   }
 });
