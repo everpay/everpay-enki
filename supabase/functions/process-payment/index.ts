@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { recordAlert } from "../_shared/alerts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -148,6 +149,11 @@ serve(async (req) => {
       const isVgsAlias = /^tok(_|live_|sand_)/i.test(rawNum) || /^[A-Z0-9]{2,4}_[A-Za-z0-9]{6,}$/.test(rawNum);
       const looksLikePan = /^\d{12,19}$/.test(rawNum);
       if (!isVgsAlias || looksLikePan) {
+        await recordAlert({
+          severity: 'critical', category: 'vgs_validation', source: 'process-payment',
+          message: 'Raw PAN or non-VGS card data submitted',
+          details: { looksLikePan, hasAlias: isVgsAlias, ip: req.headers.get('x-forwarded-for') || null },
+        });
         return new Response(JSON.stringify({
           error: 'Card data must be tokenized via VGS. Raw PANs are not accepted.',
         }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -344,6 +350,12 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error processing payment:', error);
     const isUnauth = error instanceof Error && error.message === 'Unauthorized';
+    if (!isUnauth) {
+      await recordAlert({
+        severity: 'warn', category: 'payment_failure', source: 'process-payment',
+        message: error instanceof Error ? error.message : 'Unknown payment error',
+      });
+    }
     return new Response(JSON.stringify({ error: isUnauth ? 'Unauthorized' : 'An internal error occurred' }), { status: isUnauth ? 401 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
