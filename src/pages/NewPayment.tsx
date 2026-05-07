@@ -94,7 +94,8 @@ export default function NewPayment() {
   const { isChecking: isFraudChecking, lastResult: fraudResult, checkFraud } = useFraudDetection();
   const selectedProvider = resolveProvider(currency, billingCountry);
   const numericAmount = parseFloat(amount) || 0;
-  const { data: feePreview } = useFeePreview(selectedProvider, currency, numericAmount);
+  const { data: feePreview, isLoading: feePreviewLoading, error: feePreviewError, refetch: refetchFee } = useFeePreview(selectedProvider, currency, numericAmount);
+  const feeMissing = !feePreviewLoading && !feePreviewError && !feePreview?.matched;
   const idempotencyKey = `idk_${Date.now()}`;
 
   const { isPolling, currentStatus: pollingStatus, startPolling } = usePaymentPolling({
@@ -484,9 +485,11 @@ export default function NewPayment() {
             />
           </div>
 
-          <Button type="submit" className="w-full gap-2" size="lg" disabled={isSubmitting}>
+          <Button type="submit" className="w-full gap-2" size="lg" disabled={isSubmitting || feePreviewLoading || feeMissing}>
             {isSubmitting ? (
               <><Loader2 className="h-4 w-4 animate-spin" />Processing...</>
+            ) : feeMissing ? (
+              <>Add fee profile to enable</>
             ) : (
               <><CreditCard className="h-4 w-4" />Create Payment<ArrowRight className="h-4 w-4" /></>
             )}
@@ -544,11 +547,26 @@ export default function NewPayment() {
               <Receipt className="h-4 w-4 text-primary" />
               <h3 className="font-heading text-sm font-semibold text-foreground">Processor Fee Preview</h3>
             </div>
-            {!feePreview?.matched ? (
-              <p className="text-xs text-muted-foreground">
-                No fee profile configured for <span className="font-mono">{selectedProvider}</span> / {currency}.
-                Add one in Enki → Strategy → Fees.
-              </p>
+            {feePreviewLoading ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" /> Calculating fee…
+              </div>
+            ) : feePreviewError ? (
+              <div className="space-y-2">
+                <p className="text-xs text-destructive">
+                  Failed to load fee preview: {(feePreviewError as Error).message}
+                </p>
+                <button type="button" onClick={() => refetchFee()} className="text-xs underline text-primary">Retry</button>
+              </div>
+            ) : !feePreview?.matched ? (
+              <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-1">
+                <p className="text-xs font-medium text-warning-foreground">
+                  No fee profile for <span className="font-mono">{selectedProvider}</span> / {currency}.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Submission is disabled. Add one in <span className="font-medium">Enki → Fee Engine</span>.
+                </p>
+              </div>
             ) : (
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
