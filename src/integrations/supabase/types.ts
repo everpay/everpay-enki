@@ -3554,6 +3554,51 @@ export type Database = {
           },
         ]
       }
+      rebelfi_sync_runs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          errors: Json
+          id: string
+          inserted: number
+          merchant_id: string | null
+          scanned: number
+          skipped: number
+          status: string
+          updated: number
+          user_id: string
+          verification: Json
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          errors?: Json
+          id?: string
+          inserted?: number
+          merchant_id?: string | null
+          scanned?: number
+          skipped?: number
+          status?: string
+          updated?: number
+          user_id: string
+          verification?: Json
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          errors?: Json
+          id?: string
+          inserted?: number
+          merchant_id?: string | null
+          scanned?: number
+          skipped?: number
+          status?: string
+          updated?: number
+          user_id?: string
+          verification?: Json
+        }
+        Relationships: []
+      }
       recipients_intl: {
         Row: {
           account_number: string | null
