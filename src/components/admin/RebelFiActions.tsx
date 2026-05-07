@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Sparkles, Wallet, ArrowUpRight, ArrowDownRight, History, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Sparkles, Wallet, ArrowUpRight, ArrowDownRight, History, ShieldCheck, AlertTriangle, Eye, Radio, Info } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 type Merchant = { id: string; name: string };
@@ -23,6 +24,8 @@ type SyncRun = {
   skipped: number;
   errors: any;
   verification: any;
+  skipped_details: any;
+  source?: string;
   duration_ms: number | null;
   created_at: string;
 };
@@ -88,6 +91,54 @@ export function RebelFiActions({
     onError: (e: any) => toast.error(`Sync failed: ${e?.message || e}`),
   });
 
+  // ---- Preflight preview ----
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [preview, setPreview] = useState<any>(null);
+  const previewMut = useMutation({
+    mutationFn: async () => {
+      const body: any = { action: "preview" };
+      if (merchantId) body.merchant_id = merchantId;
+      const { data, error } = await supabase.functions.invoke("rebelfi-sync", { body });
+      if (error) throw error;
+      if ((data as any)?.ok === false) throw new Error((data as any).error);
+      return data as any;
+    },
+    onSuccess: (data) => { setPreview(data); setPreviewOpen(true); },
+    onError: (e: any) => toast.error(`Preview failed: ${e?.message || e}`),
+  });
+
+  // ---- Skipped inspector ----
+  const [skippedRun, setSkippedRun] = useState<SyncRun | null>(null);
+
+  // ---- Polling settings ----
+  const pollQ = useQuery<any>({
+    queryKey: ["rebelfi-poll-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rebelfi_poll_settings" as any).select("*").limit(1).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const pollMut = useMutation({
+    mutationFn: async (patch: { enabled?: boolean; interval_seconds?: number; merchant_id?: string | null }) => {
+      const existing: any = pollQ.data;
+      if (existing?.id) {
+        const { error } = await supabase.from("rebelfi_poll_settings" as any)
+          .update(patch).eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("rebelfi_poll_settings" as any).insert(patch);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rebelfi-poll-settings"] });
+      toast.success("Polling settings saved");
+    },
+    onError: (e: any) => toast.error(e?.message || "Failed to save polling settings"),
+  });
+
   return (
     <div className="space-y-4">
       {/* Sync controls */}
@@ -108,12 +159,65 @@ export function RebelFiActions({
               </SelectContent>
             </Select>
           </div>
+          <Button onClick={() => previewMut.mutate()} disabled={previewMut.isPending} variant="secondary" className="gap-2">
+            <Eye className="h-4 w-4" /> {previewMut.isPending ? "Previewing…" : "Balance impact preview"}
+          </Button>
           <Button onClick={() => syncMut.mutate()} disabled={syncMut.isPending} className="gap-2">
             <Sparkles className="h-4 w-4" /> {syncMut.isPending ? "Syncing…" : "Sync yield to ledger"}
           </Button>
           <RegisterWalletDialog onDone={onRefresh} />
           <SupplyUnwindDialog mode="supply" wallets={wallets} venues={venues} onDone={onRefresh} />
           <SupplyUnwindDialog mode="unwind" wallets={wallets} venues={venues} onDone={onRefresh} />
+        </CardContent>
+      </Card>
+
+      {/* Auto-polling */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2"><Radio className="h-4 w-4" /> Auto-polling</CardTitle>
+          <CardDescription>
+            Automatically pull RebelFi operation status changes into the ledger on a schedule (cron runs every minute, throttled by interval).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={!!pollQ.data?.enabled}
+              onCheckedChange={(v) => pollMut.mutate({ enabled: v })}
+              disabled={pollMut.isPending || pollQ.isLoading}
+            />
+            <Label className="text-sm">{pollQ.data?.enabled ? "Enabled" : "Disabled"}</Label>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Interval (seconds)</Label>
+            <Input
+              type="number" min={60} step={30}
+              defaultValue={pollQ.data?.interval_seconds ?? 300}
+              onBlur={(e) => {
+                const n = Math.max(60, Number(e.target.value) || 300);
+                if (n !== pollQ.data?.interval_seconds) pollMut.mutate({ interval_seconds: n });
+              }}
+              className="w-32"
+            />
+          </div>
+          <div className="min-w-[220px]">
+            <Label className="text-xs text-muted-foreground mb-1 block">Polled merchant</Label>
+            <Select
+              value={pollQ.data?.merchant_id || ""}
+              onValueChange={(v) => pollMut.mutate({ merchant_id: v || null })}
+            >
+              <SelectTrigger><SelectValue placeholder="First merchant" /></SelectTrigger>
+              <SelectContent>
+                {(merchantsQ.data || []).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-xs text-muted-foreground space-y-0.5">
+            <div>Last run: {pollQ.data?.last_run_at ? new Date(pollQ.data.last_run_at).toLocaleString() : "—"}</div>
+            <div>Status: {pollQ.data?.last_status || "—"}{pollQ.data?.last_error ? ` · ${pollQ.data.last_error}` : ""}</div>
+          </div>
         </CardContent>
       </Card>
 
@@ -126,7 +230,7 @@ export function RebelFiActions({
         <CardContent className="p-0">
           <Table>
             <TableHeader><TableRow>
-              <TableHead>When</TableHead><TableHead>Status</TableHead>
+              <TableHead>When</TableHead><TableHead>Source</TableHead><TableHead>Status</TableHead>
               <TableHead className="text-right">Scanned</TableHead>
               <TableHead className="text-right">Inserted</TableHead>
               <TableHead className="text-right">Updated</TableHead>
@@ -135,21 +239,32 @@ export function RebelFiActions({
             </TableRow></TableHeader>
             <TableBody>
               {runsQ.isLoading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">Loading…</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-6 text-muted-foreground">Loading…</TableCell></TableRow>
               ) : (runsQ.data || []).length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">No runs yet — click Sync to begin.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-6 text-muted-foreground">No runs yet — click Sync to begin.</TableCell></TableRow>
               ) : (runsQ.data || []).map((r) => {
                 const v = r.verification || {};
                 const consistent = v?.dashboard_consistent === true;
                 const errCount = Array.isArray(r.errors) ? r.errors.length : 0;
+                const skippedCount = Array.isArray(r.skipped_details) ? r.skipped_details.length : 0;
                 return (
                   <TableRow key={r.id}>
                     <TableCell className="text-xs">{new Date(r.created_at).toLocaleString()}</TableCell>
+                    <TableCell><Badge variant="outline" className="text-[10px] uppercase">{r.source || "manual"}</Badge></TableCell>
                     <TableCell><Badge variant={r.status === "success" ? "default" : r.status === "partial" ? "secondary" : "destructive"}>{r.status}</Badge></TableCell>
                     <TableCell className="text-right">{r.scanned}</TableCell>
                     <TableCell className="text-right text-emerald-600">{r.inserted}</TableCell>
                     <TableCell className="text-right">{r.updated}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{r.skipped}</TableCell>
+                    <TableCell className="text-right">
+                      {skippedCount > 0 ? (
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1"
+                          onClick={() => setSkippedRun(r)}>
+                          {r.skipped} <Info className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">{r.skipped}</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {r.inserted === 0 ? (
                         <span className="text-xs text-muted-foreground">n/a</span>
@@ -167,7 +282,140 @@ export function RebelFiActions({
           </Table>
         </CardContent>
       </Card>
+
+      <PreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        preview={preview}
+        onConfirm={() => { setPreviewOpen(false); syncMut.mutate(); }}
+        confirming={syncMut.isPending}
+      />
+      <SkippedDialog run={skippedRun} onClose={() => setSkippedRun(null)} />
     </div>
+  );
+}
+
+function PreviewDialog({ open, onOpenChange, preview, onConfirm, confirming }: any) {
+  const p = preview?.preview;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Balance impact preview</DialogTitle>
+          <DialogDescription>
+            Estimated changes if you run sync now. No data has been written yet.
+          </DialogDescription>
+        </DialogHeader>
+        {!p ? (
+          <div className="text-sm text-muted-foreground">Nothing to apply — no new RebelFi operations to credit.</div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-3 text-sm">
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">New transactions</div>
+                <div className="text-2xl font-semibold text-emerald-600">+{p.totals.new_transactions}</div>
+              </div>
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Status updates</div>
+                <div className="text-2xl font-semibold">{p.totals.updated_transactions}</div>
+              </div>
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Idempotency conflicts</div>
+                <div className="text-2xl font-semibold text-amber-600">{p.totals.idempotency_conflicts}</div>
+              </div>
+            </div>
+            {p.currencies.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No balance deltas — nothing new to credit.</div>
+            ) : (
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Currency</TableHead>
+                  <TableHead className="text-right">Credit Δ</TableHead>
+                  <TableHead className="text-right">Current balance</TableHead>
+                  <TableHead className="text-right">Projected balance</TableHead>
+                  <TableHead className="text-right">Available Δ</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {p.currencies.map((c: any) => (
+                    <TableRow key={c.currency}>
+                      <TableCell className="font-medium">{c.currency}</TableCell>
+                      <TableCell className="text-right text-emerald-600">+{c.credit_delta.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{c.current_balance.toFixed(2)}</TableCell>
+                      <TableCell className="text-right font-semibold">{c.projected_balance.toFixed(2)}</TableCell>
+                      <TableCell className="text-right text-emerald-600">+{(c.projected_available - c.current_available).toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={onConfirm} disabled={confirming || !p || p.totals.new_transactions === 0}>
+            {confirming ? "Applying…" : "Apply now"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SkippedDialog({ run, onClose }: { run: SyncRun | null; onClose: () => void }) {
+  const details: any[] = Array.isArray(run?.skipped_details) ? run!.skipped_details : [];
+  const conflicts = details.filter((d) => d.reason === "idempotency_conflict");
+  const others = details.filter((d) => d.reason !== "idempotency_conflict");
+  return (
+    <Dialog open={!!run} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Skipped operations</DialogTitle>
+          <DialogDescription>
+            {run ? new Date(run.created_at).toLocaleString() : ""} — {details.length} skipped, of which {conflicts.length} were idempotency conflicts.
+          </DialogDescription>
+        </DialogHeader>
+        {conflicts.length > 0 && (
+          <div>
+            <div className="text-xs uppercase text-muted-foreground mb-2">Idempotency conflicts</div>
+            <div className="rounded-md border max-h-[320px] overflow-auto">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Idempotency key</TableHead>
+                  <TableHead>Existing tx</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-right">Ledger entries</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {conflicts.map((c, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-mono text-xs">{c.idempotency_key}</TableCell>
+                      <TableCell className="font-mono text-xs">{(c.existing_transaction_id || "").slice(0, 8)}…</TableCell>
+                      <TableCell><Badge variant="outline">{c.existing_status}</Badge></TableCell>
+                      <TableCell className="text-right">{Number(c.existing_amount || 0).toFixed(2)} {c.existing_currency}</TableCell>
+                      <TableCell className="text-right">
+                        {Array.isArray(c.ledger_entries) ? c.ledger_entries.length : 0}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <details className="mt-2 text-xs text-muted-foreground">
+              <summary className="cursor-pointer">View raw ledger entries</summary>
+              <pre className="mt-2 max-h-64 overflow-auto rounded bg-muted p-2 text-[10px]">{JSON.stringify(conflicts.map((c) => ({ key: c.idempotency_key, ledger: c.ledger_entries })), null, 2)}</pre>
+            </details>
+          </div>
+        )}
+        {others.length > 0 && (
+          <div>
+            <div className="text-xs uppercase text-muted-foreground mb-2 mt-2">Other skips</div>
+            <pre className="max-h-48 overflow-auto rounded bg-muted p-2 text-[10px]">{JSON.stringify(others, null, 2)}</pre>
+          </div>
+        )}
+        <DialogFooter><Button variant="ghost" onClick={onClose}>Close</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
