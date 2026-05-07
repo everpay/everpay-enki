@@ -3554,9 +3554,49 @@ export type Database = {
           },
         ]
       }
+      rebelfi_poll_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          interval_seconds: number
+          last_error: string | null
+          last_run_at: string | null
+          last_status: string | null
+          merchant_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          interval_seconds?: number
+          last_error?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          merchant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          interval_seconds?: number
+          last_error?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          merchant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       rebelfi_sync_runs: {
         Row: {
           created_at: string
+          dry_run: boolean
           duration_ms: number | null
           errors: Json
           id: string
@@ -3564,6 +3604,8 @@ export type Database = {
           merchant_id: string | null
           scanned: number
           skipped: number
+          skipped_details: Json
+          source: string
           status: string
           updated: number
           user_id: string
@@ -3571,6 +3613,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dry_run?: boolean
           duration_ms?: number | null
           errors?: Json
           id?: string
@@ -3578,6 +3621,8 @@ export type Database = {
           merchant_id?: string | null
           scanned?: number
           skipped?: number
+          skipped_details?: Json
+          source?: string
           status?: string
           updated?: number
           user_id: string
@@ -3585,6 +3630,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dry_run?: boolean
           duration_ms?: number | null
           errors?: Json
           id?: string
@@ -3592,6 +3638,8 @@ export type Database = {
           merchant_id?: string | null
           scanned?: number
           skipped?: number
+          skipped_details?: Json
+          source?: string
           status?: string
           updated?: number
           user_id?: string
