@@ -31,6 +31,33 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    // ---- Authentication: cryptographic JWT verification ----
+    const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');
+    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+    const callerUserId = userData.user.id;
+    // Authorization: admin/super_admin OR a merchant acting on their own merchant_id.
+    const [{ data: roleRows }, { data: merchantRow }] = await Promise.all([
+      supabase.from('user_roles').select('role').eq('user_id', callerUserId),
+      supabase.from('merchants').select('id').eq('user_id', callerUserId).maybeSingle(),
+    ]);
+    const isAdmin = (roleRows || []).some((r: any) => r.role === 'admin' || r.role === 'super_admin');
     // The merchant-facing tables (elektropay_wallets, merchants, etc.) live in the
     // external Everpay project. Persist there so the dashboard (which reads via
     // admin-data-proxy → external project) actually sees newly-provisioned wallets.
@@ -50,6 +77,23 @@ serve(async (req) => {
 
     const body = await req.json();
     const { action, ...params } = body;
+    // Non-admin callers may only act on their own merchant_id.
+    if (!isAdmin) {
+      if (!merchantRow) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden — no merchant linked to caller' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      if (params.merchant_id && params.merchant_id !== merchantRow.id) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden — cannot act on another merchant' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      // Force-scope mutations to caller's merchant.
+      params.merchant_id = merchantRow.id;
+    }
     // Elektropay v3 expects API-Key + API-Secret headers (not Basic). Send both for
     // forward compatibility so the upstream stops returning 401 + HTML.
     const headers: Record<string, string> = {
