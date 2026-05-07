@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
+import { RebelFiActions } from "@/components/admin/RebelFiActions";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell, Legend, LineChart, Line,
@@ -41,20 +43,7 @@ export default function AdminTreasury360() {
   const { isAdmin, isSuperAdmin, isLoading } = useAccessControl();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "balances";
-  const [syncing, setSyncing] = useState(false);
-
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("rebelfi-sync", { body: {} });
-      if (error) throw error;
-      toast.success(`RebelFi sync: +${data?.inserted || 0} entries (${data?.skipped || 0} skipped)`);
-    } catch (e: any) {
-      toast.error(`Sync failed: ${e?.message || e}`);
-    } finally {
-      setSyncing(false);
-    }
-  };
+  const qc = useQueryClient();
 
   const accounts = useQuery({
     queryKey: ["t360-accounts"],
@@ -453,11 +442,11 @@ export default function AdminTreasury360() {
         </TabsContent>
 
         <TabsContent value="rebelfi" className="mt-4 space-y-4">
-          <div className="flex justify-end">
-            <Button size="sm" onClick={handleSync} disabled={syncing} className="gap-2">
-              <Sparkles className="h-4 w-4" /> {syncing ? "Syncing…" : "Sync yield to ledger"}
-            </Button>
-          </div>
+          <RebelFiActions
+            wallets={rebelfi.data?.wallets || []}
+            venues={rebelfi.data?.venues || []}
+            onRefresh={() => qc.invalidateQueries({ queryKey: ["rebelfi-treasury"] })}
+          />
           {rebelfi.isLoading ? (
             <Card><CardContent className="p-6 text-sm text-muted-foreground">Loading RebelFi yield infrastructure…</CardContent></Card>
           ) : rebelfi.isError ? (

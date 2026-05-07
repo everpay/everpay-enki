@@ -29,6 +29,7 @@ const toUnits = (s: any, decimals = 6) => {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const t0 = Date.now();
   try {
     if (!REBELFI_API_KEY) {
       return new Response(JSON.stringify({ error: "REBELFI_API_KEY not configured" }),
@@ -63,31 +64,57 @@ serve(async (req) => {
       merchantId = m?.id;
     }
     if (!merchantId) {
-      return new Response(JSON.stringify({ error: "No merchant found for user" }),
+      return new Response(JSON.stringify({ error: "No merchant_id provided and no default merchant for user" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const opsR = await rfFetch(`/operations?limit=100`);
+    if (!opsR.ok) {
+      const errPayload = { error: "RebelFi operations fetch failed", status: opsR.status, body: opsR.body };
+      await admin.from("rebelfi_sync_runs").insert({
+        user_id: userData.user.id, merchant_id: merchantId, status: "failed",
+        errors: [errPayload], duration_ms: Date.now() - t0,
+      });
+      return new Response(JSON.stringify(errPayload),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const operations: any[] = (opsR.body?.operations || opsR.body?.data || opsR.body || []) as any[];
 
     let inserted = 0;
+    let updated = 0;
     let skipped = 0;
     const errors: any[] = [];
+    const affectedAccountIds = new Set<string>();
+    const insertedTxIds: string[] = [];
 
     for (const op of Array.isArray(operations) ? operations : []) {
       const opId = op.id || op.operation_id || op.uuid;
       if (!opId) { skipped++; continue; }
       const type = (op.type || op.operation_type || "").toString().toLowerCase();
-      const isCredit = ["yield","interest","earnings","allocation_yield","reward","deposit"].some((t) => type.includes(t));
+      const isCredit = ["yield","interest","earnings","allocation_yield","reward","deposit","supply"].some((t) => type.includes(t));
       const amountUnits = toUnits(op.amount ?? op.value ?? op.netAmount ?? 0);
       if (!isCredit || amountUnits <= 0) { skipped++; continue; }
 
-      const currency = (op.currency || op.asset || "USDC").toString().toUpperCase();
+      const currency = (op.currency || op.asset || op.token || "USDC").toString().toUpperCase();
       const ledgerCurrency = currency === "USDC" || currency === "USDT" ? "USD" : currency;
       const idemKey = `rebelfi:${opId}`;
+      const opStatus = (op.status || "").toString().toLowerCase();
 
-      const { data: existing } = await admin.from("transactions").select("id").eq("idempotency_key", idemKey).maybeSingle();
-      if (existing) { skipped++; continue; }
+      const { data: existing } = await admin.from("transactions")
+        .select("id, status").eq("idempotency_key", idemKey).maybeSingle();
+
+      if (existing) {
+        if (opStatus && opStatus !== existing.status) {
+          await admin.from("transactions").update({
+            status: opStatus === "confirmed" || opStatus === "completed" ? "completed" : opStatus,
+            metadata: { rebelfi: op }, updated_at: new Date().toISOString(),
+          }).eq("id", existing.id);
+          updated++;
+        } else {
+          skipped++;
+        }
+        continue;
+      }
 
       const { data: tx, error: txErr } = await admin.from("transactions").insert({
         merchant_id: merchantId,
@@ -96,11 +123,12 @@ serve(async (req) => {
         status: "completed",
         provider: "rebelfi",
         provider_ref: opId,
-        description: `RebelFi ${type || "yield"} - ${op.venueId || op.venue || ""}`,
+        description: `RebelFi ${type || "yield"}${op.venueId ? ` @ venue ${op.venueId}` : ""}`,
         idempotency_key: idemKey,
         metadata: { rebelfi: op },
       }).select("id").single();
-      if (txErr || !tx) { errors.push({ opId, error: txErr?.message }); continue; }
+      if (txErr || !tx) { errors.push({ opId, error: txErr?.message || "tx insert failed" }); continue; }
+      insertedTxIds.push(tx.id);
 
       let { data: acct } = await admin.from("accounts").select("id")
         .eq("merchant_id", merchantId).eq("currency", ledgerCurrency).maybeSingle();
@@ -112,6 +140,7 @@ serve(async (req) => {
         if (acctErr || !newAcct) { errors.push({ opId, error: acctErr?.message || "account create failed" }); continue; }
         acct = newAcct;
       }
+      affectedAccountIds.add(acct.id);
 
       const { error: leErr } = await admin.from("ledger_entries").insert([
         { transaction_id: tx.id, account_id: acct.id, entry_type: "credit", amount: amountUnits, currency: ledgerCurrency },
@@ -128,8 +157,38 @@ serve(async (req) => {
       inserted++;
     }
 
+    // Verification: confirm ledger_entries + accounts reflect the inserted txs
+    const verification: any = { ledger_entries_found: 0, accounts: [] };
+    if (insertedTxIds.length > 0) {
+      const { data: les } = await admin.from("ledger_entries")
+        .select("id, transaction_id, account_id, amount, entry_type")
+        .in("transaction_id", insertedTxIds);
+      verification.ledger_entries_found = les?.length || 0;
+      verification.expected_ledger_entries = insertedTxIds.length;
+    }
+    if (affectedAccountIds.size > 0) {
+      const { data: accts } = await admin.from("accounts")
+        .select("id, currency, balance, available_balance")
+        .in("id", Array.from(affectedAccountIds));
+      verification.accounts = accts || [];
+    }
+    verification.dashboard_consistent =
+      verification.ledger_entries_found === insertedTxIds.length;
+
+    await admin.from("rebelfi_sync_runs").insert({
+      user_id: userData.user.id,
+      merchant_id: merchantId,
+      status: errors.length ? "partial" : "success",
+      scanned: operations.length || 0,
+      inserted, updated, skipped,
+      errors,
+      verification,
+      duration_ms: Date.now() - t0,
+    });
+
     return new Response(JSON.stringify({
-      ok: true, merchant_id: merchantId, scanned: operations.length, inserted, skipped, errors,
+      ok: true, merchant_id: merchantId,
+      scanned: operations.length || 0, inserted, updated, skipped, errors, verification,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || String(e) }),
