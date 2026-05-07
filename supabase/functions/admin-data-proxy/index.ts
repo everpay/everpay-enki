@@ -40,12 +40,20 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // The JWT is issued by the EXTERNAL Supabase auth project (where users sign in),
+  // not by this Enki project. Verify it against that auth server.
+  const extUrl = Deno.env.get("EXTERNAL_SUPABASE_URL") || localUrl;
+  const extAnon = Deno.env.get("EXTERNAL_SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_ANON_KEY")!;
+  const extAuth = createClient(extUrl, extAnon, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
   const authHeader = req.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "");
   if (!token) return jr({ error: "Auth required" }, 401);
 
-  // Cryptographically verify the JWT via the auth server.
-  const { data: userData, error: userErr } = await localAdmin.auth.getUser(token);
+  // Verify the JWT via the external auth server (issuer of this token).
+  const { data: userData, error: userErr } = await extAuth.auth.getUser(token);
   if (userErr || !userData?.user?.id) return jr({ error: "Invalid token" }, 401);
   const callerId: string = userData.user.id;
   const callerEmail: string | null = userData.user.email ?? null;
