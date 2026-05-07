@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.kyb-notify]
 verify_jwt = false
+
+[functions.system-status]
+verify_jwt = false
+
+[functions.balance-alert-checker]
+verify_jwt = false
+
+[functions.pending-payment-watcher]
+verify_jwt = false

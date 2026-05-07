@@ -8,6 +8,8 @@ import { formatCurrency, formatDate } from '@/lib/format';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ShieldCheck, Gauge, Clock, DollarSign, AlertTriangle, TrendingUp } from 'lucide-react';
+import { CardVelocityCard } from '@/components/CardVelocityCard';
+import { BalanceAlertsManager } from '@/components/BalanceAlertsManager';
 
 function useAdminRollingReserves() {
   return useQuery({
@@ -111,6 +113,11 @@ export default function AdminReservesDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CardVelocityCard />
+        <BalanceAlertsManager />
+      </div>
     </AppLayout>
   );
 }

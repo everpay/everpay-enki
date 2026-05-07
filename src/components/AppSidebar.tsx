@@ -183,6 +183,7 @@ const adminSections: NavSection[] = [
       { to: "/enki/strategy/fees", icon: CreditCardIcon, label: "Fee Engine" },
       { to: "/enki/strategy/logs", icon: Eye, label: "Routing Logs" },
       { to: "/enki/strategy/merchant-view", icon: Store, label: "Merchant View" },
+     { to: "/enki/processor-descriptors", icon: Receipt, label: "Processor Descriptors" },
     ],
   },
   {

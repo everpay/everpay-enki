@@ -71,6 +71,7 @@ import AdminReconciliation from "./pages/admin/AdminReconciliation";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminUserReconciliation from "./pages/admin/AdminUserReconciliation";
 import AdminSecurityAlerts from "./pages/admin/AdminSecurityAlerts";
+import ProcessorDescriptors from "./pages/admin/ProcessorDescriptors";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +187,7 @@ const AppRoutes = () => {
     <Route path="/enki/reconciliation" element={<AdminRoute><AdminReconciliation /></AdminRoute>} />
     <Route path="/enki/user-reconciliation" element={<AdminRoute><AdminUserReconciliation /></AdminRoute>} />
     <Route path="/enki/security-alerts" element={<AdminRoute><AdminSecurityAlerts /></AdminRoute>} />
+    <Route path="/enki/processor-descriptors" element={<AdminRoute><ProcessorDescriptors /></AdminRoute>} />
     <Route path="/enki/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
 
     {/* Catch-all */}

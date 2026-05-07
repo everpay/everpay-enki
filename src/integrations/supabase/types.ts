@@ -265,6 +265,110 @@ export type Database = {
         }
         Relationships: []
       }
+      balance_alert_configs: {
+        Row: {
+          active: boolean
+          cooldown_minutes: number
+          created_at: string
+          currency: string
+          id: string
+          last_triggered_at: string | null
+          merchant_id: string
+          notify_email: boolean
+          threshold_amount: number
+          threshold_type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cooldown_minutes?: number
+          created_at?: string
+          currency: string
+          id?: string
+          last_triggered_at?: string | null
+          merchant_id: string
+          notify_email?: boolean
+          threshold_amount: number
+          threshold_type: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cooldown_minutes?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          last_triggered_at?: string | null
+          merchant_id?: string
+          notify_email?: boolean
+          threshold_amount?: number
+          threshold_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balance_alert_configs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      balance_alert_history: {
+        Row: {
+          config_id: string | null
+          currency: string
+          id: string
+          merchant_id: string
+          notification_channel: string | null
+          notification_sent: boolean
+          observed_balance: number
+          threshold_amount: number
+          threshold_type: string
+          triggered_at: string
+        }
+        Insert: {
+          config_id?: string | null
+          currency: string
+          id?: string
+          merchant_id: string
+          notification_channel?: string | null
+          notification_sent?: boolean
+          observed_balance: number
+          threshold_amount: number
+          threshold_type: string
+          triggered_at?: string
+        }
+        Update: {
+          config_id?: string | null
+          currency?: string
+          id?: string
+          merchant_id?: string
+          notification_channel?: string | null
+          notification_sent?: boolean
+          observed_balance?: number
+          threshold_amount?: number
+          threshold_type?: string
+          triggered_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balance_alert_history_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "balance_alert_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "balance_alert_history_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_accounts: {
         Row: {
           account_number: string | null
@@ -2322,6 +2426,57 @@ export type Database = {
           },
         ]
       }
+      merchant_processor_descriptors: {
+        Row: {
+          active: boolean
+          created_at: string
+          descriptor: string
+          descriptor_text: string | null
+          id: string
+          merchant_id: string
+          notes: string | null
+          processor: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          descriptor: string
+          descriptor_text?: string | null
+          id?: string
+          merchant_id: string
+          notes?: string | null
+          processor: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          descriptor?: string
+          descriptor_text?: string | null
+          id?: string
+          merchant_id?: string
+          notes?: string | null
+          processor?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_processor_descriptors_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_processor_descriptors_processor_fkey"
+            columns: ["processor"]
+            isOneToOne: false
+            referencedRelation: "payment_processors"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
       merchant_profiles: {
         Row: {
           address: Json | null
@@ -2916,6 +3071,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_processors: {
+        Row: {
+          acquirer_descriptor: string | null
+          active: boolean
+          created_at: string
+          display_name: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          acquirer_descriptor?: string | null
+          active?: boolean
+          created_at?: string
+          display_name?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          acquirer_descriptor?: string | null
+          active?: boolean
+          created_at?: string
+          display_name?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       payouts: {
         Row: {
