@@ -1,6 +1,27 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { extSelect, extUpdate } from "@/hooks/useExternalData";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
+
+const LOCAL_SUPABASE_URL = "https://schxpniiwnxzscbcnynt.supabase.co";
+const LOCAL_SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjaHhwbmlpd254enNjYmNueW50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NjkzMjYsImV4cCI6MjA5MTI0NTMyNn0.AuNS8fpvPVZDazKkP9lpD4ddfW0CUt-jB012lNrrnlI";
+const localSupabase = createClient(LOCAL_SUPABASE_URL, LOCAL_SUPABASE_ANON_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+async function callElektropay(action: string, params: Record<string, any> = {}) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  const { data, error } = await localSupabase.functions.invoke("elektropay-proxy", {
+    body: { action, ...params },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (error) throw new Error(error.message || "Elektropay call failed");
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
 
 export interface CryptoWallet {
   id: string;
@@ -50,11 +71,30 @@ export function useCryptoWallets(merchantId?: string) {
   return useQuery({
     queryKey: ["crypto-wallets", merchantId],
     queryFn: async () => {
-      const rows = await extSelect("crypto_wallets", {
+      // Real source of truth is elektropay_wallets (synced from Elektropay API).
+      const rows = await extSelect("elektropay_wallets", {
         filters: merchantId ? { merchant_id: merchantId } : undefined,
         order: { column: "created_at", ascending: false },
       });
-      return (rows || []) as CryptoWallet[];
+      return (rows || []).map((w: any): CryptoWallet => ({
+        id: w.id,
+        store_id: w.elektropay_store_id || "",
+        merchant_id: w.merchant_id,
+        asset_id: w.asset_id,
+        address: w.wallet_address ?? null,
+        network: w.crypto_network ?? null,
+        balance: Number(w.balance ?? 0),
+        on_hold: Number(w.on_hold ?? 0),
+        available: Number(w.available ?? 0),
+        base_balance: Number(w.base_balance ?? 0),
+        is_default: false,
+        is_active: (w.status ?? "active") === "active",
+        status: (w.status ?? "active") as CryptoWallet["status"],
+        is_user_added: false,
+        metadata: {},
+        created_at: w.created_at,
+        updated_at: w.updated_at,
+      }));
     },
   });
 }
@@ -63,10 +103,27 @@ export function useCryptoAssets() {
   return useQuery({
     queryKey: ["crypto-assets"],
     queryFn: async () => {
-      const rows = await extSelect("crypto_assets", {
-        order: { column: "symbol", ascending: true },
-      });
-      return (rows || []) as CryptoAsset[];
+      // Derive available assets from synced wallets so the filter shows real options.
+      const wallets = await extSelect("elektropay_wallets", {});
+      const seen = new Set<string>();
+      const list: CryptoAsset[] = [];
+      for (const w of wallets || []) {
+        if (seen.has(w.asset_id)) continue;
+        seen.add(w.asset_id);
+        list.push({
+          id: w.asset_id,
+          asset_id: w.asset_id,
+          symbol: w.currency || w.asset_id,
+          name: w.asset_id,
+          network: w.crypto_network ?? null,
+          decimals: 8,
+          is_fiat: false,
+          is_active: true,
+          min_withdrawal_amount: null,
+          max_withdrawal_amount: null,
+        });
+      }
+      return list;
     },
   });
 }
@@ -75,12 +132,42 @@ export function useCryptoStores(merchantId?: string) {
   return useQuery({
     queryKey: ["crypto-stores", merchantId],
     queryFn: async () => {
-      const rows = await extSelect("crypto_stores", {
+      // crypto_stores table is platform-only; derive from elektropay_settings.
+      const rows = await extSelect("elektropay_settings", {
         filters: merchantId ? { merchant_id: merchantId } : undefined,
-        order: { column: "created_at", ascending: false },
       });
-      return (rows || []) as CryptoStore[];
+      return (rows || []).map((s: any): CryptoStore => ({
+        id: s.id,
+        merchant_id: s.merchant_id,
+        name: `Store ${String(s.merchant_id).slice(0, 6)}`,
+        base_currency: "USD",
+        is_active: !!s.enabled,
+        is_test: false,
+        created_at: s.created_at,
+        elektropay_store_id: s.elektropay_store_id,
+      }));
     },
+  });
+}
+
+/**
+ * Trigger a balance sync from Elektropay for one merchant (or all when no
+ * merchantId is provided — the function iterates merchants with elektropay
+ * settings on its side).
+ */
+export function useSyncElektropay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: { merchant_id?: string } = {}) => {
+      return await callElektropay("sync_balances", vars);
+    },
+    onSuccess: () => {
+      toast.success("Synced from Elektropay");
+      qc.invalidateQueries({ queryKey: ["crypto-wallets"] });
+      qc.invalidateQueries({ queryKey: ["crypto-assets"] });
+      qc.invalidateQueries({ queryKey: ["crypto-stores"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 
