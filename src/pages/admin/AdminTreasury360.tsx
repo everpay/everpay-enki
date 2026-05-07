@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RebelFiActions } from "@/components/admin/RebelFiActions";
+import { FormError } from "@/components/ui/form-error";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -449,13 +450,12 @@ export default function AdminTreasury360() {
           />
           {rebelfi.isLoading ? (
             <Card><CardContent className="p-6 text-sm text-muted-foreground">Loading RebelFi yield infrastructure…</CardContent></Card>
-          ) : rebelfi.isError ? (
-            <Card>
-              <CardHeader><CardTitle className="text-base text-destructive">RebelFi unreachable</CardTitle></CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                {(rebelfi.error as any)?.message || "Could not reach the RebelFi API. Verify REBELFI_API_KEY."}
-              </CardContent>
-            </Card>
+          ) : rebelfi.isError || (rebelfi.data && rebelfi.data.ok === false) ? (
+            <FormError title="RebelFi unreachable">
+              {(rebelfi.error as any)?.message
+                || (rebelfi.data as any)?.error
+                || "Could not reach the RebelFi API. Verify REBELFI_API_KEY."}
+            </FormError>
           ) : (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -186,7 +186,7 @@ function RegisterWalletDialog({ onDone }: { onDone: () => void }) {
         body: { action: "register_wallet", walletAddress: walletAddress.trim(), blockchain, label: label || undefined },
       });
       if (error) throw error;
-      if ((data as any)?.statusCode && (data as any)?.message) throw new Error((data as any).message);
+      if ((data as any)?.ok === false) throw new Error((data as any).error || "RebelFi rejected the request");
       toast.success("Wallet registered with RebelFi");
       setOpen(false);
       setWalletAddress(""); setLabel("");
@@ -264,9 +264,10 @@ function SupplyUnwindDialog({
         body: { action: mode, walletAddress, strategyId: Number(strategyId) || strategyId, amount: baseUnits },
       });
       if (error) throw error;
-      if ((data as any)?.statusCode && (data as any)?.message) throw new Error((data as any).message);
-      setResult(data);
-      toast.success(`${mode === "supply" ? "Supply" : "Unwind"} planned — operation ${(data as any)?.id || (data as any)?.operationId || "created"}`);
+      if ((data as any)?.ok === false) throw new Error((data as any).error || "RebelFi rejected the request");
+      const op = (data as any)?.data || data;
+      setResult(op);
+      toast.success(`${mode === "supply" ? "Supply" : "Unwind"} planned — operation ${op?.id || op?.operationId || "created"}`);
       onDone();
     } catch (e: any) {
       toast.error(`${mode} failed: ${e?.message || e}`);
