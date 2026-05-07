@@ -3,13 +3,16 @@ import { extSelect, externalProxy } from '@/hooks/useExternalData';
 import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, eachDayOfInterval, subDays } from 'date-fns';
 
 interface MonthlyData { month: string; revenue: number; refunds: number; chargebacks: number; count: number; }
-interface DailyData { date: string; volume: number; count: number; }
+interface DailyData { date: string; volume: number; count: number; declines: number; declinedAmount: number; attempts: number; }
 
 interface TransactionAnalytics {
   monthlyData: MonthlyData[];
   dailyData: DailyData[];
   totalRevenue: number;
   totalTransactions: number;
+  totalCompleted: number;
+  totalDeclined: number;
+  authRate: number;
   totalRefunds: number;
   totalChargebacks: number;
   totalUsers: number;
@@ -36,7 +39,10 @@ export function useAdminTransactionAnalytics() {
       const refunds = refundsRes.status === 'fulfilled' ? refundsRes.value : [];
       const disputes = disputesRes.status === 'fulfilled' ? disputesRes.value : [];
       const users = usersRes.status === 'fulfilled' ? (usersRes.value.data || []) : [];
-      const txns = allTxns.filter((t: any) => t.status === 'completed');
+      const COMPLETED = new Set(['completed', 'success', 'succeeded', 'paid', 'captured']);
+      const DECLINED = new Set(['failed', 'declined', 'error', 'cancelled', 'canceled', 'expired']);
+      const txns = allTxns.filter((t: any) => COMPLETED.has(String(t.status).toLowerCase()));
+      const declinedTxns = allTxns.filter((t: any) => DECLINED.has(String(t.status).toLowerCase()));
 
       const months = eachMonthOfInterval({ start: sixMonthsAgo, end: now });
       const monthlyData: MonthlyData[] = months.map((month: Date) => {
@@ -57,14 +63,31 @@ export function useAdminTransactionAnalytics() {
       const dailyData: DailyData[] = days.map((day: Date) => {
         const ds = new Date(day); ds.setHours(0, 0, 0, 0);
         const de = new Date(day); de.setHours(23, 59, 59, 999);
-        const dTxns = txns.filter((t: any) => { const d = new Date(t.created_at); return d >= ds && d <= de; });
-        return { date: format(day, 'MMM d'), volume: dTxns.reduce((s: number, t: any) => s + Number(t.amount), 0), count: dTxns.length };
+        const inDay = (t: any) => { const d = new Date(t.created_at); return d >= ds && d <= de; };
+        const dTxns = txns.filter(inDay);
+        const dDecl = declinedTxns.filter(inDay);
+        return {
+          date: format(day, 'MMM d'),
+          volume: dTxns.reduce((s: number, t: any) => s + Number(t.amount), 0),
+          count: dTxns.length,
+          declines: dDecl.length,
+          declinedAmount: dDecl.reduce((s: number, t: any) => s + Number(t.amount), 0),
+          attempts: dTxns.length + dDecl.length,
+        };
       });
+
+      const totalCompleted = txns.length;
+      const totalDeclined = declinedTxns.length;
+      const authDenom = totalCompleted + totalDeclined;
+      const authRate = authDenom > 0 ? (totalCompleted / authDenom) * 100 : 0;
 
       return {
         monthlyData, dailyData,
         totalRevenue: txns.reduce((s: number, t: any) => s + Number(t.amount), 0),
         totalTransactions: allTxns.length,
+        totalCompleted,
+        totalDeclined,
+        authRate,
         totalRefunds: refunds.length,
         totalChargebacks: disputes.length,
         totalUsers: users.length,
