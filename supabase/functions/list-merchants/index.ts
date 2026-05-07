@@ -16,13 +16,16 @@ Deno.serve(async (req) => {
   const localAdmin = createClient(localUrl, localServiceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+  const extUrl = Deno.env.get("EXTERNAL_SUPABASE_URL") || localUrl;
+  const extAnon = Deno.env.get("EXTERNAL_SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_ANON_KEY")!;
+  const extAuth = createClient(extUrl, extAnon, { auth: { autoRefreshToken: false, persistSession: false } });
 
   const authHeader = req.headers.get("authorization") || "";
   const token = authHeader.replace("Bearer ", "");
   if (!token) return jr({ error: "Auth required" }, 401);
 
-  // Verify JWT via auth server — no email whitelist trust.
-  const { data: userData, error: userErr } = await localAdmin.auth.getUser(token);
+  // Token issued by EXTERNAL auth project — verify there.
+  const { data: userData, error: userErr } = await extAuth.auth.getUser(token);
   if (userErr || !userData?.user?.id) return jr({ error: "Invalid token" }, 401);
   const callerId: string = userData.user.id;
   const callerEmail: string | null = userData.user.email ?? null;
