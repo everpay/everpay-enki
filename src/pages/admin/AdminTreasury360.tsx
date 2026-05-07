@@ -14,6 +14,7 @@ import {
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 
 const fmt = (n: number, c = "USD") => {
   try {
@@ -34,6 +35,8 @@ function sumByCurrency<T extends Record<string, any>>(rows: T[], amountKey = "ba
 
 export default function AdminTreasury360() {
   const { isAdmin, isSuperAdmin, isLoading } = useAccessControl();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "balances";
 
   const accounts = useQuery({
     queryKey: ["t360-accounts"],
@@ -221,7 +224,7 @@ export default function AdminTreasury360() {
         </Card>
       </div>
 
-      <Tabs defaultValue="balances">
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams(v === "balances" ? {} : { tab: v })}>
         <TabsList>
           <TabsTrigger value="balances">Balances</TabsTrigger>
           <TabsTrigger value="liquidity">Liquidity & FX</TabsTrigger>
