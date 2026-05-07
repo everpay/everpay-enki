@@ -21,11 +21,11 @@ Deno.serve(async (req) => {
   const token = authHeader.replace("Bearer ", "");
   if (!token) return jr({ error: "Auth required" }, 401);
 
-  // Cryptographically verify JWT — no email whitelist trust.
-  const { data: claimsData, error: claimsErr } = await localAdmin.auth.getClaims(token);
-  if (claimsErr || !claimsData?.claims?.sub) return jr({ error: "Invalid token" }, 401);
-  const callerId: string = claimsData.claims.sub as string;
-  const callerEmail: string | null = (claimsData.claims.email as string) ?? null;
+  // Verify JWT via auth server — no email whitelist trust.
+  const { data: userData, error: userErr } = await localAdmin.auth.getUser(token);
+  if (userErr || !userData?.user?.id) return jr({ error: "Invalid token" }, 401);
+  const callerId: string = userData.user.id;
+  const callerEmail: string | null = userData.user.email ?? null;
 
   let isAdmin = false;
   {
