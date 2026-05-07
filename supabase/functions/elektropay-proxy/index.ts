@@ -31,6 +31,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    // The merchant-facing tables (elektropay_wallets, merchants, etc.) live in the
+    // external Everpay project. Persist there so the dashboard (which reads via
+    // admin-data-proxy → external project) actually sees newly-provisioned wallets.
+    const extUrl = Deno.env.get('EXTERNAL_SUPABASE_URL');
+    const extKey = Deno.env.get('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY');
+    const extDb = extUrl && extKey ? createClient(extUrl, extKey) : supabase;
     const apiKey = Deno.env.get('ELEKTROPAY_API_KEY');
     const apiSecret = Deno.env.get('ELEKTROPAY_API_SECRET');
     if (!apiKey || !apiSecret) {
@@ -83,7 +89,7 @@ serve(async (req) => {
         const accountsData = await safeJson(res);
         if (params.merchant_id && accountsData.accounts) {
           for (const acct of accountsData.accounts) {
-            await supabase.from('elektropay_wallets').upsert({
+            await extDb.from('elektropay_wallets').upsert({
               merchant_id: params.merchant_id,
               asset_id: acct.asset_id,
               currency: acct.currency,
@@ -120,13 +126,18 @@ serve(async (req) => {
         // Persist to elektropay_wallets so the merchant dashboard reflects it
         try {
           if (params.merchant_id && data.address_id) {
-            await supabase.from('elektropay_wallets').upsert({
+            await extDb.from('elektropay_wallets').upsert({
               merchant_id: params.merchant_id,
               asset_id: payload.asset_id || 'USDT.TRC20',
               currency: (payload.asset_id || 'USDT').split('.')[0],
-              crypto_network: payload.crypto_network || 'TRON',
-              elektropay_account_id: data.address_id,
-              elektropay_store_id: payload.store_id || null,
+              crypto_network: data.crypto_network || payload.crypto_network || null,
+              crypto_network_name: data.crypto_network_name || null,
+              wallet_address: data.address || null,
+              address_id: data.address_id,
+              elektropay_account_id: data.account_id || data.address_id,
+              elektropay_store_id: data.store_id || payload.store_id || null,
+              dedicate_id: data.dedicate_id || null,
+              status: 'active',
             }, { onConflict: 'merchant_id,asset_id' });
           }
         } catch (e) { console.warn('elektropay wallet upsert failed', e); }
@@ -166,15 +177,17 @@ serve(async (req) => {
         });
         const data = await safeJson(res);
         if (params.merchant_id && data.address_id) {
-          await supabase.from('elektropay_wallets').upsert({
+          await extDb.from('elektropay_wallets').upsert({
             merchant_id: params.merchant_id,
             asset_id: 'USDT.TRC20',
             currency: 'USDT',
             crypto_network: 'TRON',
             wallet_address: data.address || data.wallet_address || null,
             address_id: data.address_id,
-            elektropay_account_id: data.address_id,
-            elektropay_store_id: params.store_id || null,
+            elektropay_account_id: data.account_id || data.address_id,
+            elektropay_store_id: data.store_id || params.store_id || null,
+            dedicate_id: data.dedicate_id || null,
+            status: 'active',
           }, { onConflict: 'merchant_id,asset_id' });
         }
         if (params.merchant_id) {
