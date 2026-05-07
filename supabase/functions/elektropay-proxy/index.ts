@@ -31,6 +31,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    // The merchant-facing tables (elektropay_wallets, merchants, etc.) live in the
+    // external Everpay project. Persist there so the dashboard (which reads via
+    // admin-data-proxy → external project) actually sees newly-provisioned wallets.
+    const extUrl = Deno.env.get('EXTERNAL_SUPABASE_URL');
+    const extKey = Deno.env.get('EXTERNAL_SUPABASE_SERVICE_ROLE_KEY');
+    const extDb = extUrl && extKey ? createClient(extUrl, extKey) : supabase;
     const apiKey = Deno.env.get('ELEKTROPAY_API_KEY');
     const apiSecret = Deno.env.get('ELEKTROPAY_API_SECRET');
     if (!apiKey || !apiSecret) {
