@@ -430,6 +430,146 @@ export default function AdminTreasury360() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="rebelfi" className="mt-4 space-y-4">
+          {rebelfi.isLoading ? (
+            <Card><CardContent className="p-6 text-sm text-muted-foreground">Loading RebelFi yield infrastructure…</CardContent></Card>
+          ) : rebelfi.isError ? (
+            <Card>
+              <CardHeader><CardTitle className="text-base text-destructive">RebelFi unreachable</CardTitle></CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                {(rebelfi.error as any)?.message || "Could not reach the RebelFi API. Verify REBELFI_API_KEY."}
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2"><DollarSign className="h-4 w-4" /> Total value managed</CardDescription>
+                    <CardTitle className="text-2xl">{fmt(rebelfi.data?.summary.totalValueUsd || 0, "USD")}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground">{rebelfi.data?.summary.allocationsCount || 0} active allocations</CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Yield earned</CardDescription>
+                    <CardTitle className="text-2xl text-emerald-600">{fmt(rebelfi.data?.summary.yieldEarnedUsd || 0, "USD")}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground">Lifetime earnings</CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2"><Activity className="h-4 w-4" /> Average APY</CardDescription>
+                    <CardTitle className="text-2xl">{(rebelfi.data?.summary.averageApy || 0).toFixed(2)}%</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground">Portfolio-weighted</CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2"><Wallet className="h-4 w-4" /> Wallets / Venues</CardDescription>
+                    <CardTitle className="text-2xl">{rebelfi.data?.summary.walletsCount || 0} <span className="text-base font-normal text-muted-foreground">/ {rebelfi.data?.summary.venuesCount || 0}</span></CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground">Registered wallets · Active venues</CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2"><Sparkles className="h-4 w-4" /> Active allocations</CardTitle>
+                  <CardDescription>Stablecoin yield positions across DeFi venues</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>Venue / Strategy</TableHead><TableHead>Token</TableHead><TableHead>Chain</TableHead>
+                      <TableHead className="text-right">Value</TableHead>
+                      <TableHead className="text-right">Earned</TableHead>
+                      <TableHead className="text-right">APY</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {(rebelfi.data?.allocations || []).length === 0 ? (
+                        <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No allocations yet</TableCell></TableRow>
+                      ) : (rebelfi.data?.allocations || []).map((a: any, i: number) => {
+                        const dec = 6;
+                        const value = Number(a.currentValue ?? a.balance ?? a.value ?? 0) / 10 ** dec;
+                        const earned = Number(a.earnings ?? a.yieldEarned ?? a.earned ?? 0) / 10 ** dec;
+                        return (
+                          <TableRow key={a.id || i}>
+                            <TableCell className="font-medium">{a.venueName || a.strategy?.name || `Strategy ${a.strategyId ?? "—"}`}</TableCell>
+                            <TableCell className="font-mono">{a.token || a.tokenSymbol || "USDC"}</TableCell>
+                            <TableCell className="font-mono text-xs">{a.blockchain || a.chain || "—"}</TableCell>
+                            <TableCell className="text-right">{fmt(value, "USD")}</TableCell>
+                            <TableCell className="text-right text-emerald-600">{fmt(earned, "USD")}</TableCell>
+                            <TableCell className="text-right">{Number(a.apy ?? a.currentApy ?? 0).toFixed(2)}%</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Registered wallets</CardTitle>
+                  <CardDescription>Custody retained — RebelFi orchestrates supply/unwind</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>Address</TableHead><TableHead>Chain</TableHead>
+                      <TableHead>Profile</TableHead><TableHead>Status</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {(rebelfi.data?.wallets || []).length === 0 ? (
+                        <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No wallets registered</TableCell></TableRow>
+                      ) : (rebelfi.data?.wallets || []).map((w: any, i: number) => (
+                        <TableRow key={w.id || w.address || i}>
+                          <TableCell className="font-mono text-xs truncate max-w-[260px]">{w.address || w.walletAddress || "—"}</TableCell>
+                          <TableCell className="font-mono text-xs">{w.blockchain || w.chain || "—"}</TableCell>
+                          <TableCell className="text-xs">{w.profileName || w.userId || "—"}</TableCell>
+                          <TableCell><Badge variant={w.status === "active" || !w.status ? "default" : "secondary"}>{w.status || "active"}</Badge></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Recent operations</CardTitle>
+                  <CardDescription>Supply / unwind transactions</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader><TableRow>
+                      <TableHead>When</TableHead><TableHead>Type</TableHead><TableHead>Token</TableHead>
+                      <TableHead className="text-right">Amount</TableHead><TableHead>Status</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {(rebelfi.data?.operations || []).length === 0 ? (
+                        <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No operations</TableCell></TableRow>
+                      ) : (rebelfi.data?.operations || []).map((op: any, i: number) => {
+                        const amt = Number(op.amount ?? 0) / 1e6;
+                        return (
+                          <TableRow key={op.id || i}>
+                            <TableCell className="text-xs">{op.createdAt ? new Date(op.createdAt).toLocaleString() : "—"}</TableCell>
+                            <TableCell><Badge variant="outline">{op.type || op.operationType || "—"}</Badge></TableCell>
+                            <TableCell className="font-mono">{op.token || op.tokenSymbol || "USDC"}</TableCell>
+                            <TableCell className="text-right">{fmt(amt, "USD")}</TableCell>
+                            <TableCell><Badge variant={op.status === "completed" || op.status === "confirmed" ? "default" : op.status === "failed" ? "destructive" : "secondary"}>{op.status || "pending"}</Badge></TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
       </Tabs>
     </AppLayout>
   );
