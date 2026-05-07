@@ -8,6 +8,8 @@ import { formatCurrency, formatDate } from '@/lib/format';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ShieldCheck, Gauge, Clock, DollarSign, AlertTriangle, TrendingUp } from 'lucide-react';
+import { CardVelocityCard } from '@/components/CardVelocityCard';
+import { BalanceAlertsManager } from '@/components/BalanceAlertsManager';
 
 function useAdminRollingReserves() {
   return useQuery({
