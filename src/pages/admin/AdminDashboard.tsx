@@ -8,6 +8,7 @@ import { CurrencySelector } from '@/components/CurrencySelector';
 import { Button } from '@/components/ui/button';
 import { Users, DollarSign, Store, CheckCircle2, ArrowUpRight, ArrowDownRight, CreditCard, ArrowRightLeft, Wallet, CreditCard as CreditCardIcon } from 'lucide-react';
 import { useAdminDashboardData } from '@/hooks/useAdminDashboardData';
+import { useAdminTransactionAnalytics } from '@/hooks/useAdminTransactionAnalytics';
 import AdminVolumeChart from '@/components/admin/charts/AdminVolumeChart';
 import AdminRevenueChart from '@/components/admin/charts/AdminRevenueChart';
 import AdminChargebackChart from '@/components/admin/charts/AdminChargebackChart';
@@ -35,6 +36,7 @@ const KPICard = ({ title, value, change, trend, icon: Icon, description }: KPICa
 
 export default function AdminDashboard() {
   const { data, isLoading } = useAdminDashboardData();
+  const { data: analytics } = useAdminTransactionAnalytics();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -49,9 +51,10 @@ export default function AdminDashboard() {
   }
 
   const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
-  const authRate = data && data.totalTransactions > 0
-    ? ((data.totalTransactions - data.totalChargebacks) / data.totalTransactions * 100).toFixed(1)
-    : '0';
+  // Auth rate = completed / (completed + declined). Reflects declines from past days.
+  const completed = analytics?.totalCompleted ?? 0;
+  const declined = analytics?.totalDeclined ?? 0;
+  const authRate = analytics ? analytics.authRate.toFixed(1) : '0';
 
   return (
     <AppLayout>
@@ -68,7 +71,14 @@ export default function AdminDashboard() {
           <KPICard title="Total Volume" value={fmt(data?.totalVolume || 0)} change={`${data?.totalTransactions || 0} txns`} trend="up" icon={DollarSign} description="Processing volume" />
           <KPICard title="Active Merchants" value={(data?.totalMerchants || 0).toString()} change={`of ${data?.totalUsers || 0} users`} trend="neutral" icon={Store} description="Onboarded merchants" />
           <KPICard title="Total Users" value={(data?.totalUsers || 0).toString()} change="" trend="neutral" icon={Users} description="All registered users" />
-          <KPICard title="Auth Rate" value={`${authRate}%`} change="" trend="neutral" icon={CheckCircle2} description="Transaction approval" />
+          <KPICard
+            title="Auth Rate"
+            value={`${authRate}%`}
+            change={`${completed} ok / ${declined} declined`}
+            trend={Number(authRate) >= 85 ? 'up' : 'down'}
+            icon={CheckCircle2}
+            description="of attempted transactions"
+          />
           <KPICard title="Crypto Commission" value={fmt(data?.cryptoTotalFees || 0)} change={`${data?.cryptoPaymentCount || 0} crypto txns`} trend="up" icon={Wallet} description="5% + $1.00 per txn" />
         </div>
 
