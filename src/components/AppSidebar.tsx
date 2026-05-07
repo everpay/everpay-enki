@@ -198,6 +198,7 @@ const adminSections: NavSection[] = [
       { to: "/enki/user-reconciliation", icon: Users, label: "User Reconciliation" },
       { to: "/enki/resellers", icon: Handshake, label: "Resellers" },
       { to: "/enki/audit-trail", icon: Shield, label: "Audit Trail" },
+      { to: "/enki/security-alerts", icon: Shield, label: "Security Alerts" },
       { to: "/enki/reports", icon: FileText, label: "Reports" },
     ],
   },

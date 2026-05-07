@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { recordAlert } from "../_shared/alerts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -145,6 +146,10 @@ serve(async (req) => {
     // the signature verifies. Missing secret = misconfiguration = HTTP 500.
     if (!webhookSecret) {
       console.error('EVERPAY_WEBHOOK_SECRET not configured — refusing webhook');
+      await recordAlert({
+        severity: 'critical', category: 'webhook_signature', source: 'everpay-webhook',
+        message: 'EVERPAY_WEBHOOK_SECRET not configured',
+      });
       return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -152,6 +157,11 @@ serve(async (req) => {
     const valid = await verifySignature(rawBody, signature, webhookSecret);
     if (!valid) {
       console.error('Invalid webhook signature');
+      await recordAlert({
+        severity: 'critical', category: 'webhook_signature', source: 'everpay-webhook',
+        message: 'Invalid webhook signature',
+        details: { ip: req.headers.get('x-forwarded-for') || null, has_sig: !!signature },
+      });
       return new Response(JSON.stringify({ error: 'Invalid signature' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
