@@ -68,6 +68,32 @@ serve(async (req) => {
       return { non_json_upstream: true, status: res.status, body_preview: text.slice(0, 200) };
     };
 
+    // Validate that an upstream Elektropay account/dedicate response contains the
+    // critical fields needed before persisting. Returns a list of missing keys.
+    const missingWalletFields = (acct: Record<string, any>): string[] => {
+      const required = ['wallet_address', 'crypto_network_name', 'asset_id'];
+      const aliasMap: Record<string, string[]> = {
+        wallet_address: ['wallet_address', 'address'],
+        crypto_network_name: ['crypto_network_name', 'crypto_network'],
+        asset_id: ['asset_id', 'currency'],
+      };
+      return required.filter((k) => !aliasMap[k].some((alias) => acct?.[alias]));
+    };
+    const logValidationFailure = async (
+      context: string,
+      missing: string[],
+      payload: Record<string, any>,
+    ) => {
+      console.warn(`[elektropay-proxy] ${context} missing required fields:`, missing, payload);
+      try {
+        await supabase.from('event_logs').insert({
+          event_type: 'wallet.upsert.invalid',
+          source_service: 'elektropay-proxy',
+          payload: { context, missing, sample: payload },
+        });
+      } catch (_) { /* ignore */ }
+    };
+
     let result: any;
     switch (action) {
       case 'ping':
@@ -84,16 +110,68 @@ serve(async (req) => {
         result = { balances: data.accounts || data.balances || [], raw: data, ok: res.ok };
         break;
       }
+      case 'list_wallets': {
+        // Live fetch from Elektropay /accounts. Returns the canonical wallet list
+        // (system + merchant + dedicated) without depending on local sync.
+        const res = await fetch(`${url}/accounts`, { headers });
+        const data = await safeJson(res);
+        const accts: any[] = data.accounts || data.balances || [];
+        const wallets = accts.map((a) => {
+          const missing = missingWalletFields(a);
+          if (missing.length) {
+            logValidationFailure('list_wallets', missing, a).catch(() => {});
+          }
+          return {
+            id: a.account_id || a.address_id || crypto.randomUUID(),
+            asset_id: a.asset_id || a.currency || null,
+            currency: a.currency || (a.asset_id ? String(a.asset_id).split('.')[0] : null),
+            crypto_network: a.crypto_network ?? null,
+            crypto_network_name: a.crypto_network_name ?? a.crypto_network ?? null,
+            wallet_address: a.wallet_address ?? a.address ?? null,
+            address_id: a.address_id ?? null,
+            elektropay_account_id: a.account_id ?? a.address_id ?? null,
+            elektropay_store_id: a.store_id ?? null,
+            balance: parseFloat(a.balance || '0'),
+            available: parseFloat(a.available || '0'),
+            on_hold: parseFloat(a.on_hold || '0'),
+            base_balance: parseFloat(a.base_balance || '0'),
+            base_currency: a.base_currency || 'USD',
+            status: a.status || 'active',
+            account_type: a.account_type || (a.store_id ? 'store' : 'system'),
+            _missing: missing,
+          };
+        });
+        result = { ok: res.ok, status: res.status, wallets, count: wallets.length, raw: data };
+        break;
+      }
+      case 'list_stores': {
+        // Live fetch from Elektropay /store (some regions return /stores).
+        let res = await fetch(`${url}/stores`, { headers });
+        if (!res.ok) res = await fetch(`${url}/store`, { headers });
+        const data = await safeJson(res);
+        const stores = data.stores || data.store || data.data || [];
+        result = { ok: res.ok, status: res.status, stores, count: Array.isArray(stores) ? stores.length : 0, raw: data };
+        break;
+      }
       case 'sync_balances': {
         const res = await fetch(`${url}/accounts`, { headers });
         const accountsData = await safeJson(res);
+        const validationErrors: any[] = [];
         if (params.merchant_id && accountsData.accounts) {
           for (const acct of accountsData.accounts) {
+            const missing = missingWalletFields(acct);
+            if (missing.length) {
+              await logValidationFailure('sync_balances', missing, acct);
+              validationErrors.push({ asset_id: acct.asset_id, missing });
+              continue;
+            }
             await extDb.from('elektropay_wallets').upsert({
               merchant_id: params.merchant_id,
               asset_id: acct.asset_id,
               currency: acct.currency,
-              crypto_network: acct.crypto_network,
+              crypto_network: acct.crypto_network ?? null,
+              crypto_network_name: acct.crypto_network_name ?? acct.crypto_network ?? null,
+              wallet_address: acct.wallet_address ?? acct.address ?? null,
               balance: parseFloat(acct.balance || '0'),
               available: parseFloat(acct.available || '0'),
               on_hold: parseFloat(acct.on_hold || '0'),
@@ -101,10 +179,11 @@ serve(async (req) => {
               base_currency: acct.base_currency || 'USD',
               elektropay_account_id: acct.account_id,
               elektropay_store_id: acct.store_id,
+              status: acct.status || 'active',
             }, { onConflict: 'merchant_id,asset_id' });
           }
         }
-        result = accountsData;
+        result = { ...accountsData, ok: res.ok, validation_errors: validationErrors };
         break;
       }
       case 'create_store': {
@@ -123,9 +202,18 @@ serve(async (req) => {
           method: 'POST', headers, body: JSON.stringify(payload),
         });
         const data = await safeJson(res);
+        const merged = {
+          asset_id: payload.asset_id,
+          wallet_address: data.address || data.wallet_address,
+          crypto_network_name: data.crypto_network_name || data.crypto_network || payload.crypto_network,
+        };
+        const missing = missingWalletFields(merged);
+        if (missing.length) {
+          await logValidationFailure('dedicate', missing, { request: payload, response: data });
+        }
         // Persist to elektropay_wallets so the merchant dashboard reflects it
         try {
-          if (params.merchant_id && data.address_id) {
+          if (params.merchant_id && data.address_id && missing.length === 0) {
             await extDb.from('elektropay_wallets').upsert({
               merchant_id: params.merchant_id,
               asset_id: payload.asset_id || 'USDT.TRC20',
@@ -141,7 +229,8 @@ serve(async (req) => {
             }, { onConflict: 'merchant_id,asset_id' });
           }
         } catch (e) { console.warn('elektropay wallet upsert failed', e); }
-        result = { ...data, ok: res.ok };
+        result = { ...data, ok: res.ok && missing.length === 0, missing_fields: missing };
+        if (missing.length) result.error = `Elektropay response missing required fields: ${missing.join(', ')}`;
         break;
       }
       case 'auto_provision_wallet': {
