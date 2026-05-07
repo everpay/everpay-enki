@@ -125,6 +125,55 @@ serve(async (req) => {
       });
     }
 
+    if (action === "register_wallet") {
+      const payload = {
+        walletAddress: body.walletAddress,
+        blockchain: body.blockchain,
+        userId: body.userId || undefined,
+        label: body.label || undefined,
+      };
+      if (!payload.walletAddress || !payload.blockchain) {
+        return new Response(JSON.stringify({ error: "walletAddress and blockchain required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const r = await rfFetch(`/wallets`, { method: "POST", body: JSON.stringify(payload) });
+      return new Response(JSON.stringify(r.body), {
+        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "supply" || action === "unwind") {
+      const endpoint = action === "supply" ? "/operations/supply" : "/operations/unwind";
+      const payload: any = {
+        walletAddress: body.walletAddress,
+        strategyId: body.strategyId,
+        amount: body.amount, // base-units string
+        tokenAddress: body.tokenAddress || undefined,
+      };
+      if (!payload.walletAddress || !payload.strategyId || !payload.amount) {
+        return new Response(JSON.stringify({ error: "walletAddress, strategyId, amount required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const r = await rfFetch(endpoint, { method: "POST", body: JSON.stringify(payload) });
+      return new Response(JSON.stringify(r.body), {
+        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "get_operation") {
+      if (!body.operationId) {
+        return new Response(JSON.stringify({ error: "operationId required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const r = await rfFetch(`/operations/${body.operationId}`);
+      return new Response(JSON.stringify(r.body), {
+        status: r.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Default: aggregate summary for Treasury 360°
     const [walletsR, allocsR, opsR, venuesR] = await Promise.all([
       rfFetch(`/wallets`),
