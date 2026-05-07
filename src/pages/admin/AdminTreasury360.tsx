@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Landmark, Wallet, ArrowUpRight, DollarSign, Bitcoin, Activity } from "lucide-react";
+import { Landmark, Wallet, ArrowUpRight, DollarSign, Bitcoin, Activity, Sparkles, TrendingUp } from "lucide-react";
+import { useRebelFi } from "@/hooks/useRebelFi";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell, Legend, LineChart, Line,
@@ -64,6 +65,7 @@ export default function AdminTreasury360() {
     queryKey: ["t360-reserves"],
     queryFn: () => extSelect("rolling_reserves", { limit: 500 }).catch(() => []),
   });
+  const rebelfi = useRebelFi();
 
   if (isLoading) return <AppLayout><div className="p-6">Loading…</div></AppLayout>;
   if (!isAdmin && !isSuperAdmin) return <Unauthorized />;
@@ -227,6 +229,7 @@ export default function AdminTreasury360() {
           <TabsTrigger value="payouts">Payouts</TabsTrigger>
           <TabsTrigger value="crypto">Crypto Wallets</TabsTrigger>
           <TabsTrigger value="reserves">Reserves</TabsTrigger>
+          <TabsTrigger value="rebelfi" className="gap-1"><Sparkles className="h-3.5 w-3.5" /> RebelFi Yield</TabsTrigger>
         </TabsList>
 
         <TabsContent value="balances" className="mt-4">
