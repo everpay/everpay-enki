@@ -19,6 +19,8 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 import { useFraudDetection, FraudRiskResult } from '@/hooks/useFraudDetection';
+import { useFeePreview } from '@/hooks/useFeePreview';
+import { Receipt } from 'lucide-react';
 
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
@@ -91,6 +93,8 @@ export default function NewPayment() {
   const { deviceInfo } = useDeviceAnalytics();
   const { isChecking: isFraudChecking, lastResult: fraudResult, checkFraud } = useFraudDetection();
   const selectedProvider = resolveProvider(currency, billingCountry);
+  const numericAmount = parseFloat(amount) || 0;
+  const { data: feePreview } = useFeePreview(selectedProvider, currency, numericAmount);
   const idempotencyKey = `idk_${Date.now()}`;
 
   const { isPolling, currentStatus: pollingStatus, startPolling } = usePaymentPolling({
@@ -532,6 +536,46 @@ export default function NewPayment() {
                 <Badge variant="outline" className="text-xs">Parallel</Badge>
               </div>
             </div>
+          </div>
+
+          {/* Fee Preview */}
+          <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+            <div className="flex items-center gap-2 mb-3">
+              <Receipt className="h-4 w-4 text-primary" />
+              <h3 className="font-heading text-sm font-semibold text-foreground">Processor Fee Preview</h3>
+            </div>
+            {!feePreview?.matched ? (
+              <p className="text-xs text-muted-foreground">
+                No fee profile configured for <span className="font-mono">{selectedProvider}</span> / {currency}.
+                Add one in Enki → Strategy → Fees.
+              </p>
+            ) : (
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Amount</span>
+                  <span className="font-mono text-foreground">{feePreview.amount.toFixed(2)} {currency}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">% Fee ({Number(feePreview.profile.percentage_fee)}%)</span>
+                  <span className="font-mono text-foreground">{feePreview.percentageAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Fixed Fee</span>
+                  <span className="font-mono text-foreground">{feePreview.fixedAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-border pt-2">
+                  <span className="text-muted-foreground">Total Fee</span>
+                  <span className="font-mono font-semibold text-destructive">−{feePreview.totalFee.toFixed(2)} {currency}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Net to Merchant</span>
+                  <span className="font-mono font-semibold text-primary">{feePreview.net.toFixed(2)} {currency}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground pt-1">
+                  Settles in {feePreview.profile.settlement_days}d · Chargeback ${Number(feePreview.profile.chargeback_fee)} · Refund ${Number(feePreview.profile.refund_fee)}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Fraud Risk Indicator */}
