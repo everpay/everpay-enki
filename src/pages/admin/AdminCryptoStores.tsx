@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/AppLayout";
-import { useCryptoStores, useCryptoWallets, useSyncElektropay } from "@/hooks/useCryptoWallets";
+import { useCryptoWallets, useSyncElektropay } from "@/hooks/useCryptoWallets";
 import { extSelect } from "@/hooks/useExternalData";
 import { useAccessControl } from "@/hooks/useAccessControl";
 import Unauthorized from "@/components/admin/Unauthorized";
