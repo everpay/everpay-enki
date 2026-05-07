@@ -19,6 +19,8 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeviceAnalytics } from '@/hooks/useDeviceAnalytics';
 import { useFraudDetection, FraudRiskResult } from '@/hooks/useFraudDetection';
+import { useFeePreview } from '@/hooks/useFeePreview';
+import { Receipt } from 'lucide-react';
 
 import { usePaymentPolling } from '@/hooks/usePaymentPolling';
 
@@ -91,6 +93,8 @@ export default function NewPayment() {
   const { deviceInfo } = useDeviceAnalytics();
   const { isChecking: isFraudChecking, lastResult: fraudResult, checkFraud } = useFraudDetection();
   const selectedProvider = resolveProvider(currency, billingCountry);
+  const numericAmount = parseFloat(amount) || 0;
+  const { data: feePreview } = useFeePreview(selectedProvider, currency, numericAmount);
   const idempotencyKey = `idk_${Date.now()}`;
 
   const { isPolling, currentStatus: pollingStatus, startPolling } = usePaymentPolling({
