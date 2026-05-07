@@ -22,6 +22,7 @@ const ALLOWED_TABLES = new Set([
   "plaid_items","everpay_webhooks","rolling_reserves","provider_events","routing_decisions",
   "payment_attempts","merchant_processor_overrides","business_profiles","payment_processors",
   "settlements","chargeflow_disputes","kyb_documents","recipients_intl",
+  "security_alerts",
 ]);
 
 Deno.serve(async (req) => {
