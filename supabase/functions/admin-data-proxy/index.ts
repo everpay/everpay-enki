@@ -502,7 +502,12 @@ Deno.serve(async (req) => {
         if (typeof limit === "number") q = q.limit(limit);
         if (typeof offset === "number" && typeof limit === "number") q = q.range(offset, offset + limit - 1);
         const { data: rows, count: cnt, error: lerr } = await q;
-        if (lerr) return jr({ error: `local fallback failed: ${lerr.message}` }, 500);
+        if (lerr) {
+          // Table may not exist locally (e.g. crypto_assets only lives on platform OS).
+          // Return empty result set instead of 500 so the UI degrades gracefully.
+          console.warn(`local fallback failed for ${table}: ${lerr.message}`);
+          return jr({ data: [], count: 0, degraded: true, error: lerr.message });
+        }
         return jr({ data: rows || [], count: cnt ?? null, degraded: true });
       }
     }
