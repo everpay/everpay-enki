@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RebelFiActions } from "@/components/admin/RebelFiActions";
+import { FormError } from "@/components/ui/form-error";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
