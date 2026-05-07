@@ -183,7 +183,10 @@ export default function AdminFeeEngine() {
                       <td className="text-right p-3 font-mono text-foreground">${Number(fee.chargeback_fee)}</td>
                       <td className="text-right p-3 font-mono text-foreground">${Number(fee.refund_fee)}</td>
                       <td className="text-right p-3 font-mono text-foreground">{fee.settlement_days}d</td>
-                      <td className="p-3"><Button variant="ghost" size="icon" onClick={() => deleteFee.mutate(fee.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button></td>
+                      <td className="p-3 text-right whitespace-nowrap">
+                        <Button variant="ghost" size="icon" onClick={() => setEditing(fee)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => deleteFee.mutate(fee.id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                      </td>
                     </motion.tr>
                   );
                 })}
