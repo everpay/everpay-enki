@@ -25,13 +25,15 @@ Deno.serve(async (req) => {
   const localUrl = Deno.env.get("SUPABASE_URL")!;
   const localServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const localAnon = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const extUrl = Deno.env.get("EXTERNAL_SUPABASE_URL") || localUrl;
+  const extAnon = Deno.env.get("EXTERNAL_SUPABASE_ANON_KEY") || localAnon;
 
   const auth = req.headers.get("authorization") || "";
   const token = auth.replace("Bearer ", "");
   if (!token) return json({ error: "Auth required" }, 401);
 
-  // Validate caller against local DB (Admin OS auth)
-  const userClient = createClient(localUrl, localAnon, { global: { headers: { Authorization: auth } } });
+  // Token is issued by the EXTERNAL auth project; verify against it.
+  const userClient = createClient(extUrl, extAnon, { global: { headers: { Authorization: auth } } });
   const { data: who } = await userClient.auth.getUser(token);
   if (!who?.user) return json({ error: "Invalid token" }, 401);
 
