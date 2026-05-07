@@ -54,7 +54,7 @@ export default function AdminDashboard() {
   // Auth rate = completed / (completed + declined). Reflects declines from past days.
   const completed = analytics?.totalCompleted ?? 0;
   const declined = analytics?.totalDeclined ?? 0;
-  const authRate = analytics ? analytics.authRate.toFixed(1) : '0';
+  const authRate = analytics?.authRate != null ? analytics.authRate.toFixed(1) : '0';
 
   return (
     <AppLayout>
