@@ -59,6 +59,33 @@ export function useStrategyFeeProfiles() {
   return useExtFetch<any>("processor_fee_profiles", "strategy-fee-profiles");
 }
 
+export function useUpsertFeeProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (f: any) => {
+      const { id, ...rest } = f;
+      if (id) {
+        await extUpdate("processor_fee_profiles", id, rest);
+      } else {
+        await extInsert("processor_fee_profiles", rest);
+      }
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["strategy-fee-profiles"] }); toast.success("Fee profile saved"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+export function useDeleteFeeProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await extDelete("processor_fee_profiles", id);
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["strategy-fee-profiles"] }); toast.success("Fee profile deleted"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
 // ---- Platform Markups ----
 export function useMarkups() {
   return useExtFetch<any>("platform_fee_markups", "markups");
