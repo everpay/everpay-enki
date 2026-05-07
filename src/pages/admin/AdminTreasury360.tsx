@@ -9,11 +9,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Landmark, Wallet, ArrowUpRight, DollarSign, Bitcoin, Activity, Sparkles, TrendingUp } from "lucide-react";
 import { useRebelFi } from "@/hooks/useRebelFi";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from "recharts";
 import { useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 
 const fmt = (n: number, c = "USD") => {
   try {
@@ -34,6 +39,22 @@ function sumByCurrency<T extends Record<string, any>>(rows: T[], amountKey = "ba
 
 export default function AdminTreasury360() {
   const { isAdmin, isSuperAdmin, isLoading } = useAccessControl();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "balances";
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("rebelfi-sync", { body: {} });
+      if (error) throw error;
+      toast.success(`RebelFi sync: +${data?.inserted || 0} entries (${data?.skipped || 0} skipped)`);
+    } catch (e: any) {
+      toast.error(`Sync failed: ${e?.message || e}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const accounts = useQuery({
     queryKey: ["t360-accounts"],
@@ -221,7 +242,7 @@ export default function AdminTreasury360() {
         </Card>
       </div>
 
-      <Tabs defaultValue="balances">
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams(v === "balances" ? {} : { tab: v })}>
         <TabsList>
           <TabsTrigger value="balances">Balances</TabsTrigger>
           <TabsTrigger value="liquidity">Liquidity & FX</TabsTrigger>
@@ -432,6 +453,11 @@ export default function AdminTreasury360() {
         </TabsContent>
 
         <TabsContent value="rebelfi" className="mt-4 space-y-4">
+          <div className="flex justify-end">
+            <Button size="sm" onClick={handleSync} disabled={syncing} className="gap-2">
+              <Sparkles className="h-4 w-4" /> {syncing ? "Syncing…" : "Sync yield to ledger"}
+            </Button>
+          </div>
           {rebelfi.isLoading ? (
             <Card><CardContent className="p-6 text-sm text-muted-foreground">Loading RebelFi yield infrastructure…</CardContent></Card>
           ) : rebelfi.isError ? (
