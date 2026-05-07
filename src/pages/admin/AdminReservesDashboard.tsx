@@ -113,6 +113,11 @@ export default function AdminReservesDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CardVelocityCard />
+        <BalanceAlertsManager />
+      </div>
     </AppLayout>
   );
 }
