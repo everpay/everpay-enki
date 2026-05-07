@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { extSelect } from '@/hooks/useExternalData';
 import { AppLayout } from '@/components/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,23 +19,22 @@ const AdminTransactionMonitoring = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const { data: txData, error: txError } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (txError) throw txError;
+      // Source: external merchant DB (admin proxy). Includes ALL statuses (completed,
+      // failed, declined, pending) so recent declines are visible in monitoring.
+      const txData: any[] = await extSelect('transactions', {
+        select: '*',
+        order: { column: 'created_at', ascending: false },
+        limit: 200,
+      });
 
       const processedTransactions = await Promise.all(
         (txData || []).filter(tx => tx.merchant_id != null).map(async (tx) => {
-          const { data: history } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('merchant_id', tx.merchant_id)
-            .neq('id', tx.id)
-            .order('created_at', { ascending: false })
-            .limit(50);
+          const history: any[] = await extSelect('transactions', {
+            select: 'id, merchant_id, amount, currency, created_at',
+            filters: { merchant_id: tx.merchant_id },
+            order: { column: 'created_at', ascending: false },
+            limit: 50,
+          });
 
           const userHistory: Transaction[] = (history || []).map(h => ({
             id: h.id, user_id: h.merchant_id || '', amount: parseFloat(String(h.amount || 0)),
