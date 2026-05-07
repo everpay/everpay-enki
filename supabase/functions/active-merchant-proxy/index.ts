@@ -38,12 +38,24 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
+    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const supabaseUrlAuth = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnon = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const userClient = createClient(supabaseUrlAuth, supabaseAnon, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const callerUserId = userData.user.id;
 
     const ACTIVE_MERCHANT_URL = Deno.env.get('ACTIVE_MERCHANT_URL');
     if (!ACTIVE_MERCHANT_URL) {
@@ -87,6 +99,19 @@ serve(async (req) => {
     if (credError || !credData) {
       return new Response(JSON.stringify({ error: 'Gateway credentials not found' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Authorization: caller must own the merchant the credential belongs to,
+    // OR be an admin/super_admin.
+    const [{ data: merchantRow }, { data: roleRows }] = await Promise.all([
+      supabase.from('merchants').select('id').eq('user_id', callerUserId).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', callerUserId),
+    ]);
+    const isAdmin = (roleRows || []).some((r: any) => r.role === 'admin' || r.role === 'super_admin');
+    if (!isAdmin && (!merchantRow || merchantRow.id !== credData.merchant_id)) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
