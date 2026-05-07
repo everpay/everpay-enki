@@ -3891,6 +3891,48 @@ export type Database = {
           },
         ]
       }
+      security_alerts: {
+        Row: {
+          category: Database["public"]["Enums"]["alert_category"]
+          created_at: string
+          details: Json
+          id: string
+          merchant_id: string | null
+          message: string
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: Database["public"]["Enums"]["alert_severity"]
+          source: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["alert_category"]
+          created_at?: string
+          details?: Json
+          id?: string
+          merchant_id?: string | null
+          message: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          source: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["alert_category"]
+          created_at?: string
+          details?: Json
+          id?: string
+          merchant_id?: string | null
+          message?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          source?: string
+        }
+        Relationships: []
+      }
       settlement_batches: {
         Row: {
           created_at: string
@@ -5140,6 +5182,17 @@ export type Database = {
         Returns: boolean
       }
       increment_usage_count: { Args: { token_id: string }; Returns: undefined }
+      log_security_alert: {
+        Args: {
+          _category: Database["public"]["Enums"]["alert_category"]
+          _details?: Json
+          _merchant_id?: string
+          _message: string
+          _severity: Database["public"]["Enums"]["alert_severity"]
+          _source: string
+        }
+        Returns: string
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -5159,6 +5212,14 @@ export type Database = {
       }
     }
     Enums: {
+      alert_category:
+        | "payment_failure"
+        | "vgs_validation"
+        | "webhook_signature"
+        | "auth"
+        | "rate_limit"
+        | "other"
+      alert_severity: "info" | "warn" | "critical"
       app_role:
         | "admin"
         | "moderator"
@@ -5298,6 +5359,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      alert_category: [
+        "payment_failure",
+        "vgs_validation",
+        "webhook_signature",
+        "auth",
+        "rate_limit",
+        "other",
+      ],
+      alert_severity: ["info", "warn", "critical"],
       app_role: [
         "admin",
         "moderator",
