@@ -450,7 +450,7 @@ export default function AdminTreasury360() {
           />
           {rebelfi.isLoading ? (
             <Card><CardContent className="p-6 text-sm text-muted-foreground">Loading RebelFi yield infrastructure…</CardContent></Card>
-          ) : rebelfi.isError || (rebelfi.data && rebelfi.data.ok === false) ? (
+          ) : rebelfi.isError ? (
             <>
               <FormError title="RebelFi unreachable">
                 {(rebelfi.error as any)?.message
@@ -518,6 +518,11 @@ export default function AdminTreasury360() {
             </>
           ) : (
             <>
+              {rebelfi.data?.degraded && (
+                <FormError title="RebelFi partially reachable">
+                  {(rebelfi.data as any)?.error || "One or more RebelFi sub-calls failed; available yield data is still displayed below."}
+                </FormError>
+              )}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
