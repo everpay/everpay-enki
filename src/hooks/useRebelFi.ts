@@ -31,7 +31,21 @@ export function useRebelFi() {
       const { data, error } = await supabase.functions.invoke("rebelfi-proxy", {
         body: { action: "summary" },
       });
-      if (error) throw error;
+      if (error) {
+        return {
+          ok: true,
+          degraded: true,
+          error: error.message || "RebelFi proxy request failed",
+          base_url: "api.rebelfi.io / sandbox-api.rebelfi.io",
+          attempted: { proxy_action: "summary", edge_function: "rebelfi-proxy", provider_route: "RebelFi" },
+          summary: { totalValueUsd: 0, yieldEarnedUsd: 0, averageApy: 0, walletsCount: 0, allocationsCount: 0, venuesCount: 0 },
+          wallets: [],
+          allocations: [],
+          operations: [],
+          venues: [],
+          errors: { proxy: error.message || error },
+        } satisfies RebelFiData;
+      }
       const payload = (data || {}) as Partial<RebelFiData> & { error?: string };
       return {
         ok: payload.ok !== false,
