@@ -188,10 +188,26 @@ serve(async (req) => {
       rfFetch(`/venues`),
     ]);
 
-    const wallets = (walletsR.body?.wallets || walletsR.body?.data || walletsR.body || []) as any[];
-    const allocations = (allocsR.body?.allocations || allocsR.body?.data || allocsR.body || []) as any[];
-    const operations = (opsR.body?.operations || opsR.body?.data || opsR.body || []) as any[];
-    const venues = (venuesR.body?.venues || venuesR.body?.data || venuesR.body || []) as any[];
+    const normalizeList = (body: any, keys: string[]) => {
+      for (const key of keys) {
+        if (Array.isArray(body?.[key])) return body[key];
+      }
+      if (Array.isArray(body?.data)) return body.data;
+      if (Array.isArray(body)) return body;
+      return [];
+    };
+
+    const wallets = normalizeList(walletsR.body, ["wallets"]);
+    const allocations = normalizeList(allocsR.body, ["allocations"]);
+    const operations = normalizeList(opsR.body, ["operations"]);
+    const venues = normalizeList(venuesR.body, ["venues"]);
+    const errors = {
+      wallets: walletsR.ok ? null : walletsR.body,
+      allocations: allocsR.ok ? null : allocsR.body,
+      operations: opsR.ok ? null : opsR.body,
+      venues: venuesR.ok ? null : venuesR.body,
+    };
+    const failed = Object.entries(errors).filter(([, v]) => Boolean(v));
 
     // Compute totals (amounts come back as base-unit strings; USDC/USDT use 6 decimals)
     const toUnits = (s: string | number | undefined, decimals = 6) => {
@@ -212,8 +228,16 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      ok: true,
+      ok: failed.length === 0,
+      degraded: failed.length > 0,
+      error: failed.length > 0 ? `RebelFi returned ${failed.length} failed sub-call${failed.length === 1 ? "" : "s"}; showing available cached/empty data.` : undefined,
       base_url: REBELFI_BASE,
+      attempted: {
+        proxy_action: "summary",
+        edge_function: "rebelfi-proxy",
+        provider_route: "RebelFi",
+        sub_calls: ["GET /v1/wallets", "GET /v1/allocations", "GET /v1/operations?limit=25", "GET /v1/venues"],
+      },
       summary: {
         totalValueUsd: totalValue,
         yieldEarnedUsd: totalEarned,
@@ -226,12 +250,7 @@ serve(async (req) => {
       allocations,
       operations,
       venues,
-      errors: {
-        wallets: walletsR.ok ? null : walletsR.body,
-        allocations: allocsR.ok ? null : allocsR.body,
-        operations: opsR.ok ? null : opsR.body,
-        venues: venuesR.ok ? null : venuesR.body,
-      },
+      errors,
     }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e: any) {
     return jsonOk({ ok: false, error: e?.message || String(e) });
