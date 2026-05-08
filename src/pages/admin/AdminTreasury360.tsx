@@ -521,6 +521,14 @@ export default function AdminTreasury360() {
               {rebelfi.data?.degraded && (
                 <FormError title="RebelFi partially reachable">
                   {(rebelfi.data as any)?.error || "One or more RebelFi sub-calls failed; available yield data is still displayed below."}
+                  {(rebelfi.data as any)?.served_from_cache && (
+                    <div className="mt-1 text-xs opacity-80">
+                      Showing cached snapshot
+                      {(rebelfi.data as any)?.cache_fetched_at
+                        ? ` from ${new Date((rebelfi.data as any).cache_fetched_at).toLocaleString()}`
+                        : ""}.
+                    </div>
+                  )}
                 </FormError>
               )}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
