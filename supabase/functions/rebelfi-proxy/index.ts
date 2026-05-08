@@ -228,7 +228,7 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      ok: failed.length === 0,
+      ok: true,
       degraded: failed.length > 0,
       error: failed.length > 0 ? `RebelFi returned ${failed.length} failed sub-call${failed.length === 1 ? "" : "s"}; showing available cached/empty data.` : undefined,
       base_url: REBELFI_BASE,
