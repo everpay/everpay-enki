@@ -4,7 +4,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
 };
 
 const REBELFI_API_KEY = Deno.env.get("REBELFI_API_KEY") || "";
@@ -24,18 +25,36 @@ function jsonOk(payload: unknown, status = 200) {
 
 async function rfFetch(path: string, init: RequestInit = {}) {
   const url = `${REBELFI_BASE}${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url, {
-    ...init,
-    headers: {
-      "x-api-key": REBELFI_API_KEY,
-      "Content-Type": "application/json",
-      ...(init.headers || {}),
-    },
-  });
-  const text = await res.text();
-  let json: any = null;
-  try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
-  return { ok: res.ok, status: res.status, body: json };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        "x-api-key": REBELFI_API_KEY,
+        "Content-Type": "application/json",
+        ...(init.headers || {}),
+      },
+    });
+    const text = await res.text();
+    let json: any = null;
+    try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
+    return { ok: res.ok, status: res.status, body: json };
+  } catch (e: any) {
+    return {
+      ok: false,
+      status: 0,
+      body: {
+        error: e?.name === "AbortError" ? "RebelFi upstream timed out" : "RebelFi upstream request failed",
+        message: e?.message || String(e),
+        fallback: true,
+        url,
+      },
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 serve(async (req) => {
