@@ -451,11 +451,71 @@ export default function AdminTreasury360() {
           {rebelfi.isLoading ? (
             <Card><CardContent className="p-6 text-sm text-muted-foreground">Loading RebelFi yield infrastructure…</CardContent></Card>
           ) : rebelfi.isError || (rebelfi.data && rebelfi.data.ok === false) ? (
-            <FormError title="RebelFi unreachable">
-              {(rebelfi.error as any)?.message
-                || (rebelfi.data as any)?.error
-                || "Could not reach the RebelFi API. Verify REBELFI_API_KEY."}
-            </FormError>
+            <>
+              <FormError title="RebelFi unreachable">
+                {(rebelfi.error as any)?.message
+                  || (rebelfi.data as any)?.error
+                  || "Could not reach the RebelFi API. Verify REBELFI_API_KEY."}
+              </FormError>
+              <Card className="border-destructive/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Debug · last attempted route</CardTitle>
+                  <CardDescription className="text-xs">
+                    Shown so you can pinpoint which provider call or proxy action failed.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs font-mono">
+                  <div className="flex justify-between gap-2 border-b border-border/40 pb-1">
+                    <span className="text-muted-foreground">Proxy action</span>
+                    <span>summary</span>
+                  </div>
+                  <div className="flex justify-between gap-2 border-b border-border/40 pb-1">
+                    <span className="text-muted-foreground">Edge function</span>
+                    <span>rebelfi-proxy</span>
+                  </div>
+                  <div className="flex justify-between gap-2 border-b border-border/40 pb-1">
+                    <span className="text-muted-foreground">Upstream base</span>
+                    <span className="truncate max-w-[60%] text-right">
+                      {(rebelfi.data as any)?.base_url || "api.rebelfi.io / sandbox-api.rebelfi.io"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-2 border-b border-border/40 pb-1">
+                    <span className="text-muted-foreground">Provider route</span>
+                    <span>RebelFi (no fallback configured — SmartFastPay/Mondo not used for yield)</span>
+                  </div>
+                  <div className="pt-2">
+                    <p className="text-muted-foreground mb-1">Sub-calls attempted</p>
+                    {(() => {
+                      const errs = (rebelfi.data as any)?.errors || {};
+                      const subs = ["wallets", "allocations", "operations", "venues"];
+                      return (
+                        <div className="space-y-1">
+                          {subs.map((k) => {
+                            const e = errs?.[k];
+                            return (
+                              <div key={k} className="flex justify-between gap-2">
+                                <span>GET /v1/{k}</span>
+                                <span className={e ? "text-destructive" : "text-emerald-600"}>
+                                  {e ? `failed · ${typeof e === "string" ? e : (e?.message || e?.error || JSON.stringify(e).slice(0, 80))}` : "ok"}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  {(rebelfi.error || rebelfi.data) && (
+                    <details className="pt-2">
+                      <summary className="cursor-pointer text-muted-foreground">Raw response</summary>
+                      <pre className="mt-2 max-h-64 overflow-auto rounded bg-muted p-2 text-[10px] leading-relaxed">
+{JSON.stringify(rebelfi.error || rebelfi.data, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </CardContent>
+              </Card>
+            </>
           ) : (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

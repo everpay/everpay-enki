@@ -29,9 +29,6 @@ export function useRebelFi() {
         body: { action: "summary" },
       });
       if (error) throw error;
-      if (data && (data as any).ok === false) {
-        throw new Error((data as any).error || "RebelFi unreachable");
-      }
       return data as RebelFiData;
     },
     staleTime: 60_000,
