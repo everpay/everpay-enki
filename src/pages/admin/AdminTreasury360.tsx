@@ -76,7 +76,7 @@ export default function AdminTreasury360() {
     queryKey: ["t360-reserves"],
     queryFn: () => extSelect("rolling_reserves", { limit: 500 }).catch(() => []),
   });
-  const rebelfi = useRebelFi();
+  const rebelfi = useRebelFi(activeTab === "rebelfi");
 
   if (isLoading) return <AppLayout><div className="p-6">Loading…</div></AppLayout>;
   if (!isAdmin && !isSuperAdmin) return <Unauthorized />;
