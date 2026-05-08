@@ -87,7 +87,81 @@ Deno.serve(async (req) => {
     }
     if (action === "list_merchants_full") {
       const r = await gw<{ data: any[] }>("merchants.list_full");
-      return jr({ data: r.data, degraded: false });
+      const rawMerchants: any[] = Array.isArray(r.data) ? r.data : [];
+
+      // Pull users so we can backfill email/name when the merchant row is missing
+      // them (often the case for legacy rows that only have name = email).
+      let users: any[] = [];
+      try {
+        const ur = await gw<{ data: any[] }>("users.list");
+        users = Array.isArray(ur.data) ? ur.data : [];
+      } catch (e) { console.error("users.list failed", (e as Error).message); }
+      const usersById = new Map<string, any>();
+      const usersByEmail = new Map<string, any>();
+      for (const u of users) {
+        if (u?.id) usersById.set(u.id, u);
+        if (u?.email) usersByEmail.set(String(u.email).toLowerCase(), u);
+      }
+
+      const isEmail = (s: any) => typeof s === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+      const enriched = rawMerchants.map((m: any) => {
+        const u = m?.user_id ? usersById.get(m.user_id) : null;
+        const userEmail = u?.email || null;
+        const userName = u?.user_metadata?.display_name || u?.raw_user_meta_data?.display_name || null;
+        let email = m.email || userEmail || (isEmail(m.name) ? m.name : null);
+        let name = m.name && !isEmail(m.name) ? m.name : (userName || (userEmail ? userEmail.split("@")[0] : m.name));
+        return { ...m, email, name };
+      });
+
+      // Deduplicate: prefer entries with a real (non-email) name and
+      // earliest created_at. Key by user_id when present, otherwise email.
+      const dedupKey = (m: any) => (m.user_id || (m.email || "").toLowerCase() || m.id);
+      const byKey = new Map<string, any>();
+      for (const m of enriched) {
+        const k = dedupKey(m);
+        const prev = byKey.get(k);
+        if (!prev) { byKey.set(k, m); continue; }
+        const prevHasRealName = prev.name && !isEmail(prev.name);
+        const curHasRealName = m.name && !isEmail(m.name);
+        if (curHasRealName && !prevHasRealName) { byKey.set(k, m); continue; }
+        if (curHasRealName === prevHasRealName) {
+          // pick earliest created_at
+          const a = new Date(prev.created_at || 0).getTime();
+          const b = new Date(m.created_at || 0).getTime();
+          if (b && (!a || b < a)) byKey.set(k, m);
+        }
+      }
+      const deduped = Array.from(byKey.values());
+
+      // Surface users that signed up but have no merchant row yet
+      // (e.g. globeandgo18@gmail.com missing from the merchants list).
+      const seenUserIds = new Set(deduped.map((m: any) => m.user_id).filter(Boolean));
+      const seenEmails = new Set(deduped.map((m: any) => (m.email || "").toLowerCase()).filter(Boolean));
+      for (const u of users) {
+        const em = (u?.email || "").toLowerCase();
+        if (!u?.id || (seenUserIds.has(u.id) || (em && seenEmails.has(em)))) continue;
+        deduped.push({
+          id: `user:${u.id}`,
+          user_id: u.id,
+          name: u.user_metadata?.display_name || u.email?.split("@")[0] || "(no name)",
+          email: u.email || null,
+          phone: u.phone || null,
+          created_at: u.created_at || null,
+          status: "pending",
+          profile: { onboarding_status: "pending", missing_merchant_row: true },
+        });
+      }
+
+      // Stable sort: most recent first
+      deduped.sort((a: any, b: any) =>
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      );
+
+      return jr({
+        data: deduped,
+        degraded: false,
+        meta: { raw_count: rawMerchants.length, deduped_count: deduped.length, users_count: users.length },
+      });
     }
     if (action === "update_merchant") {
       // body: { merchant_id, patch: { name?, email?, phone?, status? } }
