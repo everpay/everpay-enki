@@ -24,7 +24,7 @@ export interface RebelFiData {
   errors?: Record<string, any>;
 }
 
-export function useRebelFi() {
+export function useRebelFi(enabled = true) {
   return useQuery<RebelFiData>({
     queryKey: ["rebelfi-treasury"],
     queryFn: async () => {
@@ -68,6 +68,7 @@ export function useRebelFi() {
         errors: payload.errors,
       };
     },
+    enabled,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
