@@ -3593,6 +3593,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rebelfi_proxy_cache: {
+        Row: {
+          cache_key: string
+          fetched_at: string
+          payload: Json
+          upstream_ok: boolean
+        }
+        Insert: {
+          cache_key: string
+          fetched_at?: string
+          payload: Json
+          upstream_ok?: boolean
+        }
+        Update: {
+          cache_key?: string
+          fetched_at?: string
+          payload?: Json
+          upstream_ok?: boolean
+        }
+        Relationships: []
+      }
       rebelfi_sync_runs: {
         Row: {
           created_at: string
