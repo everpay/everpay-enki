@@ -13,6 +13,8 @@ export interface RebelFiSummary {
 export interface RebelFiData {
   ok: boolean;
   degraded?: boolean;
+  served_from_cache?: boolean;
+  cache_fetched_at?: string | null;
   error?: string;
   base_url: string;
   attempted?: Record<string, any>;
@@ -50,6 +52,8 @@ export function useRebelFi(enabled = true) {
       return {
         ok: payload.ok !== false,
         degraded: payload.degraded || payload.ok === false,
+        served_from_cache: (payload as any).served_from_cache,
+        cache_fetched_at: (payload as any).cache_fetched_at ?? null,
         error: payload.error,
         base_url: payload.base_url || "api.rebelfi.io / sandbox-api.rebelfi.io",
         attempted: payload.attempted,
