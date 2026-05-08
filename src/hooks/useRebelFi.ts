@@ -12,7 +12,10 @@ export interface RebelFiSummary {
 
 export interface RebelFiData {
   ok: boolean;
+  degraded?: boolean;
+  error?: string;
   base_url: string;
+  attempted?: Record<string, any>;
   summary: RebelFiSummary;
   wallets: any[];
   allocations: any[];
