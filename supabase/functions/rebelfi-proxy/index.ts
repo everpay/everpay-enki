@@ -227,10 +227,10 @@ serve(async (req) => {
       if (apy > 0) { apySum += apy; apyCount += 1; }
     }
 
-    return new Response(JSON.stringify({
+    const fresh = {
       ok: true,
       degraded: failed.length > 0,
-      error: failed.length > 0 ? `RebelFi returned ${failed.length} failed sub-call${failed.length === 1 ? "" : "s"}; showing available cached/empty data.` : undefined,
+      error: failed.length > 0 ? `RebelFi returned ${failed.length} failed sub-call${failed.length === 1 ? "" : "s"}; showing last cached data where possible.` : undefined,
       base_url: REBELFI_BASE,
       attempted: {
         proxy_action: "summary",
@@ -251,7 +251,83 @@ serve(async (req) => {
       operations,
       venues,
       errors,
-    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    };
+
+    // ---- Server-side cache: write on success, fall back on failure ----
+    const allFailed = failed.length === 4;
+    try {
+      if (!allFailed) {
+        // Merge per-section: prefer fresh non-empty arrays, else keep cached arrays.
+        const { data: cached } = await supabase
+          .from("rebelfi_proxy_cache")
+          .select("payload")
+          .eq("cache_key", "summary")
+          .maybeSingle();
+        const prev: any = cached?.payload || null;
+
+        const merged = { ...fresh } as any;
+        if (prev) {
+          if (!walletsR.ok && Array.isArray(prev.wallets)) merged.wallets = prev.wallets;
+          if (!allocsR.ok && Array.isArray(prev.allocations)) merged.allocations = prev.allocations;
+          if (!opsR.ok && Array.isArray(prev.operations)) merged.operations = prev.operations;
+          if (!venuesR.ok && Array.isArray(prev.venues)) merged.venues = prev.venues;
+          // Recompute summary if we merged from cache
+          if (failed.length > 0) {
+            const allocs = merged.allocations as any[];
+            let tv = 0, te = 0, as = 0, ac = 0;
+            for (const a of allocs) {
+              tv += toUnits(a.currentValue ?? a.balance ?? a.value);
+              te += toUnits(a.earnings ?? a.yieldEarned ?? a.earned);
+              const apy = Number(a.apy ?? a.currentApy ?? 0);
+              if (apy > 0) { as += apy; ac += 1; }
+            }
+            merged.summary = {
+              totalValueUsd: tv,
+              yieldEarnedUsd: te,
+              averageApy: ac ? as / ac : 0,
+              walletsCount: Array.isArray(merged.wallets) ? merged.wallets.length : 0,
+              allocationsCount: Array.isArray(merged.allocations) ? merged.allocations.length : 0,
+              venuesCount: Array.isArray(merged.venues) ? merged.venues.length : 0,
+            };
+            merged.served_from_cache = true;
+            merged.cache_fetched_at = (cached as any)?.fetched_at || null;
+          }
+        }
+        // Persist freshest merged snapshot for future fallbacks.
+        await supabase
+          .from("rebelfi_proxy_cache")
+          .upsert({
+            cache_key: "summary",
+            payload: merged,
+            fetched_at: new Date().toISOString(),
+            upstream_ok: failed.length === 0,
+          }, { onConflict: "cache_key" });
+        return new Response(JSON.stringify(merged), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // All upstream calls failed → serve last cache.
+      const { data: cached } = await supabase
+        .from("rebelfi_proxy_cache")
+        .select("payload, fetched_at")
+        .eq("cache_key", "summary")
+        .maybeSingle();
+      if (cached?.payload) {
+        const out = {
+          ...(cached.payload as any),
+          ok: true,
+          degraded: true,
+          served_from_cache: true,
+          cache_fetched_at: (cached as any).fetched_at,
+          error: "RebelFi upstream unreachable — serving cached data.",
+          errors,
+        };
+        return new Response(JSON.stringify(out), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    } catch (cacheErr) {
+      console.error("rebelfi cache failure", (cacheErr as Error).message);
+    }
+
+    return new Response(JSON.stringify(fresh), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e: any) {
     return jsonOk({ ok: false, error: e?.message || String(e) });
   }
