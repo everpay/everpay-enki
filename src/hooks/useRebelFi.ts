@@ -32,7 +32,27 @@ export function useRebelFi() {
         body: { action: "summary" },
       });
       if (error) throw error;
-      return data as RebelFiData;
+      const payload = (data || {}) as Partial<RebelFiData> & { error?: string };
+      return {
+        ok: payload.ok !== false,
+        degraded: payload.degraded || payload.ok === false,
+        error: payload.error,
+        base_url: payload.base_url || "api.rebelfi.io / sandbox-api.rebelfi.io",
+        attempted: payload.attempted,
+        summary: payload.summary || {
+          totalValueUsd: 0,
+          yieldEarnedUsd: 0,
+          averageApy: 0,
+          walletsCount: 0,
+          allocationsCount: 0,
+          venuesCount: 0,
+        },
+        wallets: payload.wallets || [],
+        allocations: payload.allocations || [],
+        operations: payload.operations || [],
+        venues: payload.venues || [],
+        errors: payload.errors,
+      };
     },
     staleTime: 60_000,
     refetchOnWindowFocus: false,
