@@ -227,7 +227,6 @@ serve(async (req) => {
       if (apy > 0) { apySum += apy; apyCount += 1; }
     }
 
-    return new Response(JSON.stringify({
     const fresh = {
       ok: true,
       degraded: failed.length > 0,
