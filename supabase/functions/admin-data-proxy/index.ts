@@ -237,6 +237,128 @@ Deno.serve(async (req) => {
       catch { await localAdmin.from("audit_logs").insert(auditRow); }
       return jr({ ok: true, merchant: updated, diff, fallback });
     }
+
+    // ---- Bulk / single merchant approval (KYB + onboarding) --------------
+    const approveOne = async (m: { merchant_id?: string; user_id?: string; name?: string; email?: string }) => {
+      const reviewer = callerEmail || "platform-os";
+      const at = new Date().toISOString();
+      let merchantId = m.merchant_id && !String(m.merchant_id).startsWith("user:") ? m.merchant_id : null;
+
+      // Create merchant row if missing
+      if (!merchantId) {
+        if (!m.user_id) return { ok: false, error: "user_id required to create merchant" };
+        const created = await gw<{ data: any[] }>("db.insert", {
+          table: "merchants",
+          data: {
+            user_id: m.user_id,
+            name: m.name || (m.email ? m.email.split("@")[0] : "Merchant"),
+            email: m.email || null,
+            status: "active",
+          },
+        }, reviewer);
+        merchantId = (created.data || [])[0]?.id;
+        if (!merchantId) return { ok: false, error: "merchant_create_failed" };
+      } else {
+        try {
+          await gw("merchants.update", { merchant_id: merchantId, patch: { status: "active" } }, reviewer);
+        } catch (e) { /* non-fatal */ }
+      }
+
+      // Upsert merchant_profiles → approved
+      try {
+        await gw("db.upsert", {
+          table: "merchant_profiles",
+          data: { merchant_id: merchantId, onboarding_status: "approved", kyb_verified_at: at },
+          on_conflict: "merchant_id",
+        }, reviewer);
+      } catch (e: any) {
+        return { ok: false, error: `profile_upsert_failed: ${e?.message}` };
+      }
+
+      // Approve all KYB documents for this merchant
+      let kybApproved = 0;
+      try {
+        const docs = await gw<{ data: any[] }>("db.select", {
+          table: "kyb_documents", filters: { merchant_id: merchantId },
+        });
+        for (const d of (docs.data || [])) {
+          if (d.status === "approved") continue;
+          try {
+            await gw("db.update", {
+              table: "kyb_documents",
+              id: d.id,
+              data: { status: "approved", reviewed_at: at, reviewed_by: callerId, review_notes: "Bulk approved by admin (KYC/Plaid verified)" },
+            }, reviewer);
+            kybApproved++;
+          } catch {}
+        }
+      } catch {}
+
+      // Audit
+      try {
+        await gw("db.insert", {
+          table: "audit_logs",
+          data: {
+            user_id: callerId,
+            action: "merchant.approve",
+            entity_type: "merchant",
+            entity_id: merchantId,
+            metadata: { reviewer_email: callerEmail, at, kyb_approved: kybApproved },
+          },
+        }, reviewer);
+      } catch {}
+
+      return { ok: true, merchant_id: merchantId, kyb_approved: kybApproved };
+    };
+
+    if (action === "approve_merchant") {
+      const r = await approveOne({
+        merchant_id: body.merchant_id,
+        user_id: body.user_id,
+        name: body.name,
+        email: body.email,
+      });
+      return jr(r, r.ok ? 200 : 400);
+    }
+
+    if (action === "approve_all_merchants") {
+      // Re-use list_merchants_full enrichment
+      const lr = await gw<{ data: any[] }>("merchants.list_full");
+      const raws: any[] = Array.isArray(lr.data) ? lr.data : [];
+      let users: any[] = [];
+      try { users = (await gw<{ data: any[] }>("users.list")).data || []; } catch {}
+      const usersById = new Map(users.map((u: any) => [u.id, u]));
+      const results: any[] = [];
+      const seenUserIds = new Set<string>();
+      for (const m of raws) {
+        if (m.user_id) seenUserIds.add(m.user_id);
+        const r = await approveOne({
+          merchant_id: m.id,
+          user_id: m.user_id,
+          name: m.name,
+          email: m.email || usersById.get(m.user_id)?.email,
+        });
+        results.push({ id: m.id, email: m.email, ...r });
+      }
+      // Users without merchant rows
+      for (const u of users) {
+        if (!u?.id || seenUserIds.has(u.id)) continue;
+        const r = await approveOne({
+          user_id: u.id,
+          name: u.user_metadata?.display_name || u.email?.split("@")[0],
+          email: u.email,
+        });
+        results.push({ id: `user:${u.id}`, email: u.email, ...r });
+      }
+      const summary = {
+        total: results.length,
+        approved: results.filter((r) => r.ok).length,
+        failed: results.filter((r) => !r.ok).length,
+      };
+      return jr({ ok: true, summary, results });
+    }
+    // ----------------------------------------------------------------------
+
     if (action === "merchant_audit_log") {
       if (!body.merchant_id) return jr({ error: "merchant_id required" }, 400);
       let rows: any[] = [];
