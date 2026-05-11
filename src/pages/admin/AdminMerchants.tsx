@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { externalProxy } from '@/hooks/useExternalData';
 import MerchantForm from '@/components/admin/MerchantForm';
-import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone, Pencil, Loader2, Send, RefreshCw, Link2, History } from 'lucide-react';
+import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone, Pencil, Loader2, Send, RefreshCw, Link2, History, ShieldCheck } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { NewSinceBadge } from '@/components/admin/NewSinceBadge';
 import { SyncNowButton } from '@/components/admin/SyncNowButton';
@@ -166,6 +166,43 @@ export default function AdminMerchants() {
     }
   };
 
+  const [approving, setApproving] = useState<string | null>(null);
+  const [bulkApproving, setBulkApproving] = useState(false);
+
+  const approveMerchant = async (m: MerchantRow) => {
+    setApproving(m.id);
+    try {
+      const r = await externalProxy({
+        action: 'approve_merchant',
+        merchant_id: m.id,
+        user_id: m.user_id,
+        name: m.name,
+        email: m.email,
+      });
+      if (r?.ok) {
+        toast({ title: 'Merchant approved', description: `${m.email || m.name} • KYB docs approved: ${r.kyb_approved ?? 0}` });
+        await fetchMerchants();
+      } else {
+        toast({ title: 'Approval failed', description: r?.error || 'Unknown error', variant: 'destructive' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Approval failed', description: e?.message, variant: 'destructive' });
+    } finally { setApproving(null); }
+  };
+
+  const approveAll = async () => {
+    if (!confirm('Approve ALL merchants and mark their KYB documents as approved? This applies to every user in the production environment.')) return;
+    setBulkApproving(true);
+    try {
+      const r = await externalProxy({ action: 'approve_all_merchants' });
+      const s = r?.summary || {};
+      toast({ title: 'Bulk approval complete', description: `Approved ${s.approved}/${s.total} (failed: ${s.failed})` });
+      await fetchMerchants();
+    } catch (e: any) {
+      toast({ title: 'Bulk approval failed', description: e?.message, variant: 'destructive' });
+    } finally { setBulkApproving(false); }
+  };
+
   const filteredMerchants = merchants.filter(m => {
     const term = searchTerm.toLowerCase();
     const matchesSearch = m.name?.toLowerCase().includes(term) ||
@@ -208,6 +245,10 @@ export default function AdminMerchants() {
             <SyncNowButton onSynced={fetchMerchants} />
             <Button variant="outline" onClick={() => setReconcileOpen(true)}>
               <Search className="mr-2 h-4 w-4" />Reconcile
+            </Button>
+            <Button variant="outline" onClick={approveAll} disabled={bulkApproving}>
+              {bulkApproving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+              Approve all
             </Button>
             <Button onClick={() => setOpenAddMerchant(true)}>
               <UserPlus className="mr-2 h-4 w-4" />Add Merchant
@@ -303,6 +344,18 @@ export default function AdminMerchants() {
                             <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => syncMerchant(m.id)} aria-label="Sync records" title="Sync records">
                               <RefreshCw className="h-4 w-4" />
                             </Button>
+                            {m.onboarding_status !== 'approved' && (
+                              <Button
+                                variant="ghost"
+                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700"
+                                onClick={() => approveMerchant(m)}
+                                disabled={approving === m.id}
+                                aria-label="Approve merchant"
+                                title="Approve (KYB + onboarding)"
+                              >
+                                {approving === m.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
