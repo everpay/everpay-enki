@@ -311,6 +311,15 @@ export default function AdminMerchants() {
                   <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={onboardingFilter} onValueChange={(v) => setOnboardingFilter(v as any)}>
+                <SelectTrigger className="w-[200px]"><SelectValue placeholder="Onboarding" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All onboarding</SelectItem>
+                  <SelectItem value="pending">Pending approval</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="kyb_incomplete">KYB docs incomplete</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {loading ? (
@@ -324,6 +333,7 @@ export default function AdminMerchants() {
                       <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Onboarding</TableHead>
+                      <TableHead>KYB docs</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="w-[50px]">Actions</TableHead>
                     </TableRow>
@@ -340,6 +350,20 @@ export default function AdminMerchants() {
                           }>
                             {m.onboarding_status}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const a = Number(m.kyb_approved || 0);
+                            const t = Number(m.kyb_total || 0);
+                            const complete = t > 0 && a >= t;
+                            return (
+                              <Badge variant="outline" className={
+                                t === 0 ? 'text-muted-foreground' : complete ? 'text-emerald-600 border-emerald-300' : 'text-amber-600 border-amber-300'
+                              }>
+                                {a}/{t}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(m.created_at).toLocaleDateString()}
