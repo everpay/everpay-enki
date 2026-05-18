@@ -27,6 +27,8 @@ interface MerchantRow {
   onboarding_status: string;
   source: string;
   profile?: any;
+  kyb_approved?: number;
+  kyb_total?: number;
 }
 
 export default function AdminMerchants() {
@@ -168,6 +170,10 @@ export default function AdminMerchants() {
 
   const [approving, setApproving] = useState<string | null>(null);
   const [bulkApproving, setBulkApproving] = useState(false);
+  const [onboardingFilter, setOnboardingFilter] = useState<'all' | 'pending' | 'approved' | 'kyb_incomplete'>('all');
+  const [bulkResultsOpen, setBulkResultsOpen] = useState(false);
+  const [bulkResults, setBulkResults] = useState<any[]>([]);
+  const [bulkSummary, setBulkSummary] = useState<{ total: number; approved: number; failed: number; kyb_approved?: number } | null>(null);
 
   const approveMerchant = async (m: MerchantRow) => {
     setApproving(m.id);
@@ -193,9 +199,14 @@ export default function AdminMerchants() {
   const approveAll = async () => {
     if (!confirm('Approve ALL merchants and mark their KYB documents as approved? This applies to every user in the production environment.')) return;
     setBulkApproving(true);
+    setBulkResults([]);
+    setBulkSummary(null);
     try {
       const r = await externalProxy({ action: 'approve_all_merchants' });
       const s = r?.summary || {};
+      setBulkSummary(s);
+      setBulkResults(Array.isArray(r?.results) ? r.results : []);
+      setBulkResultsOpen(true);
       toast({ title: 'Bulk approval complete', description: `Approved ${s.approved}/${s.total} (failed: ${s.failed})` });
       await fetchMerchants();
     } catch (e: any) {
@@ -210,7 +221,12 @@ export default function AdminMerchants() {
       m.id?.toLowerCase().includes(term) ||
       m.user_id?.toLowerCase().includes(term);
     const matchesStatus = statusFilter === 'all' || m.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesOnboarding =
+      onboardingFilter === 'all' ||
+      (onboardingFilter === 'pending' && m.onboarding_status !== 'approved') ||
+      (onboardingFilter === 'approved' && m.onboarding_status === 'approved') ||
+      (onboardingFilter === 'kyb_incomplete' && (Number(m.kyb_total || 0) === 0 || Number(m.kyb_approved || 0) < Number(m.kyb_total || 0)));
+    return matchesSearch && matchesStatus && matchesOnboarding;
   });
 
   const stats = {
