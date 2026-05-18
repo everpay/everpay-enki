@@ -339,38 +339,56 @@ Deno.serve(async (req) => {
     }
 
     if (action === "approve_all_merchants") {
-      // Re-use list_merchants_full enrichment
-      const lr = await gw<{ data: any[] }>("merchants.list_full");
-      const raws: any[] = Array.isArray(lr.data) ? lr.data : [];
+      // Re-use list_merchants_full enrichment. Wrap every individual
+      // approval so one bad row can never poison the bulk response, and
+      // run them in bounded parallel batches so we stay under the 60s
+      // edge-function wall time even with 50+ merchants.
+      let raws: any[] = [];
       let users: any[] = [];
+      try { raws = (await gw<{ data: any[] }>("merchants.list_full")).data || []; }
+      catch (e: any) { return jr({ ok: false, error: `list_full_failed: ${e?.message || e}` }, 200); }
       try { users = (await gw<{ data: any[] }>("users.list")).data || []; } catch {}
       const usersById = new Map(users.map((u: any) => [u.id, u]));
-      const results: any[] = [];
       const seenUserIds = new Set<string>();
+      const targets: Array<{ merchant_id?: string; user_id?: string; name?: string; email?: string; _label: string }> = [];
       for (const m of raws) {
         if (m.user_id) seenUserIds.add(m.user_id);
-        const r = await approveOne({
-          merchant_id: m.id,
+        targets.push({
+          merchant_id: String(m.id).startsWith("user:") ? undefined : m.id,
           user_id: m.user_id,
           name: m.name,
           email: m.email || usersById.get(m.user_id)?.email,
+          _label: m.email || m.name || m.id,
         });
-        results.push({ id: m.id, email: m.email, ...r });
       }
-      // Users without merchant rows
       for (const u of users) {
         if (!u?.id || seenUserIds.has(u.id)) continue;
-        const r = await approveOne({
+        targets.push({
           user_id: u.id,
           name: u.user_metadata?.display_name || u.email?.split("@")[0],
           email: u.email,
+          _label: u.email || u.id,
         });
-        results.push({ id: `user:${u.id}`, email: u.email, ...r });
+      }
+      const results: any[] = [];
+      const CHUNK = 6;
+      for (let i = 0; i < targets.length; i += CHUNK) {
+        const slice = targets.slice(i, i + CHUNK);
+        const settled = await Promise.allSettled(
+          slice.map((t) => approveOne(t).catch((e: any) => ({ ok: false, error: e?.message || String(e) }))),
+        );
+        slice.forEach((t, idx) => {
+          const s = settled[idx];
+          const base = { label: t._label, email: t.email, merchant_id: t.merchant_id, user_id: t.user_id };
+          if (s.status === "fulfilled") results.push({ ...base, ...s.value });
+          else results.push({ ...base, ok: false, error: (s.reason as any)?.message || String(s.reason) });
+        });
       }
       const summary = {
         total: results.length,
         approved: results.filter((r) => r.ok).length,
         failed: results.filter((r) => !r.ok).length,
+        kyb_approved: results.reduce((n, r) => n + (Number(r.kyb_approved) || 0), 0),
       };
       return jr({ ok: true, summary, results });
     }
