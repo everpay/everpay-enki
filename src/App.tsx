@@ -73,6 +73,14 @@ import AdminUserReconciliation from "./pages/admin/AdminUserReconciliation";
 import AdminSecurityAlerts from "./pages/admin/AdminSecurityAlerts";
 import ProcessorDescriptors from "./pages/admin/ProcessorDescriptors";
 
+// Routing Maestro (ported)
+import RoutingMaestroDashboard from "./pages/admin/routing-maestro/RoutingDashboard";
+import RoutingMaestroMerchantRouting from "./pages/admin/routing-maestro/MerchantRouting";
+import RoutingMaestroRulesEngine from "./pages/admin/routing-maestro/RulesEngine";
+import RoutingMaestroPreview from "./pages/admin/routing-maestro/RoutingPreview";
+import RoutingMaestroProcessorPerformance from "./pages/admin/routing-maestro/ProcessorPerformance";
+import RoutingMaestroFailoverConfig from "./pages/admin/routing-maestro/FailoverConfig";
+
 const queryClient = new QueryClient();
 
 function LoadingScreen() {
@@ -189,6 +197,14 @@ const AppRoutes = () => {
     <Route path="/enki/security-alerts" element={<AdminRoute><AdminSecurityAlerts /></AdminRoute>} />
     <Route path="/enki/processor-descriptors" element={<AdminRoute><ProcessorDescriptors /></AdminRoute>} />
     <Route path="/enki/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
+
+    {/* Routing Maestro */}
+    <Route path="/enki/routing-maestro" element={<AdminRoute><RoutingMaestroDashboard /></AdminRoute>} />
+    <Route path="/enki/routing-maestro/merchant" element={<AdminRoute><RoutingMaestroMerchantRouting /></AdminRoute>} />
+    <Route path="/enki/routing-maestro/rules" element={<AdminRoute><RoutingMaestroRulesEngine /></AdminRoute>} />
+    <Route path="/enki/routing-maestro/preview" element={<AdminRoute><RoutingMaestroPreview /></AdminRoute>} />
+    <Route path="/enki/routing-maestro/performance" element={<AdminRoute><RoutingMaestroProcessorPerformance /></AdminRoute>} />
+    <Route path="/enki/routing-maestro/failover" element={<AdminRoute><RoutingMaestroFailoverConfig /></AdminRoute>} />
 
     {/* Catch-all */}
     <Route path="*" element={<NotFound />} />
