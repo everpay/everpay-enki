@@ -96,6 +96,20 @@ Deno.serve(async (req) => {
         const ur = await gw<{ data: any[] }>("users.list");
         users = Array.isArray(ur.data) ? ur.data : [];
       } catch (e) { console.error("users.list failed", (e as Error).message); }
+      // Pull KYB docs once so we can attach approved/total counts per merchant.
+      let kybDocs: any[] = [];
+      try {
+        const kr = await gw<{ data: any[] }>("db.select", { table: "kyb_documents", limit: 5000 });
+        kybDocs = Array.isArray(kr.data) ? kr.data : [];
+      } catch (e) { console.error("kyb_documents fetch failed", (e as Error).message); }
+      const kybByMerchant = new Map<string, { approved: number; total: number }>();
+      for (const d of kybDocs) {
+        const mid = d?.merchant_id; if (!mid) continue;
+        const c = kybByMerchant.get(mid) || { approved: 0, total: 0 };
+        c.total += 1;
+        if (d.status === "approved") c.approved += 1;
+        kybByMerchant.set(mid, c);
+      }
       const usersById = new Map<string, any>();
       const usersByEmail = new Map<string, any>();
       for (const u of users) {
@@ -110,7 +124,8 @@ Deno.serve(async (req) => {
         const userName = u?.user_metadata?.display_name || u?.raw_user_meta_data?.display_name || null;
         let email = m.email || userEmail || (isEmail(m.name) ? m.name : null);
         let name = m.name && !isEmail(m.name) ? m.name : (userName || (userEmail ? userEmail.split("@")[0] : m.name));
-        return { ...m, email, name };
+        const kc = kybByMerchant.get(m.id) || { approved: 0, total: 0 };
+        return { ...m, email, name, kyb_approved: kc.approved, kyb_total: kc.total };
       });
 
       // Deduplicate: prefer entries with a real (non-email) name and
@@ -148,6 +163,8 @@ Deno.serve(async (req) => {
           phone: u.phone || null,
           created_at: u.created_at || null,
           status: "pending",
+          kyb_approved: 0,
+          kyb_total: 0,
           profile: { onboarding_status: "pending", missing_merchant_row: true },
         });
       }
