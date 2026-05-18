@@ -27,6 +27,8 @@ interface MerchantRow {
   onboarding_status: string;
   source: string;
   profile?: any;
+  kyb_approved?: number;
+  kyb_total?: number;
 }
 
 export default function AdminMerchants() {
@@ -168,6 +170,10 @@ export default function AdminMerchants() {
 
   const [approving, setApproving] = useState<string | null>(null);
   const [bulkApproving, setBulkApproving] = useState(false);
+  const [onboardingFilter, setOnboardingFilter] = useState<'all' | 'pending' | 'approved' | 'kyb_incomplete'>('all');
+  const [bulkResultsOpen, setBulkResultsOpen] = useState(false);
+  const [bulkResults, setBulkResults] = useState<any[]>([]);
+  const [bulkSummary, setBulkSummary] = useState<{ total: number; approved: number; failed: number; kyb_approved?: number } | null>(null);
 
   const approveMerchant = async (m: MerchantRow) => {
     setApproving(m.id);
@@ -193,9 +199,14 @@ export default function AdminMerchants() {
   const approveAll = async () => {
     if (!confirm('Approve ALL merchants and mark their KYB documents as approved? This applies to every user in the production environment.')) return;
     setBulkApproving(true);
+    setBulkResults([]);
+    setBulkSummary(null);
     try {
       const r = await externalProxy({ action: 'approve_all_merchants' });
       const s = r?.summary || {};
+      setBulkSummary(s);
+      setBulkResults(Array.isArray(r?.results) ? r.results : []);
+      setBulkResultsOpen(true);
       toast({ title: 'Bulk approval complete', description: `Approved ${s.approved}/${s.total} (failed: ${s.failed})` });
       await fetchMerchants();
     } catch (e: any) {
@@ -210,7 +221,12 @@ export default function AdminMerchants() {
       m.id?.toLowerCase().includes(term) ||
       m.user_id?.toLowerCase().includes(term);
     const matchesStatus = statusFilter === 'all' || m.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesOnboarding =
+      onboardingFilter === 'all' ||
+      (onboardingFilter === 'pending' && m.onboarding_status !== 'approved') ||
+      (onboardingFilter === 'approved' && m.onboarding_status === 'approved') ||
+      (onboardingFilter === 'kyb_incomplete' && (Number(m.kyb_total || 0) === 0 || Number(m.kyb_approved || 0) < Number(m.kyb_total || 0)));
+    return matchesSearch && matchesStatus && matchesOnboarding;
   });
 
   const stats = {
@@ -295,6 +311,15 @@ export default function AdminMerchants() {
                   <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={onboardingFilter} onValueChange={(v) => setOnboardingFilter(v as any)}>
+                <SelectTrigger className="w-[200px]"><SelectValue placeholder="Onboarding" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All onboarding</SelectItem>
+                  <SelectItem value="pending">Pending approval</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="kyb_incomplete">KYB docs incomplete</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {loading ? (
@@ -308,6 +333,7 @@ export default function AdminMerchants() {
                       <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Onboarding</TableHead>
+                      <TableHead>KYB docs</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="w-[50px]">Actions</TableHead>
                     </TableRow>
@@ -324,6 +350,20 @@ export default function AdminMerchants() {
                           }>
                             {m.onboarding_status}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const a = Number(m.kyb_approved || 0);
+                            const t = Number(m.kyb_total || 0);
+                            const complete = t > 0 && a >= t;
+                            return (
+                              <Badge variant="outline" className={
+                                t === 0 ? 'text-muted-foreground' : complete ? 'text-emerald-600 border-emerald-300' : 'text-amber-600 border-amber-300'
+                              }>
+                                {a}/{t}
+                              </Badge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {new Date(m.created_at).toLocaleDateString()}
@@ -525,6 +565,53 @@ export default function AdminMerchants() {
                 </div>
               ))}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk approval results */}
+      <Dialog open={bulkResultsOpen} onOpenChange={setBulkResultsOpen}>
+        <DialogContent className="sm:max-w-[720px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Bulk approval results</DialogTitle></DialogHeader>
+          {bulkSummary && (
+            <div className="grid grid-cols-4 gap-3 text-sm">
+              <div className="rounded-md border p-3"><p className="text-muted-foreground text-xs">Total</p><p className="text-xl font-semibold">{bulkSummary.total}</p></div>
+              <div className="rounded-md border p-3"><p className="text-muted-foreground text-xs">Approved</p><p className="text-xl font-semibold text-emerald-600">{bulkSummary.approved}</p></div>
+              <div className="rounded-md border p-3"><p className="text-muted-foreground text-xs">Failed</p><p className="text-xl font-semibold text-red-600">{bulkSummary.failed}</p></div>
+              <div className="rounded-md border p-3"><p className="text-muted-foreground text-xs">KYB docs approved</p><p className="text-xl font-semibold">{bulkSummary.kyb_approved ?? 0}</p></div>
+            </div>
+          )}
+          <div className="rounded-md border mt-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Merchant / user</TableHead>
+                  <TableHead>Result</TableHead>
+                  <TableHead>KYB</TableHead>
+                  <TableHead>Error</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bulkResults.map((r, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm">
+                      <div className="font-medium">{r.label || r.email || r.merchant_id || r.user_id}</div>
+                      <div className="text-xs text-muted-foreground">{r.merchant_id || r.user_id}</div>
+                    </TableCell>
+                    <TableCell>
+                      {r.ok
+                        ? <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100"><CheckCircle2 className="h-3 w-3 mr-1" />OK</Badge>
+                        : <Badge className="bg-red-100 text-red-700 hover:bg-red-100"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>}
+                    </TableCell>
+                    <TableCell className="text-sm">{r.kyb_approved ?? 0}</TableCell>
+                    <TableCell className="text-xs text-red-600 break-words max-w-[260px]">{r.ok ? '' : (r.error || '—')}</TableCell>
+                  </TableRow>
+                ))}
+                {bulkResults.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground text-sm py-6">No results</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
         </DialogContent>
       </Dialog>
