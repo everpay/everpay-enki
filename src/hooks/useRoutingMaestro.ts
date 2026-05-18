@@ -69,12 +69,12 @@ export function useRoutingMerchants() {
     queryFn: async (): Promise<MerchantRow[]> => {
       const { data } = await supabase
         .from("merchants")
-        .select("id, name, status, business_type")
+        .select("id, name, status, region")
         .order("created_at", { ascending: false });
       return (data ?? []).map((m: any): MerchantRow => ({
         id: m.id,
         name: m.name || "Untitled Merchant",
-        industry: m.business_type || "—",
+        industry: m.region || "—",
         status: m.status === "active" ? "active" : "inactive",
         overrideEnabled: false,
       }));
