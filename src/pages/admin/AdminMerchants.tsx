@@ -568,6 +568,53 @@ export default function AdminMerchants() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Bulk approval results */}
+      <Dialog open={bulkResultsOpen} onOpenChange={setBulkResultsOpen}>
+        <DialogContent className="sm:max-w-[720px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Bulk approval results</DialogTitle></DialogHeader>
+          {bulkSummary && (
+            <div className="grid grid-cols-4 gap-3 text-sm">
+              <div className="rounded-md border p-3"><p className="text-muted-foreground text-xs">Total</p><p className="text-xl font-semibold">{bulkSummary.total}</p></div>
+              <div className="rounded-md border p-3"><p className="text-muted-foreground text-xs">Approved</p><p className="text-xl font-semibold text-emerald-600">{bulkSummary.approved}</p></div>
+              <div className="rounded-md border p-3"><p className="text-muted-foreground text-xs">Failed</p><p className="text-xl font-semibold text-red-600">{bulkSummary.failed}</p></div>
+              <div className="rounded-md border p-3"><p className="text-muted-foreground text-xs">KYB docs approved</p><p className="text-xl font-semibold">{bulkSummary.kyb_approved ?? 0}</p></div>
+            </div>
+          )}
+          <div className="rounded-md border mt-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Merchant / user</TableHead>
+                  <TableHead>Result</TableHead>
+                  <TableHead>KYB</TableHead>
+                  <TableHead>Error</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bulkResults.map((r, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm">
+                      <div className="font-medium">{r.label || r.email || r.merchant_id || r.user_id}</div>
+                      <div className="text-xs text-muted-foreground">{r.merchant_id || r.user_id}</div>
+                    </TableCell>
+                    <TableCell>
+                      {r.ok
+                        ? <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100"><CheckCircle2 className="h-3 w-3 mr-1" />OK</Badge>
+                        : <Badge className="bg-red-100 text-red-700 hover:bg-red-100"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>}
+                    </TableCell>
+                    <TableCell className="text-sm">{r.kyb_approved ?? 0}</TableCell>
+                    <TableCell className="text-xs text-red-600 break-words max-w-[260px]">{r.ok ? '' : (r.error || '—')}</TableCell>
+                  </TableRow>
+                ))}
+                {bulkResults.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground text-sm py-6">No results</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
