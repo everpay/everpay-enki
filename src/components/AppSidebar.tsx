@@ -188,6 +188,17 @@ const adminSections: NavSection[] = [
     ],
   },
   {
+    title: "Routing Maestro",
+    items: [
+      { to: "/enki/routing-maestro", icon: LayoutDashboard, label: "Dashboard" },
+      { to: "/enki/routing-maestro/merchant", icon: Store, label: "Merchant Routing" },
+      { to: "/enki/routing-maestro/rules", icon: Shield, label: "Rule Engine" },
+      { to: "/enki/routing-maestro/preview", icon: Eye, label: "Routing Preview" },
+      { to: "/enki/routing-maestro/performance", icon: Activity, label: "Processor Performance" },
+      { to: "/enki/routing-maestro/failover", icon: RefreshCw, label: "Failover & Retry" },
+    ],
+  },
+  {
     title: "Operations",
     items: [
       { to: "/enki/notifications", icon: Bell, label: "Notifications" },
