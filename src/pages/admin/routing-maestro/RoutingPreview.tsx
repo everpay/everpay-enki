@@ -1,63 +1,64 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RoutingChain, RoutingStep } from "@/components/routing-maestro/RoutingChain";
-import { useRoutingMerchants, useRoutingRules, useProcessors } from "@/hooks/useRoutingMaestro";
-import { Play } from "lucide-react";
+import { useRoutingMerchants } from "@/hooks/useRoutingMaestro";
+import { supabase } from "@/integrations/supabase/client";
+import { useMutation } from "@tanstack/react-query";
+import { Play, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
-const currencies = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "PKR"];
-const countries = ["US", "DE", "GB", "JP", "CA", "AU", "FR", "NL", "PK"];
+const currencies = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD", "PKR", "INR", "BRL", "MXN", "PHP"];
+const countries = ["US", "DE", "GB", "JP", "CA", "AU", "FR", "NL", "PK", "IN", "BR", "MX", "PH"];
+const cardBrands = ["visa", "mastercard", "amex", "discover", "jcb", "unionpay"];
+const riskLevels = ["low", "medium", "high"];
+
+type ResolveResp = {
+  merchant: { id: string; name: string; region: string | null };
+  winningRule: null | { ruleId: string; ruleName: string; priority: number; target: string; fallback: string | null };
+  evaluations: { ruleId: string; ruleName: string; priority: number; target: string; matched: boolean; reasons: string[] }[];
+  chain: { step: number; processor: string; displayName: string }[];
+  availableProcessors: { id: string; name: string }[];
+  generatedAt: string;
+};
 
 export default function RoutingPreview() {
   const { data: merchants = [] } = useRoutingMerchants();
-  const { data: rules = [] } = useRoutingRules();
-  const { data: processors = [] } = useProcessors();
 
   const [merchantId, setMerchantId] = useState("");
   const [amount, setAmount] = useState("2500");
   const [currency, setCurrency] = useState("USD");
-  const [country, setCountry] = useState("US");
-  const [result, setResult] = useState<RoutingStep[] | null>(null);
-  const [explanation, setExplanation] = useState<string[]>([]);
+  const [country, setCountry] = useState<string>("");
+  const [cardBrand, setCardBrand] = useState<string>("");
+  const [riskLevel, setRiskLevel] = useState<string>("");
+  const [excluded, setExcluded] = useState<Record<string, boolean>>({});
+  const [result, setResult] = useState<ResolveResp | null>(null);
 
-  const procName = (id: string) => processors.find((p) => p.id === id)?.name || id;
+  const resolve = useMutation({
+    mutationFn: async (): Promise<ResolveResp> => {
+      const { data, error } = await supabase.functions.invoke("route-resolve", {
+        body: {
+          merchantId,
+          amount: parseFloat(amount) || 0,
+          currency,
+          country: country || null,
+          cardBrand: cardBrand || null,
+          riskLevel: riskLevel || null,
+          excludeProcessors: Object.entries(excluded).filter(([, v]) => v).map(([k]) => k),
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as ResolveResp;
+    },
+    onSuccess: (d) => setResult(d),
+    onError: (e: any) => toast.error(e.message || "Resolve failed"),
+  });
 
-  const simulateRouting = () => {
-    const amt = parseFloat(amount);
-    const reasons: string[] = [];
-    const steps: RoutingStep[] = [];
-
-    const merchantRules = rules.filter((r) => r.enabled && (r.scope === "global" || r.merchantId === merchantId));
-    let matchedTarget: string | null = null;
-    let matchedFallback: string | null = null;
-
-    for (const r of merchantRules.sort((a, b) => a.priority - b.priority)) {
-      const okCurrency = r.conditions.find((c) => c.field === "currency");
-      const okMin = r.conditions.find((c) => c.field === "amount" && c.operator === ">=");
-      const okMax = r.conditions.find((c) => c.field === "amount" && c.operator === "<=");
-      if (okCurrency && !okCurrency.value.split(",").map((s) => s.trim().toUpperCase()).includes(currency)) continue;
-      if (okMin && amt < Number(okMin.value)) continue;
-      if (okMax && amt > Number(okMax.value)) continue;
-      matchedTarget = r.actionTarget;
-      reasons.push(`Rule matched: "${r.name}" (priority ${r.priority}) → route to ${procName(r.actionTarget)}`);
-      break;
-    }
-
-    if (!matchedTarget) {
-      const fallback = processors.find((p) => p.enabled);
-      matchedTarget = fallback?.id || "shieldhub";
-      reasons.push(`No rule matched — default to ${procName(matchedTarget)}`);
-    }
-
-    steps.push({ processor: procName(matchedTarget), status: "success", latency: processors.find((p) => p.id === matchedTarget)?.latency });
-    reasons.push(`Final: routed via ${procName(matchedTarget)}`);
-
-    setResult(steps);
-    setExplanation(reasons);
-  };
+  const availableProcs = useMemo(() => result?.availableProcessors ?? [], [result]);
 
   return (
     <AppLayout>
