@@ -3,21 +3,32 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProcessors } from "@/hooks/useRoutingMaestro";
+import { useRoutingMetrics } from "@/hooks/useRoutingMaestro";
+import { RoutingFiltersBar, DEFAULT_FILTERS, periodToRange, type RoutingFilters } from "@/components/routing-maestro/RoutingFiltersBar";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { toast } from "sonner";
 
 export default function ProcessorPerformance() {
-  const { data: procs = [], isLoading } = useProcessors();
+  const [filters, setFilters] = useState<RoutingFilters>(DEFAULT_FILTERS);
+  const range = useMemo(() => periodToRange(filters.period), [filters.period]);
+  const { data, isLoading, isFetching } = useRoutingMetrics({
+    from: range.from,
+    to: range.to,
+    processors: filters.processors.length ? filters.processors : undefined,
+    merchantIds: filters.merchantIds.length ? filters.merchantIds : undefined,
+  });
+  const procs = data?.processors ?? [];
+  const merchants = data?.merchants ?? [];
   const qc = useQueryClient();
 
   const toggleProcessor = async (id: string, enabled: boolean) => {
     const { error } = await supabase.from("payment_processors").update({ active: enabled }).eq("name", id);
     if (error) return toast.error(`Update failed: ${error.message}`);
     toast.success("Processor status updated");
-    qc.invalidateQueries({ queryKey: ["rm:processors"] });
+    qc.invalidateQueries({ queryKey: ["rm:metrics"] });
   };
 
   const volumeData = procs.map((p) => ({
@@ -30,9 +41,19 @@ export default function ProcessorPerformance() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Processor Performance</h1>
-          <p className="text-sm text-muted-foreground mt-1">Monitor and manage processor health metrics (last 30 days)</p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Processor Performance</h1>
+            <p className="text-sm text-muted-foreground mt-1">Live processor health · {filters.period} window</p>
+          </div>
+          <RoutingFiltersBar
+            filters={filters}
+            onChange={setFilters}
+            onRefresh={() => qc.invalidateQueries({ queryKey: ["rm:metrics"] })}
+            loading={isFetching}
+            processorOptions={procs.map((p) => ({ id: p.id, label: p.name }))}
+            merchantOptions={merchants.map((m) => ({ id: m.id, label: m.name }))}
+          />
         </div>
 
         <Card className="p-5">
