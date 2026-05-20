@@ -4926,6 +4926,7 @@ export type Database = {
           fx_rate: number | null
           id: string
           idempotency_key: string | null
+          latency_ms: number | null
           merchant_id: string
           metadata: Json | null
           provider: string
@@ -4944,6 +4945,7 @@ export type Database = {
           fx_rate?: number | null
           id?: string
           idempotency_key?: string | null
+          latency_ms?: number | null
           merchant_id: string
           metadata?: Json | null
           provider: string
@@ -4962,6 +4964,7 @@ export type Database = {
           fx_rate?: number | null
           id?: string
           idempotency_key?: string | null
+          latency_ms?: number | null
           merchant_id?: string
           metadata?: Json | null
           provider?: string

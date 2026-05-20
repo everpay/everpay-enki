@@ -16,6 +16,44 @@ const PROCESSOR_CAPS: Record<string, number> = {
   matrix: 4_000_000,
 };
 
+// ─── Composite metrics endpoint (BFF) ─────────────────────────
+export type RoutingMetricsFilters = {
+  from?: string;
+  to?: string;
+  processors?: string[];
+  merchantIds?: string[];
+  decisionLimit?: number;
+};
+
+export type RoutingMetricsResponse = {
+  processors: (Processor & { totalCount: number })[];
+  trend: PerfPoint[];
+  decisions: {
+    id: string;
+    merchant: string;
+    amount: string;
+    status: "success" | "failed" | "pending";
+    provider: string;
+    createdAt: string;
+  }[];
+  merchants: { id: string; name: string; status: string; region: string | null }[];
+  totals: { transactions: number; volume: number; activeProcessors: number };
+  from: string;
+  to: string;
+};
+
+export function useRoutingMetrics(filters: RoutingMetricsFilters) {
+  return useQuery({
+    queryKey: ["rm:metrics", filters],
+    queryFn: async (): Promise<RoutingMetricsResponse> => {
+      const { data, error } = await supabase.functions.invoke("routing-metrics", { body: filters });
+      if (error) throw error;
+      return data as RoutingMetricsResponse;
+    },
+    staleTime: 30_000,
+  });
+}
+
 // ─── Processors ────────────────────────────────────────────────
 export function useProcessors() {
   return useQuery({

@@ -1,164 +1,65 @@
+# Routing Maestro — Backend Wiring Plan
 
+The 4 substantial features each need DB schema + edge function + UI wiring. I'll stage them across 4 turns so each is fully shipped, tested, and reviewable before moving on.
 
-# Merchant Pricing & Billing Engine
+## Turn 1 — Dashboard & Performance Live Data (foundation)
 
-## Summary
-Add a complete SaaS monetization layer to Everpay Enki: configurable per-merchant pricing models, automated fee calculation on every transaction, monthly billing invoice generation, and reseller revenue sharing — with three new admin pages and an edge function for fee computation.
+**Goal**: Replace any remaining mock/placeholder values on `RoutingDashboard` and `ProcessorPerformance` with real aggregates, plus add the dashboard filters (date range, processor, merchant) that drive every chart.
 
-## What Exists Today
-- **`transaction_fees`** table: processor-level fee configs (percentage, fixed, chargeback, refund) with per-method/region granularity
-- **`platform_fee_markups`** table: processor-level markup percentages and flat fees, optionally per-merchant
-- **`processor_fee_profiles`** table: per-merchant provider fee profiles (percentage, fixed, settlement days)
-- **`invoices`** table: basic merchant invoices (amount, currency, status, items jsonb, due_date)
-- **Reseller Portal** (`/reseller`): hardcoded 0.125% commission calculation, no stored splits
-- **AdminTransactionFees** page: CRUD for `transaction_fees` table
-- **AdminFeeEngine** page: read-only view of `processor_fee_profiles` and `platform_fee_markups`
-- **No** `merchant_pricing`, `fee_breakdowns`, or `reseller_splits` tables exist
+**Schema**
+- New view `routing_metrics_daily` (materialized): per-day per-processor success/failure/volume/latency from `transactions`.
+- Index on `transactions (provider, created_at, status)`.
 
-## Database Changes (Migration)
+**Edge function**: `routing-metrics` (verify_jwt=true, admin-only)
+- Input: `{ from, to, processors?, merchantIds? }`
+- Output: `{ processors[], trend[], decisions[], totals }` — single composite payload (BFF pattern, per project memory).
 
-### New Tables
+**UI**
+- `useRoutingMaestro.ts` → swap `useProcessors`, `usePerformanceHistory`, `useRecentRoutingDecisions` to one `useRoutingMetrics(filters)`.
+- Add `RoutingFiltersBar` (period selector + processor multi-select + merchant search) on `RoutingDashboard` and `ProcessorPerformance`.
+- Real latency from `transactions.latency_ms` (add column if missing) instead of deterministic placeholder.
+
+## Turn 2 — Routing Preview Form + Simulator API
+
+**Goal**: Parameter form (currency, amount, region, MCC, card brand, processor availability toggles) → real `route-simulate` edge function that runs the production routing logic and returns the expected processor chain with explanations.
+
+**Schema**: none (read-only over `routing_rules` + `psp_routes`).
+
+**Edge function**: `route-simulate` — pure function evaluating rules in priority order against the input; returns ordered chain + which rule matched + why each was skipped.
+
+**UI**: rewrite `RoutingPreview.tsx` with the form and step-by-step explanation panel.
+
+## Turn 3 — Failover & Retry: Save / Activate / Audit Log
+
+**Goal**: Move failover config off `localStorage` into DB; every change written to an audit log shown inline.
+
+**Schema**
+- `failover_configs (merchant_id, processor, max_retries, retry_delay_ms, backoff, fallback_chain jsonb, active, updated_by)`.
+- `routing_audit_log (id, actor_id, action, entity_type, entity_id, before jsonb, after jsonb, created_at)` — RLS: admins read, service role write.
+
+**Edge function**: `routing-config-write` — validates payload, writes config, inserts audit row in one tx.
+
+**UI**: `FailoverConfig.tsx` save/activate buttons + side-panel audit timeline.
+
+## Turn 4 — Rules Engine Full CRUD + Optimistic UI
+
+**Goal**: Create / update / delete routing rules with schema validation, optimistic updates, conflict detection. Reuses audit log from Turn 3.
+
+**Schema**: extend `routing_rules` with `region_match text[]`, `mcc_match text[]`, `card_brand_match text[]`, `updated_by uuid`, `version int`.
+
+**Edge function**: `routing-rules-write` — Zod-validated CRUD + audit emit + optimistic-lock via `version`.
+
+**UI**: full edit dialog in `RulesEngine.tsx`, optimistic `useMutation` with rollback, inline validation.
+
+## Order & checkpoints
 
 ```text
-merchant_pricing
-├── id (uuid PK)
-├── merchant_id (uuid FK → merchants)
-├── model_type (text: 'percentage', 'fixed', 'tiered', 'blended')
-├── percentage_fee (numeric, default 2.9)
-├── fixed_fee (numeric, default 0.30)
-├── currency (text, default 'USD')
-├── tiers (jsonb, nullable — volume-based tiers)
-├── sponsor_fee_pct (numeric, default 0)
-├── active (boolean, default true)
-├── created_at / updated_at
-└── UNIQUE(merchant_id, currency)
-
-fee_breakdowns
-├── id (uuid PK)
-├── transaction_id (uuid FK → transactions, UNIQUE)
-├── merchant_id (uuid FK → merchants)
-├── transaction_amount (numeric)
-├── processor_fee (numeric)
-├── sponsor_fee (numeric)
-├── everpay_fee (numeric)
-├── total_fee (numeric)
-├── net_amount (numeric)
-├── pricing_model (text)
-├── pricing_snapshot (jsonb — frozen pricing at calculation time)
-└── created_at
-
-reseller_splits
-├── id (uuid PK)
-├── reseller_id (uuid FK → profiles.user_id)
-├── merchant_id (uuid FK → merchants)
-├── revenue_share_pct (numeric, default 12.5 — basis points)
-├── active (boolean, default true)
-├── created_at / updated_at
-└── UNIQUE(reseller_id, merchant_id)
-
-billing_periods
-├── id (uuid PK)
-├── merchant_id (uuid FK → merchants)
-├── period_start (timestamptz)
-├── period_end (timestamptz)
-├── total_transactions (integer)
-├── total_volume (numeric)
-├── total_fees (numeric)
-├── total_processor_fees (numeric)
-├── total_sponsor_fees (numeric)
-├── total_everpay_fees (numeric)
-├── invoice_id (uuid FK → invoices, nullable)
-├── status (text: 'open', 'closed', 'invoiced')
-└── created_at
+Turn 1 (Dashboard live + filters) ──► verify charts
+Turn 2 (Preview simulator)        ──► verify chain output
+Turn 3 (Failover save + audit)    ──► verify persistence + log
+Turn 4 (Rules CRUD)               ──► verify create/edit/delete + audit
 ```
 
-### RLS Policies
-- `merchant_pricing`: admin full access; merchants SELECT own rows
-- `fee_breakdowns`: admin full access; merchants SELECT own rows
-- `reseller_splits`: admin full CRUD; resellers SELECT own rows
-- `billing_periods`: admin full access; merchants SELECT own rows
+After each turn I'll pause for you to spot-check before starting the next. Backend storage reuses existing `routing_rules` + `psp_routes` and adds only `failover_configs`, `routing_audit_log`, and the `routing_metrics_daily` view — matching the "reuse existing" option from the earlier scoping question.
 
-### Realtime
-- Enable realtime on `fee_breakdowns` for live fee tracking
-
-## Edge Functions
-
-### 1. `calculate-fees` (new)
-Called after transaction creation (from `process-payment` or `payment-state-machine`).
-
-Logic:
-1. Look up `merchant_pricing` for the merchant + currency
-2. If tiered model, find applicable tier based on monthly volume
-3. Calculate: `processor_fee` (from `processor_fee_profiles`), `sponsor_fee` (from pricing), `everpay_fee` (markup)
-4. Insert into `fee_breakdowns`
-5. Create corresponding ledger entries (debit merchant, credit platform fee account)
-
-### 2. `generate-billing` (new)
-Triggered monthly (cron) or manually by admin.
-
-Logic:
-1. For each merchant with `billing_periods.status = 'open'`, aggregate `fee_breakdowns` for the period
-2. Create an `invoices` row with line items (processor fees, platform fees, sponsor fees)
-3. Update `billing_periods.status = 'invoiced'` and link `invoice_id`
-4. Optionally enqueue a transactional email (invoice-created template)
-
-## Frontend — New Admin Pages
-
-### 1. `/enki/pricing` — Merchant Pricing Management
-- Table of all merchants with their active pricing model
-- Create/edit pricing modal: model type selector, fee inputs, tiered pricing JSON editor
-- Bulk pricing assignment
-- Per-merchant override indicator
-
-### 2. `/enki/revenue` — Revenue Dashboard
-- Summary cards: Total Platform Revenue, Processor Costs, Net Margin, Reseller Payouts
-- Monthly revenue chart (stacked: processor + sponsor + everpay)
-- Per-merchant revenue breakdown table
-- Reseller revenue sharing table with split percentages and earned amounts
-
-### 3. `/enki/billing` — Billing Management
-- List of billing periods per merchant with status badges
-- Generate invoice button (calls `generate-billing`)
-- Link to existing invoice detail view
-- Period-level fee aggregation summary
-
-## Hooks (new files)
-
-- `useMerchantPricing()` — CRUD for `merchant_pricing`
-- `useFeeBreakdowns(merchantId?)` — query `fee_breakdowns` with filters
-- `useResellerSplits()` — CRUD for `reseller_splits`
-- `useBillingPeriods(merchantId?)` — query and manage `billing_periods`
-- `useRevenueAnalytics()` — aggregated revenue stats from `fee_breakdowns`
-
-## Sidebar Navigation
-Add under the existing Enki admin nav sections:
-- **Pricing** → `/enki/pricing` (DollarSign icon)
-- **Revenue** → `/enki/revenue` (TrendingUp icon)
-- **Billing** → `/enki/billing` (Receipt icon)
-
-## Integration Points
-- **process-payment**: After successful transaction, invoke `calculate-fees`
-- **Ledger**: Fee breakdown amounts added as ledger entries
-- **Reseller Portal**: Replace hardcoded 0.125% with actual `reseller_splits` data
-- **Settlement engine**: Net settlement = gross - total_fee from `fee_breakdowns`
-
-## File Summary
-
-| Action | File |
-|--------|------|
-| Migration | `supabase/migrations/xxx_pricing_billing_engine.sql` |
-| New edge fn | `supabase/functions/calculate-fees/index.ts` |
-| New edge fn | `supabase/functions/generate-billing/index.ts` |
-| New hook | `src/hooks/useMerchantPricing.ts` |
-| New hook | `src/hooks/useFeeBreakdowns.ts` |
-| New hook | `src/hooks/useResellerSplits.ts` |
-| New hook | `src/hooks/useBillingPeriods.ts` |
-| New hook | `src/hooks/useRevenueAnalytics.ts` |
-| New page | `src/pages/admin/AdminPricing.tsx` |
-| New page | `src/pages/admin/AdminRevenue.tsx` |
-| New page | `src/pages/admin/AdminBilling.tsx` |
-| Edit | `src/App.tsx` — add 3 routes |
-| Edit | `src/components/AppSidebar.tsx` — add 3 nav items |
-| Edit | `src/pages/ResellerPortal.tsx` — use `reseller_splits` |
-| Edit | `supabase/config.toml` — register new functions |
-
+Confirm and I'll start with **Turn 1**.
