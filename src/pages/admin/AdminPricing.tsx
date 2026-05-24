@@ -145,6 +145,7 @@ export default function AdminPricing() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <Card>
