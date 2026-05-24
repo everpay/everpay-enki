@@ -198,4 +198,47 @@ async function hasAnyRole(
   return false;
 }
 
+async function hasAnyRoleByEmail(
+  localAdmin: SupabaseClient,
+  email: string | null,
+  wanted: Set<string>,
+  allowExternal: boolean,
+): Promise<boolean> {
+  const emailLc = (email || "").trim().toLowerCase();
+  if (!emailLc) return false;
+
+  const localProfiles = await localAdmin
+    .from("profiles")
+    .select("user_id")
+    .ilike("display_name", emailLc)
+    .limit(5);
+  const localUserIds = (localProfiles.data ?? []).map((p: any) => p.user_id).filter(Boolean);
+  for (const id of localUserIds) {
+    if (await hasAnyRole(localAdmin, id, wanted, false)) return true;
+  }
+
+  if (allowExternal) {
+    const extUrl = Deno.env.get("EXTERNAL_SUPABASE_URL");
+    const extKey = Deno.env.get("EXTERNAL_SUPABASE_SERVICE_ROLE_KEY");
+    if (extUrl && extKey) {
+      try {
+        const ext = createClient(extUrl, extKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        const extProfiles = await ext
+          .from("profiles")
+          .select("user_id")
+          .ilike("display_name", emailLc)
+          .limit(5);
+        for (const id of (extProfiles.data ?? []).map((p: any) => p.user_id).filter(Boolean)) {
+          const extRoles = await ext.from("user_roles").select("role").eq("user_id", id);
+          if ((extRoles.data ?? []).some((r: any) => wanted.has(r.role))) return true;
+        }
+      } catch (_) { /* ignore */ }
+    }
+  }
+
+  return false;
+}
+
 export { corsHeaders };
