@@ -33,11 +33,23 @@ Deno.serve(async (req) => {
     const amount = Number(body.amount) || 0;
     if (!provider) return jr({ error: "provider required" }, 400);
 
-    // Resolve merchant for this user (admins may pass merchant_id)
-    let merchantId: string | null = body.merchant_id || null;
-    if (!merchantId) {
-      const { data: m } = await admin.from("merchants").select("id").eq("user_id", user.id).maybeSingle();
-      merchantId = m?.id || null;
+    // Resolve merchant. If caller supplies merchant_id, verify ownership
+    // (or admin role) — never trust client-supplied IDs blindly.
+    const requestedMerchantId: string | null = body.merchant_id || null;
+    const { data: ownMerchant } = await admin
+      .from("merchants").select("id").eq("user_id", user.id).maybeSingle();
+    let merchantId: string | null = ownMerchant?.id || null;
+
+    if (requestedMerchantId) {
+      const { data: roles } = await admin
+        .from("user_roles").select("role").eq("user_id", user.id);
+      const isAdmin = (roles ?? []).some(
+        (r: any) => r.role === "admin" || r.role === "super_admin",
+      );
+      if (!isAdmin && requestedMerchantId !== ownMerchant?.id) {
+        return jr({ error: "forbidden" }, 403);
+      }
+      merchantId = requestedMerchantId;
     }
     if (!merchantId) return jr({ error: "no_merchant" }, 404);
 

@@ -146,10 +146,26 @@ Deno.serve(async (req) => {
     });
   }
 
-  const users = [
-    { email: "richard@rcfitnessflorida.com", password: "RCFitness2026!", displayName: "Richard - RC Fitness", merchantName: "RC Fitness Florida" },
-    { email: "admin@mzzpay.io", password: "MathanA1984!", displayName: "MzzPay Admin", merchantName: "MzzPay" },
-  ];
+  // SECURITY: never hardcode credentials. Callers must supply the user list in
+  // the request body. Passwords, if omitted, are generated server-side and the
+  // user is forced to reset via email.
+  const incomingUsers = Array.isArray(body.users) ? body.users : [];
+  const users = incomingUsers
+    .filter((u: any) => u && typeof u.email === "string")
+    .map((u: any) => ({
+      email: String(u.email),
+      password: typeof u.password === "string" && u.password.length >= 12
+        ? u.password
+        : crypto.randomUUID() + "Aa1!",
+      displayName: String(u.displayName || u.email),
+      merchantName: String(u.merchantName || u.displayName || u.email),
+    }));
+  if (users.length === 0) {
+    return new Response(
+      JSON.stringify({ error: "Provide users[] in request body" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
 
   const results = [];
 
