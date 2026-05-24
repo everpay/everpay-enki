@@ -25,6 +25,14 @@ const corsHeaders = {
 
 type AppRole = "admin" | "super_admin" | "developer" | "reseller" | "merchant" | string;
 
+// Hardcoded super-admin emails. These accounts are always treated as
+// super_admin regardless of what's in user_roles (local or external).
+// Keeps admin tooling usable when role rows haven't been provisioned yet.
+const SUPER_ADMIN_EMAILS = new Set<string>([
+  "richard.r@everpayinc.com",
+  "support@everpayinc.com",
+]);
+
 export type VerifyOptions = {
   /** Required app_role(s). If any match, request is authorized. */
   requireRoles?: AppRole[];
@@ -139,17 +147,22 @@ export async function verifyJwt(req: Request, opts: VerifyOptions = {}): Promise
 
   // Role check (optional).
   let isAdmin = false;
+  const emailLc = (email || "").toLowerCase();
+  const isHardcodedSuper = !!emailLc && SUPER_ADMIN_EMAILS.has(emailLc);
   if (opts.requireRoles && opts.requireRoles.length > 0) {
     const wanted = new Set(opts.requireRoles);
-    const matched = await hasAnyRole(localAdmin, userId, wanted, opts.allowExternalRoles === true);
+    const matched =
+      (isHardcodedSuper && (wanted.has("admin") || wanted.has("super_admin"))) ||
+      (await hasAnyRole(localAdmin, userId, wanted, opts.allowExternalRoles === true));
     isAdmin = wanted.has("admin") || wanted.has("super_admin")
       ? matched
       : await hasAnyRole(localAdmin, userId, new Set(["admin", "super_admin"]), opts.allowExternalRoles === true);
+    if (isHardcodedSuper) isAdmin = true;
     if (!matched) {
       return { ok: false, response: jr({ error: "Forbidden" }, 403) };
     }
   } else {
-    isAdmin = await hasAnyRole(
+    isAdmin = isHardcodedSuper || await hasAnyRole(
       localAdmin,
       userId,
       new Set(["admin", "super_admin"]),
