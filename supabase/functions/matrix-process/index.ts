@@ -447,6 +447,28 @@ serve(async (req) => {
       }
     }
 
+    // Detect credential/config rejections from Matrix and fall back to
+    // simulation mode so the dashboard stays functional when the configured
+    // sandbox tenant doesn't recognize our project_id / MID / API key.
+    const msg = String(data?.message || '').toLowerCase();
+    const isCredOrConfigError =
+      !response.ok && (
+        response.status === 401 ||
+        (response.status === 400 && msg.includes('apikey')) ||
+        (response.status === 404 && (msg.includes('mid') || msg.includes('not found') || msg.includes('project')))
+      );
+
+    if (isCredOrConfigError) {
+      console.warn(`[Matrix] Falling back to simulation (status=${response.status}, msg="${data?.message}")`);
+      return new Response(JSON.stringify({
+        simulation: true,
+        fallback_reason: data?.message || `HTTP ${response.status}`,
+        matrix_status: response.status,
+        sandbox,
+        ...simulateResponse(action, params),
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     return new Response(JSON.stringify({
       sandbox,
       matrix_status: response.status,
