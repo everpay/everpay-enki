@@ -47,19 +47,32 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
+  // Require authentication for ALL paths. Routing rules are merchant-internal.
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+  const { data: u } = await admin.auth.getUser(authHeader.replace("Bearer ", ""));
+  const caller = u?.user;
+  if (!caller) return json({ error: "Unauthorized" }, 401);
+
+  const [{ data: callerRoles }, { data: callerMerchant }] = await Promise.all([
+    admin.from("user_roles").select("role").eq("user_id", caller.id),
+    admin.from("merchants").select("id, gambling_enabled").eq("user_id", caller.id).maybeSingle(),
+  ]);
+  const isAdmin = (callerRoles ?? []).some((r: any) => r.role === "admin" || r.role === "super_admin");
+
   let merchantId: string | null = body.merchantId || null;
   let gamblingEnabled = false;
 
-  if (!merchantId) {
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      const { data: u } = await admin.auth.getUser(authHeader.replace("Bearer ", ""));
-      if (u?.user) {
-        const { data: m } = await admin
-          .from("merchants").select("id, gambling_enabled").eq("user_id", u.user.id).maybeSingle();
-        if (m) { merchantId = m.id; gamblingEnabled = !!m.gambling_enabled; }
-      }
+  if (merchantId) {
+    // Caller-supplied merchantId — verify ownership unless admin.
+    if (!isAdmin && callerMerchant?.id !== merchantId) {
+      return json({ error: "Forbidden" }, 403);
     }
+  } else if (callerMerchant) {
+    merchantId = callerMerchant.id;
+    gamblingEnabled = !!callerMerchant.gambling_enabled;
   }
 
   if (merchantId && !gamblingEnabled) {
