@@ -39,19 +39,15 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) {
+    const token = authHeader.slice(7).trim();
+    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims?.sub) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
-    const callerUserId = userData.user.id;
+    const callerUserId = claimsData.claims.sub as string;
     // Authorization: admin/super_admin OR a merchant acting on their own merchant_id.
     const [{ data: roleRows }, { data: merchantRow }] = await Promise.all([
       supabase.from('user_roles').select('role').eq('user_id', callerUserId),
