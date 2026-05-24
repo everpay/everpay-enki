@@ -41,6 +41,17 @@ export default function AdminPricing() {
     queryFn: () => extSelect("merchants", { select: "id, name", order: { column: "name", ascending: true } }),
   });
 
+  // Dedupe merchant list by name (external project occasionally returns duplicates).
+  const dedupedMerchants = (() => {
+    const seen = new Map<string, any>();
+    for (const m of (merchants || []) as any[]) {
+      const key = (m.name || "").trim().toLowerCase();
+      if (!key) continue;
+      if (!seen.has(key)) seen.set(key, m);
+    }
+    return Array.from(seen.values());
+  })();
+
   const handleSave = () => {
     if (!form.merchant_id) { toast.error("Merchant required"); return; }
     let parsedTiers = null;
