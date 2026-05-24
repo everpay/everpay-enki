@@ -99,7 +99,7 @@ export default function AdminPricing() {
                   <Select value={form.merchant_id} onValueChange={v => setForm(f => ({ ...f, merchant_id: v }))}>
                     <SelectTrigger><SelectValue placeholder="Select merchant" /></SelectTrigger>
                     <SelectContent>
-                      {(merchants || []).map((m: any) => (
+                      {dedupedMerchants.map((m: any) => (
                         <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                       ))}
                     </SelectContent>
