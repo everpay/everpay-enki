@@ -31,7 +31,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    // ---- Authentication: cryptographic JWT verification ----
+    // ---- Authentication: validate JWT using anon client + Authorization header ----
     const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');
     if (!authHeader?.toLowerCase().startsWith('bearer ')) {
       return new Response(
@@ -39,15 +39,29 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
     const token = authHeader.slice(7).trim();
-    const { data: claimsData, error: claimsErr } = await supabase.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims?.sub) {
+    let callerUserId: string | null = null;
+    // Try local JWKS verification first (works with new signing keys).
+    try {
+      const { data: claimsData } = await userClient.auth.getClaims(token);
+      callerUserId = (claimsData?.claims?.sub as string) || null;
+    } catch (_) { /* fall through */ }
+    // Fallback to /user for legacy HS256 tokens.
+    if (!callerUserId) {
+      const { data: userData } = await userClient.auth.getUser(token);
+      callerUserId = userData?.user?.id || null;
+    }
+    if (!callerUserId) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
-    const callerUserId = claimsData.claims.sub as string;
     // Authorization: admin/super_admin OR a merchant acting on their own merchant_id.
     const [{ data: roleRows }, { data: merchantRow }] = await Promise.all([
       supabase.from('user_roles').select('role').eq('user_id', callerUserId),
