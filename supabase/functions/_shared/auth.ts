@@ -153,21 +153,21 @@ export async function verifyJwt(req: Request, opts: VerifyOptions = {}): Promise
     const wanted = new Set(opts.requireRoles);
     const matched =
       (isHardcodedSuper && (wanted.has("admin") || wanted.has("super_admin"))) ||
-      (await hasAnyRole(localAdmin, userId, wanted, opts.allowExternalRoles === true));
+      (await hasAnyRole(localAdmin, userId, wanted, opts.allowExternalRoles === true)) ||
+      (await hasAnyRoleByEmail(localAdmin, email, wanted, opts.allowExternalRoles === true));
     isAdmin = wanted.has("admin") || wanted.has("super_admin")
       ? matched
-      : await hasAnyRole(localAdmin, userId, new Set(["admin", "super_admin"]), opts.allowExternalRoles === true);
+      : (await hasAnyRole(localAdmin, userId, new Set(["admin", "super_admin"]), opts.allowExternalRoles === true)) ||
+        (await hasAnyRoleByEmail(localAdmin, email, new Set(["admin", "super_admin"]), opts.allowExternalRoles === true));
     if (isHardcodedSuper) isAdmin = true;
     if (!matched) {
       return { ok: false, response: jr({ error: "Forbidden" }, 403) };
     }
   } else {
-    isAdmin = isHardcodedSuper || await hasAnyRole(
-      localAdmin,
-      userId,
-      new Set(["admin", "super_admin"]),
-      opts.allowExternalRoles === true,
-    );
+    const adminRoles = new Set(["admin", "super_admin"]);
+    isAdmin = isHardcodedSuper ||
+      await hasAnyRole(localAdmin, userId, adminRoles, opts.allowExternalRoles === true) ||
+      await hasAnyRoleByEmail(localAdmin, email, adminRoles, opts.allowExternalRoles === true);
   }
 
   return { ok: true, userId, email, claims, issuer, isAdmin, localAdmin };
@@ -196,6 +196,53 @@ async function hasAnyRole(
     }
   }
   return false;
+}
+
+async function hasAnyRoleByEmail(
+  localAdmin: SupabaseClient,
+  email: string | null,
+  wanted: Set<string>,
+  allowExternal: boolean,
+): Promise<boolean> {
+  const emailLc = (email || "").trim().toLowerCase();
+  if (!emailLc) return false;
+
+  const localUserIds = await authUserIdsByEmail(localAdmin, emailLc);
+  for (const id of localUserIds) {
+    if (await hasAnyRole(localAdmin, id, wanted, false)) return true;
+  }
+
+  if (allowExternal) {
+    const extUrl = Deno.env.get("EXTERNAL_SUPABASE_URL");
+    const extKey = Deno.env.get("EXTERNAL_SUPABASE_SERVICE_ROLE_KEY");
+    if (extUrl && extKey) {
+      try {
+        const ext = createClient(extUrl, extKey, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        for (const id of await authUserIdsByEmail(ext, emailLc)) {
+          const extRoles = await ext.from("user_roles").select("role").eq("user_id", id);
+          if ((extRoles.data ?? []).some((r: any) => wanted.has(r.role))) return true;
+        }
+      } catch (_) { /* ignore */ }
+    }
+  }
+
+  return false;
+}
+
+async function authUserIdsByEmail(client: SupabaseClient, emailLc: string): Promise<string[]> {
+  const ids: string[] = [];
+  for (let page = 1; page <= 5; page++) {
+    const { data, error } = await client.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data?.users?.length) break;
+    ids.push(...data.users
+      .filter((u: any) => (u.email || "").toLowerCase() === emailLc)
+      .map((u: any) => u.id)
+      .filter(Boolean));
+    if (data.users.length < 1000) break;
+  }
+  return ids;
 }
 
 export { corsHeaders };
