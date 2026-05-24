@@ -207,12 +207,7 @@ async function hasAnyRoleByEmail(
   const emailLc = (email || "").trim().toLowerCase();
   if (!emailLc) return false;
 
-  const localProfiles = await localAdmin
-    .from("profiles")
-    .select("user_id")
-    .ilike("display_name", emailLc)
-    .limit(5);
-  const localUserIds = (localProfiles.data ?? []).map((p: any) => p.user_id).filter(Boolean);
+  const localUserIds = await authUserIdsByEmail(localAdmin, emailLc);
   for (const id of localUserIds) {
     if (await hasAnyRole(localAdmin, id, wanted, false)) return true;
   }
@@ -225,12 +220,7 @@ async function hasAnyRoleByEmail(
         const ext = createClient(extUrl, extKey, {
           auth: { autoRefreshToken: false, persistSession: false },
         });
-        const extProfiles = await ext
-          .from("profiles")
-          .select("user_id")
-          .ilike("display_name", emailLc)
-          .limit(5);
-        for (const id of (extProfiles.data ?? []).map((p: any) => p.user_id).filter(Boolean)) {
+        for (const id of await authUserIdsByEmail(ext, emailLc)) {
           const extRoles = await ext.from("user_roles").select("role").eq("user_id", id);
           if ((extRoles.data ?? []).some((r: any) => wanted.has(r.role))) return true;
         }
@@ -239,6 +229,20 @@ async function hasAnyRoleByEmail(
   }
 
   return false;
+}
+
+async function authUserIdsByEmail(client: SupabaseClient, emailLc: string): Promise<string[]> {
+  const ids: string[] = [];
+  for (let page = 1; page <= 5; page++) {
+    const { data, error } = await client.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data?.users?.length) break;
+    ids.push(...data.users
+      .filter((u: any) => (u.email || "").toLowerCase() === emailLc)
+      .map((u: any) => u.id)
+      .filter(Boolean));
+    if (data.users.length < 1000) break;
+  }
+  return ids;
 }
 
 export { corsHeaders };
