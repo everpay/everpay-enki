@@ -34,7 +34,7 @@ async function tagShopifyOrder(shopDomain: string, accessToken: string, orderId:
 async function dispatchMerchantWebhook(supabase: any, merchantId: string, eventType: string, payload: any) {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    await fetch(`${supabaseUrl}/functions/v1/api-v2-webhooks`, {
+    await fetch(`${supabaseUrl}/functions/v1/api-v1-webhooks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ merchant_id: merchantId, event: eventType, data: payload }),
