@@ -313,7 +313,7 @@ Deno.serve(async (req) => {
 
   // ─── Parse route early (needed for logging) ───
   const url = new URL(req.url);
-  const pathParts = url.pathname.replace(/^\/api-v2/, '').replace(/^\/v1/, '').split('/').filter(Boolean);
+  const pathParts = url.pathname.replace(/^\/api-v1/, '').replace(/^\/v1/, '').split('/').filter(Boolean);
   const method = req.method;
   const resource = pathParts[0] || '';
   const resourceId = pathParts[1] || '';
