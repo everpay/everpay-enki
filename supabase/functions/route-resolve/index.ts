@@ -1,5 +1,4 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { verifyJwt, corsHeaders } from "../_shared/auth.ts";
 
 type ResolveInput = {
   merchantId: string;
@@ -15,22 +14,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-
-    const url = Deno.env.get("SUPABASE_URL")!;
-    const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const authed = createClient(url, anon, { global: { headers: { Authorization: authHeader } } });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: cErr } = await authed.auth.getClaims(token);
-    if (cErr || !claims?.claims) return json({ error: "Unauthorized" }, 401);
-    const userId = claims.claims.sub as string;
-
-    const admin = createClient(url, svc);
-    const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", userId);
-    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "super_admin");
-    if (!isAdmin) return json({ error: "Forbidden" }, 403);
+    const v = await verifyJwt(req, {
+      requireRoles: ["admin", "super_admin"],
+      allowExternalRoles: true,
+    });
+    if (!v.ok) return v.response;
+    const admin = v.localAdmin;
 
     const body = (await req.json()) as ResolveInput;
     if (!body?.merchantId || !body?.currency || typeof body?.amount !== "number") {

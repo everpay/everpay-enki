@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { recordProviderLedger } from "../_shared/ledger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { verifyJwt, corsHeaders } from "../_shared/auth.ts";
 
 const ELEKTROPAY_DEFAULT_URL = 'https://apiv3.elektropay.com/int';
 const ELEKTROPAY_REGION_URLS: Record<string, string> = {
@@ -30,44 +26,13 @@ function resolveUrl(country?: string | null, override?: string | null): string {
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
-    const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    // ---- Authentication: validate JWT using anon client + Authorization header ----
-    const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');
-    if (!authHeader?.toLowerCase().startsWith('bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const token = authHeader.slice(7).trim();
-    let callerUserId: string | null = null;
-    // Try local JWKS verification first (works with new signing keys).
-    try {
-      const { data: claimsData } = await userClient.auth.getClaims(token);
-      callerUserId = (claimsData?.claims?.sub as string) || null;
-    } catch (_) { /* fall through */ }
-    // Fallback to /user for legacy HS256 tokens.
-    if (!callerUserId) {
-      const { data: userData } = await userClient.auth.getUser(token);
-      callerUserId = userData?.user?.id || null;
-    }
-    if (!callerUserId) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-    // Authorization: admin/super_admin OR a merchant acting on their own merchant_id.
-    const [{ data: roleRows }, { data: merchantRow }] = await Promise.all([
-      supabase.from('user_roles').select('role').eq('user_id', callerUserId),
-      supabase.from('merchants').select('id').eq('user_id', callerUserId).maybeSingle(),
-    ]);
-    const isAdmin = (roleRows || []).some((r: any) => r.role === 'admin' || r.role === 'super_admin');
+    const v = await verifyJwt(req, { allowExternalRoles: true });
+    if (!v.ok) return v.response;
+    const callerUserId = v.userId;
+    const isAdmin = v.isAdmin;
+    const supabase = v.localAdmin;
+    const { data: merchantRow } = await supabase
+      .from('merchants').select('id').eq('user_id', callerUserId).maybeSingle();
     // The merchant-facing tables (elektropay_wallets, merchants, etc.) live in the
     // external Everpay project. Persist there so the dashboard (which reads via
     // admin-data-proxy → external project) actually sees newly-provisioned wallets.
