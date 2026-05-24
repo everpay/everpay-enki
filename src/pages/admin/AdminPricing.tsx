@@ -13,8 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMerchantPricing } from "@/hooks/useMerchantPricing";
 import { useQuery } from "@tanstack/react-query";
 import { extSelect } from "@/hooks/useExternalData";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DollarSign, Plus, Pencil } from "lucide-react";
+import { DollarSign, Plus, Pencil, Users } from "lucide-react";
 
 const modelLabels: Record<string, string> = {
   percentage: "Percentage",
@@ -40,6 +41,17 @@ export default function AdminPricing() {
     queryKey: ["admin-merchants-for-pricing"],
     queryFn: () => extSelect("merchants", { select: "id, name", order: { column: "name", ascending: true } }),
   });
+
+  // Dedupe merchant list by name (external project occasionally returns duplicates).
+  const dedupedMerchants = (() => {
+    const seen = new Map<string, any>();
+    for (const m of (merchants || []) as any[]) {
+      const key = (m.name || "").trim().toLowerCase();
+      if (!key) continue;
+      if (!seen.has(key)) seen.set(key, m);
+    }
+    return Array.from(seen.values());
+  })();
 
   const handleSave = () => {
     if (!form.merchant_id) { toast.error("Merchant required"); return; }
@@ -74,6 +86,19 @@ export default function AdminPricing() {
             <h1 className="text-2xl font-bold flex items-center gap-2"><DollarSign className="h-6 w-6 text-primary" /> Merchant Pricing</h1>
             <p className="text-muted-foreground text-sm">Configure per-merchant pricing models and fee structures</p>
           </div>
+          <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const t = toast.loading("Removing duplicate merchants…");
+              const { data, error } = await supabase.functions.invoke("dedupe-external-merchants", { body: { dry_run: false } });
+              toast.dismiss(t);
+              if (error) return toast.error(error.message);
+              toast.success(`Removed ${data?.deleted_count ?? 0} duplicate merchant${data?.deleted_count === 1 ? "" : "s"}`);
+            }}
+          >
+            <Users className="h-4 w-4 mr-1" /> Dedupe Merchants
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => setForm({ merchant_id: "", model_type: "percentage", percentage_fee: 2.9, fixed_fee: 0.3, currency: "USD", tiers: "", active: true })}>
@@ -88,7 +113,7 @@ export default function AdminPricing() {
                   <Select value={form.merchant_id} onValueChange={v => setForm(f => ({ ...f, merchant_id: v }))}>
                     <SelectTrigger><SelectValue placeholder="Select merchant" /></SelectTrigger>
                     <SelectContent>
-                      {(merchants || []).map((m: any) => (
+                      {dedupedMerchants.map((m: any) => (
                         <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -120,6 +145,7 @@ export default function AdminPricing() {
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <Card>
