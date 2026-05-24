@@ -222,6 +222,115 @@ export function useCreateRule() {
   });
 }
 
+// ─── Failover configs (DB-backed) ─────────────────────────────
+export type FailoverConfigRow = {
+  id: string;
+  merchant_id: string | null;
+  processor: string;
+  max_retries: number;
+  retry_delay_ms: number;
+  backoff: string;
+  fallback_chain: string[];
+  active: boolean;
+  version: number;
+  updated_by: string | null;
+  updated_at: string;
+};
+
+export function useFailoverConfigs(merchantId?: string | null) {
+  return useQuery({
+    queryKey: ["rm:failover-configs", merchantId ?? "global"],
+    queryFn: async (): Promise<FailoverConfigRow[]> => {
+      let q = supabase.from("failover_configs").select("*").order("processor");
+      q = merchantId ? q.eq("merchant_id", merchantId) : q.is("merchant_id", null);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as any;
+    },
+  });
+}
+
+function uuid() {
+  return crypto.randomUUID();
+}
+
+async function callConfigWrite(body: any, idempotencyKey?: string) {
+  const { data, error } = await supabase.functions.invoke("routing-config-write", {
+    body,
+    headers: idempotencyKey ? { "idempotency-key": idempotencyKey } : undefined,
+  });
+  if (error) throw error;
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return data;
+}
+
+export function useSaveFailoverConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (config: Partial<FailoverConfigRow> & { processor: string }) =>
+      callConfigWrite({ action: "save", config }, uuid()),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rm:failover-configs"] });
+      qc.invalidateQueries({ queryKey: ["rm:audit-log"] });
+    },
+  });
+}
+
+export function useActivateFailoverConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) =>
+      callConfigWrite({ action: active ? "activate" : "deactivate", config_id: id }, uuid()),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rm:failover-configs"] });
+      qc.invalidateQueries({ queryKey: ["rm:audit-log"] });
+    },
+  });
+}
+
+export function useRollbackFailoverConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, targetVersion }: { id: string; targetVersion?: number }) =>
+      callConfigWrite({ action: "rollback", config_id: id, target_version: targetVersion }, uuid()),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rm:failover-configs"] });
+      qc.invalidateQueries({ queryKey: ["rm:audit-log"] });
+    },
+  });
+}
+
+// ─── Routing audit log ────────────────────────────────────────
+export type AuditEntry = {
+  id: string;
+  actor_id: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  before: any;
+  after: any;
+  metadata: any;
+  created_at: string;
+};
+
+export function useRoutingAuditLog(opts?: { entityId?: string; limit?: number }) {
+  return useQuery({
+    queryKey: ["rm:audit-log", opts?.entityId ?? "all", opts?.limit ?? 50],
+    queryFn: async (): Promise<AuditEntry[]> => {
+      let q = supabase
+        .from("routing_audit_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(opts?.limit ?? 50);
+      if (opts?.entityId) q = q.eq("entity_id", opts.entityId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as any;
+    },
+    refetchInterval: 15_000,
+  });
+}
+
 // ─── Performance history (last 30 days, weekly buckets) ───────
 export function usePerformanceHistory() {
   return useQuery({

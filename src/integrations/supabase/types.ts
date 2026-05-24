@@ -1520,6 +1520,51 @@ export type Database = {
         }
         Relationships: []
       }
+      failover_configs: {
+        Row: {
+          active: boolean
+          backoff: string
+          created_at: string
+          fallback_chain: Json
+          id: string
+          max_retries: number
+          merchant_id: string | null
+          processor: string
+          retry_delay_ms: number
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          backoff?: string
+          created_at?: string
+          fallback_chain?: Json
+          id?: string
+          max_retries?: number
+          merchant_id?: string | null
+          processor: string
+          retry_delay_ms?: number
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          active?: boolean
+          backoff?: string
+          created_at?: string
+          fallback_chain?: Json
+          id?: string
+          max_retries?: number
+          merchant_id?: string | null
+          processor?: string
+          retry_delay_ms?: number
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       fee_breakdowns: {
         Row: {
           created_at: string
@@ -4083,6 +4128,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      routing_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          merchant_id: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          merchant_id?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          merchant_id?: string | null
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
+      routing_idempotency: {
+        Row: {
+          created_at: string
+          expires_at: string
+          key: string
+          operation: string
+          response: Json | null
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          key: string
+          operation: string
+          response?: Json | null
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          key?: string
+          operation?: string
+          response?: Json | null
+          transaction_id?: string | null
+        }
+        Relationships: []
       }
       routing_rules: {
         Row: {
