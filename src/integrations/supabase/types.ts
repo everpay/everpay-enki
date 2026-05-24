@@ -664,6 +664,102 @@ export type Database = {
           },
         ]
       }
+      billing_agreements: {
+        Row: {
+          amount: number | null
+          amount_max: number | null
+          amount_min: number | null
+          consent_ip: string | null
+          consent_user_agent: string | null
+          created_at: string
+          currency: string
+          current_balance: number | null
+          customer_id: string | null
+          deferred_charge_at: string | null
+          description: string | null
+          end_date: string | null
+          frequency: string | null
+          id: string
+          interval_count: number | null
+          intro_amount: number | null
+          intro_periods: number | null
+          merchant_id: string
+          metadata: Json | null
+          mit_type: string
+          next_billing_at: string | null
+          payment_method_id: string | null
+          reload_amount: number | null
+          reload_threshold: number | null
+          start_date: string | null
+          status: string
+          total_billing_cycles: number | null
+          updated_at: string
+          variable_amount: boolean | null
+        }
+        Insert: {
+          amount?: number | null
+          amount_max?: number | null
+          amount_min?: number | null
+          consent_ip?: string | null
+          consent_user_agent?: string | null
+          created_at?: string
+          currency?: string
+          current_balance?: number | null
+          customer_id?: string | null
+          deferred_charge_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          frequency?: string | null
+          id?: string
+          interval_count?: number | null
+          intro_amount?: number | null
+          intro_periods?: number | null
+          merchant_id: string
+          metadata?: Json | null
+          mit_type: string
+          next_billing_at?: string | null
+          payment_method_id?: string | null
+          reload_amount?: number | null
+          reload_threshold?: number | null
+          start_date?: string | null
+          status?: string
+          total_billing_cycles?: number | null
+          updated_at?: string
+          variable_amount?: boolean | null
+        }
+        Update: {
+          amount?: number | null
+          amount_max?: number | null
+          amount_min?: number | null
+          consent_ip?: string | null
+          consent_user_agent?: string | null
+          created_at?: string
+          currency?: string
+          current_balance?: number | null
+          customer_id?: string | null
+          deferred_charge_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          frequency?: string | null
+          id?: string
+          interval_count?: number | null
+          intro_amount?: number | null
+          intro_periods?: number | null
+          merchant_id?: string
+          metadata?: Json | null
+          mit_type?: string
+          next_billing_at?: string | null
+          payment_method_id?: string | null
+          reload_amount?: number | null
+          reload_threshold?: number | null
+          start_date?: string | null
+          status?: string
+          total_billing_cycles?: number | null
+          updated_at?: string
+          variable_amount?: boolean | null
+        }
+        Relationships: []
+      }
       billing_periods: {
         Row: {
           created_at: string

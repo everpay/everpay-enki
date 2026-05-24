@@ -567,6 +567,76 @@ Deno.serve(async (req) => {
     }
 
     // ═══════════════════════════════════════
+    // BILLING AGREEMENTS (MIT consent records)
+    // ═══════════════════════════════════════
+    if (resource === 'billing-agreements') {
+      if (method === 'POST' && !resourceId) {
+        const body = await req.json();
+        if (!body.mit_type) return json(400, { error: { type: 'invalid_request_error', code: 'parameter_missing', message: 'mit_type is required', param: 'mit_type' } }, reqId);
+        if (!['recurring', 'deferred', 'reload', 'unscheduled'].includes(body.mit_type)) {
+          return json(400, { error: { type: 'invalid_request_error', code: 'parameter_invalid', message: 'mit_type must be recurring, deferred, reload, or unscheduled', param: 'mit_type' } }, reqId);
+        }
+        const consentIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || null;
+        const { data, error } = await supabase.from('billing_agreements').insert({
+          merchant_id: merchantId,
+          customer_id: body.customer_id || null,
+          payment_method_id: body.payment_method_id || null,
+          mit_type: body.mit_type,
+          status: body.status || 'active',
+          currency: body.currency || 'USD',
+          frequency: body.recurring?.frequency || null,
+          interval_count: body.recurring?.interval_count ?? 1,
+          amount: body.recurring?.amount ?? body.amount ?? null,
+          variable_amount: body.recurring?.variable_amount ?? false,
+          amount_min: body.recurring?.amount_min ?? null,
+          amount_max: body.recurring?.amount_max ?? null,
+          intro_amount: body.recurring?.intro_amount ?? null,
+          intro_periods: body.recurring?.intro_periods ?? null,
+          total_billing_cycles: body.recurring?.total_billing_cycles ?? null,
+          start_date: body.recurring?.start_date || new Date().toISOString(),
+          end_date: body.recurring?.end_date || null,
+          next_billing_at: body.recurring?.start_date || null,
+          deferred_charge_at: body.deferred?.charge_at || null,
+          reload_threshold: body.reload?.threshold ?? null,
+          reload_amount: body.reload?.amount ?? null,
+          current_balance: body.reload?.starting_balance ?? 0,
+          consent_ip: consentIp,
+          consent_user_agent: req.headers.get('user-agent'),
+          description: body.description || null,
+          metadata: body.metadata || {},
+        }).select().single();
+        if (error) return json(400, { error: { type: 'invalid_request_error', code: 'create_failed', message: error.message } }, reqId);
+        return json(201, { object: 'billing_agreement', ...data }, reqId);
+      }
+      if (method === 'POST' && resourceId && url.pathname.endsWith('/cancel')) {
+        const realId = resourceId === 'cancel' ? url.pathname.split('/').filter(Boolean).slice(-2)[0] : resourceId;
+        const { data, error } = await supabase.from('billing_agreements').update({ status: 'canceled' }).eq('id', realId).eq('merchant_id', merchantId).select().single();
+        if (error || !data) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Billing agreement not found' } }, reqId);
+        return json(200, { object: 'billing_agreement', ...data }, reqId);
+      }
+      if (method === 'GET' && resourceId) {
+        const { data, error } = await supabase.from('billing_agreements').select('*').eq('id', resourceId).eq('merchant_id', merchantId).single();
+        if (error || !data) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Billing agreement not found' } }, reqId);
+        return json(200, { object: 'billing_agreement', ...data }, reqId);
+      }
+      if (method === 'GET' && !resourceId) {
+        const { limit, offset } = parsePagination(url);
+        const { data, count, error } = await supabase.from('billing_agreements').select('*', { count: 'exact' }).eq('merchant_id', merchantId).order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+        if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/billing-agreements'), reqId);
+      }
+      if (method === 'PATCH' && resourceId) {
+        const body = await req.json();
+        const allowed = ['status', 'amount', 'frequency', 'interval_count', 'end_date', 'next_billing_at', 'deferred_charge_at', 'reload_threshold', 'reload_amount', 'description', 'metadata', 'payment_method_id'];
+        const updates: Record<string, unknown> = {};
+        for (const k of allowed) if (body[k] !== undefined) updates[k] = body[k];
+        const { data, error } = await supabase.from('billing_agreements').update(updates).eq('id', resourceId).eq('merchant_id', merchantId).select().single();
+        if (error || !data) return json(404, { error: { type: 'invalid_request_error', code: 'resource_missing', message: 'Billing agreement not found' } }, reqId);
+        return json(200, { object: 'billing_agreement', ...data }, reqId);
+      }
+    }
+
+    // ═══════════════════════════════════════
     // PAYMENT METHODS
     // ═══════════════════════════════════════
     if (resource === 'payment-methods') {
