@@ -313,7 +313,7 @@ Deno.serve(async (req) => {
 
   // ─── Parse route early (needed for logging) ───
   const url = new URL(req.url);
-  const pathParts = url.pathname.replace(/^\/api-v2/, '').replace(/^\/v2/, '').split('/').filter(Boolean);
+  const pathParts = url.pathname.replace(/^\/api-v1/, '').replace(/^\/v1/, '').split('/').filter(Boolean);
   const method = req.method;
   const resource = pathParts[0] || '';
   const resourceId = pathParts[1] || '';
@@ -494,7 +494,7 @@ Deno.serve(async (req) => {
 
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payments'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/payments'), reqId);
       }
     }
 
@@ -562,7 +562,7 @@ Deno.serve(async (req) => {
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payment-intents'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/payment-intents'), reqId);
       }
     }
 
@@ -623,7 +623,7 @@ Deno.serve(async (req) => {
         const { limit, offset } = parsePagination(url);
         const { data, count, error } = await supabase.from('billing_agreements').select('*', { count: 'exact' }).eq('merchant_id', merchantId).order('created_at', { ascending: false }).range(offset, offset + limit - 1);
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/billing-agreements'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/billing-agreements'), reqId);
       }
       if (method === 'PATCH' && resourceId) {
         const body = await req.json();
@@ -685,7 +685,7 @@ Deno.serve(async (req) => {
         if (customerId) query = query.eq('customer_id', customerId);
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payment-methods'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/payment-methods'), reqId);
       }
 
       if (method === 'DELETE' && resourceId) {
@@ -759,7 +759,7 @@ Deno.serve(async (req) => {
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payment-links'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/payment-links'), reqId);
       }
     }
 
@@ -795,7 +795,7 @@ Deno.serve(async (req) => {
 
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/transactions'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/transactions'), reqId);
       }
     }
 
@@ -836,7 +836,7 @@ Deno.serve(async (req) => {
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/refunds'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/refunds'), reqId);
       }
     }
 
@@ -905,7 +905,7 @@ Deno.serve(async (req) => {
         if (email) query = query.ilike('email', `%${email}%`);
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/customers'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/customers'), reqId);
       }
     }
 
@@ -986,7 +986,7 @@ Deno.serve(async (req) => {
         if (active === 'true') query = query.gt('stock', 0);
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/products'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/products'), reqId);
       }
     }
 
@@ -1071,7 +1071,7 @@ Deno.serve(async (req) => {
         if (status) query = query.eq('status', status);
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/subscriptions'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/subscriptions'), reqId);
       }
     }
 
@@ -1138,7 +1138,7 @@ Deno.serve(async (req) => {
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/plans'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/plans'), reqId);
       }
     }
 
@@ -1169,7 +1169,7 @@ Deno.serve(async (req) => {
         if (status) query = query.eq('status', status);
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/disputes'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/disputes'), reqId);
       }
     }
 
@@ -1235,7 +1235,7 @@ Deno.serve(async (req) => {
         if (status) query = query.eq('status', status);
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/invoices'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/invoices'), reqId);
       }
     }
 
@@ -1326,7 +1326,7 @@ Deno.serve(async (req) => {
         if (status) query = query.eq('status', status);
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/payouts'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/payouts'), reqId);
       }
     }
 
@@ -1399,7 +1399,7 @@ Deno.serve(async (req) => {
           .order('created_at', { ascending: false })
           .range(offset, offset + limit - 1);
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/bank-accounts'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/bank-accounts'), reqId);
       }
     }
 
@@ -1438,7 +1438,7 @@ Deno.serve(async (req) => {
           .select('*')
           .eq('merchant_id', merchantId);
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, { object: 'list', data: (wallets || []).map(w => ({ object: 'wallet', ...w })), has_more: false, url: '/v2/wallets' }, reqId);
+        return json(200, { object: 'list', data: (wallets || []).map(w => ({ object: 'wallet', ...w })), has_more: false, url: '/v1/wallets' }, reqId);
       }
     }
 
@@ -1477,7 +1477,7 @@ Deno.serve(async (req) => {
           .eq('merchant_id', merchantId)
           .order('created_at', { ascending: false });
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, { object: 'list', data: endpoints || [], has_more: false, url: '/v2/webhooks/endpoints' }, reqId);
+        return json(200, { object: 'list', data: endpoints || [], has_more: false, url: '/v1/webhooks/endpoints' }, reqId);
       }
 
       if (method === 'DELETE' && endpointId) {
@@ -1539,7 +1539,7 @@ Deno.serve(async (req) => {
         if (type) query = query.eq('event_type', type);
         const { data, count, error } = await query;
         if (error) return json(500, { error: { type: 'api_error', code: 'query_failed', message: error.message } }, reqId);
-        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v2/events'), reqId);
+        return json(200, listResponse(data || [], count, (offset + limit) < (count || 0), '/v1/events'), reqId);
       }
     }
 
@@ -1685,7 +1685,7 @@ Deno.serve(async (req) => {
         data: enrichedTxs,
         has_more: (offset + limit) < (count || 0),
         total_count: count,
-        url: '/v2/composite/transactions',
+        url: '/v1/composite/transactions',
       }, reqId));
     }
 

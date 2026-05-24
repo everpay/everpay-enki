@@ -153,7 +153,7 @@ serve(async (req) => {
       // Dispatch merchant webhook
       try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        await fetch(`${supabaseUrl}/functions/v1/api-v2-webhooks`, {
+        await fetch(`${supabaseUrl}/functions/v1/api-v1-webhooks`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

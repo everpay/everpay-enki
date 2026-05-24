@@ -14,7 +14,7 @@ const json = (status: number, body: unknown) =>
 /**
  * Everpay v2 Webhook Events Reference
  *
- * Merchants can subscribe to these events via the /v2/webhooks/endpoints API:
+ * Merchants can subscribe to these events via the /v1/webhooks/endpoints API:
  *
  * payment.created      — New payment initiated
  * payment.completed    — Payment successfully processed

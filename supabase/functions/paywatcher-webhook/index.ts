@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
     // Fan out canonical webhook to merchant subscribers
     if (merchantId && txStatus) {
       const fanoutEvent = txStatus === "completed" ? "payment.completed" : "payment.failed";
-      supabase.functions.invoke("api-v2-webhooks", {
+      supabase.functions.invoke("api-v1-webhooks", {
         body: {
           merchant_id: merchantId,
           event_type: fanoutEvent,

@@ -328,7 +328,7 @@ serve(async (req) => {
 
     // STEP 8 — Webhooks
     const eventType = internalStatus === 'completed' ? 'payment.completed' : internalStatus === 'failed' ? 'payment.failed' : 'payment.created';
-    supabase.functions.invoke('api-v2-webhooks', { body: { merchant_id: merchantId, event_type: eventType, payload: { payment_id: transaction.id, payment_intent_id: intent.id, amount: totalAmount, currency, status: internalStatus, provider, customer_email: customerEmail, provider_ref: transaction.provider_ref, source: paymentData.source || null, order_id: paymentData.orderId || null, created_at: transaction.created_at } } }).catch(e => console.error('Webhook error:', e));
+    supabase.functions.invoke('api-v1-webhooks', { body: { merchant_id: merchantId, event_type: eventType, payload: { payment_id: transaction.id, payment_intent_id: intent.id, amount: totalAmount, currency, status: internalStatus, provider, customer_email: customerEmail, provider_ref: transaction.provider_ref, source: paymentData.source || null, order_id: paymentData.orderId || null, created_at: transaction.created_at } } }).catch(e => console.error('Webhook error:', e));
 
     if (internalStatus === 'completed' && paymentData.source === 'shopify' && paymentData.orderId) {
       // Mark the Shopify order as PAID via the dedicated mark-paid function

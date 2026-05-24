@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
 
     // Dispatch v2 webhook
     const refundEventType = amount === transaction.amount ? 'payment.refunded' : 'payment.partially_refunded';
-    supabaseAdmin.functions.invoke("api-v2-webhooks", {
+    supabaseAdmin.functions.invoke("api-v1-webhooks", {
       body: {
         merchant_id: merchant.id,
         event_type: refundEventType,
@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
     }).catch(err => console.error("Refund webhook error:", err));
 
     // Also dispatch refund.created
-    supabaseAdmin.functions.invoke("api-v2-webhooks", {
+    supabaseAdmin.functions.invoke("api-v1-webhooks", {
       body: {
         merchant_id: merchant.id,
         event_type: "refund.completed",
