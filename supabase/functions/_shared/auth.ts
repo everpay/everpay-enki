@@ -153,21 +153,21 @@ export async function verifyJwt(req: Request, opts: VerifyOptions = {}): Promise
     const wanted = new Set(opts.requireRoles);
     const matched =
       (isHardcodedSuper && (wanted.has("admin") || wanted.has("super_admin"))) ||
-      (await hasAnyRole(localAdmin, userId, wanted, opts.allowExternalRoles === true));
+      (await hasAnyRole(localAdmin, userId, wanted, opts.allowExternalRoles === true)) ||
+      (await hasAnyRoleByEmail(localAdmin, email, wanted, opts.allowExternalRoles === true));
     isAdmin = wanted.has("admin") || wanted.has("super_admin")
       ? matched
-      : await hasAnyRole(localAdmin, userId, new Set(["admin", "super_admin"]), opts.allowExternalRoles === true);
+      : (await hasAnyRole(localAdmin, userId, new Set(["admin", "super_admin"]), opts.allowExternalRoles === true)) ||
+        (await hasAnyRoleByEmail(localAdmin, email, new Set(["admin", "super_admin"]), opts.allowExternalRoles === true));
     if (isHardcodedSuper) isAdmin = true;
     if (!matched) {
       return { ok: false, response: jr({ error: "Forbidden" }, 403) };
     }
   } else {
-    isAdmin = isHardcodedSuper || await hasAnyRole(
-      localAdmin,
-      userId,
-      new Set(["admin", "super_admin"]),
-      opts.allowExternalRoles === true,
-    );
+    const adminRoles = new Set(["admin", "super_admin"]);
+    isAdmin = isHardcodedSuper ||
+      await hasAnyRole(localAdmin, userId, adminRoles, opts.allowExternalRoles === true) ||
+      await hasAnyRoleByEmail(localAdmin, email, adminRoles, opts.allowExternalRoles === true);
   }
 
   return { ok: true, userId, email, claims, issuer, isAdmin, localAdmin };
