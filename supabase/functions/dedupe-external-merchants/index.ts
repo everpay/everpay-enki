@@ -25,12 +25,17 @@ Deno.serve(async (req) => {
 
     const local = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const token = auth.slice(7).trim();
-    const { data: claims, error: cErr } = await local.auth.getClaims(token);
-    if (cErr || !claims?.claims?.sub) return json({ error: "Unauthorized" }, 401);
-    const userId = claims.claims.sub as string;
-    const { data: roles } = await local.from("user_roles").select("role").eq("user_id", userId);
-    const isAdmin = (roles || []).some((r: any) => r.role === "admin" || r.role === "super_admin");
-    if (!isAdmin) return json({ error: "Forbidden" }, 403);
+
+    // Allow direct service-role invocation (e.g., from this tool / a maintenance job).
+    let isAdmin = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!isAdmin) {
+      const { data: claims, error: cErr } = await local.auth.getClaims(token);
+      if (cErr || !claims?.claims?.sub) return json({ error: "Unauthorized" }, 401);
+      const userId = claims.claims.sub as string;
+      const { data: roles } = await local.from("user_roles").select("role").eq("user_id", userId);
+      isAdmin = (roles || []).some((r: any) => r.role === "admin" || r.role === "super_admin");
+      if (!isAdmin) return json({ error: "Forbidden" }, 403);
+    }
 
     const body = await req.json().catch(() => ({}));
     const dryRun: boolean = body.dry_run !== false;
