@@ -538,6 +538,18 @@ export default function AdminMerchants() {
               </Select>
               {editErrors.status && <p className="text-xs text-destructive mt-1">{editErrors.status}</p>}
             </div>
+            <div>
+              <Label className="text-xs">Onboarding (KYB) Status</Label>
+              <Select value={editForm.onboarding_status} onValueChange={v => setEditForm(f => ({ ...f, onboarding_status: v }))}>
+                <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground mt-1">Setting Approved runs full KYB approval (profile + documents).</p>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
               <Button onClick={saveEdit} disabled={savingEdit}>
