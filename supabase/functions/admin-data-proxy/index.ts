@@ -298,7 +298,7 @@ Deno.serve(async (req) => {
         if (!merchantId) return { ok: false, error: "merchant_create_failed" };
       } else {
         try {
-          await gw("merchants.update", { merchant_id: merchantId, patch: { status: "active" } }, reviewer);
+          await gw("db.update", { table: "merchants", id: merchantId, data: { status: "active" } }, reviewer);
         } catch (e) { /* non-fatal */ }
       }
 
@@ -480,8 +480,10 @@ Deno.serve(async (req) => {
     if (action === "link_merchant_user") {
       // body: { merchant_id, user_id }
       if (!body.merchant_id || !body.user_id) return jr({ error: "merchant_id + user_id required" }, 400);
+      if (isSyntheticMerchantId(body.merchant_id) || !UUID_RE.test(String(body.merchant_id))) return jr({ error: "A real merchant record is required before linking a user" }, 409);
+      if (!UUID_RE.test(String(body.user_id))) return jr({ error: "Invalid user id" }, 400);
       try {
-        await gw("merchants.update", { merchant_id: body.merchant_id, patch: { user_id: body.user_id } }, callerEmail || "platform-os");
+        await gw("db.update", { table: "merchants", id: body.merchant_id, data: { user_id: body.user_id } }, callerEmail || "platform-os");
       } catch {
         await localAdmin.from("merchants").update({ user_id: body.user_id }).eq("id", body.merchant_id);
       }
