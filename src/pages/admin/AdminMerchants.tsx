@@ -121,12 +121,13 @@ export default function AdminMerchants() {
         toast({ title: 'Validation failed', description: res.error || 'Please fix the highlighted fields', variant: 'destructive' });
         return;
       }
+      const merchantIdForFollowup = res?.merchant?.id || selectedMerchant.id;
       // Handle onboarding_status change separately (lives on merchant_profiles)
       if (editForm.onboarding_status && editForm.onboarding_status !== (selectedMerchant.onboarding_status || 'pending')) {
         if (editForm.onboarding_status === 'approved') {
           await externalProxy({
             action: 'approve_merchant',
-            merchant_id: selectedMerchant.id,
+            merchant_id: merchantIdForFollowup,
             user_id: selectedMerchant.user_id,
             email: editForm.email || selectedMerchant.email,
             name: editForm.name,
@@ -134,7 +135,7 @@ export default function AdminMerchants() {
         } else {
           await externalProxy({
             action: 'update_merchant_onboarding',
-            merchant_id: selectedMerchant.id,
+            merchant_id: merchantIdForFollowup,
             onboarding_status: editForm.onboarding_status,
           });
         }

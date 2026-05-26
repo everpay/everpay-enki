@@ -28,6 +28,21 @@ const LOCAL_ONLY_TABLES = new Set<string>([
   "security_alerts",
 ]);
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isSyntheticMerchantId = (value: unknown) => typeof value === "string" && value.startsWith("user:");
+const stripSyntheticUserId = (value: unknown) => isSyntheticMerchantId(value) ? String(value).slice("user:".length) : String(value || "");
+
+function buildMerchantInsert(userId: string, patch: Record<string, any>) {
+  const email = patch?.email ? String(patch.email) : null;
+  return {
+    user_id: userId,
+    name: patch?.name || (email ? email.split("@")[0] : "New Merchant"),
+    email,
+    phone: patch?.phone ?? null,
+    status: patch?.status || "pending",
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -139,30 +154,28 @@ Deno.serve(async (req) => {
     if (action === "update_merchant") {
       // body: { merchant_id, patch: { name?, email?, phone?, status? } }
       if (!body.merchant_id || !body.patch) return jr({ error: "merchant_id + patch required" }, 400);
+      const patch = body.patch || {};
       // Synthetic id for users without a merchant row yet -> create one first
-      if (String(body.merchant_id).startsWith("user:")) {
-        const uid = String(body.merchant_id).slice("user:".length);
-        const name = body.patch?.name || body.patch?.email?.split("@")[0] || "New Merchant";
+      if (isSyntheticMerchantId(body.merchant_id)) {
+        const uid = stripSyntheticUserId(body.merchant_id);
+        if (!UUID_RE.test(uid)) return jr({ error: "Invalid synthetic user id" }, 400);
         let newId: string | null = null;
+        const insertRow = buildMerchantInsert(uid, patch);
         try {
-          const r = await gw<{ ok: boolean; merchant?: any; id?: string }>(
-            "merchants.create",
-            { user_id: uid, name, email: body.patch?.email ?? null, phone: body.patch?.phone ?? null },
-            callerEmail || "platform-os",
-          );
-          newId = r.merchant?.id || r.id || null;
+          const created = await gw<{ data?: any[] }>("db.insert", { table: "merchants", data: insertRow }, callerEmail || "platform-os");
+          newId = (created.data || [])[0]?.id || null;
         } catch {}
         if (!newId) {
           const { data, error } = await localAdmin
             .from("merchants")
-            .insert({ user_id: uid, name, email: body.patch?.email ?? null, phone: body.patch?.phone ?? null })
+            .insert(insertRow)
             .select("id").maybeSingle();
           if (error || !data) return jr({ error: error?.message || "Failed to create merchant row" }, 502);
           newId = data.id;
         }
         body.merchant_id = newId;
       }
-      const patch = body.patch || {};
+      if (!UUID_RE.test(String(body.merchant_id))) return jr({ error: "Invalid merchant id" }, 400);
       const fieldErrors: Record<string, string> = {};
       const ALLOWED_STATUSES = ["active", "pending", "suspended"];
       if (patch.email != null && patch.email !== "") {
@@ -205,12 +218,8 @@ Deno.serve(async (req) => {
       let updated: any = null;
       let fallback = false;
       try {
-        const r = await gw<{ ok: boolean; merchant?: any }>(
-          "merchants.update",
-          { merchant_id: body.merchant_id, patch },
-          callerEmail || "platform-os",
-        );
-        updated = r.merchant;
+        const r = await gw<{ data?: any[] }>("db.update", { table: "merchants", id: body.merchant_id, data: patch }, callerEmail || "platform-os");
+        updated = (r.data || [])[0] || null;
       } catch (e) {
         const { data, error } = await localAdmin.from("merchants").update(patch).eq("id", body.merchant_id).select().maybeSingle();
         if (error) return jr({ error: error.message, gateway_error: (e as Error).message }, 502);
@@ -289,7 +298,7 @@ Deno.serve(async (req) => {
         if (!merchantId) return { ok: false, error: "merchant_create_failed" };
       } else {
         try {
-          await gw("merchants.update", { merchant_id: merchantId, patch: { status: "active" } }, reviewer);
+          await gw("db.update", { table: "merchants", id: merchantId, data: { status: "active" } }, reviewer);
         } catch (e) { /* non-fatal */ }
       }
 
@@ -471,8 +480,10 @@ Deno.serve(async (req) => {
     if (action === "link_merchant_user") {
       // body: { merchant_id, user_id }
       if (!body.merchant_id || !body.user_id) return jr({ error: "merchant_id + user_id required" }, 400);
+      if (isSyntheticMerchantId(body.merchant_id) || !UUID_RE.test(String(body.merchant_id))) return jr({ error: "A real merchant record is required before linking a user" }, 409);
+      if (!UUID_RE.test(String(body.user_id))) return jr({ error: "Invalid user id" }, 400);
       try {
-        await gw("merchants.update", { merchant_id: body.merchant_id, patch: { user_id: body.user_id } }, callerEmail || "platform-os");
+        await gw("db.update", { table: "merchants", id: body.merchant_id, data: { user_id: body.user_id } }, callerEmail || "platform-os");
       } catch {
         await localAdmin.from("merchants").update({ user_id: body.user_id }).eq("id", body.merchant_id);
       }
