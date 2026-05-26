@@ -18,26 +18,49 @@ Deno.serve(async (req) => {
   );
 
   const mismatches: any[] = [];
+  const skipped: any[] = [];
   const runId = crypto.randomUUID();
   const startedAt = new Date().toISOString();
 
-  // 1) Local merchants
-  const { data: merchants = [] } = await local
-    .from("merchants")
-    .select("id, name, currency")
-    .limit(500);
+  // Optional merchant scoping via body: { merchant_id?: string }
+  let scopedId: string | null = null;
+  try {
+    if (req.headers.get("content-type")?.includes("application/json")) {
+      const b = await req.json().catch(() => ({}));
+      if (b?.merchant_id && typeof b.merchant_id === "string") scopedId = b.merchant_id;
+    }
+  } catch { /* ignore */ }
+
+  // Safe table reader — returns [] when the table is missing (42P01) or RLS
+  // denies access, and records the skip so the UI can surface it.
+  const safeSelect = async (table: string, build: (q: any) => any) => {
+    try {
+      const q = build(local.from(table));
+      const { data, error } = await q;
+      if (error) {
+        skipped.push({ table, reason: error.code === "42P01" ? "missing_table" : "query_error", message: error.message });
+        return [] as any[];
+      }
+      return (data ?? []) as any[];
+    } catch (e) {
+      skipped.push({ table, reason: "exception", message: (e as Error).message });
+      return [] as any[];
+    }
+  };
+
+  // 1) Local merchants (scoped to admin caller's selection if provided)
+  const merchants = await safeSelect("merchants", (q) => {
+    let s = q.select("id, name, currency").limit(500);
+    if (scopedId) s = s.eq("id", scopedId);
+    return s;
+  });
 
   for (const m of merchants ?? []) {
     // ---- Derived balance from ledger_entries
-    const { data: ledger = [] } = await local
-      .from("ledger_entries")
-      .select("amount, currency, entry_type, transaction_id")
-      .limit(5000);
-    const { data: txMap = [] } = await local
-      .from("transactions")
-      .select("id, amount, currency")
-      .eq("merchant_id", m.id)
-      .limit(5000);
+    const ledger = await safeSelect("ledger_entries", (q) =>
+      q.select("amount, currency, entry_type, transaction_id").limit(5000));
+    const txMap = await safeSelect("transactions", (q) =>
+      q.select("id, amount, currency").eq("merchant_id", m.id).limit(5000));
     const txIds = new Set((txMap ?? []).map((t: any) => t.id));
     let derived = 0;
     for (const e of ledger ?? []) {
@@ -71,8 +94,8 @@ Deno.serve(async (req) => {
     }
 
     // ---- Routing state: compare active providers local vs gateway
-    const { data: localRoutes = [] } = await local
-      .from("psp_routes").select("processor, active").eq("merchant_id", m.id);
+    const localRoutes = await safeSelect("psp_routes", (q) =>
+      q.select("processor, active").eq("merchant_id", m.id));
     const localActive = new Set((localRoutes ?? []).filter((r: any) => r.active).map((r: any) => r.processor));
     try {
       const gr = await gw<{ data: any[] }>("db.select", {
@@ -95,8 +118,8 @@ Deno.serve(async (req) => {
     }
 
     // ---- Settlement status: pending counts local vs gateway
-    const { data: localSettle = [] } = await local
-      .from("settlement_batches").select("status").eq("merchant_id", m.id);
+    const localSettle = await safeSelect("settlement_batches", (q) =>
+      q.select("status").eq("merchant_id", m.id));
     const localPending = (localSettle ?? []).filter((s: any) => s.status === "pending").length;
     try {
       const gs = await gw<{ data: any[] }>("db.select", {
@@ -130,7 +153,9 @@ Deno.serve(async (req) => {
     started_at: startedAt,
     finished_at: new Date().toISOString(),
     merchants_checked: merchants?.length ?? 0,
+    scoped_merchant_id: scopedId,
     mismatches_count: mismatches.length,
     mismatches,
+    skipped,
   });
 });

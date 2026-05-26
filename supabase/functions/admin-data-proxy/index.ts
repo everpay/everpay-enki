@@ -213,9 +213,35 @@ Deno.serve(async (req) => {
         );
         updated = r.merchant;
       } catch (e) {
-        const { data, error } = await localAdmin.from("merchants").update(patch).eq("id", body.merchant_id).select().maybeSingle();
-        if (error) return jr({ error: error.message, gateway_error: (e as Error).message }, 502);
-        updated = data; fallback = true;
+        // Gateway op may reject unknown fields (phone, region, etc).
+        // Fall back to generic db.update on the gateway BEFORE touching the
+        // local DB — the merchant row lives in Platform OS so a local update
+        // would either no-op or fail on FK.
+        try {
+          const r2 = await gw<{ data: any[] }>(
+            "db.update",
+            { table: "merchants", id: body.merchant_id, data: patch },
+            callerEmail || "platform-os",
+          );
+          updated = (r2.data || [])[0] || { id: body.merchant_id, ...patch };
+          fallback = true;
+        } catch (e2) {
+          // Last resort: only attempt local update when a local row exists,
+          // otherwise return a clear, actionable error.
+          const { data: localRow } = await localAdmin.from("merchants").select("id").eq("id", body.merchant_id).maybeSingle();
+          if (!localRow) {
+            return jr({
+              error: "Could not update merchant",
+              gateway_error: (e as Error).message,
+              gateway_fallback_error: (e2 as Error).message,
+              hint: "Merchant lives in Platform OS gateway; verify the gateway accepts these fields.",
+              patch_fields: Object.keys(patch),
+            }, 502);
+          }
+          const { data, error } = await localAdmin.from("merchants").update(patch).eq("id", body.merchant_id).select().maybeSingle();
+          if (error) return jr({ error: error.message, gateway_error: (e as Error).message, gateway_fallback_error: (e2 as Error).message }, 502);
+          updated = data; fallback = true;
+        }
       }
       // Compute diff
       const diff: Record<string, { old: any; new: any }> = {};
