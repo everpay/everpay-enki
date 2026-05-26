@@ -218,12 +218,8 @@ Deno.serve(async (req) => {
       let updated: any = null;
       let fallback = false;
       try {
-        const r = await gw<{ ok: boolean; merchant?: any }>(
-          "merchants.update",
-          { merchant_id: body.merchant_id, patch },
-          callerEmail || "platform-os",
-        );
-        updated = r.merchant;
+        const r = await gw<{ data?: any[] }>("db.update", { table: "merchants", id: body.merchant_id, data: patch }, callerEmail || "platform-os");
+        updated = (r.data || [])[0] || null;
       } catch (e) {
         const { data, error } = await localAdmin.from("merchants").update(patch).eq("id", body.merchant_id).select().maybeSingle();
         if (error) return jr({ error: error.message, gateway_error: (e as Error).message }, 502);
