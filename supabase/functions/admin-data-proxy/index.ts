@@ -240,6 +240,9 @@ Deno.serve(async (req) => {
       if (!body.merchant_id || !ALLOWED.includes(body.onboarding_status)) {
         return jr({ error: "merchant_id + onboarding_status (pending|approved|rejected) required" }, 400);
       }
+      if (String(body.merchant_id).startsWith("user:")) {
+        return jr({ error: "This user has no merchant record yet. Edit and save name/email first to create one." }, 409);
+      }
       const reviewer = callerEmail || "platform-os";
       const at = new Date().toISOString();
       const profilePatch: any = { merchant_id: body.merchant_id, onboarding_status: body.onboarding_status };
