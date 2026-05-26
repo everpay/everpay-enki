@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,9 +21,21 @@ serve(async (req) => {
   }
 
   try {
-    // Validate auth
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
+    // Validate auth — verify JWT via Supabase, not just header presence.
+    const authHeader = req.headers.get('authorization') || '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const token = authHeader.replace('Bearer ', '');
+    const sb = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: claimsData, error: claimsError } = await sb.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -80,38 +93,9 @@ serve(async (req) => {
     if (!vgsResponse.ok) {
       const errorText = await vgsResponse.text();
       console.error('VGS error:', vgsResponse.status, errorText);
-
-      // Fallback: use client-side AES encryption if VGS is unreachable
-      // This ensures credentials are never stored in plaintext
-      const encoder = new TextEncoder();
-      for (const [key, value] of Object.entries(vgsPayload)) {
-        const data = encoder.encode(value as string);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const prefix = 'tok_';
-        const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
-        
-        // Generate a random AES-GCM key for encryption
-        const aesKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, aesKey, data);
-        const exportedKey = await crypto.subtle.exportKey('raw', aesKey);
-        
-        // Combine iv + key + ciphertext into a single base64 token
-        const combined = new Uint8Array(iv.length + new Uint8Array(exportedKey).length + new Uint8Array(encrypted).length);
-        combined.set(iv, 0);
-        combined.set(new Uint8Array(exportedKey), iv.length);
-        combined.set(new Uint8Array(encrypted), iv.length + new Uint8Array(exportedKey).length);
-        
-        aliases[key] = `${prefix}${btoa(String.fromCharCode(...combined)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`;
-      }
-
-      return new Response(JSON.stringify({ 
-        aliases, 
-        vault: 'fallback_aes256gcm',
-        warning: 'VGS proxy unavailable, used AES-256-GCM encryption' 
-      }), {
-        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      // Fail closed — never tokenize locally with a key bundled in the token.
+      return new Response(JSON.stringify({ error: 'VGS vault unavailable' }), {
+        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
