@@ -94,23 +94,13 @@ Deno.serve(async (req) => {
         return { ...m, email, name, kyb_approved: kc.approved, kyb_total: kc.total };
       });
 
-      // Deduplicate: prefer entries with a real (non-email) name and
-      // earliest created_at. Key by user_id when present, otherwise email.
-      const dedupKey = (m: any) => (m.user_id || (m.email || "").toLowerCase() || m.id);
+      // Dedupe by merchant id ONLY. A single user may legitimately own
+      // multiple merchants (e.g. test/live or multi-brand) — collapsing on
+      // user_id was hiding 14 of 21 platform merchants. The external
+      // Platform OS project is the single source of truth.
       const byKey = new Map<string, any>();
       for (const m of enriched) {
-        const k = dedupKey(m);
-        const prev = byKey.get(k);
-        if (!prev) { byKey.set(k, m); continue; }
-        const prevHasRealName = prev.name && !isEmail(prev.name);
-        const curHasRealName = m.name && !isEmail(m.name);
-        if (curHasRealName && !prevHasRealName) { byKey.set(k, m); continue; }
-        if (curHasRealName === prevHasRealName) {
-          // pick earliest created_at
-          const a = new Date(prev.created_at || 0).getTime();
-          const b = new Date(m.created_at || 0).getTime();
-          if (b && (!a || b < a)) byKey.set(k, m);
-        }
+        if (!byKey.has(m.id)) byKey.set(m.id, m);
       }
       const deduped = Array.from(byKey.values());
 

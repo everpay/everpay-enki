@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { externalProxy } from '@/hooks/useExternalData';
+import { supabase as extSupabase } from '@/lib/supabase-client';
 import MerchantForm from '@/components/admin/MerchantForm';
 import { Search, UserPlus, Eye, Store, CheckCircle2, XCircle, Clock, Globe, Mail, Phone, Pencil, Loader2, Send, RefreshCw, Link2, History, ShieldCheck } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -54,6 +55,17 @@ export default function AdminMerchants() {
   const newCount = countNew(merchants);
 
   useEffect(() => { fetchMerchants(); }, []);
+
+  // Realtime: refresh whenever the Platform OS merchant/profile/KYB tables change.
+  useEffect(() => {
+    const ch = extSupabase
+      .channel('admin-merchants-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'merchants' }, () => fetchMerchants())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'merchant_profiles' }, () => fetchMerchants())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'kyb_documents' }, () => fetchMerchants())
+      .subscribe();
+    return () => { extSupabase.removeChannel(ch); };
+  }, []);
 
   useEffect(() => {
     if (!loading && merchants.length) {
