@@ -151,14 +151,15 @@ Deno.serve(async (req) => {
             callerEmail || "platform-os",
           );
           newId = r.merchant?.id || r.id || null;
-        } catch {}
+        } catch (e) {
+          return jr({
+            error: "Failed to create merchant via gateway",
+            gateway_error: (e as Error).message,
+            hint: "External user has no local auth record; merchant must be created in the Platform OS gateway.",
+          }, 502);
+        }
         if (!newId) {
-          const { data, error } = await localAdmin
-            .from("merchants")
-            .insert({ user_id: uid, name, email: body.patch?.email ?? null, phone: body.patch?.phone ?? null })
-            .select("id").maybeSingle();
-          if (error || !data) return jr({ error: error?.message || "Failed to create merchant row" }, 502);
-          newId = data.id;
+          return jr({ error: "Gateway did not return new merchant id" }, 502);
         }
         body.merchant_id = newId;
       }
