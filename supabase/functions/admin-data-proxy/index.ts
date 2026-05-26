@@ -211,6 +211,36 @@ Deno.serve(async (req) => {
       return jr({ ok: true, merchant: updated, diff, fallback });
     }
 
+    if (action === "update_merchant_onboarding") {
+      // body: { merchant_id, onboarding_status: 'pending'|'approved'|'rejected' }
+      const ALLOWED = ["pending", "approved", "rejected"];
+      if (!body.merchant_id || !ALLOWED.includes(body.onboarding_status)) {
+        return jr({ error: "merchant_id + onboarding_status (pending|approved|rejected) required" }, 400);
+      }
+      const reviewer = callerEmail || "platform-os";
+      const at = new Date().toISOString();
+      const profilePatch: any = { merchant_id: body.merchant_id, onboarding_status: body.onboarding_status };
+      if (body.onboarding_status === "approved") profilePatch.kyb_verified_at = at;
+      let fallback = false;
+      try {
+        await gw("db.upsert", { table: "merchant_profiles", data: profilePatch, on_conflict: "merchant_id" }, reviewer);
+      } catch {
+        const { error } = await localAdmin.from("merchant_profiles").upsert(profilePatch, { onConflict: "merchant_id" });
+        if (error) return jr({ error: error.message }, 502);
+        fallback = true;
+      }
+      const auditRow = {
+        user_id: callerId,
+        action: "merchant.onboarding_status_change",
+        entity_type: "merchant",
+        entity_id: body.merchant_id,
+        metadata: { reviewer_email: callerEmail, onboarding_status: body.onboarding_status, fallback, at },
+      };
+      try { await gw("db.insert", { table: "audit_logs", data: auditRow }, reviewer); }
+      catch { await localAdmin.from("audit_logs").insert(auditRow); }
+      return jr({ ok: true, fallback });
+    }
+
     // ---- Bulk / single merchant approval (KYB + onboarding) --------------
     const approveOne = async (m: { merchant_id?: string; user_id?: string; name?: string; email?: string }) => {
       const reviewer = callerEmail || "platform-os";
