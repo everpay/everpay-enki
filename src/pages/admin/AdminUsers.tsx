@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { externalProxy } from '@/hooks/useExternalData';
+import { supabase as extSupabase } from '@/lib/supabase-client';
 import { Search, MoreHorizontal, Trash2, Power, PowerOff } from 'lucide-react';
 import { NewSinceBadge } from '@/components/admin/NewSinceBadge';
 import { SyncNowButton } from '@/components/admin/SyncNowButton';
@@ -44,6 +45,16 @@ export default function AdminUsers() {
   const newCount = countNew(users);
 
   useEffect(() => { fetchUsers(); }, []);
+
+  // Realtime: refresh when the Platform OS source-of-truth changes.
+  useEffect(() => {
+    const ch = extSupabase
+      .channel('admin-users-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => fetchUsers())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchUsers())
+      .subscribe();
+    return () => { extSupabase.removeChannel(ch); };
+  }, []);
 
   // Mark visited once data has rendered, so the badge resets next visit.
   useEffect(() => {
