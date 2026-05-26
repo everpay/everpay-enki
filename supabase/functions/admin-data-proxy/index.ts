@@ -28,6 +28,21 @@ const LOCAL_ONLY_TABLES = new Set<string>([
   "security_alerts",
 ]);
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isSyntheticMerchantId = (value: unknown) => typeof value === "string" && value.startsWith("user:");
+const stripSyntheticUserId = (value: unknown) => isSyntheticMerchantId(value) ? String(value).slice("user:".length) : String(value || "");
+
+function buildMerchantInsert(userId: string, patch: Record<string, any>) {
+  const email = patch?.email ? String(patch.email) : null;
+  return {
+    user_id: userId,
+    name: patch?.name || (email ? email.split("@")[0] : "New Merchant"),
+    email,
+    phone: patch?.phone ?? null,
+    status: patch?.status || "pending",
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
