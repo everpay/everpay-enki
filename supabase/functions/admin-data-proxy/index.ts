@@ -139,6 +139,29 @@ Deno.serve(async (req) => {
     if (action === "update_merchant") {
       // body: { merchant_id, patch: { name?, email?, phone?, status? } }
       if (!body.merchant_id || !body.patch) return jr({ error: "merchant_id + patch required" }, 400);
+      // Synthetic id for users without a merchant row yet -> create one first
+      if (String(body.merchant_id).startsWith("user:")) {
+        const uid = String(body.merchant_id).slice("user:".length);
+        const name = body.patch?.name || body.patch?.email?.split("@")[0] || "New Merchant";
+        let newId: string | null = null;
+        try {
+          const r = await gw<{ ok: boolean; merchant?: any; id?: string }>(
+            "merchants.create",
+            { user_id: uid, name, email: body.patch?.email ?? null, phone: body.patch?.phone ?? null },
+            callerEmail || "platform-os",
+          );
+          newId = r.merchant?.id || r.id || null;
+        } catch {}
+        if (!newId) {
+          const { data, error } = await localAdmin
+            .from("merchants")
+            .insert({ user_id: uid, name, email: body.patch?.email ?? null, phone: body.patch?.phone ?? null })
+            .select("id").maybeSingle();
+          if (error || !data) return jr({ error: error?.message || "Failed to create merchant row" }, 502);
+          newId = data.id;
+        }
+        body.merchant_id = newId;
+      }
       const patch = body.patch || {};
       const fieldErrors: Record<string, string> = {};
       const ALLOWED_STATUSES = ["active", "pending", "suspended"];
@@ -216,6 +239,9 @@ Deno.serve(async (req) => {
       const ALLOWED = ["pending", "approved", "rejected"];
       if (!body.merchant_id || !ALLOWED.includes(body.onboarding_status)) {
         return jr({ error: "merchant_id + onboarding_status (pending|approved|rejected) required" }, 400);
+      }
+      if (String(body.merchant_id).startsWith("user:")) {
+        return jr({ error: "This user has no merchant record yet. Edit and save name/email first to create one." }, 409);
       }
       const reviewer = callerEmail || "platform-os";
       const at = new Date().toISOString();
