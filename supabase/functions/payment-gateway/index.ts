@@ -295,6 +295,33 @@ Deno.serve(async (req) => {
       return json({ error: 'Missing required fields: action, provider' }, 400);
     }
 
+    // Authorization — caller must own the merchant referenced by `data.merchant_id`,
+    // or be an admin/super_admin. If no merchant_id was provided, resolve and pin
+    // it to one the caller owns; reject if they own none.
+    const serviceForAuthz = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+    const { data: rolesRow } = await serviceForAuthz
+      .from('user_roles').select('role').eq('user_id', userId);
+    const callerRoles = (rolesRow ?? []).map((r: any) => r.role);
+    const isAdmin = callerRoles.includes('admin') || callerRoles.includes('super_admin');
+    const requestedMerchantId = (data as any)?.merchant_id as string | undefined;
+    let resolvedMerchantId: string | null = null;
+    if (requestedMerchantId) {
+      const { data: m } = await serviceForAuthz
+        .from('merchants').select('id,user_id').eq('id', requestedMerchantId).maybeSingle();
+      if (!m) return json({ error: 'Merchant not found' }, 404);
+      if (!isAdmin && m.user_id !== userId) return json({ error: 'Forbidden' }, 403);
+      resolvedMerchantId = m.id;
+    } else if (!isAdmin) {
+      const { data: mine } = await serviceForAuthz
+        .from('merchants').select('id').eq('user_id', userId).limit(1).maybeSingle();
+      if (!mine) return json({ error: 'Forbidden: no merchant for caller' }, 403);
+      resolvedMerchantId = mine.id;
+      (data as any).merchant_id = mine.id;
+    }
+
     const providerMap = ACTION_MAP[action];
     if (!providerMap) {
       return json({ error: `Unknown action: ${action}`, available_actions: Object.keys(ACTION_MAP) }, 400);
@@ -323,7 +350,7 @@ Deno.serve(async (req) => {
       if (val) env[key] = val;
     }
 
-    console.log(`[payment-gateway] ${action}/${provider} by user ${userId}`);
+    console.log(`[payment-gateway] ${action}/${provider} by user ${userId} merchant ${resolvedMerchantId ?? 'admin'}`);
     const result = await handler(data, env);
 
     const serviceClient = createClient(
@@ -336,7 +363,7 @@ Deno.serve(async (req) => {
       action: `gateway_${action}`,
       entity_type: 'payment_gateway',
       entity_id: result.transaction_id || 'pending',
-      metadata: { provider, action, success: result.success, amount: result.amount, currency: result.currency, status: result.status },
+      metadata: { provider, action, merchant_id: resolvedMerchantId, success: result.success, amount: result.amount, currency: result.currency, status: result.status },
     });
 
     return json(result, result.success ? 200 : 400);
