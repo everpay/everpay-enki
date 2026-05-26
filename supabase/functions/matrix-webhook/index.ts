@@ -26,25 +26,35 @@ serve(async (req) => {
 
     console.log('[Matrix Webhook] Received callback');
 
-    // Verify HMAC signature if secret key is available
+    // Fail-closed HMAC verification. Reject the request if the secret is not
+    // configured or the signature header is missing/invalid.
     const MATRIX_SECRET_KEY = Deno.env.get('MATRIX_SECRET_KEY');
-    if (MATRIX_SECRET_KEY && authHeader.startsWith('TH-HMAC ')) {
+    if (!MATRIX_SECRET_KEY) {
+      console.error('[Matrix Webhook] MATRIX_SECRET_KEY not configured — rejecting');
+      return new Response(JSON.stringify({ error: 'Server misconfigured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!authHeader.startsWith('TH-HMAC ')) {
+      return new Response(JSON.stringify({ error: 'Missing signature' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    {
       const [, sigPart] = authHeader.split(' ');
-      const [publicKey, signature] = sigPart.split(':');
-      
+      const [, signature] = (sigPart || '').split(':');
       const encoder = new TextEncoder();
       const key = await crypto.subtle.importKey(
-        'raw',
-        encoder.encode(MATRIX_SECRET_KEY),
-        { name: 'HMAC', hash: 'SHA-256' },
-        false,
-        ['sign']
+        'raw', encoder.encode(MATRIX_SECRET_KEY),
+        { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
       );
       const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
       const expectedSig = btoa(String.fromCharCode(...new Uint8Array(sig)));
-
-      if (signature !== expectedSig) {
+      if (!signature || signature !== expectedSig) {
         console.warn('[Matrix Webhook] HMAC verification failed');
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
     }
 
