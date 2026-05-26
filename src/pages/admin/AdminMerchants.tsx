@@ -42,7 +42,7 @@ export default function AdminMerchants() {
   const [selectedMerchant, setSelectedMerchant] = useState<MerchantRow | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState<{ name: string; email: string; phone: string; status: string }>({ name: '', email: '', phone: '', status: 'pending' });
+  const [editForm, setEditForm] = useState<{ name: string; email: string; phone: string; status: string; onboarding_status: string }>({ name: '', email: '', phone: '', status: 'pending', onboarding_status: 'pending' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [auditLog, setAuditLog] = useState<any[]>([]);
@@ -95,7 +95,13 @@ export default function AdminMerchants() {
 
   const openEdit = (m: MerchantRow) => {
     setSelectedMerchant(m);
-    setEditForm({ name: m.name || '', email: m.email || '', phone: m.phone || '', status: m.status || 'pending' });
+    setEditForm({
+      name: m.name || '',
+      email: m.email || '',
+      phone: m.phone || '',
+      status: m.status === 'active' ? 'active' : 'pending',
+      onboarding_status: m.onboarding_status || 'pending',
+    });
     setEditErrors({});
     setEditOpen(true);
   };
@@ -114,6 +120,24 @@ export default function AdminMerchants() {
         setEditErrors(res.field_errors);
         toast({ title: 'Validation failed', description: res.error || 'Please fix the highlighted fields', variant: 'destructive' });
         return;
+      }
+      // Handle onboarding_status change separately (lives on merchant_profiles)
+      if (editForm.onboarding_status && editForm.onboarding_status !== (selectedMerchant.onboarding_status || 'pending')) {
+        if (editForm.onboarding_status === 'approved') {
+          await externalProxy({
+            action: 'approve_merchant',
+            merchant_id: selectedMerchant.id,
+            user_id: selectedMerchant.user_id,
+            email: editForm.email || selectedMerchant.email,
+            name: editForm.name,
+          });
+        } else {
+          await externalProxy({
+            action: 'update_merchant_onboarding',
+            merchant_id: selectedMerchant.id,
+            onboarding_status: editForm.onboarding_status,
+          });
+        }
       }
       toast({ title: 'Merchant updated' });
       setEditOpen(false);
