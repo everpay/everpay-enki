@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,12 +6,30 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { extSelect } from "@/hooks/useExternalData";
-import { AlertTriangle, CheckCircle2, Download, RefreshCw, Scale, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, RefreshCw, Scale, XCircle, Activity } from "lucide-react";
 import { downloadCsv } from "@/lib/csv";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const fmt = (n: number, c = "USD") => new Intl.NumberFormat("en-US", { style: "currency", currency: c }).format(n);
 
 export default function AdminReconciliation() {
+  const { toast } = useToast();
+  const [gwRunning, setGwRunning] = useState(false);
+  const [gwResult, setGwResult] = useState<{ mismatches_count: number; mismatches: any[]; finished_at: string } | null>(null);
+
+  const runGatewayCheck = async () => {
+    setGwRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("gateway-reconciliation-check", { body: {} });
+      if (error) throw error;
+      setGwResult(data);
+      toast({ title: "Gateway check complete", description: `${data.mismatches_count} mismatch(es) found across ${data.merchants_checked} merchants.` });
+    } catch (e: any) {
+      toast({ title: "Gateway check failed", description: e?.message || "Unknown error", variant: "destructive" });
+    } finally { setGwRunning(false); }
+  };
+
   const { data: rows = [], isLoading, refetch } = useQuery({
     queryKey: ["admin-reconciliation"],
     queryFn: async () => {
@@ -100,6 +118,46 @@ export default function AdminReconciliation() {
               ))}
           </TableBody>
         </Table></CardContent></Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5 text-primary" />Gateway Reconciliation Check</CardTitle>
+              <CardDescription>Compares derived ledger balances, routing state, and settlement status against the Platform OS gateway.</CardDescription>
+            </div>
+            <Button onClick={runGatewayCheck} disabled={gwRunning}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${gwRunning ? "animate-spin" : ""}`} />
+              {gwRunning ? "Running…" : "Run check"}
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {!gwResult ? (
+              <p className="text-sm text-muted-foreground py-4">No check run yet. Click "Run check" to compare local vs gateway state.</p>
+            ) : gwResult.mismatches_count === 0 ? (
+              <div className="flex items-center gap-2 py-4 text-emerald-600">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="text-sm">All merchants match. Last run {new Date(gwResult.finished_at).toLocaleString()}.</span>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Kind</TableHead><TableHead>Merchant</TableHead><TableHead>Details</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {gwResult.mismatches.map((m, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Badge variant="destructive">{m.kind}</Badge></TableCell>
+                      <TableCell className="text-xs font-mono">{m.merchant_name || m.merchant_id || "—"}</TableCell>
+                      <TableCell className="text-xs font-mono whitespace-pre-wrap">{JSON.stringify(
+                        Object.fromEntries(Object.entries(m).filter(([k]) => !["kind","merchant_id","merchant_name"].includes(k))),
+                      )}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );
