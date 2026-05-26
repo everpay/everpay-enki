@@ -78,8 +78,12 @@ serve(async (req) => {
     wrapper.id = 'everpay-card-form-wrapper';
     wrapper.style.cssText = 'border:1px solid #e6e6e6;padding:16px;border-radius:8px;margin-top:12px;max-width:520px;';
 
+    function esc(s){var d=document.createElement('div');d.textContent=String(s==null?'':s);return d.innerHTML;}
+    function safeColor(s){return /^#[0-9a-fA-F]{3,8}$|^[a-zA-Z]+$/.test(String(s||''))?String(s):'';}
+    var btnBg = safeColor(theme.button_bg_color) || '#0052cc';
+    var btnFg = safeColor(theme.button_text_color) || '#fff';
     wrapper.innerHTML =
-      '<h4 style="margin:0 0 8px 0">' + (theme.header_text || 'Pay securely with Everpay') + '</h4>' +
+      '<h4 style="margin:0 0 8px 0">' + esc(theme.header_text || 'Pay securely with Everpay') + '</h4>' +
       '<div style="display:flex;gap:8px;flex-direction:column;">' +
         '<input id="everpay-card-name" placeholder="Cardholder name" style="padding:8px;border:1px solid #ccc;border-radius:4px" />' +
         '<input id="everpay-card-number" placeholder="Card number" inputmode="numeric" style="padding:8px;border:1px solid #ccc;border-radius:4px" />' +
@@ -89,8 +93,8 @@ serve(async (req) => {
         '</div>' +
         '<div id="everpay-card-message" style="color:#c00;min-height:18px;font-size:13px"></div>' +
         '<button id="everpay-pay-btn" style="padding:10px 14px;border-radius:6px;border:none;background:' +
-          (theme.button_bg_color || '#0052cc') + ';color:' + (theme.button_text_color || '#fff') +
-          ';cursor:pointer;font-weight:600">' + (theme.button_text || 'Pay with Everpay') + '</button>' +
+          btnBg + ';color:' + btnFg +
+          ';cursor:pointer;font-weight:600">' + esc(theme.button_text || 'Pay with Everpay') + '</button>' +
       '</div>';
     return wrapper;
   }

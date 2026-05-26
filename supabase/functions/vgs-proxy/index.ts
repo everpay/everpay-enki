@@ -76,10 +76,45 @@ Deno.serve(async (req) => {
         });
       }
 
-      const response = await fetch(destination_url, {
-        method,
+      // SSRF guard — only allow https requests to a small allowlist of
+      // payment-processor hostnames. Reject everything else (file://, internal
+      // IPs, cloud metadata, etc).
+      const ALLOWED_HOSTS = new Set<string>([
+        'sandbox.verygoodvault.com',
+        'live.verygoodvault.com',
+        'api.everpayinc.com',
+        'sandbox.shieldhubpay.com',
+        'api.shieldhubpay.com',
+        'sandbox.paco-pay.com',
+        'api.paco-pay.com',
+        'sandboxwebapi.paygate10.com',
+        'api.paygate10.com',
+        'server-to-server.getmondo.co',
+        'api-dev.lipad.io',
+        'api.lipad.io',
+        'apiv3.elektropay.com',
+      ]);
+      let parsed: URL;
+      try { parsed = new URL(destination_url); } catch {
+        return new Response(JSON.stringify({ error: 'Invalid destination_url' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (parsed.protocol !== 'https:' || !ALLOWED_HOSTS.has(parsed.hostname)) {
+        return new Response(JSON.stringify({ error: 'Destination not allowed' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const safeMethod = String(method || 'POST').toUpperCase();
+      if (!['GET','POST','PUT','PATCH','DELETE'].includes(safeMethod)) {
+        return new Response(JSON.stringify({ error: 'Invalid method' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const response = await fetch(parsed.toString(), {
+        method: safeMethod,
         headers: { 'Content-Type': 'application/json', ...customHeaders },
-        body: JSON.stringify(payload),
+        body: safeMethod === 'GET' ? undefined : JSON.stringify(payload),
       });
 
       if (!response.ok) {
