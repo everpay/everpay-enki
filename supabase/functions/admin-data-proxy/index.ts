@@ -788,8 +788,15 @@ Deno.serve(async (req) => {
         if (error) return jr({ error: error.message }, 500);
         return jr({ data: rows || [] });
       }
-      const r = await gw<{ data: any[] }>("db.insert", { table, data }, callerEmail || "platform-os");
-      return jr({ data: r.data });
+      try {
+        const r = await gw<{ data: any[] }>("db.insert", { table, data }, callerEmail || "platform-os");
+        return jr({ data: r.data });
+      } catch (gwErr) {
+        console.warn(`gateway db.insert failed for ${table}, falling back to local:`, (gwErr as Error).message);
+        const { data: rows, error } = await localAdmin.from(table).insert(data).select();
+        if (error) return jr({ error: error.message, gateway_error: (gwErr as Error).message }, 500);
+        return jr({ data: rows || [], degraded: true });
+      }
     }
     if (action === "update") {
       if (!id || !data) return jr({ error: "id and data required" }, 400);
@@ -798,13 +805,28 @@ Deno.serve(async (req) => {
         if (error) return jr({ error: error.message }, 500);
         return jr({ data: rows || [] });
       }
-      const r = await gw<{ data: any[] }>("db.update", { table, id, data }, callerEmail || "platform-os");
-      return jr({ data: r.data });
+      try {
+        const r = await gw<{ data: any[] }>("db.update", { table, id, data }, callerEmail || "platform-os");
+        return jr({ data: r.data });
+      } catch (gwErr) {
+        console.warn(`gateway db.update failed for ${table}, falling back to local:`, (gwErr as Error).message);
+        const { data: rows, error } = await localAdmin.from(table).update(data).eq("id", id).select();
+        if (error) return jr({ error: error.message, gateway_error: (gwErr as Error).message }, 500);
+        return jr({ data: rows || [], degraded: true });
+      }
     }
     if (action === "upsert") {
       if (!data) return jr({ error: "data required" }, 400);
-      const r = await gw<{ data: any[] }>("db.upsert", { table, data, on_conflict: body.on_conflict }, callerEmail || "platform-os");
-      return jr({ data: r.data });
+      try {
+        const r = await gw<{ data: any[] }>("db.upsert", { table, data, on_conflict: body.on_conflict }, callerEmail || "platform-os");
+        return jr({ data: r.data });
+      } catch (gwErr) {
+        console.warn(`gateway db.upsert failed for ${table}, falling back to local:`, (gwErr as Error).message);
+        const q = localAdmin.from(table).upsert(data, body.on_conflict ? { onConflict: body.on_conflict } : undefined).select();
+        const { data: rows, error } = await q;
+        if (error) return jr({ error: error.message, gateway_error: (gwErr as Error).message }, 500);
+        return jr({ data: rows || [], degraded: true });
+      }
     }
     if (action === "delete") {
       if (!id) return jr({ error: "id required" }, 400);
