@@ -1,65 +1,82 @@
-# Routing Maestro — Backend Wiring Plan
+## Goal
 
-The 4 substantial features each need DB schema + edge function + UI wiring. I'll stage them across 4 turns so each is fully shipped, tested, and reviewable before moving on.
+Refactor the attached "Payouts & Settlements" mock into a per-merchant drill-down view inside the Enki admin panel, styled with the Everpay design system (Sora/Manrope, #1aa478 primary, rounded-2xl cards, semantic tokens — no hardcoded cyan/dark theme from the mock).
 
-## Turn 1 — Dashboard & Performance Live Data (foundation)
+## Where it lives
 
-**Goal**: Replace any remaining mock/placeholder values on `RoutingDashboard` and `ProcessorPerformance` with real aggregates, plus add the dashboard filters (date range, processor, merchant) that drive every chart.
+- Refactor existing route `/enki/strategy/merchant-view` (`src/pages/admin/AdminMerchantView.tsx`) — currently a fee dashboard. Expand it into a Settlements & Payouts drill view per merchant. The current merchant picker stays at the top; everything below becomes the new layout.
+- Keep using `AppLayout` and existing semantic tokens (`bg-card`, `text-foreground`, `text-primary`, etc.) — no `cyan-*`, no custom dark palette.
 
-**Schema**
-- New view `routing_metrics_daily` (materialized): per-day per-processor success/failure/volume/latency from `transactions`.
-- Index on `transactions (provider, created_at, status)`.
-
-**Edge function**: `routing-metrics` (verify_jwt=true, admin-only)
-- Input: `{ from, to, processors?, merchantIds? }`
-- Output: `{ processors[], trend[], decisions[], totals }` — single composite payload (BFF pattern, per project memory).
-
-**UI**
-- `useRoutingMaestro.ts` → swap `useProcessors`, `usePerformanceHistory`, `useRecentRoutingDecisions` to one `useRoutingMetrics(filters)`.
-- Add `RoutingFiltersBar` (period selector + processor multi-select + merchant search) on `RoutingDashboard` and `ProcessorPerformance`.
-- Real latency from `transactions.latency_ms` (add column if missing) instead of deterministic placeholder.
-
-## Turn 2 — Routing Preview Form + Simulator API
-
-**Goal**: Parameter form (currency, amount, region, MCC, card brand, processor availability toggles) → real `route-simulate` edge function that runs the production routing logic and returns the expected processor chain with explanations.
-
-**Schema**: none (read-only over `routing_rules` + `psp_routes`).
-
-**Edge function**: `route-simulate` — pure function evaluating rules in priority order against the input; returns ordered chain + which rule matched + why each was skipped.
-
-**UI**: rewrite `RoutingPreview.tsx` with the form and step-by-step explanation panel.
-
-## Turn 3 — Failover & Retry: Save / Activate / Audit Log
-
-**Goal**: Move failover config off `localStorage` into DB; every change written to an audit log shown inline.
-
-**Schema**
-- `failover_configs (merchant_id, processor, max_retries, retry_delay_ms, backoff, fallback_chain jsonb, active, updated_by)`.
-- `routing_audit_log (id, actor_id, action, entity_type, entity_id, before jsonb, after jsonb, created_at)` — RLS: admins read, service role write.
-
-**Edge function**: `routing-config-write` — validates payload, writes config, inserts audit row in one tx.
-
-**UI**: `FailoverConfig.tsx` save/activate buttons + side-panel audit timeline.
-
-## Turn 4 — Rules Engine Full CRUD + Optimistic UI
-
-**Goal**: Create / update / delete routing rules with schema validation, optimistic updates, conflict detection. Reuses audit log from Turn 3.
-
-**Schema**: extend `routing_rules` with `region_match text[]`, `mcc_match text[]`, `card_brand_match text[]`, `updated_by uuid`, `version int`.
-
-**Edge function**: `routing-rules-write` — Zod-validated CRUD + audit emit + optimistic-lock via `version`.
-
-**UI**: full edit dialog in `RulesEngine.tsx`, optimistic `useMutation` with rollback, inline validation.
-
-## Order & checkpoints
+## Page structure (per selected merchant)
 
 ```text
-Turn 1 (Dashboard live + filters) ──► verify charts
-Turn 2 (Preview simulator)        ──► verify chain output
-Turn 3 (Failover save + audit)    ──► verify persistence + log
-Turn 4 (Rules CRUD)               ──► verify create/edit/delete + audit
+[ Merchant picker + search ]           (kept from current page)
+
+[ Header: Merchant name | region | status | Next Settlement countdown ]
+
+[ KPI row — 3 cards ]
+  Pending Payouts ($, batch count)
+  Total Settled (24h)  (+/- vs yesterday)
+  Settlement Strategy  (Daily / Weekly / Custom selector)
+
+[ Financial Reconciliation card (2/3) ]   [ Liquidity & Reserve (1/3) ]
+  Donut: Net Margin %                       Liquidity reserve bar
+  Rows: Gross Settlement                    Risk exposure bar
+        Processing Fees (%)                 Current Reserve Balance
+        FX Cost (spread bps)                Withdraw to Vault (disabled stub)
+        FX Spread Earned (Everpay)
+        Network/Gas Fees (crypto)
+        Crypto Spread Earned
+        Reserve Hold-back (%)
+        Commissions Earned (Everpay total)
+  Expected Net (highlighted)
+
+[ Payout History table ]
+  Columns: Transaction ID · Date · Method (Fiat / Crypto+asset chip) ·
+           Amount · FX Rate · Fees · Spread · Net · Status · Actions
+  Filter chip row: All / Fiat / Crypto / Stablecoin
+  Export CSV button (reuses existing `ExportButton`)
 ```
 
-After each turn I'll pause for you to spot-check before starting the next. Backend storage reuses existing `routing_rules` + `psp_routes` and adds only `failover_configs`, `routing_audit_log`, and the `routing_metrics_daily` view — matching the "reuse existing" option from the earlier scoping question.
+## Data sources (reuse, no schema changes)
 
-Confirm and I'll start with **Turn 1**.
+- Merchants list: `useStrategyMerchants` (already in file)
+- Fee + spread data: `useFeeBreakdowns(merchantId)` — gives `processor_fee`, `everpay_fee`, `sponsor_fee`, `total_fee`, `transaction_amount`
+- FX cost: `useTransactions` filtered by `merchant_id`, using `fx_rate`, `settlement_currency`, `settlement_amount`
+- Crypto / gas / stablecoin: `useElektropayPayments`, `useElektropayWithdrawals`, `useCryptoCommissions` (merchant-scoped)
+- Revenue aggregates: `useRevenueAnalytics` merchant breakdown for the donut + totals
+- Reserves: existing reserves hook used in `AdminReservesDashboard` (reuse, do not duplicate logic)
+
+Compute derived rows client-side:
+- `fxSpreadEarned = sum(settlement_amount - amount * fx_rate)` (when both present)
+- `gasFees = sum(elektropay_withdrawal.network_fee)` (fallback 0)
+- `cryptoSpread = sum(crypto_commission.fee_percent * amount + fee_fixed)`
+- `commissionsEarned = sum(fee_breakdowns.everpay_fee) + cryptoSpread + fxSpreadEarned`
+- `netMargin = commissionsEarned / grossSettlement`
+
+## Method classification (table)
+
+For each row, derive a `method` chip:
+- `fiat` if `provider` ∈ fiat processors (shieldhub, mondo, matrix, paygate10, makapay, payok, stripe, prometeo)
+- `crypto` / `stablecoin` if source is `elektropay_*` or asset symbol is in stablecoin set (USDT, USDC, DAI, etc.)
+Render with existing `CardBrandBadge` for fiat and a small asset pill (uses `/public/logos/crypto.svg`) for crypto.
+
+## Styling rules
+
+- All colors via tokens. Donut uses `hsl(var(--primary))` + `hsl(var(--muted))`.
+- Card shells: `rounded-2xl border bg-card p-5`.
+- Numbers: `font-mono`. Status chips reuse existing pattern from current file (no new color palette).
+- Heading: `font-display` (Sora) if available, otherwise current `font-bold` — match existing admin pages, do not introduce Paylyfe blue/cyan.
+- Motion: keep `framer-motion` entry animations consistent with rest of file.
+
+## Out of scope
+
+- No new tables, edge functions, or backend logic.
+- No changes to the merchant edit modal, reconciliation job, or auth.
+- No new dependencies.
+- No changes to the public-facing pages.
+
+## Files touched
+
+- `src/pages/admin/AdminMerchantView.tsx` — full refactor (single file).
+- Possibly extract small subcomponents inline in the same file to keep it readable; only split into separate files if it exceeds ~400 lines.
