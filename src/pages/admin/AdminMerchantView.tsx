@@ -5,13 +5,12 @@ import { extSelect } from "@/hooks/useExternalData";
 import { motion } from "framer-motion";
 import {
   Store, Search, Wallet, TrendingUp, Clock, Coins,
-  ArrowDownRight, ArrowUpRight, ShieldCheck, Fuel, Banknote,
+  ShieldCheck, Fuel, Banknote,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/ExportButton";
 
 const FIAT_PROVIDERS = new Set([
