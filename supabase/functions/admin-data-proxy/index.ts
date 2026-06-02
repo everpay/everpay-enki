@@ -11,7 +11,7 @@ const ALLOWED_TABLES = new Set([
   "subscriptions","subscription_plans","invoices","refunds","audit_logs","fee_breakdowns",
   "processors","processor_strategy","processor_fee_profiles","platform_fee_markups",
   "routing_attempt_logs","reseller_splits","elektropay_payments","elektropay_settings",
-  "elektropay_wallets","orders","payment_intents","settlement_batches","crypto_wallets",
+  "elektropay_wallets","elektropay_withdrawals","orders","payment_intents","settlement_batches","crypto_wallets",
   "crypto_assets","crypto_stores","crypto_commissions","crypto_transactions",
   "elektropay_webhook_events","surcharge_settings","bank_accounts_safe","wallets",
   "settlement_runs","payouts","billing_periods","bank_accounts","ledger_entries",
