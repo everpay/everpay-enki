@@ -303,16 +303,35 @@ Deno.serve(async (req) => {
       // Create merchant row if missing
       if (!merchantId) {
         if (!m.user_id) return { ok: false, error: "user_id required to create merchant" };
-        const created = await gw<{ data: any[] }>("db.insert", {
-          table: "merchants",
-          data: {
-            user_id: m.user_id,
-            name: m.name || (m.email ? m.email.split("@")[0] : "Merchant"),
-            email: m.email || null,
-            status: "active",
-          },
-        }, reviewer);
-        merchantId = (created.data || [])[0]?.id;
+        const merchantRow = {
+          user_id: m.user_id,
+          name: m.name || (m.email ? m.email.split("@")[0] : "Merchant"),
+          email: m.email || null,
+          status: "active",
+        };
+        try {
+          const created = await gw<{ data: any[] }>("db.insert", {
+            table: "merchants",
+            data: merchantRow,
+          }, reviewer);
+          merchantId = (created.data || [])[0]?.id;
+        } catch (gwErr: any) {
+          console.warn("gateway merchant create failed, falling back to local:", gwErr?.message || gwErr);
+          const { data: localCreated, error: localErr } = await localAdmin
+            .from("merchants")
+            .insert(merchantRow)
+            .select("id")
+            .maybeSingle();
+          if (localErr) {
+            return {
+              ok: false,
+              error: "merchant_create_failed",
+              gateway_error: gwErr?.message || String(gwErr),
+              local_error: localErr.message,
+            };
+          }
+          merchantId = localCreated?.id || null;
+        }
         if (!merchantId) return { ok: false, error: "merchant_create_failed" };
       } else {
         try {
