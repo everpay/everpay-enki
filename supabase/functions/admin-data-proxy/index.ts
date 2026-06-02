@@ -303,16 +303,35 @@ Deno.serve(async (req) => {
       // Create merchant row if missing
       if (!merchantId) {
         if (!m.user_id) return { ok: false, error: "user_id required to create merchant" };
-        const created = await gw<{ data: any[] }>("db.insert", {
-          table: "merchants",
-          data: {
-            user_id: m.user_id,
-            name: m.name || (m.email ? m.email.split("@")[0] : "Merchant"),
-            email: m.email || null,
-            status: "active",
-          },
-        }, reviewer);
-        merchantId = (created.data || [])[0]?.id;
+        const merchantRow = {
+          user_id: m.user_id,
+          name: m.name || (m.email ? m.email.split("@")[0] : "Merchant"),
+          email: m.email || null,
+          status: "active",
+        };
+        try {
+          const created = await gw<{ data: any[] }>("db.insert", {
+            table: "merchants",
+            data: merchantRow,
+          }, reviewer);
+          merchantId = (created.data || [])[0]?.id;
+        } catch (gwErr: any) {
+          console.warn("gateway merchant create failed, falling back to local:", gwErr?.message || gwErr);
+          const { data: localCreated, error: localErr } = await localAdmin
+            .from("merchants")
+            .insert(merchantRow)
+            .select("id")
+            .maybeSingle();
+          if (localErr) {
+            return {
+              ok: false,
+              error: "merchant_create_failed",
+              gateway_error: gwErr?.message || String(gwErr),
+              local_error: localErr.message,
+            };
+          }
+          merchantId = localCreated?.id || null;
+        }
         if (!merchantId) return { ok: false, error: "merchant_create_failed" };
       } else {
         try {
@@ -794,8 +813,21 @@ Deno.serve(async (req) => {
       } catch (gwErr) {
         console.warn(`gateway db.insert failed for ${table}, falling back to local:`, (gwErr as Error).message);
         const { data: rows, error } = await localAdmin.from(table).insert(data).select();
-        if (error) return jr({ error: error.message, gateway_error: (gwErr as Error).message }, 500);
-        return jr({ data: rows || [], degraded: true });
+        if (!error) return jr({ data: rows || [], degraded: true });
+
+        // If both the gateway and local write paths fail, fail safely instead
+        // of throwing another edge-function 500 that blanks the admin UI. The
+        // caller can surface this as a validation/degraded-state error while
+        // preserving the original gateway failure for debugging.
+        console.error(`local db.insert fallback failed for ${table}:`, error.message);
+        return jr({
+          data: [],
+          degraded: true,
+          write_failed: true,
+          error: "Insert could not be completed",
+          local_error: error.message,
+          gateway_error: (gwErr as Error).message,
+        }, 200);
       }
     }
     if (action === "update") {
