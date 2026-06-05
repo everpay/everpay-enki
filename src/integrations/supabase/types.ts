@@ -2517,6 +2517,59 @@ export type Database = {
           },
         ]
       }
+      merchant_high_risk_processors: {
+        Row: {
+          circoflows_enabled: boolean
+          circoflows_mode: string
+          created_at: string
+          elektropay_enabled: boolean
+          matrix_enabled: boolean
+          matrix_flow: string
+          merchant_id: string
+          notes: string | null
+          plgin_enabled: boolean
+          updated_at: string
+          valenspay_enabled: boolean
+          vertical: string
+        }
+        Insert: {
+          circoflows_enabled?: boolean
+          circoflows_mode?: string
+          created_at?: string
+          elektropay_enabled?: boolean
+          matrix_enabled?: boolean
+          matrix_flow?: string
+          merchant_id: string
+          notes?: string | null
+          plgin_enabled?: boolean
+          updated_at?: string
+          valenspay_enabled?: boolean
+          vertical?: string
+        }
+        Update: {
+          circoflows_enabled?: boolean
+          circoflows_mode?: string
+          created_at?: string
+          elektropay_enabled?: boolean
+          matrix_enabled?: boolean
+          matrix_flow?: string
+          merchant_id?: string
+          notes?: string | null
+          plgin_enabled?: boolean
+          updated_at?: string
+          valenspay_enabled?: boolean
+          vertical?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_high_risk_processors_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchant_pricing: {
         Row: {
           active: boolean
@@ -2768,9 +2821,11 @@ export type Database = {
       merchants: {
         Row: {
           api_key_hash: string | null
+          circoflows_mid: string | null
           created_at: string
           currency: string | null
           email: string | null
+          gambling_enabled: boolean
           id: string
           name: string
           phone: string | null
@@ -2783,9 +2838,11 @@ export type Database = {
         }
         Insert: {
           api_key_hash?: string | null
+          circoflows_mid?: string | null
           created_at?: string
           currency?: string | null
           email?: string | null
+          gambling_enabled?: boolean
           id?: string
           name: string
           phone?: string | null
@@ -2798,9 +2855,11 @@ export type Database = {
         }
         Update: {
           api_key_hash?: string | null
+          circoflows_mid?: string | null
           created_at?: string
           currency?: string | null
           email?: string | null
+          gambling_enabled?: boolean
           id?: string
           name?: string
           phone?: string | null
