@@ -93,6 +93,27 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['MX', 'CO', 'BR', 'CL', 'PE', 'UY', 'EC', 'AR', 'PA'],
     methods: ['Bank Redirect', 'SPEI', 'PSE', 'Open Finance', 'Bank Transfer'],
   },
+  plgin: {
+    name: 'plgin',
+    displayName: 'Plgin (Plugg & Co)',
+    supportedCurrencies: ['USD', 'EUR'],
+    regions: ['GLOBAL'],
+    methods: ['Card', 'CreditCard'],
+  },
+  circoflows: {
+    name: 'circoflows',
+    displayName: 'Circoflows',
+    supportedCurrencies: ['USD', 'EUR'],
+    regions: ['GLOBAL'],
+    methods: ['Card', 'Hosted Card Page', '3DS'],
+  },
+  valenspay: {
+    name: 'valenspay',
+    displayName: 'ValensPay PG6',
+    supportedCurrencies: ['USD', 'EUR'],
+    regions: ['GLOBAL'],
+    methods: ['Card', 'Bank Transfer', 'APM'],
+  },
 };
 
 // Country → provider mapping for intelligent routing
@@ -179,6 +200,9 @@ export function getProviderColor(provider: Provider): string {
     case 'prometeo': return 'hsl(155 65% 42%)';
     case 'matrix': return 'hsl(270 70% 55%)';
     case 'dcbank': return 'hsl(210 85% 45%)';
+    case 'plgin': return 'hsl(285 65% 50%)';
+    case 'circoflows': return 'hsl(15 80% 55%)';
+    case 'valenspay': return 'hsl(195 70% 45%)';
     default: return 'hsl(var(--chart-1))';
   }
 }

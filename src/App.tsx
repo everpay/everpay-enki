@@ -72,6 +72,7 @@ import AdminReports from "./pages/admin/AdminReports";
 import AdminUserReconciliation from "./pages/admin/AdminUserReconciliation";
 import AdminSecurityAlerts from "./pages/admin/AdminSecurityAlerts";
 import ProcessorDescriptors from "./pages/admin/ProcessorDescriptors";
+import HighRiskProcessors from "./pages/admin/HighRiskProcessors";
 
 // Routing Maestro (ported)
 import RoutingMaestroDashboard from "./pages/admin/routing-maestro/RoutingDashboard";
@@ -196,6 +197,7 @@ const AppRoutes = () => {
     <Route path="/enki/user-reconciliation" element={<AdminRoute><AdminUserReconciliation /></AdminRoute>} />
     <Route path="/enki/security-alerts" element={<AdminRoute><AdminSecurityAlerts /></AdminRoute>} />
     <Route path="/enki/processor-descriptors" element={<AdminRoute><ProcessorDescriptors /></AdminRoute>} />
+    <Route path="/enki/high-risk-processors" element={<AdminRoute><HighRiskProcessors /></AdminRoute>} />
     <Route path="/enki/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
 
     {/* Routing Maestro */}
