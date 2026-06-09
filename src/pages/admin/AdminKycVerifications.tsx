@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { extSelect } from "@/hooks/useExternalData";
 import { useAccessControl } from "@/hooks/useAccessControl";
 import Unauthorized from "@/components/admin/Unauthorized";
+import { KycVerificationDetailDrawer } from "@/components/admin/KycVerificationDetailDrawer";
 
 function statusVariant(status: string) {
   if (status === "approved" || status === "verified") return "default" as const;
@@ -20,6 +21,8 @@ function statusVariant(status: string) {
 export default function AdminKycVerifications() {
   const { isAdmin, isSuperAdmin, isLoading: roleLoading } = useAccessControl();
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<any | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { data: verifications = [], isLoading } = useQuery({
     queryKey: ["admin-kyc-verifications"],
@@ -77,7 +80,11 @@ export default function AdminKycVerifications() {
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No verifications.</TableCell></TableRow>
               ) : filtered.map((v: any) => (
-                <TableRow key={v.id}>
+                <TableRow
+                  key={v.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => { setSelected(v); setDrawerOpen(true); }}
+                >
                   <TableCell className="text-xs">{v.created_at ? new Date(v.created_at).toLocaleString() : "—"}</TableCell>
                   <TableCell className="font-mono text-xs">{v.merchant_id?.slice(0, 8)}</TableCell>
                   <TableCell><Badge variant="outline" className="capitalize">{v.provider || "—"}</Badge></TableCell>
@@ -90,6 +97,7 @@ export default function AdminKycVerifications() {
           </Table>
         </CardContent>
       </Card>
+      <KycVerificationDetailDrawer verification={selected} open={drawerOpen} onOpenChange={setDrawerOpen} />
     </AppLayout>
   );
 }
