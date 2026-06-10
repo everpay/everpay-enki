@@ -388,6 +388,7 @@ export default function AdminMerchants() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Merchant</TableHead>
+                      <TableHead>Merchant #</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Onboarding</TableHead>
@@ -400,6 +401,9 @@ export default function AdminMerchants() {
                     {filteredMerchants.map(m => (
                       <TableRow key={m.id}>
                         <TableCell className="font-medium">{m.name}</TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground" title={m.id}>
+                          {m.id ? m.id.slice(0, 8) : '—'}
+                        </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{m.email || '—'}</TableCell>
                         <TableCell>{getStatusBadge(m.status)}</TableCell>
                         <TableCell>
