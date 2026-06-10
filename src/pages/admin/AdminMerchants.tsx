@@ -84,7 +84,29 @@ export default function AdminMerchants() {
         onboarding_status: m.profile?.onboarding_status || 'pending',
         source: 'platform',
       }));
-      setMerchants(merchantList);
+      // Dedupe by email (case-insensitive) when present, else by user_id.
+      // Prefer rows that are approved, then have higher kyb count, then newest.
+      const score = (m: any) =>
+        (m.onboarding_status === 'approved' ? 1000 : 0) +
+        Number(m.kyb_approved || 0) * 10 +
+        Number(m.kyb_total || 0) +
+        (m.email ? 5 : 0);
+      const byKey = new Map<string, MerchantRow>();
+      for (const m of merchantList) {
+        const key =
+          (m.email && String(m.email).trim().toLowerCase()) ||
+          (m.user_id && `uid:${m.user_id}`) ||
+          `id:${m.id}`;
+        const prev = byKey.get(key);
+        if (!prev) { byKey.set(key, m); continue; }
+        const sNew = score(m), sOld = score(prev);
+        if (sNew > sOld) byKey.set(key, m);
+        else if (sNew === sOld && new Date(m.created_at) > new Date(prev.created_at)) byKey.set(key, m);
+      }
+      const deduped = Array.from(byKey.values()).sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setMerchants(deduped);
     } catch (error) {
       console.error('Failed to fetch merchants:', error);
       toast({ title: 'Error', description: 'Failed to load merchants', variant: 'destructive' });
@@ -366,6 +388,7 @@ export default function AdminMerchants() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Merchant</TableHead>
+                      <TableHead>Merchant #</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Onboarding</TableHead>
@@ -378,6 +401,9 @@ export default function AdminMerchants() {
                     {filteredMerchants.map(m => (
                       <TableRow key={m.id}>
                         <TableCell className="font-medium">{m.name}</TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground" title={m.id}>
+                          {m.id ? m.id.slice(0, 8) : '—'}
+                        </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{m.email || '—'}</TableCell>
                         <TableCell>{getStatusBadge(m.status)}</TableCell>
                         <TableCell>
