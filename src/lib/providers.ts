@@ -117,7 +117,7 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
   carespay: {
     name: 'carespay',
     displayName: 'Carespay',
-    supportedCurrencies: ['USD', 'HKD', 'SGD', 'JPY', 'CNY'],
+    supportedCurrencies: ['USD'] as Currency[],
     regions: ['ASIA', 'CN', 'HK', 'JP', 'KR', 'SG', 'TW', 'TH', 'VN', 'MY', 'ID', 'PH'],
     methods: ['Card', 'Visa', 'Mastercard', 'AmEx', 'JCB', 'Discover', 'Diners'],
   },
