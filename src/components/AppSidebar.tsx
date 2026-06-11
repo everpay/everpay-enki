@@ -167,6 +167,7 @@ const adminSections: NavSection[] = [
       { to: "/enki/routing", icon: Globe, label: "PSP Routing" },
       { to: "/enki/routing-decisions", icon: Eye, label: "Routing Decisions" },
       { to: "/enki/3ds", icon: Shield, label: "3DS Controls" },
+      { to: "/enki/3ds-acs", icon: Shield, label: "ActiveServer 3DS" },
       { to: "/enki/cascading", icon: ArrowLeftRight, label: "Cascading" },
       { to: "/enki/processors", icon: Globe, label: "Processor Info" },
       { to: "/enki/risk-engine", icon: Shield, label: "Risk Engine" },
