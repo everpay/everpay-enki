@@ -170,6 +170,53 @@ serve(async (req) => {
         throw new Error('Missing shop or code in callback query');
       }
 
+      // Authenticate the caller and verify they own the merchant_id they're
+      // trying to associate the Shopify store with. Without this, anyone could
+      // graft an attacker-controlled store onto a victim merchant's account.
+      if (!merchant_id) {
+        return new Response(JSON.stringify({ error: 'merchant_id required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const authHeader = req.headers.get('Authorization') || '';
+      if (!authHeader.toLowerCase().startsWith('bearer ')) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser(
+        authHeader.replace(/^[Bb]earer\s+/, ''),
+      );
+      if (userErr || !userData?.user?.id) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: ownedMerchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('id', merchant_id)
+        .eq('user_id', userData.user.id)
+        .maybeSingle();
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.user.id)
+        .in('role', ['admin', 'super_admin']);
+      if (!ownedMerchant && !(adminRole && adminRole.length > 0)) {
+        return new Response(JSON.stringify({ error: 'Forbidden: merchant_id does not belong to caller' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const normalizedShop = normalizeShopDomain(query.shop);
       if (!isValidShopDomain(normalizedShop)) {
         return new Response(JSON.stringify({ error: 'Invalid Shopify domain in callback' }), {
