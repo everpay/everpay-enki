@@ -34,9 +34,10 @@ async function tagShopifyOrder(shopDomain: string, accessToken: string, orderId:
 async function dispatchMerchantWebhook(supabase: any, merchantId: string, eventType: string, payload: any) {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     await fetch(`${supabaseUrl}/functions/v1/api-v1-webhooks`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${svc}` },
       body: JSON.stringify({ merchant_id: merchantId, event: eventType, data: payload }),
     });
   } catch (err) { console.error('Failed to dispatch merchant webhook:', err); }
@@ -75,13 +76,21 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Store not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Verify HMAC if configured
-    if (store.webhook_secret && shopifyHmac) {
-      const valid = await verifyShopifyHmac(rawBody, shopifyHmac, store.webhook_secret);
-      if (!valid) {
-        console.error('Invalid Shopify webhook HMAC');
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+    // Fail-closed HMAC verification. Prefer the per-store webhook_secret; fall back to
+    // SHOPIFY_API_SECRET (the app-level secret used to sign webhooks) when the store
+    // row predates per-store secrets. Never skip verification.
+    const sharedSecret = store.webhook_secret || Deno.env.get('SHOPIFY_API_SECRET') || '';
+    if (!sharedSecret) {
+      console.error('Shopify webhook secret not configured for store:', store.id);
+      return new Response(JSON.stringify({ error: 'Webhook not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (!shopifyHmac) {
+      return new Response(JSON.stringify({ error: 'Missing signature' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const valid = await verifyShopifyHmac(rawBody, shopifyHmac, sharedSecret);
+    if (!valid) {
+      console.error('Invalid Shopify webhook HMAC');
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // ═══════════════════════════════════════════════════

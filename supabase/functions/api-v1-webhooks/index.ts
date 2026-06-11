@@ -64,6 +64,15 @@ Deno.serve(async (req) => {
     return json(405, { error: 'Method not allowed' });
   }
 
+  // Restrict to internal callers (service_role). This function fans out HMAC-signed
+  // webhook deliveries to merchants and must never be callable from the open internet.
+  const authHeader = req.headers.get('Authorization') || '';
+  const token = authHeader.toLowerCase().startsWith('bearer ') ? authHeader.slice(7).trim() : '';
+  const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+  if (!svc || token !== svc) {
+    return json(401, { error: 'Unauthorized' });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
