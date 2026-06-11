@@ -114,6 +114,13 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['GLOBAL'],
     methods: ['Card', 'Bank Transfer', 'APM'],
   },
+  carespay: {
+    name: 'carespay',
+    displayName: 'Carespay',
+    supportedCurrencies: ['USD', 'HKD', 'SGD', 'JPY', 'CNY'],
+    regions: ['ASIA', 'CN', 'HK', 'JP', 'KR', 'SG', 'TW', 'TH', 'VN', 'MY', 'ID', 'PH'],
+    methods: ['Card', 'Visa', 'Mastercard', 'AmEx', 'JCB', 'Discover', 'Diners'],
+  },
 };
 
 
