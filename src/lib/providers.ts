@@ -114,7 +114,15 @@ export const providerConfigs: Record<Provider, ProviderConfig> = {
     regions: ['GLOBAL'],
     methods: ['Card', 'Bank Transfer', 'APM'],
   },
+  carespay: {
+    name: 'carespay',
+    displayName: 'Carespay',
+    supportedCurrencies: ['USD'] as Currency[],
+    regions: ['ASIA', 'CN', 'HK', 'JP', 'KR', 'SG', 'TW', 'TH', 'VN', 'MY', 'ID', 'PH'],
+    methods: ['Card', 'Visa', 'Mastercard', 'AmEx', 'JCB', 'Discover', 'Diners'],
+  },
 };
+
 
 // Country → provider mapping for intelligent routing
 const countryProviderMap: Record<string, Provider> = {
@@ -203,6 +211,7 @@ export function getProviderColor(provider: Provider): string {
     case 'plgin': return 'hsl(285 65% 50%)';
     case 'circoflows': return 'hsl(15 80% 55%)';
     case 'valenspay': return 'hsl(195 70% 45%)';
+    case 'carespay': return 'hsl(165 75% 40%)';
     default: return 'hsl(var(--chart-1))';
   }
 }
