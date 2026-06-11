@@ -34,9 +34,10 @@ async function tagShopifyOrder(shopDomain: string, accessToken: string, orderId:
 async function dispatchMerchantWebhook(supabase: any, merchantId: string, eventType: string, payload: any) {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     await fetch(`${supabaseUrl}/functions/v1/api-v1-webhooks`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${svc}` },
       body: JSON.stringify({ merchant_id: merchantId, event: eventType, data: payload }),
     });
   } catch (err) { console.error('Failed to dispatch merchant webhook:', err); }
