@@ -211,6 +211,7 @@ export function getProviderColor(provider: Provider): string {
     case 'plgin': return 'hsl(285 65% 50%)';
     case 'circoflows': return 'hsl(15 80% 55%)';
     case 'valenspay': return 'hsl(195 70% 45%)';
+    case 'carespay': return 'hsl(165 75% 40%)';
     default: return 'hsl(var(--chart-1))';
   }
 }
