@@ -3453,6 +3453,59 @@ export type Database = {
         }
         Relationships: []
       }
+      processor_pricing: {
+        Row: {
+          brand: string | null
+          category: string
+          condition: string | null
+          created_at: string
+          currency: string | null
+          display_order: number
+          fixed_amount: number | null
+          id: string
+          note: string | null
+          processor_id: string
+          rate: number | null
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          category: string
+          condition?: string | null
+          created_at?: string
+          currency?: string | null
+          display_order?: number
+          fixed_amount?: number | null
+          id?: string
+          note?: string | null
+          processor_id: string
+          rate?: number | null
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          category?: string
+          condition?: string | null
+          created_at?: string
+          currency?: string | null
+          display_order?: number
+          fixed_amount?: number | null
+          id?: string
+          note?: string | null
+          processor_id?: string
+          rate?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processor_pricing_processor_id_fkey"
+            columns: ["processor_id"]
+            isOneToOne: false
+            referencedRelation: "processors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processor_strategy: {
         Row: {
           created_at: string
@@ -5136,6 +5189,178 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: true
             referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      threeds_acs_merchants: {
+        Row: {
+          acquirer_bin: string | null
+          acquirer_merchant_id: string | null
+          acquirer_name: string | null
+          acs_merchant_id: string
+          country: string | null
+          created_at: string
+          id: string
+          mcc: string | null
+          merchant_id_ref: string | null
+          merchant_name: string
+          merchant_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          acquirer_bin?: string | null
+          acquirer_merchant_id?: string | null
+          acquirer_name?: string | null
+          acs_merchant_id: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          mcc?: string | null
+          merchant_id_ref?: string | null
+          merchant_name: string
+          merchant_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          acquirer_bin?: string | null
+          acquirer_merchant_id?: string | null
+          acquirer_name?: string | null
+          acs_merchant_id?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          mcc?: string | null
+          merchant_id_ref?: string | null
+          merchant_name?: string
+          merchant_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threeds_acs_merchants_merchant_id_ref_fkey"
+            columns: ["merchant_id_ref"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      threeds_acs_users: {
+        Row: {
+          client_cert_expires_at: string | null
+          client_cert_fingerprint: string | null
+          client_cert_pem: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          last_login_at: string | null
+          master_auth_enabled: boolean
+          role: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          client_cert_expires_at?: string | null
+          client_cert_fingerprint?: string | null
+          client_cert_pem?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          last_login_at?: string | null
+          master_auth_enabled?: boolean
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          client_cert_expires_at?: string | null
+          client_cert_fingerprint?: string | null
+          client_cert_pem?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          last_login_at?: string | null
+          master_auth_enabled?: boolean
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      threeds_requestor_config: {
+        Row: {
+          acs_merchant_id: string
+          api_version: string
+          created_at: string
+          decoupled_auth_enabled: boolean
+          enabled: boolean
+          id: string
+          message_extensions: Json
+          notification_url: string | null
+          requestor_id: string
+          requestor_name: string
+          requestor_url: string | null
+          result_endpoint_url: string | null
+          supported_brands: string[]
+          three_ri_enabled: boolean
+          threeds_method_url: string | null
+          updated_at: string
+          whitelisting_enabled: boolean
+        }
+        Insert: {
+          acs_merchant_id: string
+          api_version?: string
+          created_at?: string
+          decoupled_auth_enabled?: boolean
+          enabled?: boolean
+          id?: string
+          message_extensions?: Json
+          notification_url?: string | null
+          requestor_id: string
+          requestor_name: string
+          requestor_url?: string | null
+          result_endpoint_url?: string | null
+          supported_brands?: string[]
+          three_ri_enabled?: boolean
+          threeds_method_url?: string | null
+          updated_at?: string
+          whitelisting_enabled?: boolean
+        }
+        Update: {
+          acs_merchant_id?: string
+          api_version?: string
+          created_at?: string
+          decoupled_auth_enabled?: boolean
+          enabled?: boolean
+          id?: string
+          message_extensions?: Json
+          notification_url?: string | null
+          requestor_id?: string
+          requestor_name?: string
+          requestor_url?: string | null
+          result_endpoint_url?: string | null
+          supported_brands?: string[]
+          three_ri_enabled?: boolean
+          threeds_method_url?: string | null
+          updated_at?: string
+          whitelisting_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "threeds_requestor_config_acs_merchant_id_fkey"
+            columns: ["acs_merchant_id"]
+            isOneToOne: false
+            referencedRelation: "threeds_acs_merchants"
             referencedColumns: ["id"]
           },
         ]
