@@ -75,13 +75,21 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Store not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Verify HMAC if configured
-    if (store.webhook_secret && shopifyHmac) {
-      const valid = await verifyShopifyHmac(rawBody, shopifyHmac, store.webhook_secret);
-      if (!valid) {
-        console.error('Invalid Shopify webhook HMAC');
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+    // Fail-closed HMAC verification. Prefer the per-store webhook_secret; fall back to
+    // SHOPIFY_API_SECRET (the app-level secret used to sign webhooks) when the store
+    // row predates per-store secrets. Never skip verification.
+    const sharedSecret = store.webhook_secret || Deno.env.get('SHOPIFY_API_SECRET') || '';
+    if (!sharedSecret) {
+      console.error('Shopify webhook secret not configured for store:', store.id);
+      return new Response(JSON.stringify({ error: 'Webhook not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (!shopifyHmac) {
+      return new Response(JSON.stringify({ error: 'Missing signature' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const valid = await verifyShopifyHmac(rawBody, shopifyHmac, sharedSecret);
+    if (!valid) {
+      console.error('Invalid Shopify webhook HMAC');
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // ═══════════════════════════════════════════════════

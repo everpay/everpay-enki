@@ -11,9 +11,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Validate authorization
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
+  // Restrict to internal callers (service_role / cron).
+  const authHeader = req.headers.get('Authorization') || '';
+  const token = authHeader.toLowerCase().startsWith('bearer ') ? authHeader.slice(7).trim() : '';
+  const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+  if (!svc || token !== svc) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
