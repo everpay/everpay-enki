@@ -1,0 +1,7 @@
+P12-Filename: cert-auth-20260612164000391.p12
+P12-Password: GSiaweYw4hSI475N
+Owner: everpay@gmail.com
+Type: MasterAuth
+Created-Date: 2026-06-12T16:40:00.391
+Expiry-Date: 2028-06-11T16:40:00.391
+Description: DER encoded certificate using AES-256 encryption
