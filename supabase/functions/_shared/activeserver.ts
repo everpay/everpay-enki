@@ -1,0 +1,221 @@
+// GPayments ActiveServer 3DS shared client (mTLS).
+// Docs: https://docs.activeserver.cloud/en/guides/integration/integration_overview/
+// Auth: client-certificate (mTLS) using the MasterAuth P12 issued by ActiveServer,
+// converted to PEM. PEMs are embedded below as defaults (user uploaded them);
+// env vars override if set: ACTIVESERVER_CLIENT_CERT_PEM, ACTIVESERVER_CLIENT_KEY_PEM, ACTIVESERVER_CA_PEM.
+//
+// Other required config:
+//   ACTIVESERVER_BASE_URL    — e.g. https://apac.activeserver.cloud
+//   ACTIVESERVER_MERCHANT_ID — optional default merchantId injected into payloads
+import https from "node:https";
+import { Buffer } from "node:buffer";
+
+// MasterAuth client cert issued 2026-06-12, expires 2028-06-11.
+const DEFAULT_CLIENT_CERT_PEM = `-----BEGIN CERTIFICATE-----
+MIIERDCCAyygAwIBAgIBATANBgkqhkiG9w0BAQsFADBUMQswCQYDVQQGEwJBVTEg
+MB4GA1UEChMXYXBhYy5hY3RpdmVzZXJ2ZXIuY2xvdWQxIzAhBgNVBAMTGmFwYWMu
+YWN0aXZlc2VydmVyLmNsb3VkIENBMB4XDTI2MDYxMjE2NDAxNVoXDTI4MDYxMTE2
+NDAxNVoweDELMAkGA1UEBhMCQVUxDDAKBgNVBAgMA05TVzEWMBQGA1UECgwNZ3Bh
+eW1lbnRzLmNvbTERMA8GA1UECwwIM0RTZWN1cmUxMDAuBgNVBAMMJ2JhLTI0YjIx
+MGMyLWE4NzgtNGJhMy05MzE4LTBhZjVhMjBiYjA3NTCCASIwDQYJKoZIhvcNAQEB
+BQADggEPADCCAQoCggEBAKtADwWvb2+0VxAa85umiYtKAHXI5QFhhKP5/kg5T2ea
+ZYGcmRVJEd5vXjQ+0/XOVbpOM1y5USQtTVVrjfKVpVYNh5Mdbe2Ze0NWmuoxhUp3
+mQjXCz0eA4Y7XFW/SM5zcFvREQz/4QOtCLeuvJISbVMKAley/hy1SpopSCS30kL5
+MCyHXq9i9piiRpJy+vzKQD3yVy92qEJUIHKFnBRW7ZA8SylLoFxN0dqtz9c1tQeA
+A4D4sDQkeZ7IHugqwZefmQVCpCnbgtkmeRQJMz4tDjV7ufFNckwo8aEdWBgYRBz3
+OrnKGEgfbklcaIfeya5CUEGxYnanVQkJ55J14R7Bip0CAwEAAaOB/DCB+TAdBgNV
+HQ4EFgQUnU4vXTBlxL7gxu1u6XbKr5qMBMIwgaQGA1UdIwSBnDCBmYAUEyfURdoY
+b/szH7XrAhYBcWzCUXahbqRsMGoxCzAJBgNVBAYTAkFVMQwwCgYDVQQIDANOU1cx
+FjAUBgNVBAoMDWdwYXltZW50cy5jb20xETAPBgNVBAsMCDNEU2VjdXJlMSIwIAYD
+VQQDDBlHUGF5bWVudHMgSW50ZXJtZWRpYXRlIENBghEA5eS/T9K0uvmfTXoAA9Z4
+QTAJBgNVHRMEAjAAMA4GA1UdDwEB/wQEAwIF4DAWBgNVHSUBAf8EDDAKBggrBgEF
+BQcDAjANBgkqhkiG9w0BAQsFAAOCAQEAmv35xvrvfR8oezMBIhu2QAPPIe4nseop
+pchGNGWEpOPDTwW4NFZwv+cS0JHPxI91MyzqUFQnurwk3xA6N1OJxprkLjFa+vz2
+64hwTOuZ2YEleWW64lFE8gA3lEYXN7tk4T/Qb+y/fj7F2tQXCJtIsMZ0fMKEmzJ6
+2wVz9kSBAY63GGyjbN5vzpcgdW3iwqqKNSeRJLE3lw05e8y284eM1MWF/4IRlclb
+wMJRUfqjr78plQN68nNBi3N6ctd/Sq+Nt3XxSxpcnKJCY//xOmFFUzQVaGQpsCqk
+8EFTN3D5fLoEQSPJgMnqq3RoFdXxPQQY3P2Ltm6jK9uk2mS/afu8tA==
+-----END CERTIFICATE-----
+`;
+
+const DEFAULT_CLIENT_KEY_PEM = `-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCrQA8Fr29vtFcQ
+GvObpomLSgB1yOUBYYSj+f5IOU9nmmWBnJkVSRHeb140PtP1zlW6TjNcuVEkLU1V
+a43ylaVWDYeTHW3tmXtDVprqMYVKd5kI1ws9HgOGO1xVv0jOc3Bb0REM/+EDrQi3
+rrySEm1TCgJXsv4ctUqaKUgkt9JC+TAsh16vYvaYokaScvr8ykA98lcvdqhCVCBy
+hZwUVu2QPEspS6BcTdHarc/XNbUHgAOA+LA0JHmeyB7oKsGXn5kFQqQp24LZJnkU
+CTM+LQ41e7nxTXJMKPGhHVgYGEQc9zq5yhhIH25JXGiH3smuQlBBsWJ2p1UJCeeS
+deEewYqdAgMBAAECggEABZndQ+rWgrlLxa+T+ynJwuADPtb4woBNhc115yfUtIdE
+vaYBDcSrjHJpCt1pMldyz1qibGx1PnEq39naNS52z2c24XVrdIN6GBw7ieBfwy1B
+OJxL9k5GgDvty7Irb/Evohkm7R1rXyLoL5XL/h0TLU2dAQBONmMpkvw5q1XFz0Ho
+gErRSaD+7jMGHlveEOr8acUCEb9Q2fUlGrqlet/Mt/ZOtQ/BZG+gp2ZQuPFjh7Ww
+kvlbbPaR+SR5p+MPskwGfEdLdE0Xx55D9EE13WVSFvIqLa1iJjA2Rd53DGTDh+cE
+UdvHzCuj2TUxkWnOZ0PhrL9fUoEMEr0o1Kg3MDMnYQKBgQDZNUbNPfNAWQw6glmW
+4ygxZkYQ5QFA99UTcxa5hDNCnO4P/EDDF1pAQiEQUzq1kKKN/A+9Gt24wUHKR+gQ
+B2u/kAwHrVWkiExKxt/OI2QSsSCvHPa3FTTbXD4hdXEsk4NZ2DaKyygRSbmzs+O0
+Zk2GCkFANf8kdPR+hfoqSvDx8QKBgQDJ1ZgpPwCxoIJ7cjaZz1dBNjY8htg4gEzh
+5fbkStYG0jha5oXiM+4ftyC1VUUMWeB4fEJqT+qevg+UqEvR8itGwrDC3zoUc9cR
+KGrE4B9VLX/Anz6ROeVm0MG5T0CwY3fLCkpSrKBqVVJ5wbkPTQ7F9hqNormtWXma
+wP9YbWv3bQKBgAMORtK4XmW3Wv6vusbupzAauj2emyfo1KyTX+x4OahkQM0kxVx5
+RaHFzGVIZnkLcd4Bf88vQ5NH1L8dx9wB3rgxNJofDCdma3xZ0+g4gz3oFAeipq3o
+tHepko4x8senw59N9WZ6eTPVD7HBhCCTl9+c4VIf8Fj49D+bbuuNZlphAoGBALPT
+qeG974lTYE5KgZli4fQJMCOXZRhaP6XZdbMLdkvXizx6PXlAGX6KdAr8MSwC+/t9
+gtMj5v+OiWVC2WLyKFrAZisKJr5IQ6tW3mIQ6fnDMxrVBzLvaZPElYXctd8ykG4H
++hZVFgwHfxdaYd7fIjWAw0HEZTitCqq2IAuSWmq1AoGBAJ76WCUg1S+Vhwp9tlbS
+WNuxGmZVnpGyyXpXbiciEwZ2d6pskJ2xJYr5bwNR0aIhaAVeLSBX1ZlVcOMFP+Oy
+lfblne/mb39lCRvBHmw1tyQNwYi5KiFV7yEObVqT/czRvfE21QJfVcI5VliEOfOZ
+ctNLjN/x5B/qjW/SFjVVF+FX
+-----END PRIVATE KEY-----
+`;
+
+const DEFAULT_CA_PEM = `-----BEGIN CERTIFICATE-----
+MIIEzTCCArWgAwIBAgIRAOXkv0/StLr5n016AAPWeEEwDQYJKoZIhvcNAQELBQAw
+ajELMAkGA1UEBhMCQVUxDDAKBgNVBAgMA05TVzEWMBQGA1UECgwNZ3BheW1lbnRz
+LmNvbTERMA8GA1UECwwIM0RTZWN1cmUxIjAgBgNVBAMMGUdQYXltZW50cyBJbnRl
+cm1lZGlhdGUgQ0EwHhcNMjAwMjE4MDQxMzU3WhcNMzAwMjE4MDQxMzU3WjBUMQsw
+CQYDVQQGEwJBVTEgMB4GA1UEChMXYXBhYy5hY3RpdmVzZXJ2ZXIuY2xvdWQxIzAh
+BgNVBAMTGmFwYWMuYWN0aXZlc2VydmVyLmNsb3VkIENBMIIBIjANBgkqhkiG9w0B
+AQEFAAOCAQ8AMIIBCgKCAQEAn2nTGo4G3XHR0IuwQpG/k/Tg0xxXHPOnJrs4V1eh
+waOENsmZviXRfNFPbZTjXEBouZid8yNZS+E8j5hhRdkN1skAjW8DDLh9TamGlmIq
+wjsQMy4CQN63/h7Oy9wTW2QnZhOhNoc80UpEP3voUVgb/NnsH1UGDSGFpTlNRLRk
+bvEbzIN03Vs4JSAW4ZTVh1/uFAkyNBzjWy0jy00LJvdrhRz7PgPdcEqmwxLk+sMZ
+SSFwEnoL0qXrmGrcBpxxTwcdlHsDsV7r4zCqAmdEqvdmiWSO5ZFE6HAQSFk4Qva3
+i8jZkPVnzJo5oECIPcUVeSBxYFB9M8XaLjn1paTBE658kQIDAQABo4GDMIGAMA4G
+A1UdDwEB/wQEAwIChDAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwEwDwYD
+VR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUEyfURdoYb/szH7XrAhYBcWzCUXYwHwYD
+VR0jBBgwFoAUsmEG71nPhsSDY52KYA7QN3W0mMUwDQYJKoZIhvcNAQELBQADggIB
+AKmryn3LVo0d3lxYCh2CX+JM1MbJTGaZo/biYLszKbNh5U2b3aGBEg9tS1L/iLuG
+WvseGRzCRNnBh9LxnJurPjpujbgXUvD6BP0Iys+dEvwP9LD2LH5U1F5tWW/LVXys
+NEXbrdbq1EmgQYtjA8k3pSx6MmHOU7Bdk91KoQNyhaYmfjyeGZ2usK/90c9KH4al
+R2w1LnoH/Ilvm0YHEZnXc7Iw+C3ka2TgzosGolHR6j1CDOJxtfgzzIbEhq91PgTE
+fjqrWkP8yN3omV5yWEYSqWAl0V2uuz3hhH30huYuY1WWz29Pge6yjPXub2fTJthk
+f/6s/V/Aprw4i8GTnMUGig563cFHnuWwBT0+s3Bn8eE6dkHX75sHK8pCTaPFgCeA
+P/hplFGlh9RmI9U2LHiPzI3EAduI7IcYyWb8lIs2wOTCcnmobHTQp5S39/w53phq
+kkPKnohtT8eIIE77pGyZRse5Ur49eyx8xhUH9hIhRO/RvcGwo45epRSHDR0U4kGG
+PfDrors+T14XlX6uNI1sT4D1CBgKCxe2OcI1mIJEnE+ihjc2ssJjFM0kmse8/ZMq
+g2OkBQ1aZr/Oi0cdcRK1QP574scaKeMW+ZFhJb0rdfCdnYhEj/Uy89jImBfBzJMk
+4DdynQinbR/NuB/UCy3s8CItjQi/FYTE5+ntmHYXEnR+
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIFvzCCA6egAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwczELMAkGA1UEBhMCQVUx
+DDAKBgNVBAgMA05TVzEPMA0GA1UEBwwGU3lkbmV5MRYwFAYDVQQKDA1ncGF5bWVu
+dHMuY29tMREwDwYDVQQLDAgzRFNlY3VyZTEaMBgGA1UEAwwRR1BheW1lbnRzIFJv
+b3QgQ0EwHhcNMTcxMDE2MDgzMTU3WhcNMjcxMDE0MDgzMTU3WjBqMQswCQYDVQQG
+EwJBVTEMMAoGA1UECAwDTlNXMRYwFAYDVQQKDA1ncGF5bWVudHMuY29tMREwDwYD
+VQQLDAgzRFNlY3VyZTEiMCAGA1UEAwwZR1BheW1lbnRzIEludGVybWVkaWF0ZSBD
+QTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAOG/L/ksScX+Nw+0bV+5
+8FEUPKmK0rNNi8EfiAg/uO89I29RGqLvO/ze+Hv7ZpYnKBfiLoAf/kS5f5vcxmhb
+sC8jsDi6HG/Wa4u2ufJ+K7Zn99GvaVDx2mAMLbPScV6fjCMrSdoiC3P8Bvf5gHcN
+0pdot2p6XzeqNM29RawPxjA+ChBgOUKIzfVVgDUERbS+mirCucWNjB8TjAx4kilG
+KrEFDQdXhx2ArTGDw0jmJqF7oyKBMAACCZmSvgSAkrdFhF3J6mMZ5fvnWZ5jxGDs
+7Eb1EbjBe+xijotkjuxYo24TPDxvhpmOiQjaM/Idl+8Oq5Y2LywcvuyL54Zn4jH1
+OELapRdXO6W8jUHKTHrA0rgO4hkUew01qftsnxEYVFj/OTw3uxQudq4JD9dBhgy0
+mz3I1bbL6gT3pD4GnfBo72CZ8ydILwcDxnmgr8Ld6faH5FjGYtMgtdHL5ytEJ9+y
+fehtUSWTRyDvOKeO/mYDJQbGr00zJTJMpxvZxHdZaX79xegHjOepE0WnYk5ngGfd
+NsRFgfucQ+1PU/FaDTylbv7K5aO/1cwADGtx7lTS8sjdThRnuZNEErWD1XsoW9Hd
+dKk/tJBTMFXX3rtIS/ePe7LAccxRtOU2rEQnikSp5g/Se0TI8Fmnqr/C2b6u8+pt
+xWFm8gf+yGjhstaSPFMbo18JAgMBAAGjZjBkMB0GA1UdDgQWBBSyYQbvWc+GxINj
+nYpgDtA3dbSYxTAfBgNVHSMEGDAWgBT7tPWNSn48eLX6qMhiDx3rD1QCYTASBgNV
+HRMBAf8ECDAGAQH/AgEAMA4GA1UdDwEB/wQEAwIBhjANBgkqhkiG9w0BAQsFAAOC
+AgEACxVyb2rEqHrt+h9LGdQIWMgS9/gxIuzHhICSv03K30VSywwO/Ff83z0Oe+De
+TRoYXig/abcFck531bkAebvvs5OFdXvDExb6Nm9z5sP/vSsQ7KNhr+/2LriEJhk4
+D5J+tF9JGfxh8i7LaqPjd8dJGb/IDldoBuGQ3Yu8tfBnSPGxhg0VfFhOeSY5q1Qa
++/aIzyaV3DQzhD0jjjokpYe5LAO2xVE3AIDtcEnfYIYR0L4tv0u2DGDAUxDC7o6h
+Ngd4bIVWXXt+OuuWEBZfG1NRDaG7nJG/MLItxMyIvqJZhy6XCqp/Y7vB+pK3o45M
+Xv6NtOFKQDj3u/UUmNoYQ0bFACrmKz0II2/ILr7bQ1a8H2ETOgvQrKL4BW0hhY9z
+qJAxgO7bAyodV4kIPeMwAg2fIa6gKdiHfH8nmCrulWlj12JIfPoiAg1I1vLcBg2j
+N2XN4onZS8Us3P1FLC6DoP1FyNSm3GuIXlIaUBc/fArESboVRLLq9QZh1LMPiSGW
+AadocuzQsHtX9GDUci8Ycgsl6HEPuz3hcWZjjglTIn1ikBpanju4aLOUMSgSNC+e
+hV4hjJZCjxQHpYVNYQhSXNG0jmftPFu2r38YRvLWg8VC7IWLIboJbjLViqgzA2Bz
+69/M8ytZ0OU529OHda+OAGx5EqNg2nuskNAAmW5sTVEIEmA=
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIFzDCCA7SgAwIBAgIJALZVJ+f19ucvMA0GCSqGSIb3DQEBCwUAMHMxCzAJBgNV
+BAYTAkFVMQwwCgYDVQQIDANOU1kxDzANBgNVBAcMBlN5ZG5leTEWMBQGA1UECgwN
+Z3BheW1lbnRzLmNvbTERMA8GA1UECwwIM0RTZWN1cmUxGjAYBgNVBAMMEUdQYXlt
+ZW50cyBSb290IENBMB4XDTE3MTAxNjA4MjE1M1oXDTM3MTAxMTA4MjE1M1owczEL
+MAkGA1UEBhMCQVUxDDAKBgNVBAgMA05TVzEPMA0GA1UEBwwGU3lkbmV5MRYwFAYD
+VQQKDA1ncGF5bWVudHMuY29tMREwDwYDVQQLDAgzRFNlY3VyZTEaMBgGA1UEAwwR
+R1BheW1lbnRzIFJvb3QgQ0EwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoIC
+AQDUhDktwtXGKt/93/0GJgI1ECfzeDc4ar6RUCh9XsAohQupY/gO9KWk1o67Hzbg
+3AUog+7MytdsHdyGUgBJLbKwXj3dWLwnZdNx6ezbbFxIYTWqYmfcC9q6T1urBeF9
+cJe5yC0fW8RAtboB+iBeV2Q2jFImoE4UqtyJo2mKgsD8MDW7rllYjGNrBdiNr/Yn
+qUR+2JBo69ryL+gMMXTjrog9q5Vpgb8Wxu+bnY56qY3jtoHSsu/IKif7B0/JwbLW
+Wy6zOY+xP4mjC0FFRyNZqu6rgDVX+FmdfQoUH9KjweII6pogVOTGpl3E8ODo3oqx
+DUWi1+O2J7Qnt6jOOLzocPLEv4elf71oX4wGIL6glsjTdNmCmpNHGyj9iuysemsm
+oQ+vP556S450yfFOiIgoCFm7k22xvdJd1CjVWwVb1mBl+frGFXoTsh+jaOD645lg
+lCjN1R6abUjb9o6utxkFsRzFL+UfWGFih+fFlPAO4lCLkOWkRxjZNdg4zG4z3hbv
+2lkhBNlmR8Cf6T/4OgrPYASoqR6dcP/XJtfcW3OzYBNYkb1pN87OkcduBBOVy/UJ
+XCX2y5oanQ81Ze1jJl+sbZmDvLUy41D0tbU7hB4DD3BuJD7T+COCfcSBZieZXCjv
+PXFjJjl/snciuN96TYzljIYOa6R0+NmYTuxAHHc6uvuUNQIDAQABo2MwYTAdBgNV
+HQ4EFgQU+7T1jUp+PHi1+qjIYg8d6w9UAmEwHwYDVR0jBBgwFoAU+7T1jUp+PHi1
++qjIYg8d6w9UAmEwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMCAYYwDQYJ
+KoZIhvcNAQELBQADggIBAGmXdST6Cv2FhxAL7Zh5AtGnTXz/dXFRRXFyW1JREnep
+jcCY8OQWb7OAuiVw1UKJP6qLj7bGfAfBgZ6cL82iBPYBKfGWepy2sEpea18dyY0c
+zUg2xthmJ59xWbgQsk3tGkwkh/7kuKqxV1yeQXFEgpvypeAfborD2S8i5r0zPnnM
+JJGdl0osQz3o6iiZEjfyOp/WcjrZwchfS/7nohXnBpKEr+mCf3K6N0nPNfDonGZU
+ZNjvjYqAdXWc6jLBfNHz7kw+HU9YwiceuB+JL3vUQ3kiMBSwYxDtG2cyV0vUnLnl
+jJiTPraDRnCoed1O+rUyZ7akFPWxxg/QcY6s2aN1w54u6h6IV5ByS7d5302MhX4s
+LSJsSWAfpEvogV+/C/UHLSmHIYwB5Yk0PZWT53mXPna1M1c05YkG9aInTq5VbLSL
+g138PZEVlrli+0wfHKvJDISKUlEMtp0fDTeXj93YLVpb/JRSluW9PYGjEygphp3x
+3AKd7p5fCvdrIB9Egjls/P0ow3VB9XybTOoQ73W0UBfuZoGliJEneE485sYlkTHS
+KpVvZ67Y0+eRRDKKX7A2OLQNR+C0u/LZ/j9df0LsSo6TIkQj6DtXdMK4jk/ir0Hr
+9bl1bZ0o8vwJ6oXAZv3N92sFX/sC1d/AeHZxKjseZpFg7cKmrBY8pDXg9rmYIoM+
+-----END CERTIFICATE-----
+`;
+
+export function asBase(): string {
+  const v = Deno.env.get("ACTIVESERVER_BASE_URL");
+  if (!v) throw new Error("ACTIVESERVER_BASE_URL not configured");
+  return v.replace(/\/+$/, "");
+}
+
+function creds() {
+  return {
+    cert: Deno.env.get("ACTIVESERVER_CLIENT_CERT_PEM") || DEFAULT_CLIENT_CERT_PEM,
+    key: Deno.env.get("ACTIVESERVER_CLIENT_KEY_PEM") || DEFAULT_CLIENT_KEY_PEM,
+    ca: Deno.env.get("ACTIVESERVER_CA_PEM") || DEFAULT_CA_PEM,
+  };
+}
+
+export function asFetch(
+  path: string,
+  init: { method?: "GET" | "POST"; body?: string } = {},
+): Promise<{ status: number; data: unknown }> {
+  const { cert, key, ca } = creds();
+  const url = new URL(`${asBase()}${path.startsWith("/") ? "" : "/"}${path}`);
+  const method = init.method || "GET";
+  const body = method === "GET" ? undefined : (init.body ?? "");
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname + url.search,
+        method,
+        cert,
+        key,
+        ca,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          ...(body !== undefined ? { "Content-Length": Buffer.byteLength(body).toString() } : {}),
+        },
+      },
+      (res) => {
+        let chunks = "";
+        res.setEncoding("utf8");
+        res.on("data", (c: string) => (chunks += c));
+        res.on("end", () => {
+          let data: unknown = null;
+          try { data = chunks ? JSON.parse(chunks) : null; } catch { data = { _raw: chunks }; }
+          resolve({ status: res.statusCode || 0, data });
+        });
+      },
+    );
+    req.on("error", reject);
+    if (body !== undefined) req.write(body);
+    req.end();
+  });
+}
