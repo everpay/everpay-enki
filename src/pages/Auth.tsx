@@ -106,16 +106,16 @@ export default function Auth() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="gradient-glow pointer-events-none fixed inset-0" />
       <div className="relative w-full max-w-md">
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <img src={everpayIcon} alt="everpay" className="h-10 w-10 rounded-xl" />
-          <span className="font-heading text-2xl font-bold text-foreground tracking-tight">{config.title}</span>
+        <div className="flex items-center justify-center gap-3 mb-10">
+          <img src={everpayIcon} alt="everpay" className="h-11 w-11 rounded-2xl" />
+          <span className="font-heading text-3xl font-bold text-foreground tracking-tight">{config.title}</span>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-6 shadow-card">
-          <h2 className="font-heading text-xl font-bold text-foreground mb-1">
+        <div className="rounded-3xl border border-border bg-card p-8 md:p-10 shadow-card">
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-[0.95] mb-2">
             {isLogin ? 'Welcome back' : 'Create account'}
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-base text-muted-foreground mb-8">
             {isLogin ? config.subtitle : `Sign up for ${config.title}`}
           </p>
 
@@ -185,7 +185,7 @@ export default function Auth() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full gap-2" size="lg" disabled={loading}>
+            <Button type="submit" className="btn-pill w-full gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" size="lg" disabled={loading}>
               {isLogin ? 'Sign In' : 'Create Account'}
               <ArrowRight className="h-4 w-4" />
             </Button>
