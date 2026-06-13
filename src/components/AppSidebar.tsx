@@ -355,9 +355,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           if (visibleItems.length === 0) return null;
 
           return (
-            <div key={section.title || `section-${idx}`} className={idx > 0 ? "mt-5" : ""}>
+            <div key={section.title || `section-${idx}`} className={idx > 0 ? "mt-6" : ""}>
               {section.title && (
-                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   {section.title}
                 </p>
               )}
