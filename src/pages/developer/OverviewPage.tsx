@@ -17,7 +17,7 @@ const OverviewPage = () => {
     <div className="max-w-5xl mx-auto space-y-10">
       <div className="space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">
-          <span className="gradient-text">Everpay</span> Developer Platform
+          <span className="gradient-text">everpay</span> Developer Platform
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
           Build powerful payment experiences with our unified API. Accept cards, wallets, bank transfers, and crypto — all through one integration.

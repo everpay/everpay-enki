@@ -77,7 +77,7 @@ export function SiteHeader() {
     <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-white'}`}>
       <div className="container mx-auto flex h-[72px] items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src="/favicon.png" alt="Everpay Logo" className="h-8 w-8 rounded-lg" />
+          <img src="/favicon.png" alt="everpay" className="h-8 w-8 rounded-lg" />
           <span className="text-[22px] font-bold text-foreground tracking-tight font-heading">everpay</span>
         </Link>
 

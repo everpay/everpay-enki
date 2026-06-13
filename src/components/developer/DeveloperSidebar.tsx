@@ -77,7 +77,7 @@ export const DeveloperSidebar = ({ open, onToggle }: Props) => {
           <Link to="/developers" className="flex items-center gap-2">
             <img
               src="https://res.cloudinary.com/lmj6rf6tz/image/upload/v1681518139/img/LogoSqr.png"
-              alt="Everpay"
+              alt="everpay"
               className="h-7"
             />
             <span className="font-heading font-bold text-base text-sidebar-foreground">everpay</span>

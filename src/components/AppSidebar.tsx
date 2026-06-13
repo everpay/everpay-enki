@@ -309,7 +309,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Logo Header */}
       <div className="flex h-14 items-center border-b border-sidebar-border px-5">
         <div className="flex items-center gap-2.5">
-          <img src={everpayIcon} alt="Everpay" className="h-7 w-7 rounded-lg" />
+          <img src={everpayIcon} alt="everpay" className="h-7 w-7 rounded-lg" />
           <span className="font-heading text-base font-bold text-foreground tracking-tight">
             {isOnAdminRoute ? "Enki" : "Everpay"}
           </span>
