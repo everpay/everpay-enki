@@ -1,82 +1,58 @@
-## Goal
 
-Refactor the attached "Payouts & Settlements" mock into a per-merchant drill-down view inside the Enki admin panel, styled with the Everpay design system (Sora/Manrope, #1aa478 primary, rounded-2xl cards, semantic tokens — no hardcoded cyan/dark theme from the mock).
+## Phase 1 — Verify-first (new pages from prior turns)
 
-## Where it lives
+Use the in-preview browser to click through and check console/network for each new route. Fix any blockers before any visual work.
 
-- Refactor existing route `/enki/strategy/merchant-view` (`src/pages/admin/AdminMerchantView.tsx`) — currently a fee dashboard. Expand it into a Settlements & Payouts drill view per merchant. The current merchant picker stays at the top; everything below becomes the new layout.
-- Keep using `AppLayout` and existing semantic tokens (`bg-card`, `text-foreground`, `text-primary`, etc.) — no `cyan-*`, no custom dark palette.
+Routes to verify (logged in as admin):
+- `/enki/3ds-acs` — ActiveServer 3DS admin
+- `/enki/kyb-review` — KYB Review Queue
+- `/enki/itspaid` — ItsPaid ACH/Zelle
+- `/enki/card-issuing` — Virtual card issuing
+- `/enki/processors` — Carespay row + pricing
+- `/enki/merchants` — Merchant table rendering (per screenshot from earlier turn)
 
-## Page structure (per selected merchant)
+For each route I'll capture: page renders ✓ / console errors / failed network calls / RLS denials, and fix in-place. Edge functions get a smoke `curl` (`activeserver-3ds`, `itspaid-ach`, `carespay`, `cybersource`, `dwolla-transfers`, `kycaid-form`, `ofapay`, `smartfastpay-checkout`) with a no-op `action` to confirm they boot and auth-gate properly.
 
-```text
-[ Merchant picker + search ]           (kept from current page)
+## Phase 2 — Wise structural pass (token-preserving)
 
-[ Header: Merchant name | region | status | Next Settlement countdown ]
+Hard rules carried from `skill/wise-design-style`:
+- **DO NOT** change color tokens (`--primary` stays #1aa478, all semantic tokens preserved).
+- **DO NOT** swap fonts (Sora/Manrope stay).
+- Only structural/typographic moves.
 
-[ KPI row — 3 cards ]
-  Pending Payouts ($, batch count)
-  Total Settled (24h)  (+/- vs yesterday)
-  Settlement Strategy  (Daily / Weekly / Custom selector)
+Moves to apply where they fit:
+1. Pill buttons (`rounded-full h-12 px-6 font-semibold`) — primary actions only, not table row buttons.
+2. `rounded-3xl` cards with `p-8 md:p-10` on **marketing/auth/checkout** surfaces; keep `rounded-2xl p-6` for admin data cards to preserve density.
+3. Display headings (`text-5xl md:text-7xl tracking-tight leading-[0.95]`) on Landing, About, Pricing, Solutions, Auth.
+4. Eyebrow labels (`text-sm uppercase tracking-[0.18em] text-muted-foreground`) above section headings.
+5. `tabular-nums font-semibold` on every amount/KPI/balance/FX rate display.
+6. Alternating `bg-background` / `bg-muted/40` full-bleed sections (`py-20 md:py-32`) on marketing pages only.
+7. Circular tinted icon tiles (`h-12 w-12 rounded-2xl bg-primary/10`) replace square icon backgrounds on feature lists.
+8. Data list rows: left label / right value, `border-b border-border/60`, `py-4` — applied to settings, treasury, FX, balances.
+9. Sidebar refinement: tighter section labels (`text-[10px] uppercase tracking-[0.12em]` — already there), keep current density, add `mt-6` between groups (currently `mt-5`), no rebuild.
+10. Framer Motion fade-up on scroll, 24px translate, 600ms ease-out, stagger 80ms — marketing pages only (admin pages stay snappy).
 
-[ Financial Reconciliation card (2/3) ]   [ Liquidity & Reserve (1/3) ]
-  Donut: Net Margin %                       Liquidity reserve bar
-  Rows: Gross Settlement                    Risk exposure bar
-        Processing Fees (%)                 Current Reserve Balance
-        FX Cost (spread bps)                Withdraw to Vault (disabled stub)
-        FX Spread Earned (Everpay)
-        Network/Gas Fees (crypto)
-        Crypto Spread Earned
-        Reserve Hold-back (%)
-        Commissions Earned (Everpay total)
-  Expected Net (highlighted)
+### Scope tiers (so admin density isn't destroyed)
 
-[ Payout History table ]
-  Columns: Transaction ID · Date · Method (Fiat / Crypto+asset chip) ·
-           Amount · FX Rate · Fees · Spread · Net · Status · Actions
-  Filter chip row: All / Fiat / Crypto / Stablecoin
-  Export CSV button (reuses existing `ExportButton`)
-```
+**Tier A — Full Wise (airy, large)**: `src/pages/front/*`, `Landing`, `Auth`, `Checkout`, `PayInvoice`, `ResetPassword`, `Docs`, developer portal landing.
 
-## Data sources (reuse, no schema changes)
+**Tier B — Light Wise (typography + tabular-nums + eyebrow labels, keep density)**: Merchant dashboard (`Dashboard`, `Transactions`, `Invoices`, `Balances`, `Settings`, `Wallets`, `Payouts`, `Subscriptions`, `Customers`), KPI cards, settings pages.
 
-- Merchants list: `useStrategyMerchants` (already in file)
-- Fee + spread data: `useFeeBreakdowns(merchantId)` — gives `processor_fee`, `everpay_fee`, `sponsor_fee`, `total_fee`, `transaction_amount`
-- FX cost: `useTransactions` filtered by `merchant_id`, using `fx_rate`, `settlement_currency`, `settlement_amount`
-- Crypto / gas / stablecoin: `useElektropayPayments`, `useElektropayWithdrawals`, `useCryptoCommissions` (merchant-scoped)
-- Revenue aggregates: `useRevenueAnalytics` merchant breakdown for the donut + totals
-- Reserves: existing reserves hook used in `AdminReservesDashboard` (reuse, do not duplicate logic)
+**Tier C — Sidebar + numerals only**: All `/enki/*` admin pages. Apply `tabular-nums` to amounts and eyebrow labels to section titles. **Do not** inflate paddings, **do not** swap to `rounded-3xl`, **do not** add `py-20+` sections. Keep dense ops tables intact.
 
-Compute derived rows client-side:
-- `fxSpreadEarned = sum(settlement_amount - amount * fx_rate)` (when both present)
-- `gasFees = sum(elektropay_withdrawal.network_fee)` (fallback 0)
-- `cryptoSpread = sum(crypto_commission.fee_percent * amount + fee_fixed)`
-- `commissionsEarned = sum(fee_breakdowns.everpay_fee) + cryptoSpread + fxSpreadEarned`
-- `netMargin = commissionsEarned / grossSettlement`
+## Phase 3 — Verification after visual pass
+- Re-walk one representative page per tier in the preview at desktop + mobile viewports.
+- Confirm no token drift (`rg "#[0-9a-f]{6}" src/pages src/components` should not grow).
+- Confirm `>Everpay<` / `everpay-logo` clean greps still pass.
 
-## Method classification (table)
-
-For each row, derive a `method` chip:
-- `fiat` if `provider` ∈ fiat processors (shieldhub, mondo, matrix, paygate10, makapay, payok, stripe, prometeo)
-- `crypto` / `stablecoin` if source is `elektropay_*` or asset symbol is in stablecoin set (USDT, USDC, DAI, etc.)
-Render with existing `CardBrandBadge` for fiat and a small asset pill (uses `/public/logos/crypto.svg`) for crypto.
-
-## Styling rules
-
-- All colors via tokens. Donut uses `hsl(var(--primary))` + `hsl(var(--muted))`.
-- Card shells: `rounded-2xl border bg-card p-5`.
-- Numbers: `font-mono`. Status chips reuse existing pattern from current file (no new color palette).
-- Heading: `font-display` (Sora) if available, otherwise current `font-bold` — match existing admin pages, do not introduce Paylyfe blue/cyan.
-- Motion: keep `framer-motion` entry animations consistent with rest of file.
-
-## Out of scope
-
-- No new tables, edge functions, or backend logic.
-- No changes to the merchant edit modal, reconciliation job, or auth.
+## Technical notes
+- Use `framer-motion` (already installed) for marketing fade-ups; lazy-import.
+- Add a small `<Eyebrow>` and `<DisplayHeading>` presentational helper in `src/components/wise/` instead of repeating Tailwind chains.
+- No migrations. No edge function changes (except bug fixes found in Phase 1).
 - No new dependencies.
-- No changes to the public-facing pages.
 
-## Files touched
-
-- `src/pages/admin/AdminMerchantView.tsx` — full refactor (single file).
-- Possibly extract small subcomponents inline in the same file to keep it readable; only split into separate files if it exceeds ~400 lines.
+## What I will NOT do
+- Touch `src/index.css` color tokens or `tailwind.config.ts` color extensions.
+- Change `--primary`, accent hues, or font families.
+- Restructure admin tables, drawers, or routing editors.
+- Add new sidebar sections or rename existing ones (sidebar is already correct).
