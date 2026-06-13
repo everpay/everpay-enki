@@ -192,4 +192,28 @@
   .font-mono {
     font-family: var(--font-mono);
   }
+  /* Wise-style numerals: apply to all currency / KPI amounts. */
+  .num,
+  .amount {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-weight: 600;
+  }
+  /* Wise pill button — use alongside shadcn Button for primary CTAs. */
+  .btn-pill {
+    border-radius: 9999px !important;
+    height: 3rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    font-weight: 600;
+  }
+  /* Wise data row: label left, value right, divider. */
+  .wise-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid hsl(var(--border) / 0.6);
+  }
 }
