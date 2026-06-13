@@ -224,6 +224,8 @@ const adminSections: NavSection[] = [
       { to: "/enki/recipients", icon: Users, label: "Payout Recipients" },
       { to: "/enki/ledger", icon: BookOpen, label: "Ledger" },
       { to: "/enki/treasury-360?tab=rebelfi", icon: Sparkles, label: "Yield (RebelFi)" },
+      { to: "/enki/itspaid", icon: ArrowUpRight, label: "ItsPaid · ACH/Zelle" },
+      { to: "/enki/card-issuing", icon: CreditCardIcon, label: "Card Issuing" },
     ],
   },
   {

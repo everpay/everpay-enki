@@ -2136,6 +2136,219 @@ export type Database = {
           },
         ]
       }
+      itspaid_cards: {
+        Row: {
+          balance: number
+          card_account_id: string | null
+          card_expiration: string | null
+          card_last4: string | null
+          created_at: string
+          currency: string
+          environment: string
+          id: string
+          initial_load: number
+          itspaid_transaction_id: string | null
+          merchant_id: string
+          raw_response: Json | null
+          recipient_account_id: string | null
+          recipient_email: string
+          recipient_full_name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          card_account_id?: string | null
+          card_expiration?: string | null
+          card_last4?: string | null
+          created_at?: string
+          currency?: string
+          environment?: string
+          id?: string
+          initial_load?: number
+          itspaid_transaction_id?: string | null
+          merchant_id: string
+          raw_response?: Json | null
+          recipient_account_id?: string | null
+          recipient_email: string
+          recipient_full_name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          card_account_id?: string | null
+          card_expiration?: string | null
+          card_last4?: string | null
+          created_at?: string
+          currency?: string
+          environment?: string
+          id?: string
+          initial_load?: number
+          itspaid_transaction_id?: string | null
+          merchant_id?: string
+          raw_response?: Json | null
+          recipient_account_id?: string | null
+          recipient_email?: string
+          recipient_full_name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itspaid_cards_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itspaid_settings: {
+        Row: {
+          created_at: string
+          default_notification_type: number
+          default_send_method: string
+          enabled: boolean
+          environment: string
+          id: string
+          merchant_id: string
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          default_notification_type?: number
+          default_send_method?: string
+          enabled?: boolean
+          environment?: string
+          id?: string
+          merchant_id: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          default_notification_type?: number
+          default_send_method?: string
+          enabled?: boolean
+          environment?: string
+          id?: string
+          merchant_id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itspaid_settings_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      itspaid_transfers: {
+        Row: {
+          admin_message: string | null
+          amount: number
+          created_at: string
+          currency: string
+          direction: string
+          environment: string
+          fees: Json | null
+          gateway_error: string | null
+          gateway_message: string | null
+          id: string
+          itspaid_transaction_id: string | null
+          merchant_id: string
+          plaid_access_token_ref: string | null
+          plaid_account_id: string | null
+          public_description: string | null
+          raw_request: Json | null
+          raw_response: Json | null
+          recipient_bank_account_last4: string | null
+          recipient_bank_routing: string | null
+          recipient_email: string | null
+          recipient_full_name: string
+          recipient_phone: string | null
+          send_method: string
+          status: string
+          transfer_method: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_message?: string | null
+          amount: number
+          created_at?: string
+          currency?: string
+          direction?: string
+          environment?: string
+          fees?: Json | null
+          gateway_error?: string | null
+          gateway_message?: string | null
+          id?: string
+          itspaid_transaction_id?: string | null
+          merchant_id: string
+          plaid_access_token_ref?: string | null
+          plaid_account_id?: string | null
+          public_description?: string | null
+          raw_request?: Json | null
+          raw_response?: Json | null
+          recipient_bank_account_last4?: string | null
+          recipient_bank_routing?: string | null
+          recipient_email?: string | null
+          recipient_full_name: string
+          recipient_phone?: string | null
+          send_method: string
+          status?: string
+          transfer_method?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_message?: string | null
+          amount?: number
+          created_at?: string
+          currency?: string
+          direction?: string
+          environment?: string
+          fees?: Json | null
+          gateway_error?: string | null
+          gateway_message?: string | null
+          id?: string
+          itspaid_transaction_id?: string | null
+          merchant_id?: string
+          plaid_access_token_ref?: string | null
+          plaid_account_id?: string | null
+          public_description?: string | null
+          raw_request?: Json | null
+          raw_response?: Json | null
+          recipient_bank_account_last4?: string | null
+          recipient_bank_routing?: string | null
+          recipient_email?: string | null
+          recipient_full_name?: string
+          recipient_phone?: string | null
+          send_method?: string
+          status?: string
+          transfer_method?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itspaid_transfers_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kyb_review_notifications: {
         Row: {
           created_at: string

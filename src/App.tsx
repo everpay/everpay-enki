@@ -74,6 +74,8 @@ import AdminSecurityAlerts from "./pages/admin/AdminSecurityAlerts";
 import ProcessorDescriptors from "./pages/admin/ProcessorDescriptors";
 import HighRiskProcessors from "./pages/admin/HighRiskProcessors";
 import AdminActiveServer3DS from "./pages/admin/AdminActiveServer3DS";
+import AdminItsPaid from "./pages/admin/AdminItsPaid";
+import AdminCardIssuing from "./pages/admin/AdminCardIssuing";
 
 // Routing Maestro (ported)
 import RoutingMaestroDashboard from "./pages/admin/routing-maestro/RoutingDashboard";
@@ -145,6 +147,8 @@ const AppRoutes = () => {
     <Route path="/enki/routing" element={<AdminRoute><AdminPspRouting /></AdminRoute>} />
     <Route path="/enki/3ds" element={<AdminRoute><Admin3dsControls /></AdminRoute>} />
     <Route path="/enki/3ds-acs" element={<AdminRoute><AdminActiveServer3DS /></AdminRoute>} />
+    <Route path="/enki/itspaid" element={<AdminRoute><AdminItsPaid /></AdminRoute>} />
+    <Route path="/enki/card-issuing" element={<AdminRoute><AdminCardIssuing /></AdminRoute>} />
     <Route path="/enki/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
     <Route path="/enki/board" element={<AdminRoute><BoardOverview /></AdminRoute>} />
     <Route path="/enki/processors" element={<AdminRoute><AdminProcessorInfo /></AdminRoute>} />
