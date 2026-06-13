@@ -60,7 +60,7 @@ export default function PayInvoice() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-4"><div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center"><CreditCard className="h-4 w-4 text-primary-foreground" /></div><span className="font-heading text-lg font-bold text-foreground">Everpay</span></div>
+          <div className="flex items-center justify-center gap-2 mb-4"><div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center"><CreditCard className="h-4 w-4 text-primary-foreground" /></div><span className="font-heading text-lg font-bold text-foreground">everpay</span></div>
           <Badge variant="outline" className="mb-2">{invoice.invoice_number}</Badge>
           <p className="text-4xl font-bold text-foreground">{formatCurrency(invoice.amount, invoice.currency)}</p>
           {invoice.description && <p className="text-sm text-muted-foreground">{invoice.description}</p>}
@@ -82,7 +82,7 @@ export default function PayInvoice() {
           <div className="flex items-center justify-center gap-4 pt-2 border-t border-border"><div className="flex items-center gap-1 text-xs text-muted-foreground"><Lock className="h-3 w-3" /> SSL Encrypted</div><div className="flex items-center gap-1 text-xs text-muted-foreground"><Shield className="h-3 w-3" /> PCI Compliant</div></div>
         </form>
         <Button variant="ghost" size="sm" className="gap-1 text-xs mx-auto flex" onClick={() => generateInvoicePDF(invoice)}><Download className="h-3 w-3" /> Download Invoice PDF</Button>
-        <p className="text-center text-xs text-muted-foreground">Secured by <span className="font-medium text-foreground">Everpay</span></p>
+        <p className="text-center text-xs text-muted-foreground">Secured by <span className="font-medium text-foreground">everpay</span></p>
       </div>
       {/* 3DS is handled natively by ShieldHub at processor level */}
     </div>

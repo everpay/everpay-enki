@@ -452,7 +452,7 @@ export default function AboutPage() {
                   style={{ fontFamily: "Manrope, sans-serif" }}
                 >
                   Why merchants choose<br />
-                  <span className="text-[#1aa478]">Everpay</span>
+                  <span className="text-[#1aa478]">everpay</span>
                 </h2>
                 <p
                   className="text-gray-500 text-[17px] leading-[1.75] mb-8"

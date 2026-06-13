@@ -107,7 +107,7 @@ export default function Auth() {
       <div className="gradient-glow pointer-events-none fixed inset-0" />
       <div className="relative w-full max-w-md">
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <img src={everpayIcon} alt="Everpay" className="h-10 w-10 rounded-xl" />
+          <img src={everpayIcon} alt="everpay" className="h-10 w-10 rounded-xl" />
           <span className="font-heading text-2xl font-bold text-foreground tracking-tight">{config.title}</span>
         </div>
 

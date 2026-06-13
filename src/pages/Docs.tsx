@@ -154,7 +154,7 @@ export default function Docs() {
         <div className="max-w-[1440px] mx-auto flex items-center justify-between h-16 px-6">
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2">
-              <img src={everpayIcon} alt="Everpay" className="h-7 w-7 rounded-lg" />
+              <img src={everpayIcon} alt="everpay" className="h-7 w-7 rounded-lg" />
               <span className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Manrope, sans-serif' }}>everpay</span>
             </Link>
             <div className="hidden md:flex items-center gap-1">
