@@ -6169,7 +6169,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_access_enki: { Args: { _user_id: string }; Returns: boolean }
+      can_access_enki:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id: string }; Returns: boolean }
+      current_user_has_any_role: {
+        Args: { _roles: Database["public"]["Enums"]["app_role"][] }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
