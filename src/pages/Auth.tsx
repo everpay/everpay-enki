@@ -42,15 +42,12 @@ export default function Auth() {
         const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
-        const { data: adminRoles, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', signInData.user.id)
-          .in('role', ['admin', 'super_admin']);
+        const { data: canAccessEnki, error: roleError } = await supabase
+          .rpc('can_access_enki', { _user_id: signInData.user.id });
 
         if (roleError) throw roleError;
 
-        if (!adminRoles?.length) {
+        if (!canAccessEnki) {
           await supabase.auth.signOut();
           setFormError('Access denied. Only administrators can sign in to Enki.');
           return;
