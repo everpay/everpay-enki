@@ -43,7 +43,7 @@ export default function Auth() {
         if (error) throw error;
 
         const { data: canAccessEnki, error: roleError } = await supabase
-          .rpc('can_access_enki', { _user_id: signInData.user.id });
+          .rpc('can_access_enki');
 
         if (roleError) throw roleError;
 
